@@ -70,7 +70,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
         if (userId.equals(remoteUser)) {
           final AtomicBoolean polling = new AtomicBoolean(true);
           final AsyncContext acontext = req.startAsync(req, resp);
-          final WebConferencingService videoCalls = getContainer().getComponentInstanceOfType(WebConferencingService.class);
+          final WebConferencingService webConferencing = getContainer().getComponentInstanceOfType(WebConferencingService.class);
           final UserCallListener userListener = new UserCallListener(userId) {
             @Override
             public boolean isListening() {
@@ -156,7 +156,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
             @Override
             public void onComplete(AsyncEvent event) throws IOException {
               polling.set(false); // TODO do we need it here? We already do in onCall() below
-              videoCalls.removeUserCallListener(userListener);
+              webConferencing.removeUserCallListener(userListener);
             }
 
             @Override
@@ -170,14 +170,14 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
                 } else {
                   LOG.warn("<<< UpdatePollingServlet already committed for " + userId);
                 }
-                videoCalls.removeUserCallListener(userListener);
+                webConferencing.removeUserCallListener(userListener);
               }
             }
 
             @Override
             public void onError(AsyncEvent event) throws IOException {
               polling.set(false);
-              videoCalls.removeUserCallListener(userListener);
+              webConferencing.removeUserCallListener(userListener);
               Throwable err = event.getThrowable();
               if (err != null) {
                 LOG.error("Error in UpdatePollingServlet for " + userId, err);
@@ -192,7 +192,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
             }
           });
 
-          videoCalls.addUserCallListener(userListener);
+          webConferencing.addUserCallListener(userListener);
         } else {
           LOG.warn("Accessing other user updates forbidden for " + remoteUser + ", has requested updates of "
               + userId);
@@ -279,32 +279,5 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
       acontext.complete();
     }
   }
-
-  /*
-   * @Override
-   * protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-   * IOException {
-   * List<AsyncContext> asyncContexts = new ArrayList<>(this.contexts);
-   * this.contexts.clear();
-   * String name = request.getParameter("name");
-   * String message = request.getParameter("message");
-   * String htmlMessage = "<p><b>" + name + "</b><br/>" + message + "</p>";
-   * ServletContext sc = request.getServletContext();
-   * if (sc.getAttribute("messages") == null) {
-   * sc.setAttribute("messages", htmlMessage);
-   * } else {
-   * String currentMessages = (String) sc.getAttribute("messages");
-   * sc.setAttribute("messages", htmlMessage + currentMessages);
-   * }
-   * for (AsyncContext asyncContext : asyncContexts) {
-   * try (PrintWriter writer = asyncContext.getResponse().getWriter()) {
-   * writer.println(htmlMessage);
-   * writer.flush();
-   * asyncContext.complete();
-   * } catch (Exception ex) {
-   * }
-   * }
-   * }
-   */
 
 }

@@ -38,7 +38,7 @@
     <target-component>org.exoplatform.commons.addons.AddOnService</target-component>
     <component-plugin>
       <!-- 
-        Add VideoCalls portlet to portal pages with a toolbar
+        Add WebConferencing portlet to portal pages with a toolbar
       -->
       <name>addPlugin</name>
       <set-method>addPlugin</set-method>

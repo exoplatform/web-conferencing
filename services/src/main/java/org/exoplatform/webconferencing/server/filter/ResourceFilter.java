@@ -37,12 +37,12 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
 /**
- * Filter updates request to Skype resources with proper HTTP headers (for caching etc.).<br>
+ * Filter updates request to resources with proper HTTP headers (for caching etc.).<br>
  * 
  * Created by The eXo Platform SAS
  * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: SkypeResourceFilter.java 00000 Mar 14, 2017 pnedonosko $
+ * @version $Id: ResourceFilter.java 00000 Mar 14, 2017 pnedonosko $
  * 
  */
 public class ResourceFilter extends AbstractFilter implements Filter {

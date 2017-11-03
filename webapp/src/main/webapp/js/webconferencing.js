@@ -8,7 +8,7 @@
 
 	/** For debug logging. */
 	var objId = Math.floor((Math.random() * 1000) + 1);
-	var logPrefix = "[videocall_" + objId + "] ";
+	var logPrefix = "[webconferencing_" + objId + "] ";
 	var log = function(msg, e) {
 		if (typeof console != "undefined" && typeof console.log != "undefined") {
 			var isoTime = " -- " + new Date().toISOString();
@@ -330,7 +330,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "GET",
-			url : prefixUrl + "/portal/rest/videocalls/call/" + id
+			url : prefixUrl + "/portal/rest/webconferencing/call/" + id
 		});
 		return initRequest(request);
 	};
@@ -339,7 +339,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "DELETE",
-			url : prefixUrl + "/portal/rest/videocalls/call/" + id
+			url : prefixUrl + "/portal/rest/webconferencing/call/" + id
 		});
 		return initRequest(request);
 	};
@@ -348,7 +348,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "POST",
-			url : prefixUrl + "/portal/rest/videocalls/call/" + id,
+			url : prefixUrl + "/portal/rest/webconferencing/call/" + id,
 			data : info
 		});
 		return initRequest(request);
@@ -358,7 +358,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "PUT",
-			url : prefixUrl + "/portal/rest/videocalls/call/" + id,
+			url : prefixUrl + "/portal/rest/webconferencing/call/" + id,
 			data : {
 				state : state
 			}
@@ -370,7 +370,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "PUT",
-			url : prefixUrl + "/portal/rest/videocalls/user/me/call/" + callId,
+			url : prefixUrl + "/portal/rest/webconferencing/user/me/call/" + callId,
 			data : {
 				state : state
 			}
@@ -383,7 +383,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "POST",
-			url : prefixUrl + "/portal/rest/videocalls/user/me/call/" + callId
+			url : prefixUrl + "/portal/rest/webconferencing/user/me/call/" + callId
 		});
 		return initRequest(request);
 	};
@@ -393,7 +393,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "DELETE",
-			url : prefixUrl + "/portal/rest/videocalls/user/me/call/" + callId
+			url : prefixUrl + "/portal/rest/webconferencing/user/me/call/" + callId
 		});
 		return initRequest(request);
 	};
@@ -402,7 +402,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "GET",
-			url : prefixUrl + "/portal/rest/videocalls/user/me/calls"
+			url : prefixUrl + "/portal/rest/webconferencing/user/me/calls"
 		});
 		return initRequest(request);
 	};
@@ -411,7 +411,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "GET",
-			url : prefixUrl + "/videocalls/updates/" + userId,
+			url : prefixUrl + "/webconferencing/updates/" + userId,
 			timeout : 310000, 
 			headers: {
 		    "Cache-Control": "no-cache"
@@ -425,7 +425,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "GET",
-			url : prefixUrl + "/portal/rest/videocalls/user/" + userId
+			url : prefixUrl + "/portal/rest/webconferencing/user/" + userId
 		});
 		return initRequest(request);
 	};
@@ -438,7 +438,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "GET",
-			url : prefixUrl + "/portal/rest/videocalls/users",
+			url : prefixUrl + "/portal/rest/webconferencing/users",
 			data : {
 				names : names
 			}
@@ -470,7 +470,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "GET",
-			url : prefixUrl + "/portal/rest/videocalls/space/" + spaceId
+			url : prefixUrl + "/portal/rest/webconferencing/space/" + spaceId
 		});
 		return initRequest(request);
 	};
@@ -495,7 +495,7 @@
 		var request = $.ajax({
 			async : true,
 			type : "GET",
-			url : prefixUrl + "/portal/rest/videocalls/room/" + roomRef + q
+			url : prefixUrl + "/portal/rest/webconferencing/room/" + roomRef + q
 		});
 		return initRequest(request);
 	};
@@ -521,9 +521,9 @@
 	};
 	
 	/**
-	 * VideoCalls core class.
+	 * WebConferencing core class.
 	 */
-	function VideoCalls() {
+	function WebConferencing() {
 
 		// ******** Context ********
 		var currentUser, currentSpaceId, currentRoomTitle;
@@ -1477,19 +1477,19 @@
 		 */
 		this.getCall = function(id) {
 			if (cometd) {
-				log(">> getCall:/videocalls/calls:" + id + " - request published");
+				log(">> getCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					command : "get",
 					id : id
 				});
-				cometd.remoteCall("/videocalls/calls", callProps, function(response) {
+				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					if (response.successful) {
 						var result = tryParseJson(response);
-						log("<< getCall:/videocalls/calls:" + id + " - success: " + cometdInfo(response));
+						log("<< getCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						log("<< getCall:/videocalls/calls:" + id + " - failure: " + cometdError(response));
+						log("<< getCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -1504,20 +1504,20 @@
 		 */
 		this.updateCall = function(id, state) {
 			if (cometd) {
-				log(">> updateCall:/videocalls/calls:" + id + " - request published");
+				log(">> updateCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					command : "update",
 					id : id,
 					state : state
 				});
-				cometd.remoteCall("/videocalls/calls", callProps, function(response) {
+				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						log("<< updateCall:/videocalls/calls:" + id + " - success: " + cometdInfo(response));
+						log("<< updateCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						log("<< updateCall:/videocalls/calls:" + id + " - failure: " + cometdError(response));
+						log("<< updateCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -1532,19 +1532,19 @@
 		 */
 		this.deleteCall = function(id) {
 			if (cometd) {
-				log(">> deleteCall:/videocalls/calls:" + id + " - request published");
+				log(">> deleteCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					command : "delete",
 					id : id
 				});
-				cometd.remoteCall("/videocalls/calls", callProps, function(response) {
+				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						log("<< deleteCall:/videocalls/calls:" + id + " - success: " + cometdInfo(response));
+						log("<< deleteCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						log("<< deleteCall:/videocalls/calls:" + id + " - failure: " + cometdError(response));
+						log("<< deleteCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -1559,19 +1559,19 @@
 		 */
 		this.addCall = function(id, callInfo) {
 			if (cometd) {
-				log(">> addCall:/videocalls/calls:" + id + " - request published");
+				log(">> addCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams($.extend(callInfo, {
 					command : "create",
 					id : id
 				}));
-				cometd.remoteCall("/videocalls/calls", callProps, function(response) {
+				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						log("<< addCall:/videocalls/calls:" + id + " - success: " + cometdInfo(response));
+						log("<< addCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						log("<< addCall:/videocalls/calls:" + id + " - failure: " + cometdError(response));
+						log("<< addCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -1583,19 +1583,19 @@
 		
 		this.getUserGroupCalls = function() {
 			if (cometd) {
-				log(">> getUserGroupCalls:/videocalls/calls - request published");
+				log(">> getUserGroupCalls:/webconferencing/calls - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					id : "me", // an user ID, 'me' means current user in eXo
 					command : "get_calls_state"
 				});
-				cometd.remoteCall("/videocalls/calls", callProps, function(response) {
+				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						log("<< getUserGroupCalls:/videocalls/calls - success: " + cometdInfo(response));
+						log("<< getUserGroupCalls:/webconferencing/calls - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						log("<< getUserGroupCalls:/videocalls/calls - failure: " + cometdError(response));
+						log("<< getUserGroupCalls:/webconferencing/calls - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -1619,8 +1619,8 @@
 		
 		this.onUserUpdate = function(userId, onUpdate, onError) {
 			if (cometd) {
-				// /service/videocalls/calls
-				var subscription = cometd.subscribe("/eXo/Application/VideoCalls/user/" + userId, function(message) {
+				// /service/webconferencing/calls
+				var subscription = cometd.subscribe("/eXo/Application/webconferencing/user/" + userId, function(message) {
 					// Channel message handler
 					var result = tryParseJson(message);
 					if (message.data.error) {
@@ -1682,7 +1682,7 @@
 		
 		this.onCallUpdate = function(callId, onUpdate, onError) {
 			if (cometd) {
-				var subscription = cometd.subscribe("/eXo/Application/VideoCalls/call/" + callId, function(message) {
+				var subscription = cometd.subscribe("/eXo/Application/WebConferencing/call/" + callId, function(message) {
 					// Channel message handler
 					var result = tryParseJson(message);
 					if (message.data.error) {
@@ -1723,7 +1723,7 @@
 		this.toCallUpdate = function(callId, data) {
 			var process = $.Deferred();
 			if (cometd) {
-				cometd.publish("/eXo/Application/VideoCalls/call/" + callId, data, function(publishAck) {
+				cometd.publish("/eXo/Application/WebConferencing/call/" + callId, data, function(publishAck) {
 			    if (publishAck.successful) {
 			    	log("<< Call update reached the server: " + JSON.stringify(publishAck));
 			    	process.resolve("successful", 200);
@@ -1761,12 +1761,12 @@
 			$.pnotify.defaults.history = false;
 			
 			// Load common styles here - it's common CSS for all skins so far.
-			webConferencing.loadStyle("/videocalls/skin/jquery-ui.min.css");
-			webConferencing.loadStyle("/videocalls/skin/jquery-ui.structure.min.css");
-			webConferencing.loadStyle("/videocalls/skin/jquery-ui.theme.min.css");
-			webConferencing.loadStyle("/videocalls/skin/jquery.pnotify.default.css");
-			webConferencing.loadStyle("/videocalls/skin/jquery.pnotify.default.icons.css");
-			//webConferencing.loadStyle("/videocalls/skin/videocalls.css"); // this CSS will be loaded as portlet skin
+			webConferencing.loadStyle("/webconferencing/skin/jquery-ui.min.css");
+			webConferencing.loadStyle("/webconferencing/skin/jquery-ui.structure.min.css");
+			webConferencing.loadStyle("/webconferencing/skin/jquery-ui.theme.min.css");
+			webConferencing.loadStyle("/webconferencing/skin/jquery.pnotify.default.css");
+			webConferencing.loadStyle("/webconferencing/skin/jquery.pnotify.default.icons.css");
+			//webConferencing.loadStyle("/webconferencing/skin/webconferencing.css"); // this CSS will be loaded as portlet skin
 			// FYI eXo.env.client.skin contains skin name, it can be consulted to load a specific CSS
 		} catch(e) {
 			log("Error configuring Web Conferencing notifications.", e);

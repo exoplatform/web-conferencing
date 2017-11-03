@@ -60,7 +60,7 @@ import org.exoplatform.webconferencing.client.ErrorInfo;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: RESTWebConferencingService.java 00000 Feb 22, 2017 pnedonosko $
  */
-@Path("/videocalls")
+@Path("/webconferencing")
 @Produces(MediaType.APPLICATION_JSON)
 public class RESTWebConferencingService implements ResourceContainer {
 
@@ -74,7 +74,7 @@ public class RESTWebConferencingService implements ResourceContainer {
   protected static final Log        LOG   = ExoLogger.getLogger(RESTWebConferencingService.class);
 
   /** The video calls. */
-  protected final WebConferencingService videoCalls;
+  protected final WebConferencingService webConferencing;
 
   /** The cache control. */
   private final CacheControl        cacheControl;
@@ -86,7 +86,7 @@ public class RESTWebConferencingService implements ResourceContainer {
    *          the skype
    */
   public RESTWebConferencingService(WebConferencingService skype) {
-    this.videoCalls = skype;
+    this.webConferencing = skype;
     this.cacheControl = new CacheControl();
     cacheControl.setNoCache(true);
     cacheControl.setNoStore(true);
@@ -113,7 +113,7 @@ public class RESTWebConferencingService implements ResourceContainer {
           userName = currentUserName;
         }
         try {
-          UserInfo user = videoCalls.getUserInfo(userName);
+          UserInfo user = webConferencing.getUserInfo(userName);
           if (user != null) {
             return Response.ok().cacheControl(cacheControl).entity(user).build();
           } else {
@@ -169,7 +169,7 @@ public class RESTWebConferencingService implements ResourceContainer {
             callState = null;
           }
           try {
-            CallState[] calls = videoCalls.getUserCalls(userName);
+            CallState[] calls = webConferencing.getUserCalls(userName);
             if (calls != null) {
               return Response.ok().cacheControl(cacheControl).entity(calls).build();
             } else {
@@ -239,7 +239,7 @@ public class RESTWebConferencingService implements ResourceContainer {
            */
           try {
             if (UserState.JOINED.equals(state)) {
-              CallInfo call = videoCalls.joinCall(callId, userName);
+              CallInfo call = webConferencing.joinCall(callId, userName);
               if (call != null) {
                 return Response.ok().cacheControl(cacheControl).entity(call).build();
               } else {
@@ -249,7 +249,7 @@ public class RESTWebConferencingService implements ResourceContainer {
                                .build();
               }
             } else if (UserState.LEAVED.equals(state)) {
-              CallInfo call = videoCalls.leaveCall(callId, userName);
+              CallInfo call = webConferencing.leaveCall(callId, userName);
               if (call != null) {
                 return Response.ok().cacheControl(cacheControl).entity(call).build();
               } else {
@@ -315,7 +315,7 @@ public class RESTWebConferencingService implements ResourceContainer {
             if (ME.equals(userName)) {
               userName = currentUserName;
             }
-            UserInfo user = videoCalls.getUserInfo(userName);
+            UserInfo user = webConferencing.getUserInfo(userName);
             if (user != null) {
               users.add(user);
             } else {
@@ -369,7 +369,7 @@ public class RESTWebConferencingService implements ResourceContainer {
       String currentUserName = convo.getIdentity().getUserId();
       if (spaceName != null && spaceName.length() > 0) {
         try {
-          GroupInfo space = videoCalls.getSpaceInfo(spaceName);
+          GroupInfo space = webConferencing.getSpaceInfo(spaceName);
           if (space != null) {
             if (space.getMembers().containsKey(currentUserName)) {
               return Response.ok().cacheControl(cacheControl).entity(space).build();
@@ -434,7 +434,7 @@ public class RESTWebConferencingService implements ResourceContainer {
           }
           if (roomMembers != null && roomMembers.length() > 0) {
             try {
-              GroupInfo room = videoCalls.getRoomInfo(roomId,
+              GroupInfo room = webConferencing.getRoomInfo(roomId,
                                                       roomName,
                                                       roomTitle,
                                                       roomMembers.trim().split(";"));
@@ -514,7 +514,7 @@ public class RESTWebConferencingService implements ResourceContainer {
       String callId = callId(type, id);
       String currentUserName = convo.getIdentity().getUserId();
       try {
-        CallInfo call = videoCalls.getCall(callId);
+        CallInfo call = webConferencing.getCall(callId);
         if (call != null) {
           return Response.ok().cacheControl(cacheControl).entity(call).build();
         } else {
@@ -557,7 +557,7 @@ public class RESTWebConferencingService implements ResourceContainer {
       String callId = callId(type, id);
       String currentUserName = convo.getIdentity().getUserId();
       try {
-        CallInfo call = videoCalls.stopCall(callId, true);
+        CallInfo call = webConferencing.stopCall(callId, true);
         if (call != null) {
           return Response.ok().cacheControl(cacheControl).entity(call).build();
         } else {
@@ -603,7 +603,7 @@ public class RESTWebConferencingService implements ResourceContainer {
       String currentUserName = convo.getIdentity().getUserId();
       try {
         if (CallState.STOPPED.equals(state)) {
-          CallInfo call = videoCalls.stopCall(callId, false);
+          CallInfo call = webConferencing.stopCall(callId, false);
           if (call != null) {
             return Response.ok().cacheControl(cacheControl).entity(call).build();
           } else {
@@ -613,7 +613,7 @@ public class RESTWebConferencingService implements ResourceContainer {
                            .build();
           }
         } else if (CallState.STARTED.equals(state)) {
-          CallInfo call = videoCalls.startCall(callId);
+          CallInfo call = webConferencing.startCall(callId);
           if (call != null) {
             return Response.ok().cacheControl(cacheControl).entity(call).build();
           } else {
@@ -677,7 +677,7 @@ public class RESTWebConferencingService implements ResourceContainer {
               if (participants != null) {
                 String currentUserName = convo.getIdentity().getUserId();
                 try {
-                  CallInfo call = videoCalls.addCall(callId,
+                  CallInfo call = webConferencing.addCall(callId,
                                                      ownerId,
                                                      ownerType,
                                                      title,

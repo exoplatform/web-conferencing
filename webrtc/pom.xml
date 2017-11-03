@@ -22,13 +22,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>exo-web-conferencing-parent</artifactId>
     <groupId>org.exoplatform.addons.web-conferencing</groupId>
+    <artifactId>web-conferencing</artifactId>
     <version>1.1.x-SNAPSHOT</version>
   </parent>
-  <artifactId>exo-webrtc-parent</artifactId>
+  <artifactId>webrtc-connector</artifactId>
   <packaging>pom</packaging>
-  <name>eXo WebRTC :: Parent</name>
+  <name>eXo WebRTC</name>
   <description>WebRTC connector for eXo Web Conferencing</description>
   <modules>
     <module>services</module>

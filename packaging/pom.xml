@@ -22,42 +22,45 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>exo-web-conferencing-parent</artifactId>
     <groupId>org.exoplatform.addons.web-conferencing</groupId>
+    <artifactId>web-conferencing</artifactId>
     <version>1.1.x-SNAPSHOT</version>
   </parent>
-  <artifactId>exo-web-conferencing-packaging</artifactId>
+  
+  <artifactId>web-conferencing-packaging</artifactId>
   <packaging>pom</packaging>
   <name>eXo Web Conferencing :: Extension Packaging</name>
   <description>eXo Web Conferencing packaging for installation</description>
+  
   <dependencies>
     <!-- Web Conferencing -->
     <dependency>
       <groupId>org.exoplatform.addons.web-conferencing</groupId>
-      <artifactId>exo-web-conferencing-services</artifactId>
+      <artifactId>web-conferencing-services</artifactId>
       <type>jar</type>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.exoplatform.addons.web-conferencing</groupId>
-      <artifactId>exo-web-conferencing-webapp</artifactId>
+      <artifactId>web-conferencing-webapp</artifactId>
       <type>war</type>
       <scope>provided</scope>
     </dependency>
     <!-- WebRTC -->
     <dependency>
       <groupId>org.exoplatform.addons.web-conferencing</groupId>
-      <artifactId>exo-webrtc-services</artifactId>
+      <artifactId>web-conferencing-webrtc-services</artifactId>
       <type>jar</type>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.exoplatform.addons.web-conferencing</groupId>
-      <artifactId>exo-webrtc-webapp</artifactId>
+      <artifactId>web-conferencing-webrtc-webapp</artifactId>
       <type>war</type>
       <scope>provided</scope>
     </dependency>
   </dependencies>
+  
   <build>
     <resources>
       <resource>
@@ -70,7 +73,7 @@
         </includes>
       </resource>
     </resources>
-    <finalName>exo-skype</finalName>
+    <finalName>web-conferencing-webrtc</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>

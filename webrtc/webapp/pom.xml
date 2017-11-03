@@ -22,32 +22,28 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>exo-webrtc-parent</artifactId>
     <groupId>org.exoplatform.addons.web-conferencing</groupId>
+    <artifactId>webrtc-connector</artifactId>
     <version>1.1.x-SNAPSHOT</version>
   </parent>
-  <artifactId>exo-webrtc-webapp</artifactId>
+  
+  <artifactId>web-conferencing-webrtc-webapp</artifactId>
   <packaging>war</packaging>
   <name>eXo WebRTC :: Extension Webapp</name>
   <description>WebRTC web application for eXo Web Conferencing</description>
+  
   <dependencies>
     <!-- WebRTC services -->
     <dependency>
       <groupId>org.exoplatform.addons.web-conferencing</groupId>
-      <artifactId>exo-webrtc-services</artifactId>
+      <artifactId>web-conferencing-webrtc-services</artifactId>
       <scope>provided</scope>
     </dependency>
     <!-- Web Conferencing -->
     <dependency>
       <groupId>org.exoplatform.addons.web-conferencing</groupId>
-      <artifactId>exo-web-conferencing-services</artifactId>
+      <artifactId>web-conferencing-services</artifactId>
       <type>jar</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.exoplatform.addons.web-conferencing</groupId>
-      <artifactId>exo-web-conferencing-webapp</artifactId>
-      <type>war</type>
       <scope>provided</scope>
     </dependency>
     <!-- Application dependencies-->

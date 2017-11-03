@@ -212,7 +212,7 @@ public class CometdWebConferencingService implements Startable {
         // channelContext.values().remove(session.getId());
         // UserCallListener listener = clientUserListeners.remove(session.getId());
         // if (listener != null) {
-        // videoCalls.removeUserCallListener(listener);
+        // webConferencing.removeUserCallListener(listener);
         // }
       }
     }
@@ -723,7 +723,7 @@ public class CometdWebConferencingService implements Startable {
   /**
    * Instantiates a new CometD interaction service for VideoCalls.
    *
-   * @param videoCalls the video calls
+   * @param webConferencing the video calls
    */
   public CometdWebConferencingService(SessionProviderService sessionProviders,
                                  IdentityRegistry identityRegistry,

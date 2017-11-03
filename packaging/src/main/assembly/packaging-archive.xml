@@ -9,7 +9,7 @@
      <dependencySet>
        <outputDirectory>webapps</outputDirectory>
        <includes>
-         <include>org.exoplatform.addons.web-conferencing:exo-web-conferencing-webapp:war</include>
+         <include>org.exoplatform.addons.web-conferencing:web-conferencing-webapp:war</include>
        </includes>
        <outputFileNameMapping>webconferencing.war</outputFileNameMapping>
        <scope>provided</scope>
@@ -18,7 +18,7 @@
      <dependencySet>
        <outputDirectory>webapps</outputDirectory>
        <includes>
-         <include>org.exoplatform.addons.web-conferencing:exo-webrtc-webapp:war</include>
+         <include>org.exoplatform.addons.web-conferencing:web-conferencing-webrtc-webapp:war</include>
        </includes>
        <outputFileNameMapping>webrtc.war</outputFileNameMapping>
        <scope>provided</scope>
@@ -29,8 +29,7 @@
        <outputDirectory>lib</outputDirectory>
        <useTransitiveDependencies>true</useTransitiveDependencies>
        <includes>
-         <include>org.exoplatform.addons.web-conferencing:exo-web-conferencing-*:jar</include>
-         <include>org.exoplatform.addons.web-conferencing:exo-webrtc-*:jar</include>
+         <include>org.exoplatform.addons.web-conferencing:web-conferencing-*:jar</include>
        </includes>
        <scope>provided</scope>
        <fileMode>0644</fileMode>

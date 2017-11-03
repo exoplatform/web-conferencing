@@ -57,7 +57,7 @@
   </portlet-skin>
 
   <!-- Javascript for webconferencing support in Platform -->
-  <module>
+  <!-- module>
     <name>webConferencingJquery</name>
     <as>$</as>
     <load-group>webConferencingGRP</load-group>
@@ -69,7 +69,7 @@
         })();
       </adapter>
     </script>
-  </module>
+  </module -->
   <module>
     <name>webConferencingJqueryPnotify</name>
     <load-group>webConferencingGRP</load-group>
@@ -100,7 +100,7 @@
       <path>/js/webconferencing.js</path>
     </script>
     <depends>
-      <module>webConferencingJquery</module>
+      <module>jquery</module>
     </depends>
     <depends>
       <module>commons-cometd3</module>
@@ -119,18 +119,18 @@
       <path>/js/webconferencing-portlet.js</path>
     </script>
     <depends>
-      <module>webConferencingJquery</module>
+      <module>jquery</module>
     </depends>
     <depends>
       <module>webConferencing</module>
     </depends>
   </module>
   
-  <portlet>
+  <!-- portlet>
     <name>WebConferencingPortlet</name>
     <module>
       <depends>
-        <module>webConferencingJquery</module>
+        <module>jquery</module>
       </depends>
       <depends>
         <module>webConferencing</module>
@@ -139,5 +139,5 @@
         <module>webConferencingPortlet</module>
       </depends>
     </module>
-  </portlet>
+  </portlet -->
 </gatein-resources>

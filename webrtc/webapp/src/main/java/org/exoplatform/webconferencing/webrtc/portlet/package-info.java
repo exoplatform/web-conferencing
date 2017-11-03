@@ -20,4 +20,4 @@
  * WebRTC Provider portlet for Video Calls.
  *
  */
-package org.exoplatform.videocalls.webrtc.portlet;
+package org.exoplatform.webconferencing.webrtc.portlet;
