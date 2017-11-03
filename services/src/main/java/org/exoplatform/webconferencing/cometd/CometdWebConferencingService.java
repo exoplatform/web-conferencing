@@ -80,29 +80,21 @@ import org.picocontainer.Startable;
  */
 public class CometdWebConferencingService implements Startable {
 
-  public static final String             CALLS_CHANNEL_NAME                    = "/videocalls/calls";
+  public static final String             CALLS_CHANNEL_NAME                    = "/webconferencing/calls";
 
-  public static final String             CALLS_SERVICE_CHANNEL_NAME            =
-                                                                    "/service" + CALLS_CHANNEL_NAME;
+  public static final String             CALLS_SERVICE_CHANNEL_NAME            = "/service" + CALLS_CHANNEL_NAME;
 
-  public static final String             USERS_SERVICE_CHANNEL_NAME            = "/service/videocalls/users";
+  public static final String             USERS_SERVICE_CHANNEL_NAME            = "/service/webconferencing/users";
 
-  public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME        =
-                                                                        "/eXo/Application/VideoCalls/call";
+  public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME        = "/eXo/Application/WebConferencing/call";
 
-  public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME_ALL    =
-                                                                            CALL_SUBSCRIPTION_CHANNEL_NAME
-                                                                                + "/**";
+  public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME_ALL    = CALL_SUBSCRIPTION_CHANNEL_NAME + "/**";
 
-  public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS =
-                                                                               "/eXo/Application/VideoCalls/call/{callType}/{callInfo}";
+  public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS = "/eXo/Application/WebConferencing/call/{callType}/{callInfo}";
 
-  public static final String             USER_SUBSCRIPTION_CHANNEL_NAME        =
-                                                                        "/eXo/Application/VideoCalls/user";
+  public static final String             USER_SUBSCRIPTION_CHANNEL_NAME        = "/eXo/Application/WebConferencing/user";
 
-  public static final String             USER_SUBSCRIPTION_CHANNEL_PATTERN     =
-                                                                           USER_SUBSCRIPTION_CHANNEL_NAME
-                                                                               + "/{userId}";
+  public static final String             USER_SUBSCRIPTION_CHANNEL_PATTERN     = USER_SUBSCRIPTION_CHANNEL_NAME + "/{userId}";
 
   public static final String             COMMAND_GET                           = "get";
 
@@ -114,10 +106,9 @@ public class CometdWebConferencingService implements Startable {
 
   public static final String             COMMAND_GET_CALLS_STATE               = "get_calls_state";
 
-  private static final Log               LOG                                   =
-                                             ExoLogger.getLogger(CometdWebConferencingService.class);
+  private static final Log               LOG                                   = ExoLogger.getLogger(CometdWebConferencingService.class);
 
-  protected final WebConferencingService      videoCalls;
+  protected final WebConferencingService webConferencing;
 
   protected final EXoContinuationBayeux  exoBayeux;
 
@@ -129,7 +120,7 @@ public class CometdWebConferencingService implements Startable {
 
   protected final IdentityRegistry       identityRegistry;
 
-  @Service("videocalls")
+  @Service("webconferencing")
   public class CallService {
 
     class ChannelContext {
@@ -157,7 +148,7 @@ public class CometdWebConferencingService implements Startable {
       boolean removeClient(String clientId) {
         boolean res = clients.remove(clientId);
         if (clients.size() == 0) {
-          videoCalls.removeUserCallListener(listener);
+          webConferencing.removeUserCallListener(listener);
           if (LOG.isDebugEnabled()) {
             LOG.debug("<<< Removed user call listener for " + listener.getUserId() + ", client:" + clientId);
           }
@@ -167,8 +158,7 @@ public class CometdWebConferencingService implements Startable {
           }
         } else {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("<<< User call client was not removed for " + listener.getUserId() + ", client:"
-                + clientId);
+            LOG.debug("<<< User call client was not removed for " + listener.getUserId() + ", client:" + clientId);
           }
         }
         return res;
@@ -178,7 +168,7 @@ public class CometdWebConferencingService implements Startable {
         boolean wasEmpty = clients.size() == 0;
         boolean res = clients.add(clientId);
         if (wasEmpty && res) {
-          videoCalls.addUserCallListener(listener);
+          webConferencing.addUserCallListener(listener);
           if (LOG.isDebugEnabled()) {
             LOG.debug("<<< Added user call listener for " + listener.getUserId() + ", client:" + clientId);
           }
@@ -188,8 +178,7 @@ public class CometdWebConferencingService implements Startable {
           }
         } else {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("<<< User call client was not added for " + listener.getUserId() + ", client:"
-                + clientId);
+            LOG.debug("<<< User call client was not added for " + listener.getUserId() + ", client:" + clientId);
           }
         }
         return res;
@@ -201,8 +190,7 @@ public class CometdWebConferencingService implements Startable {
       @Override
       public void removed(ServerSession session, boolean timeout) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Session removed: " + session.getId() + " timedout:" + timeout + " channels: "
-              + channelsAsString(session.getSubscriptions()));
+          LOG.debug("Session removed: " + session.getId() + " timedout:" + timeout + " channels: " + channelsAsString(session.getSubscriptions()));
         }
         // cleanup session stuff, note that disconnected session already unsubscribed and has no channels
         // for (ServerChannel channel : session.getSubscriptions()) {
@@ -275,11 +263,7 @@ public class CometdWebConferencingService implements Startable {
                     }
 
                     @Override
-                    public void onCallState(String callId,
-                                            String providerType,
-                                            String callState,
-                                            String callerId,
-                                            String callerType) {
+                    public void onCallState(String callId, String providerType, String callState, String callerId, String callerType) {
                       StringBuilder data = new StringBuilder();
                       data.append('{');
                       data.append("\"eventType\": \"call_state\",");
@@ -298,8 +282,7 @@ public class CometdWebConferencingService implements Startable {
                       data.append('}');
                       bayeux.getChannel(channelId).publish(serverSession, data.toString());
                       if (LOG.isDebugEnabled()) {
-                        LOG.debug(">>>> Sent call state update to " + channelId + " by "
-                            + currentUserId(null));
+                        LOG.debug(">>>> Sent call state update to " + channelId + " by " + currentUserId(null));
                       }
                     }
 
@@ -312,18 +295,14 @@ public class CometdWebConferencingService implements Startable {
                   // TODO don't needed: add listener for removed session cleanup
                   // remote.addListener(sessionRemoveListener);
                   if (LOG.isDebugEnabled()) {
-                    LOG.debug("<<< Created user call context for " + userId + ", client:" + clientId
-                        + ", channel:" + channelId);
+                    LOG.debug("<<< Created user call context for " + userId + ", client:" + clientId + ", channel:" + channelId);
                   }
                   return new ChannelContext(listener);
                 });
                 context.addClient(clientId);
               } else {
-                LOG.warn("Subscribing to other user not possible, was user " + currentUserId + ", channel:"
-                    + channelId);
-                remote.deliver(serverSession,
-                               channelId,
-                               ErrorInfo.clientError("Subscribing to other user not possible").asJSON());
+                LOG.warn("Subscribing to other user not possible, was user " + currentUserId + ", channel:" + channelId);
+                remote.deliver(serverSession, channelId, ErrorInfo.clientError("Subscribing to other user not possible").asJSON());
                 if (!channel.unsubscribe(remote)) {
                   LOG.warn("Unable to unsubscribe user " + currentUserId + " from channel " + channelId);
                 }
@@ -364,7 +343,7 @@ public class CometdWebConferencingService implements Startable {
 
       @Override
       public void channelAdded(ServerChannel channel) {
-        // Add sub/unsub listener to VideoCalls channel
+        // Add sub/unsub listener to WebConferencing channel
         final String channelId = channel.getId();
         if (LOG.isDebugEnabled()) {
           LOG.debug("> Channel added: " + channelId);
@@ -386,7 +365,7 @@ public class CometdWebConferencingService implements Startable {
           // Channel already doesn't exist here, ensure all its client listeners were unregistered
           ChannelContext context = channelContext.remove(channelId);
           if (context != null) {
-            videoCalls.removeUserCallListener(context.getListener());
+            webConferencing.removeUserCallListener(context.getListener());
             if (LOG.isDebugEnabled()) {
               LOG.debug("<< Removed user call listener for channel: " + channelId);
             }
@@ -395,18 +374,17 @@ public class CometdWebConferencingService implements Startable {
               LOG.debug("<< User call channel context not found for:" + channelId);
             }
           }
-        } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)
-            && channelId.length() > CALL_SUBSCRIPTION_CHANNEL_NAME.length()) {
+        } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME) && channelId.length() > CALL_SUBSCRIPTION_CHANNEL_NAME.length()) {
           String callId = channelId.substring(CALL_SUBSCRIPTION_CHANNEL_NAME.length() + 1);
           // This call communications ended, in normal way of by network failure - we assume the call ended,
           // ensure its parties, including those who received incoming notification but not yet
           // accepted/rejected it,
           // will be notified that the call stopped/removed.
           try {
-            CallInfo call = videoCalls.getCall(callId);
+            CallInfo call = webConferencing.getCall(callId);
             if (call != null) {
               // TODO may be need leave all them and let that logic to stop the call?
-              videoCalls.stopCall(callId, !call.getOwner().isGroup());
+              webConferencing.stopCall(callId, !call.getOwner().isGroup());
             }
           } catch (Exception e) {
             LOG.error("Error reading call " + callId, e);
@@ -445,19 +423,17 @@ public class CometdWebConferencingService implements Startable {
       bayeux.removeListener(channelListener);
       serverSession.removeListener(sessionRemoveListener);
       for (ChannelContext context : channelContext.values()) {
-        videoCalls.removeUserCallListener(context.getListener());
+        webConferencing.removeUserCallListener(context.getListener());
       }
       channelContext.clear();
     }
 
     @Subscription(CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS)
-    public void subscribeCalls(Message message,
-                               @Param("callType") String callType,
-                               @Param("callInfo") String callInfo) {
+    public void subscribeCalls(Message message, @Param("callType") String callType, @Param("callInfo") String callInfo) {
       String callId = callId(callType, callInfo);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Call published in " + message.getChannel() + " by " + message.get("sender") + " callId: "
-            + callId + " data: " + message.getJSON());
+        LOG.debug("Call published in " + message.getChannel() + " by " + message.get("sender") + " callId: " + callId + " data: "
+            + message.getJSON());
       }
       // TODO all data exchanged between peers of a call will go there, WebRTC stuff etc.
     }
@@ -466,8 +442,7 @@ public class CometdWebConferencingService implements Startable {
     public void subscribeUser(Message message, @Param("userId") String userId) {
       final String channelId = message.getChannel();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("User published in " + channelId + " by " + message.getClientId() + " userId: " + userId
-            + " data: " + message.getJSON());
+        LOG.debug("User published in " + channelId + " by " + message.getClientId() + " userId: " + userId + " data: " + message.getJSON());
       }
       // here will come user publications about his state
     }
@@ -502,12 +477,9 @@ public class CometdWebConferencingService implements Startable {
                     // User context (1)
                     ExoContainerContext.setCurrentContainer(exoContainer);
                     // Use services acquired from context container
-                    IdentityRegistry identityRegistry =
-                                                      exoContainer.getComponentInstanceOfType(IdentityRegistry.class);
-                    SessionProviderService sessionProviders =
-                                                            exoContainer.getComponentInstanceOfType(SessionProviderService.class);
-                    WebConferencingService videoCalls =
-                                                 exoContainer.getComponentInstanceOfType(WebConferencingService.class);
+                    IdentityRegistry identityRegistry = exoContainer.getComponentInstanceOfType(IdentityRegistry.class);
+                    SessionProviderService sessionProviders = exoContainer.getComponentInstanceOfType(SessionProviderService.class);
+                    WebConferencingService webConferencing = exoContainer.getComponentInstanceOfType(WebConferencingService.class);
                     // TODO should we check for NPE of the above services?
                     Identity userIdentity = identityRegistry.getIdentity(currentUserId);
                     if (userIdentity != null) {
@@ -527,15 +499,14 @@ public class CometdWebConferencingService implements Startable {
                           if (command != null) {
                             if (COMMAND_GET.equals(command)) {
                               try {
-                                CallInfo call = videoCalls.getCall(id);
+                                CallInfo call = webConferencing.getCall(id);
                                 if (call != null) {
                                   caller.result(asJSON(call));
                                 } else {
                                   caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
                                 }
                               } catch (Throwable e) {
-                                LOG.error("Error reading call info '" + id + "' by '" + currentUserId + "'",
-                                          e);
+                                LOG.error("Error reading call info '" + id + "' by '" + currentUserId + "'", e);
                                 caller.failure(ErrorInfo.serverError("Error reading call record").asJSON());
                               }
                             } else if (COMMAND_UPDATE.equals(command)) {
@@ -545,13 +516,13 @@ public class CometdWebConferencingService implements Startable {
                                   boolean stateRecognized = true;
                                   CallInfo call;
                                   if (CallState.STARTED.equals(state)) {
-                                    call = videoCalls.startCall(id);
+                                    call = webConferencing.startCall(id);
                                   } else if (CallState.STOPPED.equals(state)) {
-                                    call = videoCalls.stopCall(id, false);
+                                    call = webConferencing.stopCall(id, false);
                                   } else if (UserState.JOINED.equals(state)) {
-                                    call = videoCalls.joinCall(id, currentUserId);
+                                    call = webConferencing.joinCall(id, currentUserId);
                                   } else if (UserState.LEAVED.equals(state)) {
-                                    call = videoCalls.leaveCall(id, currentUserId);
+                                    call = webConferencing.leaveCall(id, currentUserId);
                                   } else {
                                     call = null;
                                     stateRecognized = false;
@@ -563,17 +534,14 @@ public class CometdWebConferencingService implements Startable {
                                       caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
                                     }
                                   } else {
-                                    caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized")
-                                                            .asJSON());
+                                    caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized").asJSON());
                                   }
                                 } catch (Throwable e) {
                                   LOG.error("Error updating call '" + id + "' by '" + currentUserId + "'", e);
-                                  caller.failure(ErrorInfo.serverError("Error updating call record")
-                                                          .asJSON());
+                                  caller.failure(ErrorInfo.serverError("Error updating call record").asJSON());
                                 }
                               } else {
-                                caller.failure(ErrorInfo.clientError("Wrong request parameters: state")
-                                                        .asJSON());
+                                caller.failure(ErrorInfo.clientError("Wrong request parameters: state").asJSON());
                               }
                             } else if (COMMAND_CREATE.equals(command)) {
                               String ownerId = (String) arguments.get("owner");
@@ -588,46 +556,33 @@ public class CometdWebConferencingService implements Startable {
                                       if (pstr != null) {
                                         List<String> participants = Arrays.asList(pstr.split(";"));
                                         try {
-                                          CallInfo call =
-                                                        videoCalls.addCall(id,
-                                                                           ownerId,
-                                                                           ownerType,
-                                                                           title,
-                                                                           providerType,
-                                                                           participants);
+                                          CallInfo call = webConferencing.addCall(id, ownerId, ownerType, title, providerType, participants);
                                           caller.result(asJSON(call));
                                         } catch (CallInfoException e) {
                                           // aka BAD_REQUEST
                                           caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
                                         } catch (Throwable e) {
-                                          LOG.error("Error creating call for '" + id + "' by '"
-                                              + currentUserId + "'", e);
-                                          caller.failure(ErrorInfo.serverError("Error creating call record")
-                                                                  .asJSON());
+                                          LOG.error("Error creating call for '" + id + "' by '" + currentUserId + "'", e);
+                                          caller.failure(ErrorInfo.serverError("Error creating call record").asJSON());
                                         }
                                       } else {
-                                        caller.failure(ErrorInfo.clientError("Wrong request parameters: participants")
-                                                                .asJSON());
+                                        caller.failure(ErrorInfo.clientError("Wrong request parameters: participants").asJSON());
                                       }
                                     } else {
-                                      caller.failure(ErrorInfo.clientError("Wrong request parameters: title")
-                                                              .asJSON());
+                                      caller.failure(ErrorInfo.clientError("Wrong request parameters: title").asJSON());
                                     }
                                   } else {
-                                    caller.failure(ErrorInfo.clientError("Wrong request parameters: provider")
-                                                            .asJSON());
+                                    caller.failure(ErrorInfo.clientError("Wrong request parameters: provider").asJSON());
                                   }
                                 } else {
-                                  caller.failure(ErrorInfo.clientError("Wrong request parameters: ownerType")
-                                                          .asJSON());
+                                  caller.failure(ErrorInfo.clientError("Wrong request parameters: ownerType").asJSON());
                                 }
                               } else {
-                                caller.failure(ErrorInfo.clientError("Wrong request parameters: owner")
-                                                        .asJSON());
+                                caller.failure(ErrorInfo.clientError("Wrong request parameters: owner").asJSON());
                               }
                             } else if (COMMAND_DELETE.equals(command)) {
                               try {
-                                CallInfo call = videoCalls.stopCall(id, true);
+                                CallInfo call = webConferencing.stopCall(id, true);
                                 if (call != null) {
                                   caller.result(asJSON(call));
                                 } else {
@@ -646,7 +601,7 @@ public class CometdWebConferencingService implements Startable {
                               }
                               if (userId.equals(currentUserId)) {
                                 try {
-                                  CallState[] calls = videoCalls.getUserCalls(userId);
+                                  CallState[] calls = webConferencing.getUserCalls(userId);
                                   caller.result(asJSON(calls));
                                 } catch (Throwable e) {
                                   LOG.error("Error reading users calls for '" + id + "'", e);
@@ -654,17 +609,14 @@ public class CometdWebConferencingService implements Startable {
                                 }
                               } else {
                                 // Don't let read other user calls
-                                caller.failure(ErrorInfo.clientError("Wrong request parameters: id (does not match)")
-                                                        .asJSON());
+                                caller.failure(ErrorInfo.clientError("Wrong request parameters: id (does not match)").asJSON());
                               }
                             } else {
-                              LOG.warn("Unknown call command " + command + " for '" + id + "' from '"
-                                  + currentUserId + "'");
+                              LOG.warn("Unknown call command " + command + " for '" + id + "' from '" + currentUserId + "'");
                               caller.failure(ErrorInfo.clientError("Unknown command").asJSON());
                             }
                           } else {
-                            caller.failure(ErrorInfo.clientError("Wrong request parameters: command")
-                                                    .asJSON());
+                            caller.failure(ErrorInfo.clientError("Wrong request parameters: command").asJSON());
                           }
                         } else {
                           caller.failure(ErrorInfo.clientError("Wrong request parameters: id").asJSON());
@@ -675,8 +627,7 @@ public class CometdWebConferencingService implements Startable {
                         sessionProviders.setSessionProvider(null, contextProvider);
                       }
                     } else {
-                      LOG.warn("User identity not found " + currentUserId + " for remote call of "
-                          + CALLS_CHANNEL_NAME);
+                      LOG.warn("User identity not found " + currentUserId + " for remote call of " + CALLS_CHANNEL_NAME);
                       caller.failure(ErrorInfo.clientError("User identity not found").asJSON());
                     }
                   } finally {
@@ -684,8 +635,7 @@ public class CometdWebConferencingService implements Startable {
                     ExoContainerContext.setCurrentContainer(contextContainer);
                   }
                 } else {
-                  LOG.warn("Container not found " + containerName + " for remote call of "
-                      + CALLS_CHANNEL_NAME);
+                  LOG.warn("Container not found " + containerName + " for remote call of " + CALLS_CHANNEL_NAME);
                   caller.failure(ErrorInfo.clientError("Container not found").asJSON());
                 }
               } else {
@@ -695,10 +645,8 @@ public class CometdWebConferencingService implements Startable {
               caller.failure(ErrorInfo.clientError("Unauthorized user").asJSON());
             }
           } catch (Throwable e) {
-            LOG.error("Error processing call request from client " + session.getId() + " with data: " + data,
-                      e);
-            caller.failure(ErrorInfo.serverError("Error processing call request: " + e.getMessage())
-                                    .asJSON());
+            LOG.error("Error processing call request from client " + session.getId() + " with data: " + data, e);
+            caller.failure(ErrorInfo.serverError("Error processing call request: " + e.getMessage()).asJSON());
           }
         }
       }).start();
@@ -712,8 +660,7 @@ public class CometdWebConferencingService implements Startable {
           context.removeClient(clientId);
         } else {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("<<< User call channel context not found for client: " + clientId + ", channel:"
-                + channelId);
+            LOG.debug("<<< User call channel context not found for client: " + clientId + ", channel:" + channelId);
           }
         }
       }
@@ -721,19 +668,19 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * Instantiates a new CometD interaction service for VideoCalls.
+   * Instantiates a new CometD interaction service for WebConferencing.
    *
    * @param webConferencing the video calls
    */
   public CometdWebConferencingService(SessionProviderService sessionProviders,
-                                 IdentityRegistry identityRegistry,
-                                 OrganizationService organization,
-                                 WebConferencingService videoCalls,
-                                 EXoContinuationBayeux exoBayeux) {
+                                      IdentityRegistry identityRegistry,
+                                      OrganizationService organization,
+                                      WebConferencingService webConferencing,
+                                      EXoContinuationBayeux exoBayeux) {
     this.sessionProviders = sessionProviders;
     this.identityRegistry = identityRegistry;
     this.organization = organization;
-    this.videoCalls = videoCalls;
+    this.webConferencing = webConferencing;
     this.exoBayeux = exoBayeux;
     this.service = new CallService();
   }
@@ -781,16 +728,14 @@ public class CometdWebConferencingService implements Startable {
       public void sessionRemoved(ServerSession session, boolean timedout) {
         // Nothing?
         if (LOG.isDebugEnabled()) {
-          LOG.debug("sessionRemoved: " + session.getId() + " timedout:" + timedout + " channels: "
-              + channelsAsString(session.getSubscriptions()));
+          LOG.debug("sessionRemoved: " + session.getId() + " timedout:" + timedout + " channels: " + channelsAsString(session.getSubscriptions()));
         }
       }
 
       @Override
       public void sessionAdded(ServerSession session, ServerMessage message) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("sessionAdded: " + session.getId() + " channels: "
-              + channelsAsString(session.getSubscriptions()));
+          LOG.debug("sessionAdded: " + session.getId() + " channels: " + channelsAsString(session.getSubscriptions()));
         }
       }
     });

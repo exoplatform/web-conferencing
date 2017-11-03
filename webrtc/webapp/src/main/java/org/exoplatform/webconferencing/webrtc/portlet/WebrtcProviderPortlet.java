@@ -50,7 +50,7 @@ public class WebrtcProviderPortlet extends GenericPortlet {
   private static final Log  LOG = ExoLogger.getLogger(WebrtcProviderPortlet.class);
 
   /** The video calls. */
-  private WebConferencingService videoCalls;
+  private WebConferencingService webConferencing;
 
   /** The provider. */
   private WebrtcProvider    provider;
@@ -63,9 +63,9 @@ public class WebrtcProviderPortlet extends GenericPortlet {
     super.init();
 
     ExoContainer container = ExoContainerContext.getCurrentContainer();
-    this.videoCalls = container.getComponentInstanceOfType(WebConferencingService.class);
+    this.webConferencing = container.getComponentInstanceOfType(WebConferencingService.class);
     try {
-      this.provider = (WebrtcProvider) videoCalls.getProvider(WebrtcProvider.WEBRTC_TYPE);
+      this.provider = (WebrtcProvider) webConferencing.getProvider(WebrtcProvider.WEBRTC_TYPE);
     } catch (ClassCastException e) {
       LOG.error("Provider " + WebrtcProvider.WEBRTC_TYPE + " isn't an instance of "
           + WebrtcProvider.class.getName(), e);
@@ -92,10 +92,10 @@ public class WebrtcProviderPortlet extends GenericPortlet {
 
         JavascriptManager js =
                              ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
-        js.require("SHARED/videoCalls", "videoCalls")
-          .require("SHARED/videoCalls_webrtc", "webrtcProvider")
+        js.require("SHARED/webConferencing", "webConferencing")
+          .require("SHARED/webConferencing_webrtc", "webrtcProvider")
           .addScripts("if (webrtcProvider) { webrtcProvider.configure(" + settingsJson
-              + "); videoCalls.addProvider(webrtcProvider); videoCalls.update(); }");
+              + "); webConferencing.addProvider(webrtcProvider); webConferencing.update(); }");
       } catch (Exception e) {
         LOG.error("Error processing WebRTC call portlet for user " + request.getRemoteUser(), e);
       }

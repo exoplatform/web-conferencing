@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.exoplatform.videocalls.webrtc.server;
+package org.exoplatform.webconferencing.webrtc.server;
 
 import static org.exoplatform.webconferencing.Utils.asJSON;
 
@@ -79,12 +79,12 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
       String remoteUser = httpReq.getRemoteUser();
 
       ExoContainer container = getContainer();
-      WebConferencingService videoCalls =
+      WebConferencingService webConferencing =
                                    (WebConferencingService) container.getComponentInstanceOfType(WebConferencingService.class);
-      if (videoCalls != null) {
+      if (webConferencing != null) {
         WebrtcProvider provider;
         try {
-          provider = (WebrtcProvider) videoCalls.getProvider(WebrtcProvider.WEBRTC_TYPE);
+          provider = (WebrtcProvider) webConferencing.getProvider(WebrtcProvider.WEBRTC_TYPE);
         } catch (ClassCastException e) {
           LOG.error("Provider " + WebrtcProvider.WEBRTC_TYPE + " isn't an instance of "
               + WebrtcProvider.class.getName(), e);
@@ -101,7 +101,7 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
 
           if (remoteUser != null) {
             try {
-              // init page scope with settings for videoCalls and WebRTC provider
+              // init page scope with settings for webConferencing and WebRTC provider
 
               String spaceId = httpReq.getParameter("space");
               if (spaceId == null) {
@@ -114,7 +114,7 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
               ContextInfo context = Utils.getCurrentContext(remoteUser);
               httpReq.setAttribute("contextInfo", asJSON(context));
 
-              UserInfo exoUser = videoCalls.getUserInfo(remoteUser);
+              UserInfo exoUser = webConferencing.getUserInfo(remoteUser);
               if (exoUser != null) {
                 httpReq.setAttribute("userInfo", asJSON(exoUser));
 

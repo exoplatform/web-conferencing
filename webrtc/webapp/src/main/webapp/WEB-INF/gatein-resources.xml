@@ -80,19 +80,19 @@
   
   <module>
     <name>webrtcAdapter</name>
-    <!-- load-group>videoCallsWebrtcGRP</load-group -->
+    <load-group>webConferencingGRP</load-group>
     <script>
       <path>/js/adapter-5.0.4.js</path>
     </script>
   </module>
   <module>
     <name>webConferencing_webrtc</name>
-    <!-- load-group>videoCallsWebrtcGRP</load-group -->
+    <load-group>webConferencingGRP</load-group>
     <script>
       <path>/js/webconferencing-webrtc.js</path>
     </script>
     <depends>
-      <module>webConferencingJquery</module>
+      <module>jquery</module>
     </depends>
     <depends>
       <module>webConferencing</module>
@@ -102,15 +102,15 @@
     </depends>
   </module>
   
-  <portlet>
+  <!-- portlet>
     <name>WebrtcProviderPortlet</name>
     <module>
       <depends>
-        <module>webConferencingJquery</module>
+        <module>jquery</module>
       </depends>
       <depends>
         <module>webConferencing_webrtc</module>
       </depends>
     </module>
-  </portlet>
+  </portlet -->
 </gatein-resources>

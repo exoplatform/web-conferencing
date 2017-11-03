@@ -49,7 +49,7 @@ public class Utils {
    */
   public static String spaceRoomName(String spacePrettyName) {
     StringBuilder sname = new StringBuilder();
-    sname.append("eXoVideoCalls");
+    sname.append("eXoWebConferencing");
     for (String s : spacePrettyName.split("_")) {
       if (s.length() > 0) {
         sname.append(Character.toUpperCase(s.charAt(0)));

@@ -20,8 +20,6 @@ package org.exoplatform.webconferencing.webrtc;
 
 import org.exoplatform.container.configuration.ConfigurationException;
 import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.social.core.profile.settings.IMType;
-import org.exoplatform.social.core.profile.settings.UserProfileSettingsService;
 import org.exoplatform.webconferencing.CallProvider;
 import org.exoplatform.webconferencing.CallProviderException;
 import org.exoplatform.webconferencing.UserInfo.IMInfo;
@@ -110,23 +108,7 @@ public class WebrtcProvider extends CallProvider {
    * @throws ConfigurationException the configuration exception
    */
   public WebrtcProvider(InitParams params) throws ConfigurationException {
-    this(null, params);
-  }
-
-  /**
-   * Instantiates a new WebRTC provider.
-   *
-   * @param profileSettings the profile settings
-   * @param params the params
-   * @throws ConfigurationException the configuration exception
-   */
-  public WebrtcProvider(UserProfileSettingsService profileSettings, InitParams params)
-      throws ConfigurationException {
     super(params);
-    if (profileSettings != null) {
-      // add plugin programmatically as it's an integral part of the provider
-      profileSettings.addIMType(new IMType(WEBRTC_TYPE, WEBRTC_TITLE));
-    }
   }
 
   /**

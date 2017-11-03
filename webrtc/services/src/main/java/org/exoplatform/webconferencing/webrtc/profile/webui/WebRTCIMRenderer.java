@@ -33,7 +33,7 @@ import org.exoplatform.webui.application.WebuiRequestContext;
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: SkypeBusinessIMRenderer.java 00000 May 4, 2017 pnedonosko $
+ * @version $Id: WebRTCIMRenderer.java 00000 May 4, 2017 pnedonosko $
  */
 public class WebRTCIMRenderer extends UIIMControlRenderer {
 
@@ -66,7 +66,7 @@ public class WebRTCIMRenderer extends UIIMControlRenderer {
     elem.append("<a class='actionIcon webrtcControl' data-placement='bottom' rel='tooltip' title='' data-original-title='Settings' href='javascript:void(0)'>")
         .append("<i class='uiIconSettings uiIconLightGray'></i></a>");
     context.getWriter().append(elem.toString());
-    context.getJavascriptManager().require("SHARED/videoCalls_webrtc", "webrtcProvider");
+    context.getJavascriptManager().require("SHARED/webConferencing_webrtc", "webrtcProvider");
   }
 
 }

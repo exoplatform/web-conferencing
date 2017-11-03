@@ -1620,7 +1620,7 @@
 		this.onUserUpdate = function(userId, onUpdate, onError) {
 			if (cometd) {
 				// /service/webconferencing/calls
-				var subscription = cometd.subscribe("/eXo/Application/webconferencing/user/" + userId, function(message) {
+				var subscription = cometd.subscribe("/eXo/Application/WebConferencing/user/" + userId, function(message) {
 					// Channel message handler
 					var result = tryParseJson(message);
 					if (message.data.error) {

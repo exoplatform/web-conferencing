@@ -1,6 +1,6 @@
-@import "/videocalls/skin/videocalls.css";
+@import "/webconferencing/skin/webconferencing.css";
 /* 
- * Video Calls style for Enterprise skin (for Platform 5.0) 
+ * Web Conferencing style for Enterprise skin (for Platform 5.0) 
  */
 .btn.chatCall {
 	padding: 6px 20px;

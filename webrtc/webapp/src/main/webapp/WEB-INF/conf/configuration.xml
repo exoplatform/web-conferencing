@@ -34,20 +34,11 @@
       <init-params>
         <properties-param>
           <name>provider-configuration</name>
-          <property name="disable" value="${videocalls.webrtc.disable:false}" />
+          <property name="disable" value="${webconferencing.webrtc.disable:false}" />
         </properties-param>
       </init-params>
     </component-plugin>
   </external-component-plugins>
-  
-  <!-- external-component-plugins>
-    <target-component>org.exoplatform.social.webui.profile.settings.UserProfileRenderingService</target-component>
-    <component-plugin>
-      <name>profile-im-control-mssfb</name>
-      <set-method>addIMControl</set-method>
-      <type>org.exoplatform.webconferencing.skype.profile.webui.SkypeBusinessIMRenderer</type>
-    </component-plugin>
-  </external-component-plugins -->
   
   <external-component-plugins>
     <target-component>org.exoplatform.commons.addons.AddOnService</target-component>

@@ -75,13 +75,13 @@ public class WebConferencingService implements Startable {
   protected static final String GROUP_CALL_TYPE       = "group".intern();
 
   /** The Constant CALL_OWNER_SCOPE_NAME. */
-  protected static final String CALL_OWNER_SCOPE_NAME = "videocalls.callOwner".intern();
+  protected static final String CALL_OWNER_SCOPE_NAME = "webconferencing.callOwner".intern();
 
   /** The Constant CALL_ID_SCOPE_NAME. */
-  protected static final String CALL_ID_SCOPE_NAME    = "videocalls.callId".intern();
+  protected static final String CALL_ID_SCOPE_NAME    = "webconferencing.callId".intern();
 
   /** The Constant USER_CALLS_SCOPE_NAME. */
-  protected static final String USER_CALLS_SCOPE_NAME = "videocalls.user.calls".intern();
+  protected static final String USER_CALLS_SCOPE_NAME = "webconferencing.user.calls".intern();
 
   /**
    * The Class SpaceInfo.
@@ -201,16 +201,16 @@ public class WebConferencingService implements Startable {
   protected final Map<String, Set<UserCallListener>> userListeners       = new ConcurrentHashMap<>();
 
   /**
-   * Instantiates a new VideoCalls service.
+   * Instantiates a new web conferencing service.
    *
    * @param jcrService the jcr service
    * @param sessionProviders the session providers
-   * @param hierarchyCreator the hierarchy owner
+   * @param hierarchyCreator the hierarchy creator
    * @param organization the organization
    * @param socialIdentityManager the social identity manager
    * @param driveService the drive service
    * @param listenerService the listener service
-   * @param settingService the settings service
+   * @param settingService the setting service
    */
   public WebConferencingService(RepositoryService jcrService,
                            SessionProviderService sessionProviders,

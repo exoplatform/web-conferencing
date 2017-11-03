@@ -23,18 +23,18 @@
   xsi:schemaLocation="http://www.gatein.org/xml/ns/gatein_resources_1_3 http://www.gatein.org/xml/ns/gatein_resources_1_3"
   xmlns="http://www.gatein.org/xml/ns/gatein_resources_1_3">
 
-  <!-- CSS for webconferencing support in Platform -->
+  <!-- CSS for Web Conferencing support in Platform -->
   <!-- portal-skin>
     <skin-name>Default</skin-name>
-    <skin-module>VideoCallsSkin</skin-module>
-    <css-path>/skin/videocalls-default.css</css-path>
+    <skin-module>webconferencingSkin</skin-module>
+    <css-path>/skin/webconferencing-default.css</css-path>
     <css-priority>10</css-priority>
     <overwrite>true</overwrite>
   </portal-skin>
   <portal-skin>
     <skin-name>Enterprise</skin-name>
-    <skin-module>VideoCallsSkin</skin-module>
-    <css-path>/skin/videocalls-enterprise.css</css-path>
+    <skin-module>webconferencingSkin</skin-module>
+    <css-path>/skin/webconferencing-enterprise.css</css-path>
     <css-priority>10</css-priority>
     <overwrite>true</overwrite>
   </portal-skin -->
@@ -77,7 +77,7 @@
       <path>/js/jquery.pnotify.min.js</path>
     </script>
     <depends>
-      <module>webConferencingJquery</module>
+      <module>jquery</module>
       <as>jQuery</as>
     </depends>
   </module>
@@ -89,7 +89,7 @@
       <path>/js/jquery-ui.js</path>
     </script>
     <depends>
-      <module>webConferencingJquery</module>
+      <module>jquery</module>
       <as>jQuery</as>
     </depends>
   </module>

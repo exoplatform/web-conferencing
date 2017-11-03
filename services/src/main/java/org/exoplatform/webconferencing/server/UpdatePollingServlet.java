@@ -63,7 +63,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
     String remoteUser = req.getRemoteUser();
     if (remoteUser != null) {
       if (pathInfo != null && pathInfo.length() > 1) {
-        // TODO extract from the request (on path /videocalls/updates/{userId}
+        // TODO extract from the request (on path /webconferencing/updates/{userId}
         pathInfo = pathInfo.substring(1); // omit first slash
         int userEndIndex = pathInfo.indexOf('/');
         String userId = userEndIndex > 0 ? pathInfo.substring(0, userEndIndex) : pathInfo;
