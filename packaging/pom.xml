@@ -73,7 +73,7 @@
         </includes>
       </resource>
     </resources>
-    <finalName>web-conferencing-webrtc</finalName>
+    <finalName>web-conferencing</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
@@ -85,6 +85,7 @@
               <goal>single</goal>
             </goals>
             <configuration>
+              <appendAssemblyId>false</appendAssemblyId>
               <descriptors>
                 <descriptor>src/main/assembly/packaging-archive.xml</descriptor>
               </descriptors>
