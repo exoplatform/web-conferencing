@@ -246,7 +246,7 @@
 					}
 					$call.remove();
 				}
-				$call = $("<div class='uiIncomingCall' title='" + provider.getTitle() + " call'></div>");
+				$call = $("<div class='uiIncomingCall' title='Incoming call'></div>");
 				//<span class='ui-icon messageIcon' style='float:left; margin:12px 12px 20px 0;'></span>
 				$call.append($("<div class='messageAuthor'><a target='_blank' href='" + callerLink + "' class='avatarMedium'>"
 					+ "<img src='" + callerAvatar + "'></a></div>"
@@ -382,7 +382,7 @@
 													var callerId = call.owner.id;
 													var callerLink = call.ownerLink;
 													var callerAvatar = call.avatarLink;
-													var callerMessage = call.owner.title + " is calling.";
+													var callerMessage = call.owner.title + " is calling you...";
 													var callerRoom = callerId;
 													call.title = call.owner.title; // for callee the call title is a caller name
 													//
