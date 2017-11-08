@@ -124,7 +124,7 @@ public class ErrorInfo {
   public String getMessage() {
     return message;
   }
-  
+
   /**
    * Error as JSON string.
    *

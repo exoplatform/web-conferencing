@@ -53,9 +53,9 @@ public class CallInfo {
 
   /** The provider type. */
   protected final String        providerType;
-  
+
   /** The state. */
-  protected String        state;
+  protected String              state;
 
   /**
    * Instantiates a new call info.
@@ -192,7 +192,5 @@ public class CallInfo {
   public void setState(String state) {
     this.state = state;
   }
-  
-  
 
 }

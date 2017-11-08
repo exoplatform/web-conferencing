@@ -60,7 +60,6 @@ public abstract class GroupInfo extends IdentityInfo {
     return callId;
   }
 
-
   /**
    * {@inheritDoc}
    */
@@ -94,7 +93,7 @@ public abstract class GroupInfo extends IdentityInfo {
   protected void addMember(UserInfo user) {
     members.put(user.getId(), user);
   }
-  
+
   /**
    * Adds the members (bulk operation).
    *
@@ -102,7 +101,7 @@ public abstract class GroupInfo extends IdentityInfo {
    */
   protected void addMembers(Collection<UserInfo> users) {
     for (UserInfo u : users) {
-      addMember(u);      
+      addMember(u);
     }
   }
 

@@ -28,15 +28,15 @@ public class UserState {
 
   /** The Constant JOINED. */
   public static final String JOINED = "joined";
-  
+
   /** The Constant LEAVED. */
   public static final String LEAVED = "leaved";
-  
+
   /** The user id. */
-  protected final String userId;
-  
+  protected final String     userId;
+
   /** The value. */
-  protected final String value;
+  protected final String     value;
 
   /**
    * Instantiates a new user state.
@@ -67,5 +67,5 @@ public class UserState {
   public String getValue() {
     return value;
   }
-  
+
 }

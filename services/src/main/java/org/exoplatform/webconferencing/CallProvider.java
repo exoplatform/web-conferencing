@@ -51,8 +51,7 @@ public abstract class CallProvider extends BaseComponentPlugin {
 
   /** The email test. */
   protected final Pattern             emailTest                     =
-                                                Pattern.compile(EMAIL_REGEX,
-                                                                Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+                                                Pattern.compile(EMAIL_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   /** The config. */
   protected final Map<String, String> config;

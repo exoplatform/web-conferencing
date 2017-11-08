@@ -65,19 +65,19 @@ import org.exoplatform.webconferencing.client.ErrorInfo;
 public class RESTWebConferencingService implements ResourceContainer {
 
   /** The Constant ME. */
-  public static final String        ME    = "me";
+  public static final String             ME    = "me";
 
   /** The Constant EMPTY. */
-  public static final String        EMPTY = "".intern();
+  public static final String             EMPTY = "".intern();
 
   /** The Constant LOG. */
-  protected static final Log        LOG   = ExoLogger.getLogger(RESTWebConferencingService.class);
+  protected static final Log             LOG   = ExoLogger.getLogger(RESTWebConferencingService.class);
 
   /** The video calls. */
   protected final WebConferencingService webConferencing;
 
   /** The cache control. */
-  private final CacheControl        cacheControl;
+  private final CacheControl             cacheControl;
 
   /**
    * Instantiates a new REST video calls service.
@@ -267,9 +267,7 @@ public class RESTWebConferencingService implements ResourceContainer {
                            .build();
           } catch (Throwable e) {
             LOG.error("Error adding user call by '" + currentUserName + "'", e);
-            return Response.serverError()
-                           .entity(ErrorInfo.serverError("Error adding user call for " + userName))
-                           .build();
+            return Response.serverError().entity(ErrorInfo.serverError("Error adding user call for " + userName)).build();
           }
         } else {
           return Response.status(Status.BAD_REQUEST)
@@ -324,8 +322,7 @@ public class RESTWebConferencingService implements ResourceContainer {
               }
               return Response.status(Status.NOT_FOUND)
                              .cacheControl(cacheControl)
-                             .entity(ErrorInfo.notFoundError("User " + userName
-                                 + " not found or not accessible"))
+                             .entity(ErrorInfo.notFoundError("User " + userName + " not found or not accessible"))
                              .build();
             }
           }
@@ -434,10 +431,7 @@ public class RESTWebConferencingService implements ResourceContainer {
           }
           if (roomMembers != null && roomMembers.length() > 0) {
             try {
-              GroupInfo room = webConferencing.getRoomInfo(roomId,
-                                                      roomName,
-                                                      roomTitle,
-                                                      roomMembers.trim().split(";"));
+              GroupInfo room = webConferencing.getRoomInfo(roomId, roomName, roomTitle, roomMembers.trim().split(";"));
               if (room != null) {
                 if (room.getMembers().containsKey(currentUserName)) {
                   return Response.ok().cacheControl(cacheControl).entity(room).build();
@@ -506,9 +500,7 @@ public class RESTWebConferencingService implements ResourceContainer {
   @GET
   @RolesAllowed("users")
   @Path("/call/{type}/{id}")
-  public Response getCallInfo(@Context UriInfo uriInfo,
-                              @PathParam("type") String type,
-                              @PathParam("id") String id) {
+  public Response getCallInfo(@Context UriInfo uriInfo, @PathParam("type") String type, @PathParam("id") String id) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String callId = callId(type, id);
@@ -549,9 +541,7 @@ public class RESTWebConferencingService implements ResourceContainer {
   @DELETE
   @RolesAllowed("users")
   @Path("/call/{type}/{id}")
-  public Response deleteCall(@Context UriInfo uriInfo,
-                             @PathParam("type") String type,
-                             @PathParam("id") String id) {
+  public Response deleteCall(@Context UriInfo uriInfo, @PathParam("type") String type, @PathParam("id") String id) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String callId = callId(type, id);
@@ -630,10 +620,7 @@ public class RESTWebConferencingService implements ResourceContainer {
         }
       } catch (Throwable e) {
         LOG.error("Error updating call info for '" + callId + "' by '" + currentUserName + "'", e);
-        return Response.serverError()
-                       .cacheControl(cacheControl)
-                       .entity(ErrorInfo.serverError("Error updating the call"))
-                       .build();
+        return Response.serverError().cacheControl(cacheControl).entity(ErrorInfo.serverError("Error updating the call")).build();
       }
     } else {
       return Response.status(Status.UNAUTHORIZED)
@@ -678,11 +665,11 @@ public class RESTWebConferencingService implements ResourceContainer {
                 String currentUserName = convo.getIdentity().getUserId();
                 try {
                   CallInfo call = webConferencing.addCall(callId,
-                                                     ownerId,
-                                                     ownerType,
-                                                     title,
-                                                     providerType,
-                                                     Arrays.asList(participants.split(";")));
+                                                          ownerId,
+                                                          ownerType,
+                                                          title,
+                                                          providerType,
+                                                          Arrays.asList(participants.split(";")));
                   return Response.ok().cacheControl(cacheControl).entity(call).build();
                 } catch (CallInfoException e) {
                   return Response.status(Status.BAD_REQUEST)

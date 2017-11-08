@@ -28,7 +28,7 @@ public abstract class UserCallListener {
 
   /** The user id. */
   protected final String userId;
-  
+
   /**
    * Instantiates a new incoming call listener.
    *
@@ -46,14 +46,14 @@ public abstract class UserCallListener {
   public String getUserId() {
     return userId;
   }
-  
+
   /**
    * Checks if is listening.
    *
    * @return true, if is listening
    */
   public abstract boolean isListening();
-  
+
   /**
    * Notify.
    *
@@ -64,17 +64,19 @@ public abstract class UserCallListener {
    * @param callerType the caller type
    */
   public abstract void onCallState(String callId, String providerType, String callState, String callerId, String callerType);
-  
+
   /**
    * On participant joined.
+   * 
    * @param callId the call id
    * @param providerType the provider type
    * @param partId the participant user id
    */
   public abstract void onPartJoined(String callId, String providerType, String partId);
-  
+
   /**
    * On participant leaved.
+   * 
    * @param callId the call id
    * @param providerType the provider type
    * @param partId the participant user id

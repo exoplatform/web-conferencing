@@ -47,13 +47,13 @@ import org.exoplatform.webui.application.WebuiRequestContext;
 public class WebrtcProviderPortlet extends GenericPortlet {
 
   /** The Constant LOG. */
-  private static final Log  LOG = ExoLogger.getLogger(WebrtcProviderPortlet.class);
+  private static final Log       LOG = ExoLogger.getLogger(WebrtcProviderPortlet.class);
 
   /** The video calls. */
   private WebConferencingService webConferencing;
 
   /** The provider. */
-  private WebrtcProvider    provider;
+  private WebrtcProvider         provider;
 
   /**
    * {@inheritDoc}
@@ -67,8 +67,7 @@ public class WebrtcProviderPortlet extends GenericPortlet {
     try {
       this.provider = (WebrtcProvider) webConferencing.getProvider(WebrtcProvider.WEBRTC_TYPE);
     } catch (ClassCastException e) {
-      LOG.error("Provider " + WebrtcProvider.WEBRTC_TYPE + " isn't an instance of "
-          + WebrtcProvider.class.getName(), e);
+      LOG.error("Provider " + WebrtcProvider.WEBRTC_TYPE + " isn't an instance of " + WebrtcProvider.class.getName(), e);
     }
   }
 
@@ -76,8 +75,7 @@ public class WebrtcProviderPortlet extends GenericPortlet {
    * {@inheritDoc}
    */
   @Override
-  protected void doView(final RenderRequest request, final RenderResponse response) throws PortletException,
-                                                                                    IOException {
+  protected void doView(final RenderRequest request, final RenderResponse response) throws PortletException, IOException {
     if (this.provider != null) {
       try {
         URI callURI = new URI(request.getScheme(),
@@ -90,8 +88,7 @@ public class WebrtcProviderPortlet extends GenericPortlet {
         WebrtcSettings settings = provider.settings().callUri(callURI.toString()).build();
         String settingsJson = asJSON(settings);
 
-        JavascriptManager js =
-                             ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
+        JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
         js.require("SHARED/webConferencing", "webConferencing")
           .require("SHARED/webConferencing_webrtc", "webrtcProvider")
           .addScripts("if (webrtcProvider) { webrtcProvider.configure(" + settingsJson

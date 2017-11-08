@@ -57,8 +57,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
    * {@inheritDoc}
    */
   @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-                                                                         IOException {
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     String pathInfo = req.getPathInfo();
     String remoteUser = req.getRemoteUser();
     if (remoteUser != null) {
@@ -99,8 +98,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
 
                 sendContent(acontext, body.toString());
               } else {
-                LOG.warn(">>> Fired onCallState(" + callId + ", " + callState
-                    + ") for already completed UpdatePollingServlet");
+                LOG.warn(">>> Fired onCallState(" + callId + ", " + callState + ") for already completed UpdatePollingServlet");
               }
             }
 
@@ -119,11 +117,10 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
                 body.append(partId);
                 body.append("\"}");
                 body.append('}');
-                
+
                 sendContent(acontext, body.toString());
               } else {
-                LOG.warn(">>> Fired onPartJoined(" + callId + ", " + partId
-                    + ") for already completed UpdatePollingServlet");
+                LOG.warn(">>> Fired onPartJoined(" + callId + ", " + partId + ") for already completed UpdatePollingServlet");
               }
             }
 
@@ -142,15 +139,14 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
                 body.append(partId);
                 body.append("\"}");
                 body.append('}');
-                
+
                 sendContent(acontext, body.toString());
               } else {
-                LOG.warn(">>> Fired onPartLeaved(" + callId + ", " + partId
-                    + ") for already completed UpdatePollingServlet");
+                LOG.warn(">>> Fired onPartLeaved(" + callId + ", " + partId + ") for already completed UpdatePollingServlet");
               }
             }
           };
-          
+
           acontext.setTimeout(DEFAULT_TIMEOUT);
           acontext.addListener(new AsyncListener() {
             @Override
@@ -194,8 +190,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
 
           webConferencing.addUserCallListener(userListener);
         } else {
-          LOG.warn("Accessing other user updates forbidden for " + remoteUser + ", has requested updates of "
-              + userId);
+          LOG.warn("Accessing other user updates forbidden for " + remoteUser + ", has requested updates of " + userId);
           sendError(resp, "Access forbidden", HttpServletResponse.SC_FORBIDDEN);
         }
       } else {
@@ -257,7 +252,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
       }
     }
   }
-  
+
   private void sendContent(AsyncContext acontext, String content) {
     HttpServletResponse response = (HttpServletResponse) acontext.getResponse();
     response.setContentType("text/json");

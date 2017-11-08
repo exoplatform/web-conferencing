@@ -61,6 +61,5 @@ public class WebrtcSettings extends CallProviderSettings {
   public String getCallUri() {
     return callUri;
   }
-  
 
 }

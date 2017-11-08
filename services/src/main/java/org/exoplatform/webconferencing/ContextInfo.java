@@ -53,11 +53,7 @@ public class ContextInfo {
    * @param cometdPath the cometd path
    * @param cometdToken the cometd token
    */
-  public ContextInfo(String containerName,
-                     String spaceId,
-                     String roomTitle,
-                     String cometdPath,
-                     String cometdToken) {
+  public ContextInfo(String containerName, String spaceId, String roomTitle, String cometdPath, String cometdToken) {
     super();
     this.containerName = containerName;
     this.spaceId = spaceId;

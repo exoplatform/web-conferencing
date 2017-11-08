@@ -29,18 +29,18 @@ package org.exoplatform.webconferencing;
  * 
  */
 public abstract class IdentityInfo {
-  
+
   /** The Constant ME. */
-  public static final String        ME    = "me";
+  public static final String ME    = "me";
 
   /** The Constant EMPTY. */
-  public static final String        EMPTY = "".intern();
+  public static final String EMPTY = "".intern();
 
   /** The title. */
-  protected final String title;
+  protected final String     title;
 
   /** The id. */
-  protected final String id;
+  protected final String     id;
 
   /**
    * Instantiates a new identity info.
@@ -84,5 +84,5 @@ public abstract class IdentityInfo {
    * @return the type
    */
   public abstract String getType();
-  
+
 }

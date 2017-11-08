@@ -39,7 +39,7 @@ public class UserInfo extends IdentityInfo {
 
   /** The Constant TYPE_NAME. */
   public static final String TYPE_NAME = "user".intern();
-  
+
   /** The Constant LOG. */
   protected static final Log LOG       = ExoLogger.getLogger(UserInfo.class);
 

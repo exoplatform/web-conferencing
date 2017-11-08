@@ -73,10 +73,7 @@ public class WebrtcProviderException extends CallProviderException {
    * @param enableSuppression the enable suppression
    * @param writableStackTrace the writable stack trace
    */
-  public WebrtcProviderException(String message,
-                                Throwable cause,
-                                boolean enableSuppression,
-                                boolean writableStackTrace) {
+  public WebrtcProviderException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
     super(message, cause, enableSuppression, writableStackTrace);
   }
 

@@ -75,10 +75,7 @@ public class CallProviderException extends Exception {
    * @param enableSuppression the enable suppression
    * @param writableStackTrace the writable stack trace
    */
-  public CallProviderException(String message,
-                                     Throwable cause,
-                                     boolean enableSuppression,
-                                     boolean writableStackTrace) {
+  public CallProviderException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
     super(message, cause, enableSuppression, writableStackTrace);
   }
 

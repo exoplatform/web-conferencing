@@ -90,7 +90,8 @@ public class CometdWebConferencingService implements Startable {
 
   public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME_ALL    = CALL_SUBSCRIPTION_CHANNEL_NAME + "/**";
 
-  public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS = "/eXo/Application/WebConferencing/call/{callType}/{callInfo}";
+  public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS =
+                                                                               "/eXo/Application/WebConferencing/call/{callType}/{callInfo}";
 
   public static final String             USER_SUBSCRIPTION_CHANNEL_NAME        = "/eXo/Application/WebConferencing/user";
 
@@ -106,7 +107,8 @@ public class CometdWebConferencingService implements Startable {
 
   public static final String             COMMAND_GET_CALLS_STATE               = "get_calls_state";
 
-  private static final Log               LOG                                   = ExoLogger.getLogger(CometdWebConferencingService.class);
+  private static final Log               LOG                                   =
+                                             ExoLogger.getLogger(CometdWebConferencingService.class);
 
   protected final WebConferencingService webConferencing;
 
@@ -190,7 +192,8 @@ public class CometdWebConferencingService implements Startable {
       @Override
       public void removed(ServerSession session, boolean timeout) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Session removed: " + session.getId() + " timedout:" + timeout + " channels: " + channelsAsString(session.getSubscriptions()));
+          LOG.debug("Session removed: " + session.getId() + " timedout:" + timeout + " channels: "
+              + channelsAsString(session.getSubscriptions()));
         }
         // cleanup session stuff, note that disconnected session already unsubscribed and has no channels
         // for (ServerChannel channel : session.getSubscriptions()) {
@@ -263,7 +266,11 @@ public class CometdWebConferencingService implements Startable {
                     }
 
                     @Override
-                    public void onCallState(String callId, String providerType, String callState, String callerId, String callerType) {
+                    public void onCallState(String callId,
+                                            String providerType,
+                                            String callState,
+                                            String callerId,
+                                            String callerType) {
                       StringBuilder data = new StringBuilder();
                       data.append('{');
                       data.append("\"eventType\": \"call_state\",");
@@ -302,7 +309,9 @@ public class CometdWebConferencingService implements Startable {
                 context.addClient(clientId);
               } else {
                 LOG.warn("Subscribing to other user not possible, was user " + currentUserId + ", channel:" + channelId);
-                remote.deliver(serverSession, channelId, ErrorInfo.clientError("Subscribing to other user not possible").asJSON());
+                remote.deliver(serverSession,
+                               channelId,
+                               ErrorInfo.clientError("Subscribing to other user not possible").asJSON());
                 if (!channel.unsubscribe(remote)) {
                   LOG.warn("Unable to unsubscribe user " + currentUserId + " from channel " + channelId);
                 }
@@ -374,7 +383,8 @@ public class CometdWebConferencingService implements Startable {
               LOG.debug("<< User call channel context not found for:" + channelId);
             }
           }
-        } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME) && channelId.length() > CALL_SUBSCRIPTION_CHANNEL_NAME.length()) {
+        } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)
+            && channelId.length() > CALL_SUBSCRIPTION_CHANNEL_NAME.length()) {
           String callId = channelId.substring(CALL_SUBSCRIPTION_CHANNEL_NAME.length() + 1);
           // This call communications ended, in normal way of by network failure - we assume the call ended,
           // ensure its parties, including those who received incoming notification but not yet
@@ -442,7 +452,8 @@ public class CometdWebConferencingService implements Startable {
     public void subscribeUser(Message message, @Param("userId") String userId) {
       final String channelId = message.getChannel();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("User published in " + channelId + " by " + message.getClientId() + " userId: " + userId + " data: " + message.getJSON());
+        LOG.debug("User published in " + channelId + " by " + message.getClientId() + " userId: " + userId + " data: "
+            + message.getJSON());
       }
       // here will come user publications about his state
     }
@@ -478,8 +489,10 @@ public class CometdWebConferencingService implements Startable {
                     ExoContainerContext.setCurrentContainer(exoContainer);
                     // Use services acquired from context container
                     IdentityRegistry identityRegistry = exoContainer.getComponentInstanceOfType(IdentityRegistry.class);
-                    SessionProviderService sessionProviders = exoContainer.getComponentInstanceOfType(SessionProviderService.class);
-                    WebConferencingService webConferencing = exoContainer.getComponentInstanceOfType(WebConferencingService.class);
+                    SessionProviderService sessionProviders =
+                                                            exoContainer.getComponentInstanceOfType(SessionProviderService.class);
+                    WebConferencingService webConferencing =
+                                                           exoContainer.getComponentInstanceOfType(WebConferencingService.class);
                     // TODO should we check for NPE of the above services?
                     Identity userIdentity = identityRegistry.getIdentity(currentUserId);
                     if (userIdentity != null) {
@@ -534,7 +547,8 @@ public class CometdWebConferencingService implements Startable {
                                       caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
                                     }
                                   } else {
-                                    caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized").asJSON());
+                                    caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized")
+                                                            .asJSON());
                                   }
                                 } catch (Throwable e) {
                                   LOG.error("Error updating call '" + id + "' by '" + currentUserId + "'", e);
@@ -556,7 +570,12 @@ public class CometdWebConferencingService implements Startable {
                                       if (pstr != null) {
                                         List<String> participants = Arrays.asList(pstr.split(";"));
                                         try {
-                                          CallInfo call = webConferencing.addCall(id, ownerId, ownerType, title, providerType, participants);
+                                          CallInfo call = webConferencing.addCall(id,
+                                                                                  ownerId,
+                                                                                  ownerType,
+                                                                                  title,
+                                                                                  providerType,
+                                                                                  participants);
                                           caller.result(asJSON(call));
                                         } catch (CallInfoException e) {
                                           // aka BAD_REQUEST
@@ -728,7 +747,8 @@ public class CometdWebConferencingService implements Startable {
       public void sessionRemoved(ServerSession session, boolean timedout) {
         // Nothing?
         if (LOG.isDebugEnabled()) {
-          LOG.debug("sessionRemoved: " + session.getId() + " timedout:" + timedout + " channels: " + channelsAsString(session.getSubscriptions()));
+          LOG.debug("sessionRemoved: " + session.getId() + " timedout:" + timedout + " channels: "
+              + channelsAsString(session.getSubscriptions()));
         }
       }
 

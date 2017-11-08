@@ -97,8 +97,7 @@ public class Utils {
         portlalContext = (PortalRequestContext) webuiContext.getParentAppRequestContext();
       }
 
-      String requestPath = portlalContext.getControllerContext()
-                                         .getParameter(RequestNavigationData.REQUEST_PATH);
+      String requestPath = portlalContext.getControllerContext().getParameter(RequestNavigationData.REQUEST_PATH);
       Route route = ExoRouter.route(requestPath);
       if (route != null) {
         if (portlalContext.getSiteType().equals(SiteType.GROUP)

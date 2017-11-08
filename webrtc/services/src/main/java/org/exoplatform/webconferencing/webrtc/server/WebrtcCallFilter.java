@@ -69,9 +69,7 @@ public class WebrtcCallFilter extends AbstractFilter implements Filter {
    * {@inheritDoc}
    */
   @Override
-  public void doFilter(ServletRequest request,
-                       ServletResponse response,
-                       FilterChain chain) throws IOException, ServletException {
+  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
     HttpServletRequest httpReq = (HttpServletRequest) request;
     HttpServletResponse httpRes = (HttpServletResponse) response;
 

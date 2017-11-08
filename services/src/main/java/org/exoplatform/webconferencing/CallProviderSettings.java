@@ -55,11 +55,11 @@ public class CallProviderSettings {
    * @param version the version
    */
   public CallProviderSettings(String type,
-                        String[] supportedTypes,
-                        String title,
-                        String callTitle,
-                        String joinTitle,
-                        String version) {
+                              String[] supportedTypes,
+                              String title,
+                              String callTitle,
+                              String joinTitle,
+                              String version) {
     super();
     this.type = type;
     this.supportedTypes = supportedTypes;

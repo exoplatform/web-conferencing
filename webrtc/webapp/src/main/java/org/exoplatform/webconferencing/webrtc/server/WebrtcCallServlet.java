@@ -57,8 +57,7 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
    * {@inheritDoc}
    */
   @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-                                                                         IOException {
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
     HttpServletRequest httpReq = (HttpServletRequest) req;
     HttpServletResponse httpRes = (HttpServletResponse) resp;
@@ -77,14 +76,13 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
 
       ExoContainer container = getContainer();
       WebConferencingService webConferencing =
-                                   (WebConferencingService) container.getComponentInstanceOfType(WebConferencingService.class);
+                                             (WebConferencingService) container.getComponentInstanceOfType(WebConferencingService.class);
       if (webConferencing != null) {
         WebrtcProvider provider;
         try {
           provider = (WebrtcProvider) webConferencing.getProvider(WebrtcProvider.WEBRTC_TYPE);
         } catch (ClassCastException e) {
-          LOG.error("Provider " + WebrtcProvider.WEBRTC_TYPE + " isn't an instance of "
-              + WebrtcProvider.class.getName(), e);
+          LOG.error("Provider " + WebrtcProvider.WEBRTC_TYPE + " isn't an instance of " + WebrtcProvider.class.getName(), e);
           provider = null;
         }
 
@@ -128,15 +126,13 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
                 // XXX nasty-nasty-nasty include of CometD script
                 httpReq.getRequestDispatcher("/WEB-INF/pages/call_part1.jsp").include(httpReq, httpRes);
                 ServletContext cometdContext = httpReq.getSession().getServletContext().getContext("/cometd");
-                cometdContext.getRequestDispatcher("/javascript/eXo/commons/commons-cometd3.js")
-                             .include(httpReq, httpRes);
+                cometdContext.getRequestDispatcher("/javascript/eXo/commons/commons-cometd3.js").include(httpReq, httpRes);
                 httpReq.getRequestDispatcher("/WEB-INF/pages/call_part2.jsp").include(httpReq, httpRes);
 
                 // to JSP page
                 // httpReq.getRequestDispatcher(CALL_PAGE).include(httpReq, httpRes);
               } else {
-                LOG.warn("WebRTC servlet cannot be initialized: user info cannot be obtained for "
-                    + remoteUser);
+                LOG.warn("WebRTC servlet cannot be initialized: user info cannot be obtained for " + remoteUser);
               }
             } catch (Exception e) {
               LOG.error("Error processing WebRTC call page", e);
@@ -164,8 +160,7 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
    * {@inheritDoc}
    */
   @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-                                                                          IOException {
+  protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     doGet(req, resp);
   }
 

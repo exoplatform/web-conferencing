@@ -164,8 +164,7 @@ public class WebConferencingService implements Startable {
   public static final String                         OWNER_TYPE_CHATROOM = "chat_room";
 
   /** The Constant LOG. */
-  protected static final Log                         LOG                 =
-                                                         ExoLogger.getLogger(WebConferencingService.class);
+  protected static final Log                         LOG                 = ExoLogger.getLogger(WebConferencingService.class);
 
   /** The jcr service. */
   protected final RepositoryService                  jcrService;
@@ -192,7 +191,7 @@ public class WebConferencingService implements Startable {
   protected final SettingService                     settingService;
 
   /** The providers. */
-  protected final Map<String, CallProvider>    providers           = new ConcurrentHashMap<>();
+  protected final Map<String, CallProvider>          providers           = new ConcurrentHashMap<>();
 
   /** The space service. */
   protected SpaceService                             spaceService;
@@ -213,13 +212,13 @@ public class WebConferencingService implements Startable {
    * @param settingService the setting service
    */
   public WebConferencingService(RepositoryService jcrService,
-                           SessionProviderService sessionProviders,
-                           NodeHierarchyCreator hierarchyCreator,
-                           OrganizationService organization,
-                           IdentityManager socialIdentityManager,
-                           ManageDriveService driveService,
-                           ListenerService listenerService,
-                           SettingService settingService) {
+                                SessionProviderService sessionProviders,
+                                NodeHierarchyCreator hierarchyCreator,
+                                OrganizationService organization,
+                                IdentityManager socialIdentityManager,
+                                ManageDriveService driveService,
+                                ListenerService listenerService,
+                                SettingService settingService) {
     this.jcrService = jcrService;
     this.sessionProviders = sessionProviders;
     this.hierarchyCreator = hierarchyCreator;
@@ -239,15 +238,12 @@ public class WebConferencingService implements Startable {
    */
   public UserInfo getUserInfo(String id) throws Exception {
     User user = organization.getUserHandler().findUserByName(id);
-    Identity userIdentity = socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME,
-                                                                      id,
-                                                                      true);
+    Identity userIdentity = socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME, id, true);
     if (user != null) {
       if (userIdentity != null) {
         Profile socialProfile = socialIdentityManager.getProfile(userIdentity);
         @SuppressWarnings("unchecked")
-        List<Map<String, String>> ims =
-                                      (List<Map<String, String>>) socialProfile.getProperty(Profile.CONTACT_IMS);
+        List<Map<String, String>> ims = (List<Map<String, String>>) socialProfile.getProperty(Profile.CONTACT_IMS);
         UserInfo info = new UserInfo(user.getUserName(), user.getFirstName(), user.getLastName());
         if (ims != null) {
           for (Map<String, String> m : ims) {
@@ -270,8 +266,8 @@ public class WebConferencingService implements Startable {
         return info;
       } else {
         // TODO exception here?
-        LOG.warn("Social identity not found for " + user.getUserName() + " (" + user.getFirstName() + " "
-            + user.getLastName() + ")");
+        LOG.warn("Social identity not found for " + user.getUserName() + " (" + user.getFirstName() + " " + user.getLastName()
+            + ")");
       }
     } else {
       // TODO exception here?
@@ -735,8 +731,7 @@ public class WebConferencingService implements Startable {
     if (pclass.isAssignableFrom(plugin.getClass())) {
       addProvider(pclass.cast(plugin));
     } else {
-      LOG.warn("Video Calls provider plugin is not an instance of " + pclass.getName() + ". Skipped plugin: "
-          + plugin);
+      LOG.warn("Video Calls provider plugin is not an instance of " + pclass.getName() + ". Skipped plugin: " + plugin);
     }
   }
 
@@ -749,8 +744,7 @@ public class WebConferencingService implements Startable {
     for (String type : provider.getSupportedTypes()) {
       CallProvider existing = providers.putIfAbsent(type, provider);
       if (existing != null) {
-        LOG.warn("Video Calls provider type '" + existing.getType() + "' already registered. Skipped plugin: "
-            + provider);
+        LOG.warn("Video Calls provider type '" + existing.getType() + "' already registered. Skipped plugin: " + provider);
       }
     }
   }
@@ -772,8 +766,7 @@ public class WebConferencingService implements Startable {
   public void start() {
     // XXX SpaceService done in crappy way and we need reference it after the container start only, otherwise
     // it will fail the whole server start due to not found JCR service
-    this.spaceService = ExoContainerContext.getCurrentContainer()
-                                           .getComponentInstanceOfType(SpaceService.class);
+    this.spaceService = ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(SpaceService.class);
   }
 
   /**
@@ -935,10 +928,7 @@ public class WebConferencingService implements Startable {
     try {
       JSONObject json = callToJSON(call);
       String safeCallId = URLEncoder.encode(call.getId(), "UTF-8");
-      settingService.set(Context.GLOBAL,
-                         Scope.GLOBAL.id(CALL_ID_SCOPE_NAME),
-                         safeCallId,
-                         SettingValue.create(json.toString()));
+      settingService.set(Context.GLOBAL, Scope.GLOBAL.id(CALL_ID_SCOPE_NAME), safeCallId, SettingValue.create(json.toString()));
     } finally {
       Scope.GLOBAL.id(initialGlobalId);
     }
@@ -971,8 +961,7 @@ public class WebConferencingService implements Startable {
     final String initialGlobalId = Scope.GLOBAL.getId();
     try {
       String safeCallId = URLEncoder.encode(id, "UTF-8");
-      SettingValue<?> val =
-                          settingService.get(Context.GLOBAL, Scope.GLOBAL.id(CALL_ID_SCOPE_NAME), safeCallId);
+      SettingValue<?> val = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(CALL_ID_SCOPE_NAME), safeCallId);
       if (val != null) {
         String str = String.valueOf(val.getValue());
         if (str.startsWith("{")) {
@@ -1030,10 +1019,7 @@ public class WebConferencingService implements Startable {
   protected void saveOwnerCallId(String ownerId, String callId) {
     final String initialGlobalId = Scope.GLOBAL.getId();
     try {
-      settingService.set(Context.GLOBAL,
-                         Scope.GLOBAL.id(CALL_OWNER_SCOPE_NAME),
-                         ownerId,
-                         SettingValue.create(callId));
+      settingService.set(Context.GLOBAL, Scope.GLOBAL.id(CALL_OWNER_SCOPE_NAME), ownerId, SettingValue.create(callId));
     } finally {
       Scope.GLOBAL.id(initialGlobalId);
     }
@@ -1048,8 +1034,7 @@ public class WebConferencingService implements Startable {
   protected String readOwnerCallId(String ownerId) {
     final String initialGlobalId = Scope.GLOBAL.getId();
     try {
-      SettingValue<?> val =
-                          settingService.get(Context.GLOBAL, Scope.GLOBAL.id(CALL_OWNER_SCOPE_NAME), ownerId);
+      SettingValue<?> val = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(CALL_OWNER_SCOPE_NAME), ownerId);
       if (val != null) {
         return String.valueOf(val.getValue());
       }
@@ -1168,11 +1153,7 @@ public class WebConferencingService implements Startable {
    * @return the room info
    * @throws Exception the exception
    */
-  protected RoomInfo roomInfo(String id,
-                              String name,
-                              String title,
-                              String[] members,
-                              String callId) throws Exception {
+  protected RoomInfo roomInfo(String id, String name, String title, String[] members, String callId) throws Exception {
     RoomInfo room = new RoomInfo(id, name, title);
     for (String userName : members) {
       UserInfo user = getUserInfo(userName);
