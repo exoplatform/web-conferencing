@@ -333,6 +333,19 @@ if (eXo.webConferencing) {
 									stopCallWaitClose();
 								});
 								
+								// Save user state for audio/video mute in local storage
+								//localStorage.removeItem(TOKEN_STORE);
+								//localStorage.setItem(TOKEN_STORE, JSON.stringify(token));
+								var mediaStateKey = function(name) {
+									return currentUserId + "@exo.webconferencing.webrtc." + name;
+								};
+								var saveMediaState = function(name, state) {
+									localStorage.setItem(mediaStateKey(name), state);
+								};
+								var getMediaState = function(name) {
+									return localStorage.getItem(mediaStateKey(name));
+								};
+								
 								// Subscribe to user calls to know if this call updated/stopped remotely
 							  webConferencing.onUserUpdate(currentUserId, function(update, status) {
 									if (update.eventType == "call_state") {
@@ -675,6 +688,7 @@ if (eXo.webConferencing) {
 													audioTracks[i].enabled = !audioTracks[i].enabled;
 											  }
 												$muteAudio.toggleClass("on");
+												saveMediaState("audio.disable", true);
 												log("Audio " + (audioTracks[0].enabled ? "un" : "") + "muted for " + callId);
 											}
 										});
@@ -686,6 +700,7 @@ if (eXo.webConferencing) {
 													videoTracks[i].enabled = !videoTracks[i].enabled;
 											  }
 												$muteVideo.toggleClass("on");
+												saveMediaState("video.disable", true);
 												log("Video " + (videoTracks[0].enabled ? "un" : "") + "muted for " + callId);									
 											}
 										});
@@ -708,6 +723,14 @@ if (eXo.webConferencing) {
 												});
 							  			});
 									  }
+									  // TODO should we do this only on connection done, in the resolved promise below?
+								  	// if user had saved audio/video disabled, mute them accordingly
+								  	if (getMediaState("audio.disable")) {
+								  		$muteAudio.click();
+								  	}
+								  	if (getMediaState("video.disable")) {
+								  		$muteVideo.click();
+								  	}
 									  connection.then(function() {
 									  	webrtc.joinedCall(callId).done(function() {
 									  		log("<<< Joined the call " + callId);
