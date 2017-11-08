@@ -37,9 +37,6 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
   /** The Constant LOG. */
   protected static final Logger LOG               = LoggerFactory.getLogger(WebrtcCallServlet.class);
 
-  /** The Constant CALL_PAGE. */
-  private final static String   CALL_PAGE         = "/WEB-INF/pages/call.jsp";
-
   /** The Constant UNAUTHORIZED_PAGE. */
   private final static String   UNAUTHORIZED_PAGE = "/WEB-INF/pages/unauthorized.html";
 

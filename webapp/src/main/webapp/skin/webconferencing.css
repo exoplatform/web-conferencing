@@ -13,11 +13,11 @@
 	min-width: 0;
 }
 
-.startCallButton > i:before {
-	font-size: 1px;
+.callButton > i:before {
+	/*font-size: 1px; when use font for icon, use inherited value */
 }
 
-.startCallButton .callTitle {
+.callButton .callTitle {
 	position: relative;
     top: 1px;
 }
@@ -26,8 +26,12 @@
 	font-size: 12px;
 }
 
+.callButton .callTitle {
+	margin-left: 4px;
+}
+
 /*
- * We give class defaultCallButton properties of btn-group for such things as border and font, 
+ * We give class defaultCallButton properties of btn-group for such things as border, 
  * but other will be omitted to don't be affected by its CSS from PLF core. 
  */
 .callButtonContainer .dropdown-toggle {
@@ -75,10 +79,10 @@
 }
 
 /***** Disabled styles *******/
-.startCallButton.disabled {
+.callButton.disabled {
 	color: #999
 }
-.startCallButton.disabled > i:before {
+.callButton.disabled > i:before {
 	opacity: .6
 }
 

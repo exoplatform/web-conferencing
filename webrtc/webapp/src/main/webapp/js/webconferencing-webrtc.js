@@ -176,7 +176,7 @@
 								// TODO i18n for title
 								var $button = $("<a id='" + linkId + "' title='" + target.title + "'"
 											+ " class='webrtcCallAction'>"
-											+ "<i class='uiIconWebrtcCall uiIconForum uiIconLightGray'></i>"
+											+ "<i class='uiIconVideo uiIconLightGray'></i>" // uiIconWebrtcCall
 											+ "<span class='callTitle'>" + self.getCallTitle() + "</span></a>");
 								var longTitle = self.getTitle() + " " + self.getCallTitle();
 								setTimeout(function() {
