@@ -400,7 +400,7 @@
 														// Tell the window to start the call  
 														onCallWindowReady(callWindow).done(function() {
 															log(">>>> Call page loaded " + callId);
-															callWindow.document.title = longTitle + ": " + call.owner.title;
+															callWindow.document.title = "Call with " + call.owner.title;
 															//setTimeout(function() {
 															callWindow.eXo.webConferencing.startCall(call).done(function(state) {
 																log("<<<< Call " + state + " " + callId);
