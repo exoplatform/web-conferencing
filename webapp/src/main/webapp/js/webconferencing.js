@@ -505,6 +505,15 @@
 		});
 	};
 	
+	var getUserStatus = function(userId) {
+		var request = $.ajax({
+			async : true,
+			type : "GET",
+			url : prefixUrl + "/portal/rest/state/status/" + userId
+		});
+		return initRequest(request);
+	};
+	
 	var serviceGet = function(url, data) {
 		var request = $.ajax({
 			async : true,
@@ -1755,6 +1764,8 @@
 			}
 			return process.promise();
 		};
+		
+		this.getUserStatus = getUserStatus;
 	}
 	
 	var webConferencing = new WebConferencing();

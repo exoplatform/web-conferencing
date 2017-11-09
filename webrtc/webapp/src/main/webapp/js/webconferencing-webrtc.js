@@ -233,7 +233,7 @@
 				return button.promise();
 			};
 			
-			var acceptCallPopover = function(callerLink, callerAvatar, callerMessage) {
+			var acceptCallPopover = function(callerLink, callerAvatar, callerMessage, playRingtone) {
 				// TODO show an info popover in bottom right corner of the screen as specified in CALLEE_01
 				log(">> acceptCallPopover '" + callerMessage + "' caler:" + callerLink + " avatar:" + callerAvatar);
 				var process = $.Deferred();
@@ -278,24 +278,26 @@
 					}
 				});
 				process.notify($call);
-				// Start ringing incoming sound
-				var $ring = $("<audio loop autoplay style='display: none;'>" // controls 
-							+ "<source src='/webrtc/audio/line.mp3' type='audio/mpeg'>"  
-							+ "Your browser does not support the audio element.</audio>");
-				$(document.body).append($ring);
-				process.fail(function() {
-					var $cancel = $("<audio autoplay style='display: none;'>" // controls 
-								+ "<source src='/webrtc/audio/manner_cancel.mp3' type='audio/mpeg'>"  
+				if (playRingtone) {
+					// Start ringing incoming sound only if requested (depends on user status)
+					var $ring = $("<audio loop autoplay style='display: none;'>" // controls 
+								+ "<source src='/webrtc/audio/line.mp3' type='audio/mpeg'>"  
 								+ "Your browser does not support the audio element.</audio>");
-					$(document.body).append($cancel);
-					setTimeout(function() {
-						$cancel.remove();
-					}, 3000);
-				});
-				process.always(function() {
-					// Stop incoming ringing on dialog completion
-					$ring.remove();
-				});
+					$(document.body).append($ring);
+					process.fail(function() {
+						var $cancel = $("<audio autoplay style='display: none;'>" // controls 
+									+ "<source src='/webrtc/audio/manner_cancel.mp3' type='audio/mpeg'>"  
+									+ "Your browser does not support the audio element.</audio>");
+						$(document.body).append($cancel);
+						setTimeout(function() {
+							$cancel.remove();
+						}, 3000);
+					});
+					process.always(function() {
+						// Stop incoming ringing on dialog completion
+						$ring.remove();
+					});					
+				}
 				return process.promise();
 			};
 			
@@ -386,35 +388,44 @@
 													var callerRoom = callerId;
 													call.title = call.owner.title; // for callee the call title is a caller name
 													//
-													var popover = acceptCallPopover(callerLink, callerAvatar, callerMessage);
-													popover.progress(function($call) {
-														$callPopup = $call;
-														$callPopup.callId = callId;
-														$callPopup.callState = update.callState;
-													}); 
-													popover.done(function(msg) {
-														log(">>> User " + msg + " call " + callId);
-														var longTitle = self.getTitle() + " " + self.getCallTitle();
-														var link = settings.callUri + "/" + callId;
-														var callWindow = webConferencing.showCallPopup(link, longTitle);
-														// Tell the window to start the call  
-														onCallWindowReady(callWindow).done(function() {
-															log(">>>> Call page loaded " + callId);
-															callWindow.document.title = "Call with " + call.owner.title;
-															//setTimeout(function() {
-															callWindow.eXo.webConferencing.startCall(call).done(function(state) {
-																log("<<<< Call " + state + " " + callId);
-																lockCallButton(callId, callerId, callerRoom);
-															}).fail(function(err) {
-																webConferencing.showError("Error starting call", err);
+													webConferencing.getUserStatus(currentUserId).done(function(user) {
+														var popover = acceptCallPopover(callerLink, callerAvatar, callerMessage, user.status == "available" || user.status == "away");
+														popover.progress(function($call) {
+															$callPopup = $call;
+															$callPopup.callId = callId;
+															$callPopup.callState = update.callState;
+														}); 
+														popover.done(function(msg) {
+															log(">>> User " + msg + " call " + callId);
+															var longTitle = self.getTitle() + " " + self.getCallTitle();
+															var link = settings.callUri + "/" + callId;
+															var callWindow = webConferencing.showCallPopup(link, longTitle);
+															// Tell the window to start the call  
+															onCallWindowReady(callWindow).done(function() {
+																log(">>>> Call page loaded " + callId);
+																callWindow.document.title = "Call with " + call.owner.title;
+																//setTimeout(function() {
+																callWindow.eXo.webConferencing.startCall(call).done(function(state) {
+																	log("<<<< Call " + state + " " + callId);
+																	lockCallButton(callId, callerId, callerRoom);
+																}).fail(function(err) {
+																	webConferencing.showError("Error starting call", err);
+																});
+																//}, 5000); // XXX 5sec Experimental value guessed from logs
 															});
-															//}, 5000); // XXX 5sec Experimental value guessed from logs
 														});
-													});
-													popover.fail(function(err) {
-														if ($callPopup.callState != "stopped" && $callPopup.callState != "joined") {
-															log("<<< User " + err + ($callPopup.callState ? " just " + $callPopup.callState : "") + " call " + callId + ", deleting it.");
-															deleteCall(callId);
+														popover.fail(function(err) {
+															if ($callPopup.callState != "stopped" && $callPopup.callState != "joined") {
+																log("<<< User " + err + ($callPopup.callState ? " just " + $callPopup.callState : "") + " call " + callId + ", deleting it.");
+																deleteCall(callId);
+															}
+														});
+													}).fail(function(err, status) {
+														log(">>> User status error: " + JSON.stringify(err) + " [" + status + "]");
+														if (err) {
+															webConferencing.showError("Incoming call error", webConferencing.errorText(err));
+														} else {
+															webConferencing.showError("Incoming call error", "Error read user status information from the server");
 														}
 													});
 												}).fail(function(err, status) {
