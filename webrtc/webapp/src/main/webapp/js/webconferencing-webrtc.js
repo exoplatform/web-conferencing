@@ -178,7 +178,7 @@
 											+ " class='webrtcCallAction'>"
 											+ "<i class='uiIconVideo uiIconLightGray'></i>" // uiIconWebrtcCall
 											+ "<span class='callTitle'>" + self.getCallTitle() + "</span></a>");
-								var longTitle = self.getTitle() + " " + self.getCallTitle();
+								var longTitle = "Call to " + self.getCallTitle();
 								setTimeout(function() {
 									if (!$button.hasClass("btn")) {
 										// in dropdown show longer description

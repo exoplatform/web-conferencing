@@ -336,14 +336,14 @@ if (eXo.webConferencing) {
 								// Save user state for audio/video mute in local storage
 								//localStorage.removeItem(TOKEN_STORE);
 								//localStorage.setItem(TOKEN_STORE, JSON.stringify(token));
-								var mediaStateKey = function(name) {
+								var preferenceKey = function(name) {
 									return currentUserId + "@exo.webconferencing.webrtc." + name;
 								};
-								var saveMediaState = function(name, state) {
-									localStorage.setItem(mediaStateKey(name), state);
+								var savePreference = function(name, value) {
+									localStorage.setItem(preferenceKey(name), value);
 								};
-								var getMediaState = function(name) {
-									return localStorage.getItem(mediaStateKey(name));
+								var getPreference = function(name) {
+									return localStorage.getItem(preferenceKey(name));
 								};
 								
 								// Subscribe to user calls to know if this call updated/stopped remotely
@@ -680,29 +680,43 @@ if (eXo.webConferencing) {
 										localVideo.srcObject = localStream;
 										$localVideo.addClass("active");
 										
-										var $muteAudio = $controls.find("#mute-audio");
-										$muteAudio.click(function() {
+										var enableAudio = function(newValue) {
+											var enabled;
 											var audioTracks = localStream.getAudioTracks();
 											if (audioTracks.length > 0) {
 												for (var i = 0; i < audioTracks.length; ++i) {
-													audioTracks[i].enabled = !audioTracks[i].enabled;
+													audioTracks[i].enabled = typeof newValue == "boolean" ? newValue : !audioTracks[i].enabled;
 											  }
-												$muteAudio.toggleClass("on");
-												saveMediaState("audio.disable", true);
-												log("Audio " + (audioTracks[0].enabled ? "un" : "") + "muted for " + callId);
+												enabled = typeof newValue == "boolean" ? newValue : audioTracks[0].enabled;
+											} else {
+												enabled = typeof newValue == "boolean" ? newValue : true;
 											}
+											log("Audio " + (enabled ? "un" : "") + "muted for " + callId);
+											return enabled;
+										};
+										var $muteAudio = $controls.find("#mute-audio");
+										$muteAudio.click(function() {
+											savePreference("audio.disable", new String(!enableAudio()));
+											$muteAudio.toggleClass("on");
 										});
-										var $muteVideo = $controls.find("#mute-video");
-										$muteVideo.click(function() {
+										var enableVideo = function(newValue) {
+											var enabled;
 											var videoTracks = localStream.getVideoTracks();
 											if (videoTracks.length > 0) {
 												for (var i = 0; i < videoTracks.length; ++i) {
-													videoTracks[i].enabled = !videoTracks[i].enabled;
+													videoTracks[i].enabled = typeof newValue == "boolean" ? newValue : !videoTracks[i].enabled;
 											  }
-												$muteVideo.toggleClass("on");
-												saveMediaState("video.disable", true);
-												log("Video " + (videoTracks[0].enabled ? "un" : "") + "muted for " + callId);									
+												enabled = typeof newValue == "boolean" ? newValue : videoTracks[0].enabled;
+											} else {
+												enabled = typeof newValue == "boolean" ? newValue : true;
 											}
+											log("Video " + (enabled ? "un" : "") + "muted for " + callId);
+											return enabled;
+										};
+										var $muteVideo = $controls.find("#mute-video");
+										$muteVideo.click(function() {
+											savePreference("video.disable", new String(!enableVideo()));
+											$muteVideo.toggleClass("on");
 										});
 
 									  log("Starting call " + callId + " > " + new Date().toLocaleString());
@@ -723,19 +737,22 @@ if (eXo.webConferencing) {
 												});
 							  			});
 									  }
-									  // TODO should we do this only on connection done, in the resolved promise below?
-								  	// if user had saved audio/video disabled, mute them accordingly
-								  	if (getMediaState("audio.disable")) {
-								  		$muteAudio.click();
-								  	}
-								  	if (getMediaState("video.disable")) {
-								  		$muteVideo.click();
-								  	}
-									  connection.then(function() {
-									  	webrtc.joinedCall(callId).done(function() {
-									  		log("<<< Joined the call " + callId);
-									  	});
-									  });
+										// TODO should we do this only on connection done, in the resolved promise below?
+										// if user had saved audio/video disabled, mute them accordingly
+										if (getPreference("audio.disable") == "true") {
+											enableAudio(false);
+											$muteAudio.addClass("on");
+										}
+										if (getPreference("video.disable") == "true") {
+											enableVideo(false);
+											$muteVideo.addClass("on");
+										}
+										connection.then(function() {
+											webrtc.joinedCall(callId).done(function() {
+												getPreference("audio.disable");
+												log("<<< Joined the call " + callId);
+											});
+										});
 									}).catch(function(err) {
 										// errorCallback
 										log(">> User media error: " + err + ", " + JSON.stringify(err), err);  
