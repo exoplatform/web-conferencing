@@ -178,7 +178,7 @@
 											+ " class='webrtcCallAction'>"
 											+ "<i class='uiIconVideo uiIconLightGray'></i>" // uiIconWebrtcCall
 											+ "<span class='callTitle'>" + self.getCallTitle() + "</span></a>");
-								var longTitle = "Call to " + self.getCallTitle();
+								var longTitle = self.getTitle() + " " + self.getCallTitle();
 								setTimeout(function() {
 									if (!$button.hasClass("btn")) {
 										// in dropdown show longer description
@@ -201,7 +201,7 @@
 										// Tell the window to start the call  
 										onCallWindowReady(callWindow).done(function() {
 											log(">>> Call page loaded for " + callId);
-											callWindow.document.title = longTitle + ": " + target.title;
+											callWindow.document.title = "Call to " + target.title;
 											// Timeout used for debug only - could be removed in production
 											//setTimeout(function() {
 											callWindow.eXo.webConferencing.startCall(call).done(function(state) {
