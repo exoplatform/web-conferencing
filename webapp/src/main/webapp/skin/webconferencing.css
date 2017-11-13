@@ -31,7 +31,7 @@
   
   font-size: 16px;
   position: relative;
-  top: 3px;
+  top: 2px;
 }
 
 .callButtonIconVideo:before {
@@ -44,20 +44,15 @@
 	display: inline-block;
 	vertical-align: middle;
 	white-space: nowrap;
-	font-size: 12px;
 }
 
 .callButtonContainer .btn {
 	min-width: 0;
 }
 
-.callButton > i:before {
-	/*font-size: 1px; when use font for icon, use inherited value */
-}
-
 .callButton .callTitle {
 	position: relative;
-    top: 1px;
+  top: 1px;
 }
 
 .spaceCall {
@@ -73,44 +68,35 @@
 	margin-left: 4px;
 }
 
-/*
- * We give class defaultCallButton properties of btn-group for such things as border, 
- * but other will be omitted to don't be affected by its CSS from PLF core. 
- */
-.callButtonContainer .dropdown-toggle {
-	-webkit-border-radius: 0 3px 3px 0;
-	-moz-border-radius: 0 3px 3px 0;
-	border-radius: 0 3px 3px 0;
-	/*padding-left: 5px;*/
-	/*padding-right: 5px;*/
-	margin-left: -1px !important;
-	/*font-size: 12px;*/
-}
-
-.defaultCallButton {
-	-webkit-border-radius: 3px 0 0 3px;
-	-moz-border-radius: 3px 0 0 3px;
-	border-radius: 3px 0 0 3px;
-}
-
-.defaultCallButton.popoverCall {
-	margin-right: 0px;
+.callButton.spaceCall {
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
 }
 
 .callButtonContainer .uiIconMiniArrowDown {
 	vertical-align: text-bottom;
 }
 
-.miniChatCall > .uiIconVideo {
-	font-size: 12px !important;
-}
-
-.miniChatCall:hover .uiIconVideo {
+.miniChatCall .callButtonIconVideo, .miniChatCall:hover .callButtonIconVideo {
+	font-size: 18px !important;
 	color:#ffffff;
 }
 
 #tiptip_content .connectAction>.callButtonSibling, #tiptip_content .connectAction>.callButtonContainer {
 	margin-top: 1ch !important;
+}
+
+.popoverCall {
+	/*text-align: initial !important;*/
+}
+
+#tiptip_content .connectAction .callButton {
+	text-align: left;
+}
+
+#tiptip_content .callButtonContainer > .btn {
+	padding: 5px 15px;
 }
 
 #UIBreadCrumbsNavigationPortlet .callButtonContainer {
@@ -119,14 +105,20 @@
 
 .callButtonContainerWrapper {
 	margin-top: 15px;
-    margin-right: 10px;
+  margin-right: 10px;
 }
 
-/***** Transparent styles (for space avatar, CSS class will be triggered by Javascript) *******/
-.transparentButton, .transparentButton + .dropdown-toggle {
+/***** Transparent styles (for space avatar and mini-chat, the transparentButton class will be triggered by Javascript) *******/
+.transparentButton, .miniChatCall /*, .transparentButton + .dropdown-toggle*/ {
 	background: transparent;
 	border: solid 1px transparent;
 	box-shadow: none;
+}
+
+.uiActionWithLabel.miniChatCall:hover:active, .uiActionWithLabel.miniChatCall:hover:focus {
+	background: transparent !important;
+	border: solid 1px transparent !important;
+	box-shadow: none !important;
 }
 
 /***** Disabled styles *******/
@@ -159,6 +151,14 @@
     -ms-animation: blink 1.5s linear infinite;
     -o-animation: blink 1.5s linear infinite;
     animation: blink 1.5s linear infinite;
+}
+
+@media (max-width: 480px) {
+	.uiAction .callButtonContainer {
+    display: block;
+    margin: 5px auto!important;
+    width: 100%;
+	}
 }
 
 /******** Pnotify icons ********/

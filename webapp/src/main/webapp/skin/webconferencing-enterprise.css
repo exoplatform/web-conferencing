@@ -2,27 +2,24 @@
 /* 
  * Web Conferencing style for Enterprise skin (for Platform 5.0) 
  */
-.btn.chatCall {
-	padding: 6px 20px;
+ 
+.callButtonContainer {
+	font-size: 15px;
+}
+ 
+.callButton.chatCall {
+	padding: 4px 16px;
 }
 
-.btn.chatCall.defaultCallButton ~ .dropdown-toggle {
-	padding: 6px 5px;
-}
-
-.callButtonContainerWrapper {
-	margin-top: 12px;
-    margin-right: 10px;
-}
-
-@media (max-width: 640px) {
-	.btn.chatCall {
-		padding: 4px 10px;
+@media (min-width: 481px) {
+	.popoverCall {
+		/*text-align: initial !important;*/
 	}
-	
-	.btn.chatCall.defaultCallButton ~ .dropdown-toggle {
-		padding-top: 4px;
-    	padding-bottom: 4px;
+}
+
+@media (max-width: 480px) {
+	.popoverCall {
+		text-align: center !important;
 	}
 }
 
@@ -32,30 +29,25 @@
 	box-shadow: none !important;
 }
 
-.transparentButton .callTitle {
-	color: #fff;
+.transparentButton .callButtonTitle {
+	color: #ffffff;
 }
 
 /* Call button is more narrow in spaces */
-.btn.spaceCall, .spaceCall, .defaultCallButton.spaceCall + .dropdown-toggle {
+.callButton.spaceCall {
 	padding: 1px 5px !important;
 	font-size: 12px;
 	line-height: 24px;
 }
 
-.dropdown-menu .spaceCall {
-	margin-left: 5px;
+.spaceCall > i, .spaceCall > .callButtonTitle {
+	color: #ffffff;
 }
 
-.defaultCallButton.spaceCall + .dropdown-menu li > a {
-    padding: 5px 10px;
-    font-size: 12px;
+.spaceCall:hover > i, .spaceCall:hover  > .callButtonTitle {
+	color: inherit;
 }
 
 #UIBreadCrumbsNavigationPortlet .callButtonContainer {
 	padding-top: 3px;
-}
-
-.callButtonContainer .dropdown-menu .popoverCall {
-	text-align: initial !important;
 }

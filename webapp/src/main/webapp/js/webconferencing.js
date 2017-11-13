@@ -699,11 +699,10 @@
 								if (addDropdown && $dropdown.length > 0) {
 									// Complete dropdown as a Call button: build toggle and append all this to the container
 									// TODO i18n for Call title
-									// TODO CSS for Call Button as in BTN_01..BTN_04
-									// TODO use defaultCallButton or another logic?
-									var $toggle = $("<button class='btn defaultCallButton' data-toggle='dropdown'>" + // dropdown-toggle 
+									var $toggle = $("<button class='btn' data-toggle='dropdown'>" + // dropdown-toggle 
 											"<i class='callButtonIconVideo'></i><span class='callButtonTitle'>Call</span>" +
 											"<i class='uiIconMiniArrowDown uiIconLightGray'></i></span></button>");
+									$toggle.addClass(buttonClass);
 									// move first button to the dropdown as first element
 									$container.find(".btn." + buttonClass).each(function(index, elem) {
 										var $btn = $(elem);
@@ -716,21 +715,6 @@
 									$container.append($toggle);
 									$container.append($dropdown);
 								}
-								/*if (buttons.length > 0) {
-									var $allButtons = $container.find("." + buttonClass);
-									if ($allButtons.length > 1) {
-										// ensure first button of all is a default one (for CSS)
-										var $firstButon = $allButtons.first();
-										if (!$firstButon.hasClass("defaultCallButton")) {
-											$firstButon.addClass("defaultCallButton");
-										}
-										// TODO add default icon, e.g. uiIconVideo 
-									}
-									$container.show();
-									initializer.resolve($container);
-								} else {
-									initializer.reject("Nothing added");
-								}*/
 								$container.show();
 								initializer.resolve($container);
 			        });
@@ -897,7 +881,7 @@
 									}
 									var initializer = addCallButton($wrapper, chatContext);
 									initializer.done(function($container) {
-										$container.find(".callButton").addClass("chatCall");
+										$container.find(".callButton").first().addClass("pull-right chatCall");
 										$container.find(".dropdown-menu").addClass("pull-right");
 										$wrapper.show();
 										log("<< initChat DONE " + roomTitle + " for " + currentUser.id);
@@ -951,95 +935,101 @@
 			if (typeof chatApplication === "undefined" && $fullName.length > 0 && chatNotification) {
 				var addMiniChatCallButton = function() {
 					log(">> initMiniChat for " + currentUser.id);
-					var roomTitle = $fullName.text().trim();
-					if ($titleBar.length > 0 && roomTitle.length > 0) {
-						$titleBar.find(".callButtonContainer").remove(); // clean the previous state, if have one
-						// Wait a bit for completing Chat workers
-						setTimeout(function() {
-							var chatUserId = $miniChat.data("username");
-							
-							var roomId = jzGetParam(chatNotification.sessionId + "miniChatRoom");
-							var chatType = jzGetParam(chatNotification.sessionId + "miniChatType");
-							
-							var isSpace = roomId && roomId.startsWith("space-");
-							var isTeam = roomId && roomId.startsWith("team-");
-							var isGroup = isSpace || isTeam;
-							var isP2P = !isGroup && chatType == "username";
-							
-							var roomName = roomTitle.toLowerCase().split(" ").join("_");
-							var miniChatContext = {
-								currentUser : currentUser,
-								roomId : roomId,
-								roomName : roomName,
-								roomTitle : roomTitle,
-								isGroup : isGroup,
-								isIOS : isIOS,
-								isAndroid : isAndroid,
-								isWindowsMobile : isWindowsMobile,
-								details : function() {
-									var data = $.Deferred();
-								  if (isGroup) {
-								  	if (isSpace) {
-								  		var spaceId = roomName; // TODO is it right?
-									  	getSpaceInfoReq(spaceId).done(function(space) { // TODO use getSpaceInfo() for caching spaces
-									  		data.resolve(space);
-									  	}).fail(function(e, status) {
-									  		if (typeof(status) == "number" && status == 404) {
-													log(">> miniChatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
-												} else {
-													log(">> miniChatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + JSON.stringify(e));
-												}
-									  		data.reject(e);
-											});
-								  	} else {
-								  		log(">> miniChatContext < ERROR unexpected chat type '" + chatType + "' and room id '" + roomId + "' for " + currentUser.id + ": " + JSON.stringify(e));
-								  		data.reject("Unexpected chat type: " + chatType);
-								  	}
-									} else {
-										// roomId is an user name for P2P chats
-										getUserInfoReq(roomId).done(function(user) {
-											data.resolve(user);												
-										}).fail(function(e, status) {
-											if (typeof(status) == "number" && status == 404) {
-												var msg = (e.message ? e.message + " " : "Not found ");
-												log(">> miniChatContext < ERROR get_user " + msg + " for " + currentUser.id + ": " + JSON.stringify(e));
-												data.reject(msg);
-											} else {
-												log(">> miniChatContext < ERROR get_user : " + JSON.stringify(e));
-												data.reject(e);
-											}
-										});
-									}
-									return data.promise();
-								}
-							};
-							
-							if (isSpace) {
-								currentSpaceId = roomName;
-								currentRoomTitle = roomTitle;
-							} else {
-								currentSpaceId = null;
-								currentRoomTitle = roomTitle;
-							}
-							
-							var $wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");
-							var initializer = addCallButton($wrapper, miniChatContext);
-							initializer.done(function($container) {
-								var $button = $container.find(".callButton");
-								$button.find(".callTitle").remove();
-								$button.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
-								$button.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
-								$container.find(".dropdown-menu").addClass("pull-right");
-								//
-								$titleBar.prepend($wrapper);
-								log("<< initMiniChat DONE " + roomTitle + " for " + currentUser.id);
-							});
-							initializer.fail(function(error) {
-								log("<< initMiniChat ERROR " + roomTitle + " for " + currentUser.id + ": " + error);
-							});
-						}, 1500);
+					if ($miniChat.data("minichatcallinitialized")) {
+						log("<< initMiniChat CANCELED < Already initialized for " + currentUser.id);
 					} else {
-						log("<< initMiniChat CANCELED mini-chat not found or empty");
+						var roomTitle = $fullName.text().trim();
+						if ($titleBar.length > 0 && roomTitle.length > 0) {
+							$miniChat.data("minichatcallinitialized", true);
+							$titleBar.find(".callButtonContainer").remove(); // clean the previous state, if have one
+							// Wait a bit for completing Chat workers
+							setTimeout(function() {
+								var chatUserId = $miniChat.data("username");
+								
+								var roomId = jzGetParam(chatNotification.sessionId + "miniChatRoom");
+								var chatType = jzGetParam(chatNotification.sessionId + "miniChatType");
+								
+								var isSpace = roomId && roomId.startsWith("space-");
+								var isTeam = roomId && roomId.startsWith("team-");
+								var isGroup = isSpace || isTeam;
+								var isP2P = !isGroup && chatType == "username";
+								
+								var roomName = roomTitle.toLowerCase().split(" ").join("_");
+								var miniChatContext = {
+									currentUser : currentUser,
+									roomId : roomId,
+									roomName : roomName,
+									roomTitle : roomTitle,
+									isGroup : isGroup,
+									isIOS : isIOS,
+									isAndroid : isAndroid,
+									isWindowsMobile : isWindowsMobile,
+									details : function() {
+										var data = $.Deferred();
+									  if (isGroup) {
+									  	if (isSpace) {
+									  		var spaceId = roomName; // TODO is it right?
+										  	getSpaceInfoReq(spaceId).done(function(space) { // TODO use getSpaceInfo() for caching spaces
+										  		data.resolve(space);
+										  	}).fail(function(e, status) {
+										  		if (typeof(status) == "number" && status == 404) {
+														log(">> miniChatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
+													} else {
+														log(">> miniChatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + JSON.stringify(e));
+													}
+										  		data.reject(e);
+												});
+									  	} else {
+									  		log(">> miniChatContext < ERROR unexpected chat type '" + chatType + "' and room id '" + roomId + "' for " + currentUser.id + ": " + JSON.stringify(e));
+									  		data.reject("Unexpected chat type: " + chatType);
+									  	}
+										} else {
+											// roomId is an user name for P2P chats
+											getUserInfoReq(roomId).done(function(user) {
+												data.resolve(user);												
+											}).fail(function(e, status) {
+												if (typeof(status) == "number" && status == 404) {
+													var msg = (e.message ? e.message + " " : "Not found ");
+													log(">> miniChatContext < ERROR get_user " + msg + " for " + currentUser.id + ": " + JSON.stringify(e));
+													data.reject(msg);
+												} else {
+													log(">> miniChatContext < ERROR get_user : " + JSON.stringify(e));
+													data.reject(e);
+												}
+											});
+										}
+										return data.promise();
+									}
+								};
+								
+								if (isSpace) {
+									currentSpaceId = roomName;
+									currentRoomTitle = roomTitle;
+								} else {
+									currentSpaceId = null;
+									currentRoomTitle = roomTitle;
+								}
+								
+								var $wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");
+								var initializer = addCallButton($wrapper, miniChatContext);
+								initializer.done(function($container) {
+									var $button = $container.find(".callButton").first();
+									$button.find(".callButtonTitle, .uiIconMiniArrowDown").remove();
+									$button.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
+									$button.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
+									$container.find(".dropdown-menu").addClass("pull-right");
+									//
+									$titleBar.prepend($wrapper);
+									log("<< initMiniChat DONE " + roomTitle + " for " + currentUser.id);
+								});
+								initializer.fail(function(error) {
+									log("<< initMiniChat ERROR " + roomTitle + " for " + currentUser.id + ": " + error);
+									$miniChat.removeData("minichatcallinitialized");
+								});
+							}, 1000);
+						} else {
+							log("<< initMiniChat CANCELED mini-chat not found or empty");
+						}
 					}
 				};
 				addMiniChatCallButton();
@@ -1094,7 +1084,7 @@
 			var addUserButton = function($userAction, userId) {
 				var initializer = addCallButton($userAction, userContext(userId));
 				initializer.done(function($container) {
-					$container.find(".callButton").addClass("popoverCall");
+					$container.find(".callButton").first().addClass("popoverCall");
 					log("<< initUserPopups DONE " + userId + " for " + currentUser.id);
 				});
 				initializer.fail(function(error) {
@@ -1248,7 +1238,7 @@
 			var addSpaceButton = function($spaceAction, spaceId) {
 				var initializer = addCallButton($spaceAction, spaceContext(spaceId));
 				initializer.done(function($container) {
-					$container.find(".callButton").addClass("popoverCall");
+					$container.find(".callButton").first().addClass("popoverCall");
 					log("<< initSpacePopups DONE " + spaceId + " for " + currentUser.id);
 				});
 				initializer.fail(function(error) {
