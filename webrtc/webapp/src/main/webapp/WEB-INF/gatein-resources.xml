@@ -80,14 +80,14 @@
   
   <module>
     <name>webrtcAdapter</name>
-    <load-group>webConferencingGRP</load-group>
+    <load-group>webConferencingWebrtcGRP</load-group>
     <script>
       <path>/js/adapter-5.0.4.js</path>
     </script>
   </module>
   <module>
     <name>webConferencing_webrtc</name>
-    <load-group>webConferencingGRP</load-group>
+    <load-group>webConferencingWebrtcGRP</load-group>
     <script>
       <path>/js/webconferencing-webrtc.js</path>
     </script>

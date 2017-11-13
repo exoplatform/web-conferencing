@@ -176,7 +176,7 @@
 								// TODO i18n for title
 								var $button = $("<a id='" + linkId + "' title='" + target.title + "'"
 											+ " class='webrtcCallAction'>"
-											+ "<i class='uiIconVideo uiIconLightGray'></i>" // uiIconWebrtcCall
+											+ "<i class='callButtonIconVideo uiIconLightGray'></i>" // uiIconWebrtcCall
 											+ "<span class='callTitle'>" + self.getCallTitle() + "</span></a>");
 								var longTitle = self.getTitle() + " " + self.getCallTitle();
 								setTimeout(function() {
@@ -389,7 +389,7 @@
 													call.title = call.owner.title; // for callee the call title is a caller name
 													//
 													webConferencing.getUserStatus(currentUserId).done(function(user) {
-														var popover = acceptCallPopover(callerLink, callerAvatar, callerMessage, user.status == "available" || user.status == "away");
+														var popover = acceptCallPopover(callerLink, callerAvatar, callerMessage, !user || user.status == "available" || user.status == "away");
 														popover.progress(function($call) {
 															$callPopup = $call;
 															$callPopup.callId = callId;

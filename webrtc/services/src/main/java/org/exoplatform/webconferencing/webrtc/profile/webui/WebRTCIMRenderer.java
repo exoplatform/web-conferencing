@@ -35,6 +35,7 @@ import org.exoplatform.webui.application.WebuiRequestContext;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: WebRTCIMRenderer.java 00000 May 4, 2017 pnedonosko $
  */
+@Deprecated // TODO not used
 public class WebRTCIMRenderer extends UIIMControlRenderer {
 
   /**

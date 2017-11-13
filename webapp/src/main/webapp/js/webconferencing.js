@@ -701,11 +701,11 @@
 									// TODO i18n for Call title
 									// TODO CSS for Call Button as in BTN_01..BTN_04
 									// TODO use defaultCallButton or another logic?
-									var $toggle = $("<button class='btn dropdown-toggle defaultCallButton' data-toggle='dropdown'>" +
-											"<i class='uiIconVideo'></i><span class='callButtonTitle'>Call</span>" +
+									var $toggle = $("<button class='btn defaultCallButton' data-toggle='dropdown'>" + // dropdown-toggle 
+											"<i class='callButtonIconVideo'></i><span class='callButtonTitle'>Call</span>" +
 											"<i class='uiIconMiniArrowDown uiIconLightGray'></i></span></button>");
 									// move first button to the dropdown as first element
-									$container.find("btn " + buttonClass).each(function(index, elem) {
+									$container.find(".btn." + buttonClass).each(function(index, elem) {
 										var $btn = $(elem);
 										$btn.removeClass("btn");
 										var $li = $("<li></li>");
@@ -873,10 +873,10 @@
 												get.fail(function(e, status) {
 													if (typeof(status) == "number" && status == 404) {
 														var msg = (e.message ? e.message + " " : "Not found ");
-														log(">> initChat < ERROR get_user " + msg + " for " + currentUser.id + ": " + JSON.stringify(e));
+														log(">> chatContext < ERROR get_user " + msg + " for " + currentUser.id + ": " + JSON.stringify(e));
 														data.reject(msg);
 													} else {
-														log(">> initChat < ERROR get_user : " + JSON.stringify(e));
+														log(">> chatContext < ERROR get_user : " + JSON.stringify(e));
 														data.reject(e);
 														// TODO notify the user?
 													}
@@ -885,33 +885,29 @@
 											return data.promise();
 										}
 									};
-									
-									var addRoomCallButton = function() {
-										var initializer = addCallButton($wrapper, chatContext);
-										initializer.done(function($container) {
-											$container.find(".callButton").addClass("chatCall");
-											$container.find(".dropdown-menu").addClass("pull-right");
-											$wrapper.show();
-											log("<< initChat DONE " + roomTitle + " for " + currentUser.id);
-										});
-										initializer.fail(function(error) {
-											log("<< initChat ERROR " + roomTitle + " for " + currentUser.id + ": " + error);
-											if (error.indexOf("Nothing added") < 0) {
-												$roomDetail.removeData("roomcallinitialized");
-											}
-										});										
-									};
+
 									if (isSpace) {
-										currentRoomTitle = roomTitle;
 										// XXX here we use the same technique as in chat.js's loadRoom(), 
 										// here space pretty name is an ID
-										var spaceId = roomTitle.toLowerCase().split(" ").join("_");
-										currentSpaceId = spaceId;
+										currentSpaceId = roomName;
+										currentRoomTitle = roomTitle;
 									} else if (isTeam) {
 										currentSpaceId = null;
 										currentRoomTitle = roomTitle;
 									}
-									addRoomCallButton();
+									var initializer = addCallButton($wrapper, chatContext);
+									initializer.done(function($container) {
+										$container.find(".callButton").addClass("chatCall");
+										$container.find(".dropdown-menu").addClass("pull-right");
+										$wrapper.show();
+										log("<< initChat DONE " + roomTitle + " for " + currentUser.id);
+									});
+									initializer.fail(function(error) {
+										log("<< initChat ERROR " + roomTitle + " for " + currentUser.id + ": " + error);
+										if (error.indexOf("Nothing added") < 0) {
+											$roomDetail.removeData("roomcallinitialized");
+										}
+									});
 								} else {
 									log("ERROR: Chat team dropdown not found");
 									$roomDetail.removeData("roomcallinitialized");
@@ -945,6 +941,120 @@
 					});
 				}
 			});
+		};
+		
+		var initMiniChat = function() {
+			var $miniChat = $(".mini-chat").first();
+			var $fullName = $miniChat.find(".fullname");
+			var $titleBar = $miniChat.find(".title-right");
+			// Init mini-chat
+			if (typeof chatApplication === "undefined" && $fullName.length > 0 && chatNotification) {
+				var addMiniChatCallButton = function() {
+					log(">> initMiniChat for " + currentUser.id);
+					var roomTitle = $fullName.text().trim();
+					if ($titleBar.length > 0 && roomTitle.length > 0) {
+						$titleBar.find(".callButtonContainer").remove(); // clean the previous state, if have one
+						// Wait a bit for completing Chat workers
+						setTimeout(function() {
+							var chatUserId = $miniChat.data("username");
+							
+							var roomId = jzGetParam(chatNotification.sessionId + "miniChatRoom");
+							var chatType = jzGetParam(chatNotification.sessionId + "miniChatType");
+							
+							var isSpace = roomId && roomId.startsWith("space-");
+							var isTeam = roomId && roomId.startsWith("team-");
+							var isGroup = isSpace || isTeam;
+							var isP2P = !isGroup && chatType == "username";
+							
+							var roomName = roomTitle.toLowerCase().split(" ").join("_");
+							var miniChatContext = {
+								currentUser : currentUser,
+								roomId : roomId,
+								roomName : roomName,
+								roomTitle : roomTitle,
+								isGroup : isGroup,
+								isIOS : isIOS,
+								isAndroid : isAndroid,
+								isWindowsMobile : isWindowsMobile,
+								details : function() {
+									var data = $.Deferred();
+								  if (isGroup) {
+								  	if (isSpace) {
+								  		var spaceId = roomName; // TODO is it right?
+									  	getSpaceInfoReq(spaceId).done(function(space) { // TODO use getSpaceInfo() for caching spaces
+									  		data.resolve(space);
+									  	}).fail(function(e, status) {
+									  		if (typeof(status) == "number" && status == 404) {
+													log(">> miniChatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
+												} else {
+													log(">> miniChatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + JSON.stringify(e));
+												}
+									  		data.reject(e);
+											});
+								  	} else {
+								  		log(">> miniChatContext < ERROR unexpected chat type '" + chatType + "' and room id '" + roomId + "' for " + currentUser.id + ": " + JSON.stringify(e));
+								  		data.reject("Unexpected chat type: " + chatType);
+								  	}
+									} else {
+										// roomId is an user name for P2P chats
+										getUserInfoReq(roomId).done(function(user) {
+											data.resolve(user);												
+										}).fail(function(e, status) {
+											if (typeof(status) == "number" && status == 404) {
+												var msg = (e.message ? e.message + " " : "Not found ");
+												log(">> miniChatContext < ERROR get_user " + msg + " for " + currentUser.id + ": " + JSON.stringify(e));
+												data.reject(msg);
+											} else {
+												log(">> miniChatContext < ERROR get_user : " + JSON.stringify(e));
+												data.reject(e);
+											}
+										});
+									}
+									return data.promise();
+								}
+							};
+							
+							if (isSpace) {
+								currentSpaceId = roomName;
+								currentRoomTitle = roomTitle;
+							} else {
+								currentSpaceId = null;
+								currentRoomTitle = roomTitle;
+							}
+							
+							var $wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");
+							var initializer = addCallButton($wrapper, miniChatContext);
+							initializer.done(function($container) {
+								var $button = $container.find(".callButton");
+								$button.find(".callTitle").remove();
+								$button.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
+								$button.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
+								$container.find(".dropdown-menu").addClass("pull-right");
+								//
+								$titleBar.prepend($wrapper);
+								log("<< initMiniChat DONE " + roomTitle + " for " + currentUser.id);
+							});
+							initializer.fail(function(error) {
+								log("<< initMiniChat ERROR " + roomTitle + " for " + currentUser.id + ": " + error);
+							});
+						}, 1500);
+					} else {
+						log("<< initMiniChat CANCELED mini-chat not found or empty");
+					}
+				};
+				addMiniChatCallButton();
+				// run DOM listener to know when mini chat will be construct (by notif.js script)
+				var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+				var observer = new MutationObserver(function(mutations) {
+					addMiniChatCallButton();
+				});
+				observer.observe($fullName.get(0), {
+					subtree : false,
+					childList : true,
+					attributes : false,
+					characterData : false
+				});
+			}
 		};
 
 		var userContext = function(userId) {
@@ -1263,6 +1373,7 @@
 				initSpacePopups(compId);
 				initSpace();
 				initChat();
+				initMiniChat();
 			}
 		};
 
