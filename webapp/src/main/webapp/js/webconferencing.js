@@ -1014,7 +1014,7 @@
 								var initializer = addCallButton($wrapper, miniChatContext);
 								initializer.done(function($container) {
 									var $button = $container.find(".callButton").first();
-									$button.find(".callButtonTitle, .uiIconMiniArrowDown").remove();
+									$button.children(".callButtonTitle, .callTitle, .uiIconMiniArrowDown").remove();
 									$button.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
 									$button.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
 									$container.find(".dropdown-menu").addClass("pull-right");
