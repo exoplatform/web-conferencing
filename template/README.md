@@ -16,21 +16,21 @@ Below a main features that the project offers in code:
 
 All the template code has helpful comments in the code - follow them to transform the template in your connector.
 
-You may want to build a connector and deploy to your eXo Platform server to see how it appears and generate an idea of your implementation. Afte successful build find in _/template/packaging/target_ file {{web-conferencing-myconnector.zip}}, extract it to the Platform root folder and start the server.
+You may want to build a connector and deploy to your eXo Platform server to see how it appears and generate an idea of your implementation. Afte successful build find in _/template/packaging/target_ file _web-conferencing-myconnector.zip_, extract it to the Platform root folder and start the server.
 
 ## Java API
 
-First place where to start developing in the template project, it's connector provider class: {{MyConnectorProvider}} it extends {{CallProvider}} and offers a type, title, all supported types (if actual) and a version of the connector. You can add any number of additional fields to this class - al them will be serialized to JSON and transfered to Javascript client when Web Conferencing load the connector. This serialization will be done from {{MyConnectorSettings}} instance which provided by {{getSettings()}} method and used in related servlet and portlet of the connector. 
+First place where to start developing in the template project, it's connector provider class: _MyConnectorProvider_ it extends _CallProvider_ and offers a type, title, all supported types (if actual) and a version of the connector. You can add any number of additional fields to this class - al them will be serialized to JSON and transfered to Javascript client when Web Conferencing load the connector. This serialization will be done from _MyConnectorSettings_ instance which provided by _getSettings()_ method and used in related servlet and portlet of the connector. 
 Connector provider also is responsible for reading a configuration from XML file and keeping it up to date in runtime in case of changes (e.g. by admininistrator).
 
-User profile IM type is in {{MyConnectorIMRenderer}}. 
+User profile IM type is in _MyConnectorIMRenderer_. 
 TODO
 
-Template project uses servelt with JSP page for showing a new call page. For a purpose of clean URL it uses a filter {{MyCallFilter}} which will redirect user requests to _/portal/myconnector_ URLs to the servlet.
+Template project uses servelt with JSP page for showing a new call page. For a purpose of clean URL it uses a filter _MyCallFilter_ which will redirect user requests to _/portal/myconnector_ URLs to the servlet.
 
-Call page servlet {{MyCallServlet}} can be used to add additional logic and transfer settings to Javascript client (see _call.jsp_).
+Call page servlet _MyCallServlet_ can be used to add additional logic and transfer settings to Javascript client (see _call.jsp_).
 
-Portlet class {{MyConnectorPortlet}} is for initializing Javascript module (_webconferencing-myconnector.js_) wich will add call buttons on the Platform pages and handle incoming calls from other users.
+Portlet class _MyConnectorPortlet_ is for initializing Javascript module (_webconferencing-myconnector.js_) wich will add call buttons on the Platform pages and handle incoming calls from other users.
 
 ## Javascript API
 
