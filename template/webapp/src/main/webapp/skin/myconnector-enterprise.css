@@ -1,0 +1,9 @@
+/* Styles for My Connector in Enterprise Skin */
+
+.uiIconSocMyconnector:before {
+	content: "\e829";
+}
+
+.uiIconMyCall:before {
+	top: -1px;
+}

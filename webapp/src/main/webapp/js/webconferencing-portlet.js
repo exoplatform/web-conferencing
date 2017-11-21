@@ -5,21 +5,6 @@
 (function($, webConferencing) {
 	"use strict";
 
-	var getIEVersion = function()
-	// Returns the version of Windows Internet Explorer or a -1
-	// (indicating the use of another browser).
-	{
-		var rv = -1;
-		// Return value assumes failure.
-		if (navigator.appName == "Microsoft Internet Explorer") {
-			var ua = navigator.userAgent;
-			var re = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
-			if (re.exec(ua) != null)
-				rv = parseFloat(RegExp.$1);
-		}
-		return rv;
-	};
-
 	var updater;
 
 	var init = function(user, context) {
@@ -28,7 +13,7 @@
 			webConferencing.init(user, context);
 
 			// and later on DOM changes (when portlets will load by Ajax)
-			var iev = getIEVersion();
+			var iev = webConferencing.getIEVersion();
 			if (iev == -1 || iev >= 11) {
 				// TODO as for IE<11 need use polyfills
 				// http://webcomponents.org/polyfills/

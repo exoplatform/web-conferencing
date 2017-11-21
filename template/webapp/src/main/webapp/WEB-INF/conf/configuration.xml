@@ -24,28 +24,43 @@
   xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd"
   xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
   
-  <!-- WebRTC provider plugin -->
+  <!-- My Connector provider plugin -->
   <external-component-plugins>
     <target-component>org.exoplatform.webconferencing.WebConferencingService</target-component>
     <component-plugin>
-      <name>add.clouddriveprovider</name>
+      <name>add.callprovider</name>
       <set-method>addPlugin</set-method>
-      <type>org.exoplatform.webconferencing.webrtc.WebrtcProvider</type>
+      <type>org.exoplatform.webconferencing.myconnector.MyConnectorProvider</type>
       <init-params>
         <properties-param>
           <name>provider-configuration</name>
-          <property name="disable" value="${webconferencing.webrtc.disable:false}" />
+          <property name="my-apiKey" value="${webconferencing.myconnector.apiKey:myApiKey}" />
+          <property name="my-clientId" value="${webconferencing.myconnector.clientId:myClientId}" />
+          <!-- use /portal/intranet/myconnector by default, it will open a page on intranet site -->
+          <property name="my-serviceUrl" value="${webconferencing.myconnector.serviceUrl:/portal/myconnector}" />
+          <property name="disable" value="${webconferencing.myconnector.disable:false}" />
         </properties-param>
       </init-params>
     </component-plugin>
   </external-component-plugins>
   
+  <!-- 
+    IM type for user profile settings. 
+    It's required when your connector need an IM account and user will fill it in his profile in eXo Platform.
+  -->
+  <external-component-plugins>
+    <target-component>org.exoplatform.social.webui.profile.settings.UserProfileRenderingService</target-component>
+    <component-plugin>
+      <name>profile-im-control-myconnector</name>
+      <set-method>addIMControl</set-method>
+      <type>org.exoplatform.webconferencing.myconnector.profile.webui.MyConnectorIMRenderer</type>
+    </component-plugin>
+  </external-component-plugins>
+  
+  <!-- Add My Connector portlet to portal pages with a toolbar -->
   <external-component-plugins>
     <target-component>org.exoplatform.commons.addons.AddOnService</target-component>
     <component-plugin>
-      <!-- 
-        Add WebRTC portlet to portal pages with a toolbar
-      -->
       <name>addPlugin</name>
       <set-method>addPlugin</set-method>
       <type>org.exoplatform.commons.addons.AddOnPluginImpl</type>
@@ -60,13 +75,13 @@
           <value>middle-topNavigation-container</value>
         </value-param>
         <object-param>
-          <name>WebrtcProviderPortlet</name>
-          <description>WebRTC portlet</description>
+          <name>MyConnectorPortlet</name>
+          <description>Skype portlet</description>
           <object type="org.exoplatform.portal.config.serialize.PortletApplication">
             <field name="state">
               <object type="org.exoplatform.portal.config.model.TransientApplicationState">
                 <field name="contentId">
-                  <string>webrtc/WebrtcProviderPortlet</string>
+                  <string>myconnector/MyConnectorPortlet</string>
                 </field>
               </object>
             </field>
@@ -79,46 +94,27 @@
   <external-component-plugins>
     <target-component>org.exoplatform.web.filter.ExtensibleFilter</target-component>
     <component-plugin>
-      <name>WebRTC Call add-in filters Plugin</name>
+      <name>My Call add-in filters Plugin</name>
       <set-method>addFilterDefinitions</set-method>
       <type>org.exoplatform.web.filter.FilterDefinitionPlugin</type>
       <init-params>
-        <!-- This filter useful for Development/Demo mode, when you deploy snapshot/beta versions and want avoid long browser caching for users -->
-        <object-param>
-          <name>WebRTC Call Resource Filter</name>
-          <object type="org.exoplatform.web.filter.FilterDefinition">
-            <field name="filter">
-              <object type="org.exoplatform.webconferencing.server.filter.ResourceFilter" />
-            </field>
-            <field name="patterns">
-              <collection type="java.util.ArrayList" item-type="java.lang.String">
-                <value>
-                  <string>/js/.*/webrtc.*</string>
-                </value>
-                <value>
-                  <string>/skins/.*/webrtc.*</string>
-                </value>
-              </collection>
-            </field>
-          </object>
-        </object-param>
         <!-- This filter sets URL paths rules for redirection to call servlet -->
         <object-param>
-          <name>WebRTC Call page filter</name>
+          <name>My Call page filter</name>
           <object type="org.exoplatform.web.filter.FilterDefinition">
             <field name="filter">
-              <object type="org.exoplatform.webconferencing.webrtc.server.WebrtcCallFilter" />
+              <object type="org.exoplatform.webconferencing.myconnector.server.MyCallFilter" />
             </field>
             <field name="patterns">
               <collection type="java.util.ArrayList" item-type="java.lang.String">
                 <value>
-                  <string>/webrtc/call/.*</string>
+                  <string>/myconnector/call/.*</string>
                 </value>
                 <value>
-                  <string>/webrtc/call</string>
+                  <string>/myconnector/call</string>
                 </value>
                 <value>
-                  <string>/webrtc/call\?.*</string>
+                  <string>/myconnector/call\?.*</string>
                 </value>
               </collection>
             </field>
@@ -127,7 +123,8 @@
       </init-params>
     </component-plugin>
   </external-component-plugins>
-
+  
+  <!-- i18n resources for My Connector -->
   <external-component-plugins>
     <target-component>org.exoplatform.services.resources.ResourceBundleService</target-component>
     <component-plugin>
@@ -138,13 +135,13 @@
         <values-param>
           <name>init.resources</name>
           <description>Store the following resources into the db for the first launch</description>
-          <value>locale.webrtc.WebRTC</value>
+          <value>locale.myconnector.MyConnector</value>
         </values-param>
         <values-param>
           <name>portal.resource.names</name>
           <description>The properties files of the portal , those file will be merged into one ResoruceBundle
             properties</description>
-          <value>locale.webrtc.WebRTC</value>
+          <value>locale.myconnector.MyConnector</value>
         </values-param>
       </init-params>
     </component-plugin>

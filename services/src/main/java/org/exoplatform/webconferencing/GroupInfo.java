@@ -25,7 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Group abstraction for conversations in eXo video calls.<br>
+ * Represent eXo group for conversations in calls.<br>
  * 
  * Created by The eXo Platform SAS
  * 

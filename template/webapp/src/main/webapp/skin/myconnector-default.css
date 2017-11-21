@@ -1,0 +1,9 @@
+/* Styles for My Connector in Default Skin */
+
+.uiIconSocMyconnector:before {
+	content: "\e829";
+}
+
+.uiIconMyCall {
+	vertical-align: text-bottom;
+}

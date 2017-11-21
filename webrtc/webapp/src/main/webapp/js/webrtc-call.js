@@ -9,25 +9,7 @@ if (eXo.webConferencing) {
 		var objId = Math.floor((Math.random() * 1000) + 1);
 		var logPrefix = "[webrtccall_" + objId + "] ";
 		var log = function(msg, e) {
-			if (typeof console != "undefined" && typeof console.log != "undefined") {
-				var isoTime = " -- " + new Date().toISOString();
-				if (e) {
-					var logText = logPrefix + msg;
-					if (typeof e.toString == "function") {
-						logText += ". Error: " + e.toString();
-					} else if (e.name && e.message) {
-						logText += ". " + e.name + ": " + e.message;
-					} else {
-						logText += ". Cause: " + (typeof e == "string" ? e : JSON.stringify(e));
-					}
-					console.log(logText + isoTime);
-					if (typeof e.stack != "undefined") {
-						console.log(e.stack);
-					}
-				} else {
-					console.log(logPrefix + msg + isoTime);
-				}
-			}
+			webConferencing.log(msg, e, logPrefix);
 		};
 		// log("> Loading at " + location.origin + location.pathname);
 		
@@ -785,5 +767,5 @@ if (eXo.webConferencing) {
 		log("< Loaded at " + location.origin + location.pathname);
 	})(eXo.webConferencing);
 } else {
-	console.log("eXo.webConferencing not defined for webrtc-call.js");
+	window.console && window.console.log("eXo.webConferencing not defined for webrtc-call.js");
 }

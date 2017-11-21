@@ -18,11 +18,10 @@ import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.web.AbstractHttpServlet;
 import org.exoplatform.webconferencing.ContextInfo;
 import org.exoplatform.webconferencing.UserInfo;
+import org.exoplatform.webconferencing.Utils;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.webrtc.WebrtcProvider;
 import org.exoplatform.webconferencing.webrtc.WebrtcSettings;
-import org.exoplatform.webconferencing.webrtc.server.WebrtcCallFilter;
-import org.exoplatform.webconferencing.Utils;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 
@@ -97,15 +96,6 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
           if (remoteUser != null) {
             try {
               // init page scope with settings for webConferencing and WebRTC provider
-
-              String spaceId = httpReq.getParameter("space");
-              if (spaceId == null) {
-                spaceId = EMPTY_STRING;
-              }
-              String roomTitle = httpReq.getParameter("room");
-              if (roomTitle == null) {
-                roomTitle = EMPTY_STRING;
-              }
               ContextInfo context = Utils.getCurrentContext(remoteUser);
               httpReq.setAttribute("contextInfo", asJSON(context));
 
@@ -149,7 +139,7 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
           httpReq.getRequestDispatcher(SERVER_ERROR_PAGE).include(httpReq, httpRes);
         }
       } else {
-        LOG.error("Video Calls service not found for call page and user " + remoteUser);
+        LOG.error("Web Conferencing service not found for call page and user " + remoteUser);
         httpRes.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         httpReq.getRequestDispatcher(SERVER_ERROR_PAGE).include(httpReq, httpRes);
       }

@@ -84,7 +84,7 @@ public class WebConferencingService implements Startable {
   protected static final String USER_CALLS_SCOPE_NAME = "webconferencing.user.calls".intern();
 
   /**
-   * The Class SpaceInfo.
+   * Represent Space in calls.
    */
   public class SpaceInfo extends GroupInfo {
 
@@ -120,7 +120,7 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * The Class RoomInfo.
+   * Represent Chat room in calls.
    */
   public class RoomInfo extends GroupInfo {
 

@@ -30,6 +30,16 @@
 	};
 	//log("> Loading at " + location.origin + location.pathname);
 
+	/** 
+	 * Polyfill ECMAScript 2015's String.startsWith().
+	 * */
+	if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function(searchString, position) {
+      position = position || 0;
+      return this.substr(position, searchString.length) === searchString;
+	  };
+	}
+	
 	// Returns the version of Windows Internet Explorer or a -1
 	// (indicating the use of another browser).
 	var getIEVersion = function() {
@@ -1498,25 +1508,6 @@
 		};
 		
 		/**
-		 * Add style to current document (to the end of head).
-		 */
-		this.loadStyle = function(cssUrl) {
-			if (document.createStyleSheet) {
-				document.createStyleSheet(cssUrl); // IE way
-			} else {
-				if ($("head").find("link[href='"+cssUrl+"']").length == 0) {
-					var headElems = document.getElementsByTagName("head");
-					var style = document.createElement("link");
-					style.type = "text/css";
-					style.rel = "stylesheet";
-					style.href = cssUrl;
-					headElems[headElems.length - 1].appendChild(style);
-					// $("head").append($("<link href='" + cssUrl + "' rel='stylesheet' type='text/css' />"));
-				} // else, already added
-			}
-		};
-		
-		/**
 		 * Helper method to show call popup according the Web Conferencing spec.
 		 */
 		this.showCallPopup = function(url, name) {
@@ -1867,6 +1858,29 @@
 		};
 		
 		this.getUserStatus = getUserStatus;
+		
+		// common utilities
+		this.log = log;
+		this.getIEVersion = getIEVersion;
+		
+		/**
+		 * Add style to current document (to the end of head).
+		 */
+		this.loadStyle = function(cssUrl) {
+			if (document.createStyleSheet) {
+				document.createStyleSheet(cssUrl); // IE way
+			} else {
+				if ($("head").find("link[href='"+cssUrl+"']").length == 0) {
+					var headElems = document.getElementsByTagName("head");
+					var style = document.createElement("link");
+					style.type = "text/css";
+					style.rel = "stylesheet";
+					style.href = cssUrl;
+					headElems[headElems.length - 1].appendChild(style);
+					// $("head").append($("<link href='" + cssUrl + "' rel='stylesheet' type='text/css' />"));
+				} // else, already added
+			}
+		};
 	}
 	
 	var webConferencing = new WebConferencing();

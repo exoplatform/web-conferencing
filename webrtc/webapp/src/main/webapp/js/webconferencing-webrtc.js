@@ -5,30 +5,6 @@
 (function($, webConferencing) {
 	"use strict";
 
-	/** For debug logging. */
-	var objId = Math.floor((Math.random() * 1000) + 1);
-	var logPrefix = "[webrtc_" + objId + "] ";
-	var log = function(msg, e) {
-		if (typeof console != "undefined" && typeof console.log != "undefined") {
-			var isoTime = " -- " + new Date().toISOString();
-			if (e) {
-				if (e instanceof Error) {
-					console.log(logPrefix + msg + ". " + (e.name && e.message ? e.name + ": " + e.message : e.toString()) + isoTime);
-				} if (e.name && e.message) {
-					console.log(logPrefix + msg + ". " + e.name + ": " + e.message + isoTime);
-				} else {
-					console.log(logPrefix + msg + ". Cause: " + (typeof e == "string" ? e : JSON.stringify(e)) + isoTime);
-				}
-				if (typeof e.stack != "undefined") {
-					console.log(e.stack);
-				}
-			} else {
-				console.log(logPrefix + msg + isoTime);
-			}
-		}
-	};
-	//log("> Loading at " + location.origin + location.pathname);
-
 	var globalWebConferencing = typeof eXo != "undefined" && eXo && eXo.webConferencing ? eXo.webConferencing : null;
 	
 	// Use webConferencing from global eXo namespace (for non AMD uses)
@@ -38,6 +14,14 @@
 
 	if (webConferencing) {
 
+		/** For debug logging. */
+		var objId = Math.floor((Math.random() * 1000) + 1);
+		var logPrefix = "[webrtc_" + objId + "] ";
+		var log = function(msg, e) {
+			webConferencing.log(msg, e, logPrefix);
+		};
+		//log("> Loading at " + location.origin + location.pathname);
+		
 		function WebrtcProvider() {
 			var NON_WHITESPACE_PATTERN = /\s+/;
 			var self = this;
@@ -209,7 +193,6 @@
 											}).fail(function(err) {
 												webConferencing.showError("Error starting call", webConferencing.errorText(err));
 											});
-											//}, 1000); // XXX Experimental value guessed from logs
 										});
 									}).fail(function(err) {
 										log("ERROR adding " + callId + ": " + JSON.stringify(err));
@@ -318,9 +301,9 @@
 							}								
 						}
 					};
-					var lockCallButton = function(callId, callerId, callerRoom) {
+					var lockCallButton = function(callerId, callerRoom) {
 					};
-					var unlockCallButton = function(callId, callerId, callerRoom) {
+					var unlockCallButton = function(callerId, callerRoom) {
 					};
 					if (webConferencing.hasChatApplication()) {
 						// Care about marking chat rooms for active calls
@@ -333,7 +316,7 @@
 								var getCallButton = function() {
 									return $chat.find("#room-detail .webrtcCallAction");
 								};
-								lockCallButton = function(callId, callerId, callerRoom) {
+								lockCallButton = function(callerId, callerRoom) {
 									var roomId = chatApplication.targetUser;
 									if (roomId == (callerRoom ? callerRoom : callerId)) {
 										var $callButton = getCallButton();
@@ -342,7 +325,7 @@
 										}								
 									}
 								};
-								unlockCallButton = function(callId, callerId, callerRoom) {
+								unlockCallButton = function(callerId, callerRoom) {
 									var roomId = chatApplication.targetUser;
 									if (roomId == (callerRoom ? callerRoom : callerId)) {
 										var $callButton = getCallButton();
@@ -400,18 +383,16 @@
 															var longTitle = self.getTitle() + " " + self.getCallTitle();
 															var link = settings.callUri + "/" + callId;
 															var callWindow = webConferencing.showCallPopup(link, longTitle);
-															// Tell the window to start the call  
+															// Tell the window to start a call  
 															onCallWindowReady(callWindow).done(function() {
 																log(">>>> Call page loaded " + callId);
 																callWindow.document.title = "Call with " + call.owner.title;
-																//setTimeout(function() {
 																callWindow.eXo.webConferencing.startCall(call).done(function(state) {
 																	log("<<<< Call " + state + " " + callId);
-																	lockCallButton(callId, callerId, callerRoom);
+																	lockCallButton(callerId, callerRoom);
 																}).fail(function(err) {
-																	webConferencing.showError("Error starting call", err);
+																	webConferencing.showError("Error starting call", webConferencing.errorText(err));
 																});
-																//}, 5000); // XXX 5sec Experimental value guessed from logs
 															});
 														});
 														popover.fail(function(err) {
@@ -441,7 +422,7 @@
 												closeCallPopup(callId, update.callState);
 												// Unclock the call button
 												var callerId = update.callerId; // callerRoom is the same as callerId for P2P
-												unlockCallButton(callId, callerId, callerId); 
+												unlockCallButton(callerId, callerId); 
 											}
 										}
 									} else {
@@ -498,6 +479,6 @@
 		
 		return provider;
 	} else {
-		log("WARN: webConferencing not given and eXo.webConferencing not defined. WebRTC provider registration skipped.");
+		window.console && window.console.log("WARN: webConferencing not given and eXo.webConferencing not defined. WebRTC provider registration skipped.");
 	}
 })($, typeof webConferencing != "undefined" ? webConferencing : null );

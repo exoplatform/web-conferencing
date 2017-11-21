@@ -23,6 +23,8 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
 /**
+ * Represent external participant in calls. 
+ * 
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>

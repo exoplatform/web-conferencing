@@ -51,6 +51,7 @@
 }
 
 .callButton .callTitle {
+	margin-left: 5px;
 	position: relative;
   top: 1px;
 }

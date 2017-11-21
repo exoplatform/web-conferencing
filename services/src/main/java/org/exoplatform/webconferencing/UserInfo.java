@@ -30,6 +30,8 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
 /**
+ * Represent eXo user as a conversation participant for calls.
+ * 
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
