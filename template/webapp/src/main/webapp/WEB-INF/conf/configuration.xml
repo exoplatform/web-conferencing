@@ -76,7 +76,7 @@
         </value-param>
         <object-param>
           <name>MyConnectorPortlet</name>
-          <description>Skype portlet</description>
+          <description>My Connector portlet</description>
           <object type="org.exoplatform.portal.config.serialize.PortletApplication">
             <field name="state">
               <object type="org.exoplatform.portal.config.model.TransientApplicationState">

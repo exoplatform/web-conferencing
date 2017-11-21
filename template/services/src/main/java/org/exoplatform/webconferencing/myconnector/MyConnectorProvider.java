@@ -26,10 +26,12 @@ import org.exoplatform.webconferencing.CallProvider;
 import org.exoplatform.webconferencing.UserInfo.IMInfo;
 
 /**
+ * My Connector provider implementation.
+ * 
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: SkypeProvider.java 00000 Mar 30, 2017 pnedonosko $
+ * @version $Id: MyConnectorProvider.java 00000 Mar 30, 2017 pnedonosko $
  */
 public class MyConnectorProvider extends CallProvider {
 
@@ -56,7 +58,7 @@ public class MyConnectorProvider extends CallProvider {
   public class MyConnectorIMInfo extends IMInfo {
 
     /**
-     * Instantiates a new SfB IM info.
+     * Instantiates a new MyConnector IM info.
      *
      * @param id the id
      */
@@ -64,23 +66,17 @@ public class MyConnectorProvider extends CallProvider {
       super(TYPE, id);
     }
 
-    /**
-     * Checks if is business.
-     *
-     * @return true, if is business
-     */
-    public boolean isBusiness() {
-      return true;
-    }
+    // You may add other specific methods here. Getters will be serialized to JSON and available on client
+    // side (in Javascript provider module).
   }
 
-  /** The client id (can be used for OAUth2 authentication). */
+  /** The client id (it's a sample, can be used for OAUth2 authentication). */
   protected final String clientId;
 
-  /** The api key. */
+  /** The api key. (it's a sample) */
   protected final String apiKey;
 
-  /** The connector web-services URL. */
+  /** The connector web-services URL (will be used to generate Call page URLs). */
   protected final String url;
 
   /**
@@ -118,7 +114,7 @@ public class MyConnectorProvider extends CallProvider {
   }
 
   /**
-   * Instantiates a new my connector provider. This constructor can be used in environments when no
+   * Instantiates a new My Connector provider. This constructor can be used in environments when no
    * {@link UserProfileSettingsService} found (e.g. in test environments).
    *
    * @param params the params (from configuration.xml)

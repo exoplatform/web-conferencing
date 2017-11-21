@@ -64,8 +64,8 @@ public class MyCallFilter extends AbstractFilter implements Filter {
     HttpServletResponse httpRes = (HttpServletResponse) response;
 
     if (httpReq.getRemoteUser() != null) {
-      ServletContext skypeContext = httpReq.getSession().getServletContext().getContext(SERVLET_CTX);
-      skypeContext.getRequestDispatcher(CALL_SERVLET).forward(httpReq, httpRes);
+      ServletContext callContext = httpReq.getSession().getServletContext().getContext(SERVLET_CTX);
+      callContext.getRequestDispatcher(CALL_SERVLET).forward(httpReq, httpRes);
     } else {
       // User not authenticated into eXo Platform: follow default logic
       chain.doFilter(request, response);
