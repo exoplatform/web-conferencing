@@ -27,8 +27,7 @@ You may want to build a connector and deploy to your eXo Platform server to see 
 First place where to start developing in the template project, it's connector provider class: _MyConnectorProvider_ it extends _CallProvider_ and offers a type, title, all supported types (if actual) and a version of the connector. You can add any number of additional fields to this class - al them will be serialized to JSON and transfered to Javascript client when Web Conferencing load the connector. This serialization will be done from _MyConnectorSettings_ instance which provided by _getSettings()_ method and used in related servlet and portlet of the connector. 
 Connector provider also is responsible for reading a configuration from XML file and keeping it up to date in runtime in case of changes (e.g. by admininistrator).
 
-User profile IM type is in _MyConnectorIMRenderer_. 
-TODO
+User profile IM type defined by _MyConnectorProvider_ itself (see in constructor), but if you need additional settings user interface in user profile then you can do this via _MyConnectorIMRenderer_ class, you will add there a HTML markup and Javascript to handle your settings UI. It is registred in XML configuration as a plugin of _UserProfileRenderingService_ and it will be invoked when user profile rendered. If you don't need additional settings in user profile - remove this plugin from the configuration.
 
 Template project uses servelt with JSP page for showing a new call page. For a purpose of clean URL it uses a filter _MyCallFilter_ which will redirect user requests to _/portal/myconnector_ URLs to the servlet.
 
