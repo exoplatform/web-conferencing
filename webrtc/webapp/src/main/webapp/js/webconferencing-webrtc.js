@@ -339,7 +339,7 @@
 						webConferencing.onUserUpdate(currentUserId, function(update, status) {
 							if (update.providerType == self.getType()) {
 								if (update.eventType == "call_state") {
-									if (update.caller.type == "user") {
+									if (update.owner.type == "user") {
 										var callId = update.callId;
 										var lastCallId = lastUpdate ? lastUpdate.callId : null;
 										var lastCallState = lastUpdate ? lastUpdate.callState : null;
