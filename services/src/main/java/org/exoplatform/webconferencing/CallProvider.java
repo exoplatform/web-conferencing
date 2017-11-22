@@ -119,7 +119,7 @@ public abstract class CallProvider extends BaseComponentPlugin {
    * Gets the {@link IMInfo} instance for given IM identifier.
    *
    * @param imId the IM identifier
-   * @return an instance of {@link IMInfo}
+   * @return an instance of {@link IMInfo} or <code>null</code> if IM not supported by the provider
    * @throws CallProviderException if the provider cannot recognize given IM id or failed to instantiate
    *           an {@link IMInfo} object
    */

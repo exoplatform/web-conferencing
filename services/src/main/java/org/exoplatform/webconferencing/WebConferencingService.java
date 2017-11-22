@@ -52,6 +52,7 @@ import org.exoplatform.social.core.manager.IdentityManager;
 import org.exoplatform.social.core.service.LinkProvider;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
+import org.exoplatform.webconferencing.UserInfo.IMInfo;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -238,8 +239,8 @@ public class WebConferencingService implements Startable {
    */
   public UserInfo getUserInfo(String id) throws Exception {
     User user = organization.getUserHandler().findUserByName(id);
-    Identity userIdentity = socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME, id, true);
     if (user != null) {
+      Identity userIdentity = socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME, id, true);
       if (userIdentity != null) {
         Profile socialProfile = socialIdentityManager.getProfile(userIdentity);
         @SuppressWarnings("unchecked")
@@ -253,7 +254,10 @@ public class WebConferencingService implements Startable {
               CallProvider provider = getProvider(imType);
               if (provider != null && provider.isSupportedType(imType)) {
                 try {
-                  info.addImAccount(provider.getIMInfo(imId));
+                  IMInfo im = provider.getIMInfo(imId);
+                  if (im != null) {
+                    info.addImAccount(im);
+                  } // otherwise provider doesn't have an IM type at all
                 } catch (CallProviderException e) {
                   LOG.warn(e.getMessage());
                 }
@@ -385,7 +389,7 @@ public class WebConferencingService implements Startable {
     call.addParticipants(participants);
     call.setState(CallState.STARTED);
     String prevId = readOwnerCallId(ownerId);
-    saveCall(call);
+    saveCall(call); // TODO check if such call is not already running - use existing one so
     String userId = currentUserId();
     if (isSpace || isRoom) {
       // it's group call
@@ -540,7 +544,12 @@ public class WebConferencingService implements Startable {
               saveCall(call);
             }
             // Fire user joined to all parts, including the user itself
-            fireUserCallJoined(id, call.getProviderType(), userId, part.getId());
+            fireUserCallJoined(id,
+                               call.getProviderType(),
+                               call.getOwner().getId(),
+                               call.getOwner().getType(),
+                               userId,
+                               part.getId());
           }
         }
         // }
@@ -580,7 +589,12 @@ public class WebConferencingService implements Startable {
               }
             }
             // Fire user leaved to all parts, including the user itself
-            fireUserCallLeaved(id, call.getProviderType(), userId, part.getId());
+            fireUserCallLeaved(id,
+                               call.getProviderType(),
+                               call.getOwner().getId(),
+                               call.getOwner().getType(),
+                               userId,
+                               part.getId());
           }
         }
         if (leaved == call.getParticipants().size()) {
@@ -658,15 +672,15 @@ public class WebConferencingService implements Startable {
    * @param callId the call id
    * @param providerType the provider type
    * @param callState the call state
-   * @param callerId the caller id
-   * @param callerType the caller type
+   * @param ownerId the caller id
+   * @param ownerType the caller type
    */
   protected void fireUserCallState(String userId,
                                    String callId,
                                    String providerType,
                                    String callState,
-                                   String callerId,
-                                   String callerType) {
+                                   String ownerId,
+                                   String ownerType) {
     // Synchronize on userListeners to have a consistent list of listeners to fire
     Set<UserCallListener> listeners = userListeners.get(userId);
     if (listeners != null) {
@@ -677,7 +691,7 @@ public class WebConferencingService implements Startable {
         // As a solution, we need a temporal pool to save (deferred) events for given user
         // (listener.getUserId()) until it will send a new request or the pool expired
         if (listener.isListening()) {
-          listener.onCallState(callId, providerType, callState, callerId, callerType);
+          listener.onCallState(callId, providerType, callState, ownerId, ownerType);
         }
       }
     }
@@ -685,18 +699,25 @@ public class WebConferencingService implements Startable {
 
   /**
    * Fire user call joined a new part.
-   * 
+   *
    * @param callId the call id
    * @param providerType the provider type
+   * @param ownerId the owner id
+   * @param ownerType the owner type
    * @param partId the part id
    * @param userId the user id
    */
-  protected void fireUserCallJoined(String callId, String providerType, String partId, String userId) {
+  protected void fireUserCallJoined(String callId,
+                                    String providerType,
+                                    String ownerId,
+                                    String ownerType,
+                                    String partId,
+                                    String userId) {
     Set<UserCallListener> listeners = userListeners.get(userId);
     if (listeners != null) {
       for (UserCallListener listener : listeners) {
         if (listener.isListening()) {
-          listener.onPartJoined(callId, providerType, partId);
+          listener.onPartJoined(callId, providerType, ownerId, ownerType, partId);
         }
       }
     }
@@ -704,18 +725,25 @@ public class WebConferencingService implements Startable {
 
   /**
    * Fire user call part leaved.
-   * 
+   *
    * @param callId the call id
    * @param providerType the provider type
+   * @param ownerId the owner id
+   * @param ownerType the owner type
    * @param partId the part id
    * @param userId the user id
    */
-  protected void fireUserCallLeaved(String callId, String providerType, String partId, String userId) {
+  protected void fireUserCallLeaved(String callId,
+                                    String providerType,
+                                    String ownerId,
+                                    String ownerType,
+                                    String partId,
+                                    String userId) {
     Set<UserCallListener> listeners = userListeners.get(userId);
     if (listeners != null) {
       for (UserCallListener listener : listeners) {
         if (listener.isListening()) {
-          listener.onPartLeaved(callId, providerType, partId);
+          listener.onPartLeaved(callId, providerType, ownerId, ownerType, partId);
         }
       }
     }

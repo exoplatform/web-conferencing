@@ -232,7 +232,11 @@ public class CometdWebConferencingService implements Startable {
                 ChannelContext context = channelContext.computeIfAbsent(channelId, k -> {
                   UserCallListener listener = new UserCallListener(userId) {
                     @Override
-                    public void onPartLeaved(String callId, String providerType, String partId) {
+                    public void onPartLeaved(String callId,
+                                             String providerType,
+                                             String ownerId,
+                                             String ownerType,
+                                             String partId) {
                       StringBuilder data = new StringBuilder();
                       data.append('{');
                       data.append("\"eventType\": \"call_leaved\",");
@@ -243,13 +247,22 @@ public class CometdWebConferencingService implements Startable {
                       data.append("\",\"part\": {");
                       data.append("\"id\": \"");
                       data.append(partId);
+                      data.append("\"},\"owner\": {");
+                      data.append("\"id\": \"");
+                      data.append(ownerId);
+                      data.append("\",\"type\": \"");
+                      data.append(ownerType);
                       data.append("\"}");
                       data.append('}');
                       bayeux.getChannel(channelId).publish(serverSession, data.toString());
                     }
 
                     @Override
-                    public void onPartJoined(String callId, String providerType, String partId) {
+                    public void onPartJoined(String callId,
+                                             String providerType,
+                                             String ownerId,
+                                             String ownerType,
+                                             String partId) {
                       StringBuilder data = new StringBuilder();
                       data.append('{');
                       data.append("\"eventType\": \"call_joined\",");
@@ -260,6 +273,11 @@ public class CometdWebConferencingService implements Startable {
                       data.append("\",\"part\": {");
                       data.append("\"id\": \"");
                       data.append(partId);
+                      data.append("\"},\"owner\": {");
+                      data.append("\"id\": \"");
+                      data.append(ownerId);
+                      data.append("\",\"type\": \"");
+                      data.append(ownerType);
                       data.append("\"}");
                       data.append('}');
                       bayeux.getChannel(channelId).publish(serverSession, data.toString());
@@ -269,8 +287,8 @@ public class CometdWebConferencingService implements Startable {
                     public void onCallState(String callId,
                                             String providerType,
                                             String callState,
-                                            String callerId,
-                                            String callerType) {
+                                            String ownerId,
+                                            String ownerType) {
                       StringBuilder data = new StringBuilder();
                       data.append('{');
                       data.append("\"eventType\": \"call_state\",");
@@ -280,11 +298,11 @@ public class CometdWebConferencingService implements Startable {
                       data.append(providerType);
                       data.append("\",\"callState\": \"");
                       data.append(callState);
-                      data.append("\",\"caller\": {");
+                      data.append("\",\"owner\": {");
                       data.append("\"id\": \"");
-                      data.append(callerId);
+                      data.append(ownerId);
                       data.append("\",\"type\": \"");
-                      data.append(callerType);
+                      data.append(ownerType);
                       data.append("\"}");
                       data.append('}');
                       bayeux.getChannel(channelId).publish(serverSession, data.toString());

@@ -160,18 +160,11 @@
 								// TODO i18n for title
 								var $button = $("<a id='" + linkId + "' title='" + target.title + "'"
 											+ " class='webrtcCallAction'>"
-											+ "<i class='callButtonIconVideo uiIconLightGray'></i>" // uiIconWebrtcCall
+											+ "<i class='callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + self.getCallTitle() + "</span></a>");
-								var longTitle = self.getTitle() + " " + self.getCallTitle();
-								setTimeout(function() {
-									if (!$button.hasClass("btn")) {
-										// in dropdown show longer description
-										$button.find(".callTitle").text(longTitle);
-									}
-								}, 1000);
 								$button.click(function() {
 									// Open a window for a new call
-									var callWindow = webConferencing.showCallPopup(link, longTitle);
+									var callWindow = webConferencing.showCallPopup(link, self.getTitle() + " " + self.getCallTitle());
 									// Create a call
 									var callInfo = {
 										owner : context.currentUser.id,
@@ -305,7 +298,7 @@
 					};
 					var unlockCallButton = function(callerId, callerRoom) {
 					};
-					if (webConferencing.hasChatApplication()) {
+					if (webConferencing.getChat().isApplication()) {
 						// Care about marking chat rooms for active calls
 						var $chat = $("#chat-application");
 						if ($chat.length > 0) {
@@ -380,9 +373,8 @@
 														}); 
 														popover.done(function(msg) {
 															log(">>> User " + msg + " call " + callId);
-															var longTitle = self.getTitle() + " " + self.getCallTitle();
 															var link = settings.callUri + "/" + callId;
-															var callWindow = webConferencing.showCallPopup(link, longTitle);
+															var callWindow = webConferencing.showCallPopup(link, self.getTitle() + " " + self.getCallTitle());
 															// Tell the window to start a call  
 															onCallWindowReady(callWindow).done(function() {
 																log(">>>> Call page loaded " + callId);
@@ -421,7 +413,7 @@
 												// Hide accept popover for this call, if any
 												closeCallPopup(callId, update.callState);
 												// Unclock the call button
-												var callerId = update.callerId; // callerRoom is the same as callerId for P2P
+												var callerId = update.owner.id; // callerRoom is the same as owner Id for P2P
 												unlockCallButton(callerId, callerId); 
 											}
 										}

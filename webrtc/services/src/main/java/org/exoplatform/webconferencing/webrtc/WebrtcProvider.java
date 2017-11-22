@@ -79,6 +79,7 @@ public class WebrtcProvider extends CallProvider {
   /**
    * The Class WebrtcIMInfo.
    */
+  @Deprecated // TODO
   public class WebrtcIMInfo extends IMInfo {
 
     /**
@@ -125,7 +126,7 @@ public class WebrtcProvider extends CallProvider {
    */
   @Override
   public IMInfo getIMInfo(String imId) throws CallProviderException {
-    return new WebrtcIMInfo(imId);
+    return null; // WebRTC has not (and don't need) an IM account // new WebrtcIMInfo(imId);
   }
 
   /**

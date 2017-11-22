@@ -17,7 +17,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 /**
- * WebRTC Provider portlet for Video Calls.
+ * WebRTC Provider portlet for Web Conferencing.
  *
  */
 package org.exoplatform.webconferencing.webrtc.portlet;

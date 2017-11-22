@@ -73,7 +73,7 @@
 		};
 	  
 		// A method that should be called from external page to start a call
-	  window.startCall = function(call) {
+	  window.startCall = function(call, isNewCall) {
 			// Deferred to return to the caller and inform about a status (done or error)
 	  	var start = $.Deferred();
 	  	var callId = call.id;
@@ -92,7 +92,6 @@
 				var myconnector = webConferencing.myconnector;
 			
 				var currentUserId = webConferencing.getUser().id;
-				var isOwner = currentUserId == call.owner.id;
 				// here we rely on our logic from myconnector module script: group call ID starts with 'g/'
 				var isGroup = callId.startsWith("g/"); 
 
@@ -157,24 +156,30 @@
 						var callId = update.callId;
 						if (update.callState == "stopped" && update.callId == callId) {
 							log(">>> Call stopped remotelly: " + JSON.stringify(update) + " [" + status + "]");
-							$(".progress").text("Call stopped.");
+							$(".status").text("Call stopped.");
 							stopCall();
 							closeWindow();
 						}							
 					} else if (update.eventType == "call_joined") {
-						// Stop ringtone if some user joined the call
 						if (currentUserId != update.part.id) {
-							log(">>> Call stopped remotelly: " + JSON.stringify(update) + " [" + status + "]");
+							// Stop ringtone if some user joined the call
+							log(">>> Call joined remotelly: " + JSON.stringify(update) + " [" + status + "]");
 							stopRingtone();
 						}
-						$(".progress").text("Call started.");
+						$(".status").text("Call started.");
+					} else if (update.eventType == "call_leaved") {
+						if (currentUserId != update.part.id) {
+							log(">>> Call leaved remotelly: " + JSON.stringify(update) + " [" + status + "]");
+							// TODO action on user leaving, but take in accoun that group call will be stopped on the server side
+							// when last user leave it - don't need stop it explicitly.
+						}
 					}
 				}, function(err) {
 					log("ERROR User calls subscription failure: " + err, err);
 				});
 				
-			  if (isOwner) {
-					// For owner it's outgoing call and we play such ringtone until the call will be accpted or declined.
+			  if (isNewCall) {
+					// For a new call it's outgoing call and we play such ringtone until the call will be accpted or declined.
 					$ring = $("<audio loop autoplay style='display: none;'>" 
 								+ "<source src='/myconnector/audio/outgoing.mp3' type='audio/mpeg'>"  
 								+ "Your browser does not support the audio element.</audio>");
@@ -209,8 +214,6 @@
 				webConferencing.toCallUpdate(callId, {
 	    		"provider" : myconnector.getType(), // required field
 	    		"sender" : currentUserId, // required field
-	    		//"client" : clientId, // required field
-	    		//"host" : isOwner, // required field
 	    		"yourData" : { // your data here
 	    			"myCallKey" : currentUserId + "@" + clientId
 	    		}
@@ -218,7 +221,7 @@
 	      	log("<< Sent call update");
 	      });
 			  
-				start.resolve("started");
+				start.resolve(isNewCall ? "started" : "joined");
 			});
 			return start.promise();
 		};
@@ -237,7 +240,7 @@
 		<div id="myconnector-call-conversation">
 			<div class="description">It is an empty call page. Place your video call handler here.</div>
 			<div class="placeholder"></div>
-			<div class="progress">Calling...</div>
+			<div class="status">Calling...</div>
 		</div>
 		<div id="myconnector-call-controls">
 			<button class="call-close">Close</button>			

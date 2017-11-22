@@ -524,13 +524,14 @@
 		return initRequest(request);
 	};
 	
-	var serviceGet = function(url, data) {
+	var serviceGet = function(url, data, headers) {
 		var request = $.ajax({
 			async : true,
 			type : "GET",
 			url : url,
 			dataType : "json",
-			data : data ? data : {}
+			data : data ? data : undefined,
+			headers : headers ? headers : undefined
 		});
 		return initRequest(request);
 	};
@@ -538,6 +539,167 @@
 	var prepareUser = function(user) {
 		user.title = user.firstName + " " + user.lastName;
 	};
+	
+	/**
+	 * Helpers for interaction with eXo Chat on portal pages.
+	 */
+	function Chat() {
+		
+		var isApplication = function() {
+			return typeof(chatApplication) == "object" && chatApplication;
+		};
+		this.isApplication = isApplication;
+		
+		var isEmbedded = function() {
+			return typeof(chatNotification) == "object" && chatNotification;
+		};
+		this.isEmbedded = isEmbedded;
+		
+		this.currentRoomId = function() {
+			if (isApplication()) {
+				return chatApplication.targetUser;					
+			} else {
+				// TODO for mini chat we can find a room user via getRoom(id) but it will be in a promise
+			}
+		};
+		
+		this.getUsers = function(roomId) {
+			var process = $.Deferred(); 
+
+			var url, currentUser, dbName, token;
+			
+			if (isApplication()) {
+				if (!roomId) {
+					roomId = chatApplication.targetUser;					
+				}
+				url = chatApplication.jzUsers;
+				currentUser = chatApplication.username;
+				dbName = chatApplication.dbName;
+				token = chatApplication.token;
+			} else if (isEmbedded()) {
+				if (!roomId) {
+					roomId = jzGetParam(chatNotification.sessionId + "miniChatRoom");
+				}
+				var $chatStatus = $("#chat-status");
+				if ($chatStatus.length > 0) {
+					var serverUrl = $chatStatus.data("chat-server-url");
+					if (serverUrl) {
+						url = serverUrl + "/users";
+					} else {
+						process.reject("Cannot determine Chat server URL"); 
+					}
+					currentUser = chatNotification.username;
+					dbName = chatNotification.dbName;
+					token = chatNotification.token;
+				} else {
+					process.reject("Chat credentials not found");
+				}
+			} else {
+				process.reject("Chat not found");
+			}
+			
+			if (url && roomId) {
+				serviceGet(url, {
+	        room: roomId,
+	        user: currentUser,
+	        dbName: dbName
+	      }, {
+	        "Authorization": "Bearer " + token
+	      }).done(function(resp) {
+	      	if (resp && resp.users) {
+						process.resolve(resp.users);																
+					} else {
+						process.reject("Chat users request return empty response");
+					}
+	      }).fail(function(err, status) {
+	      	process.reject(err, status);
+	      });				
+			} else if (process.state() == "pending") {
+				process.reject("Cannot get room users: prerequisites failed");
+			}
+			
+			return process.promise();
+		};
+		
+		/**
+		 * Gets a chat room by its ID and type. If ID not given then it will try find a current one from the context.
+		 * If type not given but ID fond then it will try autodetect it. Method always returns a promise, it will be resolved if room request
+		 * succeeded and rejected if some parameter wrong or not found (and cannot be autodetected) or request failed.
+		 */
+		this.getRoom = function(id, type) {
+			var process = $.Deferred(); 
+
+			var url, currentUser, dbName, token;
+			
+			function detectRoomType() {
+				if (!type) {
+					if (id.startsWith("space-") || id.startsWith("team-") || id.startsWith("external-")) {
+						type = "room-id";
+						id = id.substring(id.indexOf("-") + 1);
+						log("WARN eXoChat.getRoom(): Chat room type was not given. Will use autodetected as room-id: " + id);
+					} else {
+						process.reject("Room type required");
+					}
+				}
+			}
+			
+			if (isApplication()) {
+				if (!id) {
+					id = chatApplication.targetUser;					
+				}
+				url = chatApplication.jzChatGetRoom;
+				currentUser = chatApplication.username;
+				dbName = chatApplication.dbName;
+				token = chatApplication.token;
+				detectRoomType();
+			} else if (isEmbedded()) {
+				if (id) {
+					detectRoomType();
+				} else {
+					id = jzGetParam(chatNotification.sessionId + "miniChatRoom");
+					type = jzGetParam(chatNotification.sessionId + "miniChatType");
+				}
+				
+				var $chatStatus = $("#chat-status");
+				if ($chatStatus.length > 0) {
+					var serverUrl = $chatStatus.data("chat-server-url");
+					if (serverUrl) {
+						url = serverUrl + "/getRoom";
+					} else {
+						process.reject("Cannot determine Chat server URL"); 
+					}
+					currentUser = chatNotification.username;
+					dbName = chatNotification.dbName;
+					token = chatNotification.token;
+				} else {
+					process.reject("Chat credentials not found");
+				}
+			} else {
+				process.reject("Chat not found");
+			}
+			
+			if (url && id && type) {
+				serviceGet(url, {
+	        targetUser: id,
+	        user: currentUser,
+	        dbName: dbName,
+	        withDetail: true,
+	        isAdmin : false,
+	        type: type
+	      }, {
+	        "Authorization": "Bearer " + token
+	      }).done(function(room) {
+	      	process.resolve(room);
+	      }).fail(function(err, status) {
+	      	process.reject(err, status);
+	      });				
+			} else if (process.state() == "pending") {
+				process.reject("Cannot get chat room: prerequisites failed");
+			}
+			
+			return process.promise();
+		};
+	}
 	
 	/**
 	 * WebConferencing core class.
@@ -552,6 +714,11 @@
 		
 		// Registered providers
 		var providers = [];
+		
+		var chat = new Chat();
+		this.getChat = function() {
+			return chat;
+		};
 
 		var errorText = function(err) {
 			return err && err.message ? err.message : err;
@@ -741,49 +908,6 @@
 			return initializer.promise();
 		};
 		
-		var hasChatApplication = function() {
-			return typeof(chatApplication) == "object" && chatApplication;
-		};
-		this.hasChatApplication = hasChatApplication;
-		
-		var currentChatRoom = function() {
-			if (hasChatApplication()) {
-				return chatApplication.targetUser;
-			} else {
-				return null;
-			}
-		};
-		this.currentChatRoom = currentChatRoom;
-		
-		var spaceChatRoom = function(id) {
-			var process = $.Deferred(); 
-			if (id.startsWith("space-")) {
-				process.resolve(id); // already
-			} else {
-				initRequest($.ajax({
-				  url: chatApplication.jzChatGetRoom,
-				  data: {
-				    "user": chatApplication.username,
-				    "targetUser": id,
-				    "type": "space-name",
-				    "dbName": chatApplication.dbName,
-				    "token": chatApplication.token,
-				    "isAdmin" : false,
-				    "withDetail": true
-				  },
-				  headers: {
-				    "Authorization": "Bearer " + chatApplication.token
-				  }
-				})).done(function(room) {
-					process.resolve(room.user);
-				}).fail(function (error, status) {
-				  process.reject(error, status);
-				});
-			}
-			return process.promise();
-		};
-		this.spaceChatRoom = spaceChatRoom;
-		
 		/**
 		 * eXo Chat initialization
 		 */
@@ -791,7 +915,7 @@
 			$(function() {
 				var $chat = $("#chat-application");
 				// chatApplication is a global on chat app page
-				if (hasChatApplication() && $chat.length > 0) {
+				if (chat.isApplication() && $chat.length > 0) {
 					log(">> initChat for " + chatApplication.username);
 					var $roomDetail = $chat.find("#room-detail");
 					
@@ -954,87 +1078,112 @@
 							$titleBar.find(".callButtonContainer").remove(); // clean the previous state, if have one
 							// Wait a bit for completing Chat workers
 							setTimeout(function() {
-								var chatUserId = $miniChat.data("username");
+								var $chatStatus = $("#chat-status");
+								var chatServerUrl = $chatStatus.data("chat-server-url");
+								var dbName = $chatStatus.data("db-name");
 								
-								var roomId = jzGetParam(chatNotification.sessionId + "miniChatRoom");
+								var chatUser = chatNotification.username; // $miniChat.data("username")
+								var chatToken = chatNotification.token;
+								
+								var chatRoom = jzGetParam(chatNotification.sessionId + "miniChatRoom");
 								var chatType = jzGetParam(chatNotification.sessionId + "miniChatType");
 								
-								var isSpace = roomId && roomId.startsWith("space-");
-								var isTeam = roomId && roomId.startsWith("team-");
-								var isGroup = isSpace || isTeam;
-								var isP2P = !isGroup && chatType == "username";
-								
-								var roomName = roomTitle.toLowerCase().split(" ").join("_");
-								var miniChatContext = {
-									currentUser : currentUser,
-									roomId : roomId,
-									roomName : roomName,
-									roomTitle : roomTitle,
-									isGroup : isGroup,
-									isIOS : isIOS,
-									isAndroid : isAndroid,
-									isWindowsMobile : isWindowsMobile,
-									details : function() {
-										var data = $.Deferred();
-									  if (isGroup) {
-									  	if (isSpace) {
-									  		var spaceId = roomName; // TODO is it right?
-										  	getSpaceInfoReq(spaceId).done(function(space) { // TODO use getSpaceInfo() for caching spaces
-										  		data.resolve(space);
-										  	}).fail(function(e, status) {
-										  		if (typeof(status) == "number" && status == 404) {
-														log(">> miniChatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
+								serviceGet(chatServerUrl + "/getRoom", {
+						        targetUser: chatRoom,
+						        user: chatUser,
+						        withDetail: true,
+						        type: chatType,
+						        dbName: dbName
+						      }, {
+						        "Authorization": "Bearer " + chatToken
+						      }
+								).done(function(room) {
+									var roomTarget = room.user;
+									
+									var isSpace = room.type == "s"; // roomId && roomId.startsWith("space-");
+									var isTeam =  room.type == "t"; // roomId && roomId.startsWith("team-");
+									var isGroup = isSpace || isTeam;
+									var isP2P = !isGroup && room.type == "u";
+									
+									roomTitle = room.fullName;
+									
+									// It is a logic used in Chat, so reuse it here:
+									var roomName = roomTitle.toLowerCase().split(" ").join("_");
+									var miniChatContext = {
+										currentUser : currentUser,
+										roomId : roomTarget,
+										roomName : roomName,
+										roomTitle : roomTitle,
+										isGroup : isGroup,
+										isIOS : isIOS,
+										isAndroid : isAndroid,
+										isWindowsMobile : isWindowsMobile,
+										details : function() {
+											var data = $.Deferred();
+										  if (isGroup) {
+										  	if (isSpace) {
+										  		var spaceId = roomName; // XXX no other way within Chat
+											  	getSpaceInfoReq(spaceId).done(function(space) { // TODO use getSpaceInfo() for caching spaces
+											  		data.resolve(space);
+											  	}).fail(function(e, status) {
+											  		if (typeof(status) == "number" && status == 404) {
+															log(">> miniChatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
+														} else {
+															log(">> miniChatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + JSON.stringify(e));
+														}
+											  		data.reject(e);
+													});
+										  	} else if (isRoom) {
+										  		// TODO
+										  	} else {
+										  		log(">> miniChatContext < ERROR unexpected chat type '" + chatType + "' and room '" + roomTarget + "' for " + currentUser.id);
+										  		data.reject("Unexpected chat type: " + chatType);
+										  	}
+											} else {
+												// roomTarget is an user name for P2P chats
+												getUserInfoReq(roomTarget).done(function(user) {
+													data.resolve(user);												
+												}).fail(function(e, status) {
+													if (typeof(status) == "number" && status == 404) {
+														var msg = (e.message ? e.message + " " : "Not found ");
+														log(">> miniChatContext < ERROR get_user " + msg + " for " + currentUser.id + ": " + JSON.stringify(e));
+														data.reject(msg);
 													} else {
-														log(">> miniChatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + JSON.stringify(e));
+														log(">> miniChatContext < ERROR get_user : " + JSON.stringify(e));
+														data.reject(e);
 													}
-										  		data.reject(e);
 												});
-									  	} else {
-									  		log(">> miniChatContext < ERROR unexpected chat type '" + chatType + "' and room id '" + roomId + "' for " + currentUser.id + ": " + JSON.stringify(e));
-									  		data.reject("Unexpected chat type: " + chatType);
-									  	}
-										} else {
-											// roomId is an user name for P2P chats
-											getUserInfoReq(roomId).done(function(user) {
-												data.resolve(user);												
-											}).fail(function(e, status) {
-												if (typeof(status) == "number" && status == 404) {
-													var msg = (e.message ? e.message + " " : "Not found ");
-													log(">> miniChatContext < ERROR get_user " + msg + " for " + currentUser.id + ": " + JSON.stringify(e));
-													data.reject(msg);
-												} else {
-													log(">> miniChatContext < ERROR get_user : " + JSON.stringify(e));
-													data.reject(e);
-												}
-											});
+											}
+											return data.promise();
 										}
-										return data.promise();
+									};
+									
+									if (isSpace) {
+										currentSpaceId = roomName;
+										currentRoomTitle = roomTitle;
+									} else {
+										currentSpaceId = null;
+										currentRoomTitle = roomTitle;
 									}
-								};
-								
-								if (isSpace) {
-									currentSpaceId = roomName;
-									currentRoomTitle = roomTitle;
-								} else {
-									currentSpaceId = null;
-									currentRoomTitle = roomTitle;
-								}
-								
-								var $wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");
-								var initializer = addCallButton($wrapper, miniChatContext);
-								initializer.done(function($container) {
-									var $button = $container.find(".callButton").first();
-									$button.children(".callButtonTitle, .callTitle, .uiIconMiniArrowDown").remove();
-									$button.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
-									$button.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
-									$container.find(".dropdown-menu").addClass("pull-right");
-									//
-									$titleBar.prepend($wrapper);
-									log("<< initMiniChat DONE " + roomTitle + " for " + currentUser.id);
-								});
-								initializer.fail(function(error) {
-									log("<< initMiniChat ERROR " + roomTitle + " for " + currentUser.id + ": " + error);
-									$miniChat.removeData("minichatcallinitialized");
+									
+									var $wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");
+									var initializer = addCallButton($wrapper, miniChatContext);
+									initializer.done(function($container) {
+										var $button = $container.find(".callButton").first();
+										$button.children(".callButtonTitle, .callTitle, .uiIconMiniArrowDown").remove();
+										$button.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
+										$button.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
+										$container.find(".dropdown-menu").addClass("pull-right");
+										//
+										$titleBar.prepend($wrapper);
+										log("<< initMiniChat DONE " + roomTitle + " for " + currentUser.id);
+									});
+									initializer.fail(function(error) {
+										log("<< initMiniChat ERROR " + roomTitle + " for " + currentUser.id + ": " + error);
+										$miniChat.removeData("minichatcallinitialized");
+									});
+								}).fail(function(err) {
+									log("<< initMiniChat ERROR getting room info from chatServer: ", err);
 								});
 							}, 1000);
 						} else {
@@ -1269,7 +1418,7 @@
 					// Find user's first name for a tip
 					var $profileLink = $tiptip.find("#tipName #profileName>a[href*='\\/g/:spaces:']");
 					if ($profileLink.length > 0) {
-						var spaceId = extractSpaceName($profileLink);
+						var spaceId = extractSpaceId($profileLink);
 						var $spaceAction = $tiptip.find(".uiAction");
 						var buttonSpace = $spaceAction.data("callbuttonspace");
 						if (!buttonSpace || buttonSpace != spaceId) {
@@ -1349,7 +1498,7 @@
 						setTimeout(function() {
 							var $chatButton = $breadcumbEntry.children(".chat-button");
 							if ($chatButton.length == 0 && waitAttempts < 40) { // wait max 2 sec
-								log(">>> Chat button not found in space breadcumb");
+								//log(">>> Chat button not found in space breadcumb");
 								waitAndAdd();
 							} else {
 								addSpaceCallButton();								
@@ -1602,8 +1751,8 @@
 					id : id
 				});
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
+					var result = tryParseJson(response);
 					if (response.successful) {
-						var result = tryParseJson(response);
 						log("<< getCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {

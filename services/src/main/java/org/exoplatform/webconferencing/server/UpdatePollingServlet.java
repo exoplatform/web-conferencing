@@ -77,7 +77,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
             }
 
             @Override
-            public void onCallState(String callId, String providerType, String callState, String callerId, String callerType) {
+            public void onCallState(String callId, String providerType, String callState, String ownerId, String ownerType) {
               if (polling.compareAndSet(true, false)) {
                 StringBuilder body = new StringBuilder();
                 body.append('{');
@@ -88,11 +88,11 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
                 body.append(providerType);
                 body.append("\",\"callState\": \"");
                 body.append(callState);
-                body.append("\",\"caller\": {");
+                body.append("\",\"owner\": {");
                 body.append("\"id\": \"");
-                body.append(callerId);
+                body.append(ownerId);
                 body.append("\",\"type\": \"");
-                body.append(callerType);
+                body.append(ownerType);
                 body.append("\"}");
                 body.append('}');
 
@@ -103,7 +103,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
             }
 
             @Override
-            public void onPartJoined(String callId, String providerType, String partId) {
+            public void onPartJoined(String callId, String providerType, String ownerId, String ownerType, String partId) {
               if (polling.compareAndSet(true, false)) {
                 StringBuilder body = new StringBuilder();
                 body.append('{');
@@ -115,6 +115,11 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
                 body.append("\",\"part\": {");
                 body.append("\"id\": \"");
                 body.append(partId);
+                body.append("\"},\"owner\": {");
+                body.append("\"id\": \"");
+                body.append(ownerId);
+                body.append("\",\"type\": \"");
+                body.append(ownerType);
                 body.append("\"}");
                 body.append('}');
 
@@ -125,7 +130,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
             }
 
             @Override
-            public void onPartLeaved(String callId, String providerType, String partId) {
+            public void onPartLeaved(String callId, String providerType, String ownerId, String ownerType, String partId) {
               if (polling.compareAndSet(true, false)) {
                 StringBuilder body = new StringBuilder();
                 body.append('{');
@@ -137,6 +142,11 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
                 body.append("\",\"part\": {");
                 body.append("\"id\": \"");
                 body.append(partId);
+                body.append("\"},\"owner\": {");
+                body.append("\"id\": \"");
+                body.append(ownerId);
+                body.append("\",\"type\": \"");
+                body.append(ownerType);
                 body.append("\"}");
                 body.append('}');
 

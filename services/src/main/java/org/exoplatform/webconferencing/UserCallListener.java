@@ -60,27 +60,31 @@ public abstract class UserCallListener {
    * @param callId the call id
    * @param providerType provider type
    * @param callState the call status
-   * @param callerId the caller id
-   * @param callerType the caller type
+   * @param ownerId the caller id
+   * @param ownerType the caller type
    */
-  public abstract void onCallState(String callId, String providerType, String callState, String callerId, String callerType);
+  public abstract void onCallState(String callId, String providerType, String callState, String ownerId, String ownerType);
 
   /**
    * On participant joined.
-   * 
+   *
    * @param callId the call id
    * @param providerType the provider type
+   * @param ownerId the caller id
+   * @param ownerType the caller type
    * @param partId the participant user id
    */
-  public abstract void onPartJoined(String callId, String providerType, String partId);
+  public abstract void onPartJoined(String callId, String providerType, String ownerId, String ownerType, String partId);
 
   /**
    * On participant leaved.
-   * 
+   *
    * @param callId the call id
    * @param providerType the provider type
+   * @param ownerId the caller id
+   * @param ownerType the caller type
    * @param partId the participant user id
    */
-  public abstract void onPartLeaved(String callId, String providerType, String partId);
+  public abstract void onPartLeaved(String callId, String providerType, String ownerId, String ownerType, String partId);
 
 }
