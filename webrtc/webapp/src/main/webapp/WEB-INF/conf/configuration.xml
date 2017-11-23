@@ -38,7 +38,7 @@
         </properties-param>
         <object-param>
           <name>rtc-configuration</name>
-          <object type="webconferencing.webrtc.WebrtcProvider$RTCConfiguration">
+          <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$RTCConfiguration">
             <!-- field name="bundlePolicy">
               <string>balanced</string>
             </field>
@@ -51,7 +51,7 @@
             <field name="certificates">
               <collection type="java.util.ArrayList">
                 <value>
-                  <object type="webconferencing.webrtc.WebrtcProvider$RTCCertificate">
+                  <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$RTCCertificate">
                     <field name="expires">
                       <long></long>
                     </field>
@@ -63,7 +63,7 @@
               <collection type="java.util.LinkedHashSet">
                 <value>
                   <!-- Pool of STUN servers for development & testing-->
-                  <object type="webconferencing.webrtc.WebrtcProvider$ICEServer">
+                  <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$ICEServer">
                     <field name="enabled">
                       <boolean>true</boolean>
                     </field>
@@ -81,7 +81,7 @@
                 </value>
                 <value>
                   <!-- Pool of Google's free STUN servers -->
-                  <object type="webconferencing.webrtc.WebrtcProvider$ICEServer">
+                  <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$ICEServer">
                     <field name="enabled">
                       <boolean>false</boolean>
                     </field>
@@ -108,7 +108,7 @@
                 </value>
                 <value>
                   <!-- Pool of other free STUN servers -->
-                  <object type="webconferencing.webrtc.WebrtcProvider$ICEServer">
+                  <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$ICEServer">
                     <field name="enabled">
                       <boolean>false</boolean>
                     </field>
@@ -129,7 +129,7 @@
                 </value>
                 <value>
                   <!-- Xirsys STUN server for testing -->
-                  <object type="webconferencing.webrtc.WebrtcProvider$ICEServer">
+                  <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$ICEServer">
                     <field name="enabled">
                       <boolean>true</boolean>
                     </field>
@@ -144,7 +144,7 @@
                 </value>
                 <value>
                   <!-- Xirsys TURN servers for testing -->
-                  <object type="webconferencing.webrtc.WebrtcProvider$ICEServer">
+                  <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$ICEServer">
                     <field name="enabled">
                       <boolean>true</boolean>
                     </field>
