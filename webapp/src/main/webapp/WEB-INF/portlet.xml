@@ -18,4 +18,18 @@
       <keywords>web conferencing video calls</keywords>
     </portlet-info>
   </portlet>
+  <portlet>
+    <portlet-name>WebConferencingAdminPortlet</portlet-name>
+    <display-name xml:lang="EN">Web Conferencing Admin portlet</display-name>
+    <portlet-class>org.exoplatform.webconferencing.admin.portlet.WebConferencingAdminPortlet</portlet-class>
+    <supports>
+      <mime-type>text/html</mime-type>
+    </supports>
+    <resource-bundle>locale.webconferencing.WebConferencing</resource-bundle>
+    <portlet-info>
+      <title>Web Conferencing Admin portelt for eXo Platform</title>
+      <short-title>Web Conferencing Admin</short-title>
+      <keywords>web conferencing administration video calls</keywords>
+    </portlet-info>
+  </portlet>
 </portlet-app>

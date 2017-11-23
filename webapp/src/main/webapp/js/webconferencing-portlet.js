@@ -1,5 +1,5 @@
 /**
- * WebConferencing portlet in eXo Platform. This script initializes UI of a page where it is loaded using Video Calls
+ * WebConferencing portlet in eXo Platform. This script initializes UI of a page where it is loaded using Web Conferencing
  * module.
  */
 (function($, webConferencing) {

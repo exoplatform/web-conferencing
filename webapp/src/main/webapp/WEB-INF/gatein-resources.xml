@@ -55,6 +55,23 @@
     <overwrite>true</overwrite>
     <!-- css-priority>10</css-priority -->
   </portlet-skin>
+  
+  <portlet-skin>
+    <application-name>webconferencing</application-name>
+    <portlet-name>WebConferencingAdminPortlet</portlet-name>
+    <skin-name>Default</skin-name>
+    <css-path>/skin/webconferencing-admin-default.css</css-path>
+    <overwrite>true</overwrite>
+    <!-- css-priority>10</css-priority -->
+  </portlet-skin>
+  <portlet-skin>
+    <application-name>webconferencing</application-name>
+    <portlet-name>WebConferencingAdminPortlet</portlet-name>
+    <skin-name>Enterprise</skin-name>
+    <css-path>/skin/webconferencing-admin-enterprise.css</css-path>
+    <overwrite>true</overwrite>
+    <!-- css-priority>10</css-priority -->
+  </portlet-skin>
 
   <!-- Javascript for webconferencing support in Platform -->
   <!-- module>
@@ -117,6 +134,18 @@
     <load-group>webConferencingGRP</load-group>
     <script>
       <path>/js/webconferencing-portlet.js</path>
+    </script>
+    <depends>
+      <module>jquery</module>
+    </depends>
+    <depends>
+      <module>webConferencing</module>
+    </depends>
+  </module>
+  <module>
+    <name>webConferencingAdminPortlet</name>
+    <script>
+      <path>/js/webconferencing-admin-portlet.js</path>
     </script>
     <depends>
       <module>jquery</module>
