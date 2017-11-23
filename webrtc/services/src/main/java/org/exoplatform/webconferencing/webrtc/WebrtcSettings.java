@@ -19,6 +19,7 @@
 package org.exoplatform.webconferencing.webrtc;
 
 import org.exoplatform.webconferencing.CallProviderSettings;
+import org.exoplatform.webconferencing.webrtc.WebrtcProvider.RTCConfiguration;
 
 /**
  * Created by The eXo Platform SAS.
@@ -29,7 +30,10 @@ import org.exoplatform.webconferencing.CallProviderSettings;
 public class WebrtcSettings extends CallProviderSettings {
 
   /** The call URI. */
-  protected final String callUri;
+  protected final String           callUri;
+
+  /** The rtc configuration. */
+  protected final RTCConfiguration rtcConfiguration;
 
   /**
    * Instantiates a new webrtc settings.
@@ -41,6 +45,7 @@ public class WebrtcSettings extends CallProviderSettings {
    * @param joinTitle the join title
    * @param version the version
    * @param callUri the call URI
+   * @param rtcConfiguration the rtc configuration
    */
   public WebrtcSettings(String type,
                         String[] supportedTypes,
@@ -48,9 +53,11 @@ public class WebrtcSettings extends CallProviderSettings {
                         String callTitle,
                         String joinTitle,
                         String version,
-                        String callUri) {
+                        String callUri,
+                        RTCConfiguration rtcConfiguration) {
     super(type, supportedTypes, title, callTitle, joinTitle, version);
     this.callUri = callUri;
+    this.rtcConfiguration = rtcConfiguration;
   }
 
   /**
@@ -60,6 +67,15 @@ public class WebrtcSettings extends CallProviderSettings {
    */
   public String getCallUri() {
     return callUri;
+  }
+
+  /**
+   * Gets the rtc configuration.
+   *
+   * @return the rtcConfiguration
+   */
+  public RTCConfiguration getRtcConfiguration() {
+    return rtcConfiguration;
   }
 
 }

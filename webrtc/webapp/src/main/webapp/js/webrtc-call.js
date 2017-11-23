@@ -160,19 +160,55 @@ if (eXo.webConferencing) {
 								});*/
 								/*{urls: 'turn:stun.l.google.com:19301?transport=udp'},
           			{urls: 'turn:stun.l.google.com:19302?transport=udp'},*/
-								var rtcConfig;
+								var rtcConfig = webrtc.getRtcConfiguration();
+								// Clean to keep only meaningful fields
+								if (!rtcConfig.bundlePolicy) {
+									delete rtcConfig.bundlePolicy;
+								}
+								if (!rtcConfig.iceTransportPolicy) {
+									delete rtcConfig.iceTransportPolicy;
+								}
+								if (rtcConfig.iceCandidatePoolSize <= 0) {
+									delete rtcConfig.iceCandidatePoolSize;
+								}
 								if (isEdge) {
 									// XXX Edge doesn't support STUN yet? Only TURN will work.
 									// https://msdn.microsoft.com/en-us/library/mt502501(v=vs.85).aspx
-									rtcConfig = {
-										iceServers: [] 
-									};
-								} else {
+									var onlyTurn = [];
+									for (var i=0; i<rtcConfig.iceServers.length; i++) {
+										var server = rtcConfig.iceServers[i];
+										var newUrls = [];
+										for (var ui=0; ui<server.urls.length; ui++) {
+											var url = server.urls[ui];
+											if (url.startsWith("turn")) {
+												// use it
+												newUrls.push(url);
+											}
+										}
+										if (newUrls.length > 0) {
+											server.urls = newUrls;
+											onlyTurn.push(server);
+										}
+									}
+									rtcConfig.iceServers = onlyTurn;
+								}/* else {
 									rtcConfig = {
 										iceServers: [ { urls: "stun:stun.l.google.com:19302" },
 											{ urls: "stun:stunserver.org" } ]
 									};									
+								}*/
+								// Also clean not actually meaningful fields
+								for (var i=0; i<rtcConfig.iceServers.length; i++) {
+									var server = rtcConfig.iceServers[i];
+									delete server.enabled;
+									if (!server.username) {
+										delete server.username;
+									}
+									if (!server.credential) {
+										delete server.credential;
+									}
 								}
+								
 								var pc = new RTCPeerConnection(rtcConfig);
 								var negotiation = $.Deferred();
 								var connection = $.Deferred();

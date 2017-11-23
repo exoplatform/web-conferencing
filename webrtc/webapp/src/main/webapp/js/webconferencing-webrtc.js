@@ -59,6 +59,12 @@
 					return settings.callTitle;
 				}
 			};
+			
+			this.getRtcConfiguration = function() {
+				if (settings) {
+					return settings.rtcConfiguration;
+				}
+			};
 
 			this.configure = function(theSettings) {
 				settings = theSettings;
