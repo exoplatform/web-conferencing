@@ -16,61 +16,55 @@
 %>
 
 	<!-- Admin scripts -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 	<script type="text/javascript">
+    /*
+     *
+     * OPEN HIDE POPUPs
+     * String id; contain the Id of element to duplicate
+     * INT inputID; Contain the number of elements
+     */
 
-		    /*
-             * OPEN HIDE POPUPs
-             * String id; contain the Id of element to duplicate
-             * INT inputID; Contain the number of elements
-             */
+    function addInput(id, inputID) {
 
-            function addInput(id, inputID) {
+        var domToAdd = jQuery("#" + id + " > .group-container" + inputID).html();
+        newId = $('#urlGroup > div').length;
+        console.log(newId);
+        jQuery("#" + id).append("<div class='group-container" + newId + "'>" + domToAdd + "</div>");
+        jQuery("#" + id + " > .group-container" + newId + " > input").attr("id", "url" + newId);
+        jQuery("#" + id + " > .group-container" + newId + " > i.uiIconPlus ").attr("onclick", "addInput('urlGroup', " + newId + ")");
 
-                var domToAdd = jQuery("#" + id + " > .group-container" + inputID).html();
-                newId = inputID + 1;
-                console.log(newId);
-                jQuery("#" + id).append("<div class='group-container" + newId + "'>" + domToAdd + "</div>");
-                jQuery("#" + id + " > .group-container" + newId + " > input").attr("id", "url" + newId);
-                jQuery("#" + id + " > .group-container" + newId + " > i.uiIconPlus ").attr("onclick", "addInput('urlGroup', " + newId + ")");
+        if (jQuery("#" + id + " > .group-container" + newId + " > i.uiIconTrash").length > 0) {
+            jQuery("#" + id + " > .group-container" + newId + " > i.uiIconTrash").attr("onclick", "removeInput("+ newId + ")");
+        } else {
+            jQuery("<i class='uiIconTrash uiIconLightGray' onclick='removeInput(" + newId + ")'>&nbsp;</i>").insertBefore("#" + id + " > .group-container" + newId + " > i.uiIconPlus ");
+        }
+    }
 
-                if (jQuery("#" + id + " > .group-container" + newId + " > i.uiIconTrash").length > 0) {
-                    jQuery("#" + id + " > .group-container" + newId + " > i.uiIconTrash").attr("onclick", "removeInput('" + id.toString() + "', " + newId + ")");
-                } else {
-                    jQuery("<i class='uiIconTrash uiIconLightGray' onclick='removeInput('" + id.toString() + "', " + newId + ")'>&nbsp;</i>").insertBefore("#" + id + " > .group-container" + newId + " > i.uiIconPlus ");
-                }
-            }
+    function removeInput(inputID) {
+        jQuery(" .group-container" + inputID).remove();
+    }
 
-            function removeInput(id, inputID) {
-                jQuery("#" + id + " .group-container" + inputID).remove();
-            }
-
-
-
-            require(['SHARED/jquery'], function (jQuery) {
-                jQuery(document).ready(function () {
-                    /* OPEN HIDE POPUPs*/
-                    jQuery("#webConfPopupClique").click(function () {
-                        jQuery(".maskPopup").removeClass("hide");
-                    });
-
-                    jQuery("#webConfPopup .uiIconClose.pull-right").click(function () {
-                        jQuery(".maskPopup").addClass("hide");
-                    });
-
-                    /* TOOLTIP */
-                    jQuery('[data-toggle="tooltip"]').tooltip();
-
-                    jQuery('#check').click(function(){
-                        if (jQuery('#check').is(":checked")){
-                            jQuery(".toggleInputs").removeClass("hideInputs");
-                        }else{
-                            jQuery(".toggleInputs").addClass("hideInputs");
-                        }
-                    });
-
-                });
-
+        jQuery(document).ready(function () {
+            /* OPEN HIDE POPUPs*/
+            jQuery("#webConfPopupClique").click(function () {
+                jQuery(".maskPopup").removeClass("hide");
             });
+
+            jQuery("#webConfPopup .uiIconClose.pull-right").click(function () {
+                jQuery(".maskPopup").addClass("hide");
+            });
+
+            jQuery('#check').click(function(){
+                if (jQuery('#check').is(":checked")){
+                    jQuery(".toggleInputs").removeClass("hideInputs");
+                }else{
+                    jQuery(".toggleInputs").addClass("hideInputs");
+                }
+            });
+            /* TOOLTIP */
+            jQuery('[data-toggle="tooltip"]').tooltip();
+        });
 
 	</script>
 
@@ -124,14 +118,8 @@
                 <div class="control-group">
                     <label class="control-label" for="url">URL :</label>
                     <div id="urlGroup">
-                        <div class="group-container0"><input id="url" name="label" placeholder="input text..." type="text" />&nbsp;&nbsp; <i class="uiIconPlus uiIconLightGray" onclick="addInput('urlGroup', 0)">&nbsp;</i></div>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label" for="url">URL :</label>
-                    <div id="urlGroup2">
                         <div class="group-container0">
-                            <input id="url" name="label" placeholder="input text..." type="text" />&nbsp;&nbsp; <i class="uiIconPlus uiIconLightGray" onclick="addInput('urlGroup2', 0)">&nbsp;</i>
+                            <input id="url" name="label" placeholder="input text..." type="text" />&nbsp;&nbsp; <i class="uiIconPlus uiIconLightGray" onclick="addInput('urlGroup', 0)">&nbsp;</i>
                         </div>
                     </div>
                     <div id="ContainerUrlGroup">
@@ -156,28 +144,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!--
-                <div>
-                    <span class="uiCheckbox">
-                        <input type="checkbox" class="checkbox">
-                        <span>Credentials</span>
-                    </span>
-                </div>
-                <div class="control-group">
-                    <label class="control-label" for="userName">UserName</label>
-                    <div class="controls"><input name="userName" type="text" id="userName" value=""></div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label" for="credentials">Credentials</label>
-                    <div class="controls"><input name="credentials" type="text" id="credentials" value=""></div>
-                </div>
-                <!-- -->
-
-
-
-
-
 
             </div>
         </div>
