@@ -95,7 +95,7 @@ public class WebConferencingAdminPortlet extends GenericPortlet {
         String exoUserJson = asJSON(exoUser);
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
         js.require("SHARED/webConferencingAdminPortlet", "webConferencingAdminPortlet")
-          .addScripts("webConferencingAdminPortlet.start(" + exoUserJson + "," + contextJson + ");");
+          .addScripts("webConferencingAdminPortlet.init(" + exoUserJson + "," + contextJson + ");");
       } else {
         LOG.warn("Web Conferencing Admin portlet cannot be initialized: user info cannot be obtained for " + remoteUser);
       }

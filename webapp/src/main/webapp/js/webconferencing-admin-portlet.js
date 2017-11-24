@@ -21,7 +21,10 @@
 		var user;
 		
 		this.init = function(theUser, context) {
-			user = theUser;
+			if (theUser) {
+				user = theUser;				
+				log("Initialized for user " + theUser.id);
+			}
 		};
 		
 		// TODO add more logic and UI here
