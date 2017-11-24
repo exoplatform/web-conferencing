@@ -29,7 +29,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   
-  font-size: 16px;
+  font-size: 18px;
   position: relative;
   top: 2px;
 }
@@ -53,7 +53,7 @@
 .callButton .callTitle {
 	margin-left: 5px;
 	position: relative;
-  top: 1px;
+  /*top: 1px;*/
 }
 
 .spaceCall {

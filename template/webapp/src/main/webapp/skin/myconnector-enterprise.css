@@ -5,5 +5,9 @@
 }
 
 .uiIconMyCall:before {
-	top: -1px;
+	/*top: -1px;*/
+}
+
+.spaceCall .uiIconMyCall {
+	top: 3px;	
 }

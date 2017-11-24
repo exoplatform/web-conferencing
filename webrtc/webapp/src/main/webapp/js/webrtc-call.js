@@ -135,6 +135,11 @@ if (eXo.webConferencing) {
 							$controls.show(); // TODO apply show/hide on timeout 
 							var $hangupButton = $controls.find("#hangup");
 							
+							var handleError = function(title, message) {
+								showError(title, message);
+								// TODO get rid of this wrapper, or do something valuable here.
+							};
+							
 							// WebRTC connection to establish a call connection
 							log("Creating RTC peer connection for " + callId);
 							// TODO use configurable stun/turn server (from server-side)
@@ -201,10 +206,11 @@ if (eXo.webConferencing) {
 								for (var i=0; i<rtcConfig.iceServers.length; i++) {
 									var server = rtcConfig.iceServers[i];
 									delete server.enabled;
-									if (!server.username) {
+									// username and credential can be empty strings
+									if (typeof server.username != "string") {
 										delete server.username;
 									}
-									if (!server.credential) {
+									if (typeof server.credential != "string") {
 										delete server.credential;
 									}
 								}
@@ -224,10 +230,6 @@ if (eXo.webConferencing) {
 									});
 								}
 								
-								var handleError = function(title, message) {
-									showError(title, message);
-									// TODO get rid of this wrapper, or do something vakuable here.
-								}
 								connection.fail(function(err) {
 									log("ERROR starting connection for " + callId + ": " + err, err);
 									handleError("Error of starting connection", err);

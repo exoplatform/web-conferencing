@@ -546,12 +546,12 @@
 	function Chat() {
 		
 		var isApplication = function() {
-			return typeof(chatApplication) == "object" && chatApplication;
+			return typeof chatApplication == "object" && chatApplication;
 		};
 		this.isApplication = isApplication;
 		
 		var isEmbedded = function() {
-			return typeof(chatNotification) == "object" && chatNotification;
+			return typeof chatNotification == "object" && chatNotification;
 		};
 		this.isEmbedded = isEmbedded;
 		
@@ -967,7 +967,7 @@
 															data.resolve(info);												
 														});
 														room.fail(function(e, status) {
-															if (typeof(status) == "number" && status == 404) {
+															if (typeof status == "number" && status == 404) {
 																var msg = (e.message ? e.message + " " : "Not found ");
 																log(">> chatContext < ERROR get_room " + roomName + " (" + msg + ") for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + roomName + ": " + JSON.stringify(e));
 																data.reject(msg);
@@ -989,7 +989,7 @@
 													data.resolve(user);												
 												});
 												get.fail(function(e, status) {
-													if (typeof(status) == "number" && status == 404) {
+													if (typeof status == "number" && status == 404) {
 														var msg = (e.message ? e.message + " " : "Not found ");
 														log(">> chatContext < ERROR get_user " + msg + " for " + currentUser.id + ": " + JSON.stringify(e));
 														data.reject(msg);
@@ -1126,7 +1126,7 @@
 											  	getSpaceInfoReq(spaceId).done(function(space) { // TODO use getSpaceInfo() for caching spaces
 											  		data.resolve(space);
 											  	}).fail(function(e, status) {
-											  		if (typeof(status) == "number" && status == 404) {
+											  		if (typeof status == "number" && status == 404) {
 															log(">> miniChatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
 														} else {
 															log(">> miniChatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + JSON.stringify(e));
@@ -1144,7 +1144,7 @@
 												getUserInfoReq(roomTarget).done(function(user) {
 													data.resolve(user);												
 												}).fail(function(e, status) {
-													if (typeof(status) == "number" && status == 404) {
+													if (typeof status == "number" && status == 404) {
 														var msg = (e.message ? e.message + " " : "Not found ");
 														log(">> miniChatContext < ERROR get_user " + msg + " for " + currentUser.id + ": " + JSON.stringify(e));
 														data.reject(msg);
@@ -1217,7 +1217,7 @@
 				details : function() {
 					var user = getUserInfoReq(userId);
 					user.fail(function(e, status) {
-						if (typeof(status) == "number" && status == 404) {
+						if (typeof status == "number" && status == 404) {
 							log(">> userContext < ERROR get_user " + (e.message ? e.message + " " : "Not found ") + userId + " for " + currentUser.id + ": " + JSON.stringify(e));
 						} else {
 							log(">> userContext < ERROR get_user : " + JSON.stringify(e));
@@ -1371,7 +1371,7 @@
 				details : function() {
 					var space = getSpaceInfoReq(spaceId); // TODO use getSpaceInfo() for caching spaces
 			  	space.fail(function(e, status) {
-						if (typeof(status) == "number" && status == 404) {
+						if (typeof status == "number" && status == 404) {
 							log(">> spaceContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
 						} else {
 							log(">> spaceContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + JSON.stringify(e));
@@ -1466,8 +1466,9 @@
 					var initializer = addCallButton($breadcumbEntry, spaceContext(currentSpaceId));
 					initializer.done(function($container) {
 						var $button = $container.find(".callButton");
-						$button.addClass("spaceCall");
+						//$button.addClass("spaceCall");
 						var $first = $button.first();
+						$first.addClass("spaceCall");
 						var $dropdown = $first.siblings(".dropdown-toggle");
 						var $hover = $();
 						if ($first.hasClass("transparentButton")) {
@@ -1478,11 +1479,12 @@
 							$first.addClass("transparentButton");
 							$hover = $hover.add($first).add($dropdown);
 						}
-						$hover.hover(function() {
+						// TODO space call button always transparent
+						/*$hover.hover(function() {
 							$first.removeClass("transparentButton");
 						}, function() {
 							$first.addClass("transparentButton");
-						});						
+						});*/						
 						log("<< initSpace DONE " + currentSpaceId + " for " + currentUser.id);
 					});
 					initializer.fail(function(error) {
