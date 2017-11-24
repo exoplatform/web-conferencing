@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <administration>
-    <webConferencing>Web Conferencing</webConferencing>
+    <webconferencing>Web Conferencing</webconferencing>
   </administration>
 </bundle>

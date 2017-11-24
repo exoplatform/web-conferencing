@@ -24,7 +24,7 @@
         xsi:schemaLocation="http://www.gatein.org/xml/ns/gatein_objects_1_3 http://www.gatein.org/xml/ns/gatein_objects_1_3"
         xmlns="http://www.gatein.org/xml/ns/gatein_objects_1_3">
   <page>
-    <name>webConferencing</name>
+    <name>webconferencing</name>
     <title>Web Conferencing Administration</title>
     <access-permissions>manager:/platform/administrators</access-permissions>
     <edit-permission>manager:/platform/administrators</edit-permission>

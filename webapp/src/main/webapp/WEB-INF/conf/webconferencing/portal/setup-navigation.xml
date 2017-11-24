@@ -26,10 +26,10 @@
   <priority>1</priority>
   <page-nodes>
     <node>
-      <uri>webConferencing</uri>
-      <name>webConferencing</name>
-      <label>#{administration.webConferencing}</label>
-      <page-reference>group::/platform/administrators::webConferencing</page-reference>
+      <uri>webconferencing</uri>
+      <name>webconferencing</name>
+      <label>#{administration.webconferencing}</label>
+      <page-reference>group::/platform/administrators::webconferencing</page-reference>
     </node>
   </page-nodes>
 </node-navigation>
