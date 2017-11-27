@@ -728,6 +728,51 @@
 		var cometdParams = function(params) {
 			return $.extend(params, cCometD.eXoSecret, cometdContext);
 		};
+
+		var getContextName = function(context) {
+			return context.spaceId ? context.spaceId : (context.roomTitle ? context.roomTitle : context.userId);
+		};
+		
+		var userPreferenceKey = function(name) {
+			return currentUser.id + "@exo.webconferencing." + name;
+		};
+		
+		var getPreferredProvider = function(contextName) {
+			if (currentUser) {
+				var key = userPreferenceKey(contextName + ".provider");
+				if (typeof Storage != "undefined") {
+					return localStorage.getItem(key);
+				} else {
+				  // No Web Storage support.
+					if (eXo && eXo.webConferencing && eXo.webConferencing.__preferences) {
+						return eXo.webConferencing.__preferences[key];
+					} else {
+						log("WARN cannot read user preference: local storage not supported.");
+					}
+				}				
+			} else {
+				log("WARN current user not set for reading user preferences.");
+			}
+			return null;
+		};
+		
+		var setPreferredProvider = function(contextName, providerType) {
+			if (currentUser) {
+				var key = userPreferenceKey(contextName + ".provider");
+				if (typeof Storage != "undefined") {
+					localStorage.setItem(key, providerType);
+				} else {
+				  // No Web Storage support.
+					if (eXo && eXo.webConferencing && eXo.webConferencing.__preferences) {
+						eXo.webConferencing.__preferences[key] = providerType;
+					} else {
+						log("WARN cannot save user preference: local storage not supported.");
+					}
+				}				
+			} else {
+				log("WARN current user not set for saving user preferences.");
+			}
+		};
 		
 		var initContext = function() {
 			var context = {
@@ -754,7 +799,6 @@
 			}
 			return context;
 		};
-
 		
 		var initProvider = function(provider) {
 			var process = $.Deferred();
@@ -787,7 +831,7 @@
 				if (addProviders.length > 0) {
 					var buttonClass = "callButton";
 					var providerFlag = "hasProvider_";
-					var contextName = (context.spaceId ? context.spaceId : (context.roomTitle ? context.roomTitle : context.userId));
+					var contextName = getContextName(context);
 					// 2) if already calling, then need wait for previous call completion and then re-call this method 
 					var prevInitializer = $target.data("callbuttoninit");
 					if (prevInitializer) {
@@ -819,7 +863,29 @@
 							$target.append($container);
 						} // else, a first (single) button or several (in the dropdown) already exist
 						var workers = [];
-						//var buttons = [];
+						var preferredProviderId = getPreferredProvider(contextName);
+						var preferredClass = "preferred";
+						var $preferredButton = $container.find("." + preferredClass).first(); // it should be an one in fact
+						function moveToDefaultButton($preferred) {
+							if ($dropdown.length > 0 && $preferred.length > 0) {
+								var $first = $container.find(".btn." + buttonClass);
+								if ($first.is($preferred)) {
+									if (!$preferred.hasClass(preferredClass)) {
+										$preferred.addClass(preferredClass);
+									}
+								} else {
+									// if not the same selected element in DOM
+									$first.removeClass("btn");
+									$first.removeClass(preferredClass);
+									var $li = $("<li></li>");
+									$li.append($first);
+									$dropdown.prepend($li);
+									$preferred.addClass("btn");
+									$preferred.addClass(preferredClass);
+									$container.prepend($preferred);
+								} // else, preferred button already first
+							} // else, nothing to move at all
+						}
 						function addProviderButton(provider, button) {
 							//log(">>> addCallButton > adding > " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
 							// need do this in a function to keep worker variable in the scope of given button when it will be done 
@@ -833,7 +899,7 @@
 									}
 									$button.addClass(buttonClass);
 									var $li = $("<li></li>");
-									$li.append($button)
+									$li.append($button);
 									$dropdown.append($li);
 								} else {
 									// add as a first (single) button
@@ -845,7 +911,19 @@
 									$container.append($button);
 									hasButton = true;
 								}
-								//buttons.push($button);
+								if (provider.getType() == preferredProviderId) {
+									// Mark if it's preferred button 
+									// even if $preferredButton already contains something - this last wins (but this should not be a case)
+									$preferredButton = $button; 
+								} else {
+									// Otherwise save user preference for this call	when it will be used
+									$button.click(function() {
+										setPreferredProvider(contextName, provider.getType());
+										// Also reorder the Call Button and its dropdown to keep this one as default
+										// TODO need also re-run context initializer consumed this promise's done button
+										//moveToDefaultButton($button);
+									});
+								}
 								log("<<< addCallButton DONE < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
 							});
 							button.fail(function(msg) {
@@ -873,24 +951,34 @@
 						}
 						if (workers.length > 0) {
 							$.when.apply($, workers).always(function() {
-								if (addDropdown && $dropdown.length > 0) {
-									// Complete dropdown as a Call button: build toggle and append all this to the container
-									// TODO i18n for Call title
-									var $toggle = $("<button class='btn' data-toggle='dropdown'>" + // dropdown-toggle 
-											"<i class='callButtonIconVideo'></i><span class='callButtonTitle'>Call</span>" +
-											"<i class='uiIconMiniArrowDown uiIconLightGray'></i></span></button>");
-									$toggle.addClass(buttonClass);
-									// move first button to the dropdown as first element
-									$container.find(".btn." + buttonClass).each(function(index, elem) {
-										var $btn = $(elem);
-										$btn.removeClass("btn");
-										var $li = $("<li></li>");
-										$li.append($btn);
-										$dropdown.prepend($li);
-									});
-									// add dropdown and its toggle finally
-									$container.append($toggle);
-									$container.append($dropdown);
+								if ($dropdown.length > 0) {
+									if (addDropdown) {
+										// Complete dropdown as a Call button: build toggle and append all this to the container
+										// TODO i18n for Call title
+										var $toggle = $("<button class='btn dropdown-toggle' data-toggle='dropdown'>" + //  
+												"<i class='uiIconMiniArrowDown uiIconLightGray'></i></span></button>");
+										// "<i class='callButtonIconVideo'></i><span class='callButtonTitle'>Call</span>" +
+										//$toggle.addClass(buttonClass);
+										// move first button to the dropdown as first element
+										/*$container.find(".btn." + buttonClass).each(function(index, elem) {
+											var $btn = $(elem);
+											$btn.removeClass("btn");
+											var $li = $("<li></li>");
+											$li.append($btn);
+											$dropdown.prepend($li);
+										});*/
+										// 
+										// add dropdown and its toggle finally
+										$container.append($toggle);
+										$container.append($dropdown);
+									}
+									// User preferred provider for this call should be a default (first) button
+									if (preferredProviderId) {
+										moveToDefaultButton($preferredButton);
+									} else {
+										// Mark first a default one (for nice CSS)
+										$container.find(".btn." + buttonClass).addClass(preferredClass);
+									}
 								}
 								$container.show();
 								initializer.resolve($container);
@@ -1015,7 +1103,8 @@
 									}
 									var initializer = addCallButton($wrapper, chatContext);
 									initializer.done(function($container) {
-										$container.find(".callButton").first().addClass("pull-right chatCall");
+										$container.find(".callButton").first().addClass("chatCall"); // pull-right
+										//$container.find(".dropdown-toggle").addClass("pull-right");
 										$container.find(".dropdown-menu").addClass("pull-right");
 										$wrapper.show();
 										log("<< initChat DONE " + roomTitle + " for " + currentUser.id);
@@ -1169,12 +1258,25 @@
 									var $wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");
 									var initializer = addCallButton($wrapper, miniChatContext);
 									initializer.done(function($container) {
-										var $button = $container.find(".callButton").first();
-										$button.children(".callButtonTitle, .callTitle, .uiIconMiniArrowDown").remove();
-										$button.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
-										$button.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
-										$container.find(".dropdown-menu").addClass("pull-right");
-										//
+										var $first = $container.find(".callButton").first();
+										// XXX No default button in mini chat yet
+										//$first.children(".callButtonTitle, .callTitle, .uiIconMiniArrowDown").remove();
+										//$first.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
+										//$first.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
+										var $dropdown = $container.find(".dropdown-menu");
+										if ($dropdown.length > 0) {
+											$dropdown.addClass("pull-right");
+											$first.removeClass("btn preferred");
+											var $li = $("<li></li>");
+											$li.append($first);
+											$dropdown.prepend($li);
+											var $toggle = $container.find(".dropdown-toggle");
+											$toggle.addClass("callButton");
+											$toggle.children(".callButtonTitle, .callTitle, .uiIconMiniArrowDown").remove();
+											$toggle.prepend($("<i class='callButtonIconVideo'></i>"));
+											$toggle.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
+											$toggle.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
+										}
 										$titleBar.prepend($wrapper);
 										log("<< initMiniChat DONE " + roomTitle + " for " + currentUser.id);
 									});
