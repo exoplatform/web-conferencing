@@ -356,8 +356,6 @@ if (eXo.webConferencing) {
 								});
 								
 								// Save user state for audio/video mute in local storage
-								//localStorage.removeItem(TOKEN_STORE);
-								//localStorage.setItem(TOKEN_STORE, JSON.stringify(token));
 								var preferenceKey = function(name) {
 									return currentUserId + "@exo.webconferencing.webrtc." + name;
 								};
