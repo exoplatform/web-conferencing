@@ -215,6 +215,8 @@ if (eXo.webConferencing) {
 									}
 								}
 								
+								log(">> WebRTC configuratuon: " + JSON.stringify(rtcConfig));
+								
 								var pc = new RTCPeerConnection(rtcConfig);
 								var negotiation = $.Deferred();
 								var connection = $.Deferred();
