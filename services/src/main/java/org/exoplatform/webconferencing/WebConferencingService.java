@@ -788,6 +788,25 @@ public class WebConferencingService implements Startable {
   }
 
   /**
+   * Gets the provider configuration.
+   *
+   * @param providerType the provider type
+   * @return the provider configuration
+   */
+  public CallProviderConfiguration getProviderConfiguration(String providerType) {
+    return null; // TODO
+  }
+  
+  /**
+   * Save provider configuration.
+   *
+   * @param config the config
+   */
+  public void saveProviderConfiguration(CallProviderConfiguration config) {
+    // TODO
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override

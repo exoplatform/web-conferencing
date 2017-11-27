@@ -755,7 +755,6 @@
 			return context;
 		};
 
-		
 		var initProvider = function(provider) {
 			var process = $.Deferred();
 			if (provider.init && provider.hasOwnProperty("init")) {
@@ -770,6 +769,42 @@
 			} else {
 				log("Marked call provider as Initialized: " + provider.getType());
 				provider.isInitialized = true;
+				process.resolve(false);
+			}
+			return process.promise();
+		};
+		
+		var adminContext = function(adminUser) {
+			var context = {
+				adminUser : adminUser,
+				isIOS : isIOS,
+				isAndroid : isAndroid,
+				isWindowsMobile : isWindowsMobile,
+				isActivated : function() {
+					// TODO detect in runtime if the provider activated
+					var activated = true;
+					var res = $.Deferred();
+					res.resolve(activated);
+					return res.promise();
+				}
+			};
+			return context;
+		};
+		
+		var initProviderAdmin = function(provider, adminUser) {
+			var process = $.Deferred();
+			if (provider.initAdmin && provider.hasOwnProperty("initAdmin")) {
+				provider.initAdmin(adminContext(adminUser)).done(function() {
+					provider.isAdminInitialized = true;
+					log("Initialized call provider admin: " + provider.getType());
+					process.resolve(true);
+				}).fail(function(err) {
+					log("ERROR initializing call provider admin for '" + provider.getType() + "': " + err);
+					process.reject(err);
+				});
+			} else {
+				log("Marked call provider admin as Initialized: " + provider.getType());
+				provider.isAdminInitialized = true;
 				process.resolve(false);
 			}
 			return process.promise();
@@ -1580,6 +1615,23 @@
 						initProvider(p);
 					}
 				}
+			}
+		};
+		
+		/**
+		 * Initialize Admin context (for Admin screen etc).
+		 */
+		this.initAdmin = function(adminUser, context) {
+			// TODO init CometD connectivity = probably yes!
+			
+			if (adminUser) {
+				// TODO invoke registered providers settings
+				for (var i = 0; i < providers.length; i++) {
+					var p = providers[i];
+					if (!p.isAdminInitialized) {
+						initProviderAdmin(p, adminUser);
+					}
+				}				
 			}
 		};
 		

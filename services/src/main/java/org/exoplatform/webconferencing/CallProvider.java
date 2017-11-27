@@ -42,6 +42,9 @@ public abstract class CallProvider extends BaseComponentPlugin {
   /** The Constant CONFIG_PROVIDER_NAME. */
   public static final String          CONFIG_PROVIDER_NAME          = "name";
 
+  /** The Constant CONFIG_PROVIDER_DESCRIPTION. */
+  public static final String          CONFIG_PROVIDER_DESCRIPTION   = "description";
+
   /** The Constant CONFIG_PROVIDER_CONFIGURATION. */
   public static final String          CONFIG_PROVIDER_CONFIGURATION = "provider-configuration";
 
@@ -79,6 +82,13 @@ public abstract class CallProvider extends BaseComponentPlugin {
    * @return the name
    */
   public abstract String getTitle();
+
+  /**
+   * Technical details description for this provider. Will be used in administrative settings.
+   *
+   * @return the details
+   */
+  public abstract String getDetails();
 
   /**
    * Gets the version.

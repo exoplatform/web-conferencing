@@ -28,9 +28,10 @@
   <external-component-plugins>
     <target-component>org.exoplatform.webconferencing.WebConferencingService</target-component>
     <component-plugin>
-      <name>add.clouddriveprovider</name>
+      <name>add.callprovider</name>
       <set-method>addPlugin</set-method>
       <type>org.exoplatform.webconferencing.webrtc.WebrtcProvider</type>
+      <description>Default provider based on [WebRTC] standard. Let users to place peer to peer call. No browser plugin needed.</description>
       <init-params>
         <properties-param>
           <name>provider-configuration</name>

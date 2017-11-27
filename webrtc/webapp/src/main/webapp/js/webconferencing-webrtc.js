@@ -452,6 +452,18 @@
 				}
 				return process.promise();
 			};
+			
+			this.initAdmin = function(context) {
+				var process = $.Deferred();
+				// TODO init Settings button and its click handler to show WebRTC settings form
+				/////
+				
+				// TODO use Lamia's WebRTC popup code here
+				
+				/////
+				process.reosolve();
+				return process.promise();
+			};
 		}
 
 		var provider = new WebrtcProvider();

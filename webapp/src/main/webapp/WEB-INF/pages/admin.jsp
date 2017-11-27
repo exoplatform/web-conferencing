@@ -18,53 +18,7 @@
 	<!-- Admin scripts -->
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 	<script type="text/javascript">
-    /*
-     *
-     * OPEN HIDE POPUPs
-     * String id; contain the Id of element to duplicate
-     * INT inputID; Contain the number of elements
-     */
-
-    function addInput(id, inputID) {
-
-        var domToAdd = jQuery("#" + id + " > .group-container" + inputID).html();
-        newId = $('#urlGroup > div').length;
-        console.log(newId);
-        jQuery("#" + id).append("<div class='group-container" + newId + "'>" + domToAdd + "</div>");
-        jQuery("#" + id + " > .group-container" + newId + " > input").attr("id", "url" + newId);
-        jQuery("#" + id + " > .group-container" + newId + " > i.uiIconPlus ").attr("onclick", "addInput('urlGroup', " + newId + ")");
-
-        if (jQuery("#" + id + " > .group-container" + newId + " > i.uiIconTrash").length > 0) {
-            jQuery("#" + id + " > .group-container" + newId + " > i.uiIconTrash").attr("onclick", "removeInput("+ newId + ")");
-        } else {
-            jQuery("<i class='uiIconTrash uiIconLightGray' onclick='removeInput(" + newId + ")'>&nbsp;</i>").insertBefore("#" + id + " > .group-container" + newId + " > i.uiIconPlus ");
-        }
-    }
-
-    function removeInput(inputID) {
-        jQuery(" .group-container" + inputID).remove();
-    }
-
-        jQuery(document).ready(function () {
-            /* OPEN HIDE POPUPs*/
-            jQuery("#webConfPopupClique").click(function () {
-                jQuery(".maskPopup").removeClass("hide");
-            });
-
-            jQuery("#webConfPopup .uiIconClose.pull-right").click(function () {
-                jQuery(".maskPopup").addClass("hide");
-            });
-
-            jQuery('#check').click(function(){
-                if (jQuery('#check').is(":checked")){
-                    jQuery(".toggleInputs").removeClass("hideInputs");
-                }else{
-                    jQuery(".toggleInputs").addClass("hideInputs");
-                }
-            });
-            /* TOOLTIP */
-            jQuery('[data-toggle="tooltip"]').tooltip();
-        });
+    // moved to portlet module
 
 	</script>
 
@@ -108,6 +62,7 @@
         </table>
     </div>
 
+		<%-- Move this to WebRTC provider --%>
     <div class="maskPopup hide" id="webConfPopup">
         <div class="NormalStyle popupContainer uiPopup">
             <div class="popupHeader ClearFix"><a aria-hidden="true" class="uiIconClose pull-right">&nbsp;</a> <span class="PopupTitle popupTitle">Popup header</span></div>

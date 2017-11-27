@@ -1,112 +1,139 @@
 /* 
  * Web Conferencing Admin styles (common for all skins) 
  */
+i[class^="uiIcon"] {
+	cursor: pointer
+}
+/*Header page*/
+.header {
+	margin: 40px 0
+}
+/**/
+/* SWICHER */
+/**/
+.switch {
+	position: relative;
+	display: inline-block;
+	width: 60px;
+	height: 24px;
+	margin-bottom: 0;
+}
 
-    i[class^="uiIcon"]{cursor: pointer}
-    /*Header page*/
-    .header{margin: 40px 0}
-    /**/
-    /* SWICHER */
-    /**/
-    .switch {
-        position: relative;
-        display: inline-block;
-        width: 60px;
-        height: 24px;
-        margin-bottom: 0;
-    }
+.switch input {
+	display: none;
+}
 
-    .switch input {display:none;}
+.slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: #ccc;
+	-webkit-transition: .4s;
+	transition: .4s;
+}
 
-    .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #ccc;
-        -webkit-transition: .4s;
-        transition: .4s;
-    }
+.slider:before {
+	position: absolute;
+	content: "";
+	height: 17px;
+	width: 17px;
+	left: 4px;
+	bottom: 3px;
+	background-color: white;
+	-webkit-transition: .4s;
+	transition: .4s;
+}
 
-    .slider:before {
-        position: absolute;
-        content: "";
-        height: 17px;
-        width: 17px;
-        left: 4px;
-        bottom: 3px;
-        background-color: white;
-        -webkit-transition: .4s;
-        transition: .4s;
-    }
+input:checked+.slider {
+	/*  background-color: #2196F3;*/
+	
+}
 
-    input:checked + .slider {
-        /*  background-color: #2196F3;*/
-    }
+input:focus+.slider {
+	box-shadow: 0 0 1px #2196F3;
+}
 
-    input:focus + .slider {
-        box-shadow: 0 0 1px #2196F3;
-    }
+input:checked+.slider:before {
+	-webkit-transform: translateX(33px);
+	-ms-transform: translateX(33px);
+	transform: translateX(33px);
+}
 
-    input:checked + .slider:before {
-        -webkit-transform: translateX(33px);
-        -ms-transform: translateX(33px);
-        transform: translateX(33px);
-    }
-    input:not(:checked) + .slider{background: #f0f0f0;border-color:#f0f0f0}
-    input:not(:checked) + .slider:before{    background-color: #ccc;}
-    /* Rounded sliders */
-    .slider.round {
-        border-radius: 34px;
-    }
+input:not (:checked ) +.slider {
+	background: #f0f0f0;
+	border-color: #f0f0f0
+}
 
-    .slider.round:before {
-        border-radius: 50%;
-    }
-    /**/
-    /* END SWICHER */
-    /**/
-    .actionIcon >i >span {
-        font-size: 0;
-    }
+input:not (:checked ) +.slider:before {
+	background-color: #ccc;
+}
+/* Rounded sliders */
+.slider.round {
+	border-radius: 34px;
+}
 
-    .uiPopup, .modal.uiPopup{max-width: 100%}
-    .webconferencing .modal.fade{top: 10%}
-    .maskPopup{
-        background: #0000005c;
-        text-align: center;
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        top: 0;
-        width: auto;
-        height: auto;
-    }
-    .NormalStyle.popupContainer {
-        position: relative;
-        background: #FFF;
-        top: 18%;
-        max-width: 95%;
-        margin: auto;
-        width: 560px;
-        max-height: 70%;
-        overflow: auto;
-    }
-    /**/
+.slider.round:before {
+	border-radius: 50%;
+}
+/**/
+/* END SWICHER */
+/**/
+.actionIcon>i>span {
+	font-size: 0;
+}
 
-    #webConfPopup .title{
-        font-weight : bold;
-        text-align: left;
-    }
-    .control-group > *, #ContainerUrlGroup > label,
-    #ContainerUrlGroup > div[id^="urlGroup"]{display: inline-block;vertical-align: text-top;}
-    div[id^="urlGroup"] * {
-        text-align: left;
-    }
-    div#ContainerUrlGroup{display: block}
-    .hideInputs{
-        display: none;
-    }
+.uiPopup, .modal.uiPopup {
+	max-width: 100%
+}
+
+.webconferencing .modal.fade {
+	top: 10%
+}
+
+.maskPopup {
+	background: #0000005c;
+	text-align: center;
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: 0;
+	width: auto;
+	height: auto;
+}
+
+.NormalStyle.popupContainer {
+	position: relative;
+	background: #FFF;
+	top: 18%;
+	max-width: 95%;
+	margin: auto;
+	width: 560px;
+	max-height: 70%;
+	overflow: auto;
+}
+/**/
+#webConfPopup .title {
+	font-weight: bold;
+	text-align: left;
+}
+
+.control-group>*, #ContainerUrlGroup>label, #ContainerUrlGroup>div[id^="urlGroup"] {
+	display: inline-block;
+	vertical-align: text-top;
+}
+
+div[id^="urlGroup"] * {
+	text-align: left;
+}
+
+div#ContainerUrlGroup {
+	display: block
+}
+
+.hideInputs {
+	display: none;
+}

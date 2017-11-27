@@ -322,4 +322,12 @@ public class WebrtcProvider extends CallProvider {
     return WEBRTC_TITLE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String getDetails() {
+    return this.getDescription();
+  }
+
 }
