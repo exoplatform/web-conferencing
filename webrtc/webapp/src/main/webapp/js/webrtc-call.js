@@ -490,7 +490,6 @@ if (eXo.webConferencing) {
 								
 								// Subscribe to the call updates
 								var listener = webConferencing.onCallUpdate(callId, function(message) {
-									// TODO handle the remote side data
 									if (message.provider == webrtc.getType()) {
 										if (message.sender != currentUserId) {
 											log(">>> Received call update for " + callId + ": " + JSON.stringify(message));

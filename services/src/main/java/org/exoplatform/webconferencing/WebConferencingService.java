@@ -442,12 +442,12 @@ public class WebConferencingService implements Startable {
     CallInfo info = readCallById(id);
     if (info != null) {
       stopCall(info, userId, remove);
-    } else if (remove) {
+    } /* TODO cleanup -- else if (remove) {
       // XXX for a case of previous version storage format, cleanup saved call ID
       if (userId != null && id.startsWith("g/")) {
         removeUserGroupCallId(userId, id);
       }
-    }
+    }*/
     return info;
   }
 
@@ -1221,7 +1221,9 @@ public class WebConferencingService implements Startable {
   protected void notifyUserCallState(CallInfo call, String initiatorId, String state) {
     for (UserInfo part : call.getParticipants()) {
       if (part.getType() == UserInfo.TYPE_NAME) {
-        if (initiatorId == null || !initiatorId.equals(part.getId())) {
+        // We notify to other part, and in case of deletion including to one who may caused the update 
+        // for a case if several user clients listening.
+        if (initiatorId == null || !initiatorId.equals(part.getId()) || CallState.STOPPED.equals(state)) {
           fireUserCallState(part.getId(),
                             call.getId(),
                             call.getProviderType(),
