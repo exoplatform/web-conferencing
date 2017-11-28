@@ -113,7 +113,8 @@
 								addParticipant(context.currentUser);
 								addParticipant(target);
 							}
-							if (ims.length > 0) {
+							if (ims.length > 1) {
+								// If we have more than single user, then we have participants for a call.
 								// Build jQuery element of the call button:
 								// It can be an anchor or button. It may use any custom CSS class (like myCallAction) we know that 
 								// Web Conferencing may add btn class (from PLF's styles) if this connector will be a single compatible 

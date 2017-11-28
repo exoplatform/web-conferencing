@@ -1266,16 +1266,19 @@
 										var $dropdown = $container.find(".dropdown-menu");
 										if ($dropdown.length > 0) {
 											$dropdown.addClass("pull-right");
-											$first.removeClass("btn preferred");
 											var $li = $("<li></li>");
 											$li.append($first);
 											$dropdown.prepend($li);
 											var $toggle = $container.find(".dropdown-toggle");
 											$toggle.addClass("callButton");
-											$toggle.children(".callButtonTitle, .callTitle, .uiIconMiniArrowDown").remove();
+											$toggle.children(".uiIconMiniArrowDown").remove();
 											$toggle.prepend($("<i class='callButtonIconVideo'></i>"));
 											$toggle.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
 											$toggle.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
+										} else {
+											$first.children(".callButtonTitle, .callTitle").remove();
+											$first.removeClass("btn preferred").addClass("uiActionWithLabel btn-mini miniChatCall");
+											$first.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
 										}
 										$titleBar.prepend($wrapper);
 										log("<< initMiniChat DONE " + roomTitle + " for " + currentUser.id);
