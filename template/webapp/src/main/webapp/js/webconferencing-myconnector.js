@@ -113,7 +113,8 @@
 								addParticipant(context.currentUser);
 								addParticipant(target);
 							}
-							if (ims.length > 0) {
+							if (ims.length > 1) {
+								// If we have more than single user, then we have participants for a call.
 								// Build jQuery element of the call button:
 								// It can be an anchor or button. It may use any custom CSS class (like myCallAction) we know that 
 								// Web Conferencing may add btn class (from PLF's styles) if this connector will be a single compatible 
@@ -374,9 +375,9 @@
 					webConferencing.onUserUpdate(currentUserId, function(update, status) {
 						// This connector cares only about own provider events
 						if (update.providerType == self.getType()) {
+							var callId = update.callId;
 							if (update.eventType == "call_state") {
 								// A call state changed (can be 'started', 'stopped', 'paused' (not used for the moment)
-								var callId = update.callId;
 								// rely on logic implemented in callButton() here: group call ID starts with 'g/'
 								var isGroup = callId.startsWith("g/");
 								log(">>> User call state updated: " + JSON.stringify(update) + " [" + status + "]");
@@ -472,7 +473,7 @@
 								// If user has incoming popup open for this call (in several user's windows/clients), then close it
 								log(">>> User call joined: " + JSON.stringify(update) + " [" + status + "]");
 								if (currentUserId == update.part.id) {
-									closeCallPopup(update.owner.id, "joined");
+									closeCallPopup(callId, "joined");
 								}
 							} else if (update.eventType == "call_leaved") {
 								// When user leaves a call, we unlock his button, thus it will be possible to join the call again - 

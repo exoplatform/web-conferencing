@@ -50,6 +50,31 @@
 	min-width: 0;
 }
 
+.btn.callButton {
+	padding-left: 15px;
+	padding-right: 15px;
+}
+
+.callButton.preferred {
+	margin-right: 0px;
+	padding-right: 10px;
+	/*border-right-color: transparent;*/
+	-webkit-border-radius: 3px 0 0 3px;
+	-moz-border-radius: 3px 0 0 3px;
+	border-radius: 3px 0 0 3px;
+}
+
+.callButton.preferred + .dropdown-toggle {
+	margin-left: -1px;
+	padding-left: 5px;
+	padding-right: 5px;
+	border-left-color: transparent;
+	-webkit-border-radius: 0 3px 3px 0;
+	-moz-border-radius: 0 3px 3px 0;
+	border-radius: 0 3px 3px 0;
+	/*background-color: #ffff;*/
+}
+
 .callButton .callTitle {
 	margin-left: 5px;
 	position: relative;
@@ -64,15 +89,15 @@
 	margin-left: 4px;
 }
 
-.callButtonTitle+.uiIconMiniArrowDown {
+.callButtonTitle + .uiIconMiniArrowDown {
 	top: -2px;
 	margin-left: 4px;
 }
 
 .callButton.spaceCall {
-	-webkit-border-radius: 3px;
-	-moz-border-radius: 3px;
-	border-radius: 3px;
+	/*-webkit-border-radius: 3px;*/
+	/*-moz-border-radius: 3px;*/
+	/*border-radius: 3px;*/
 }
 
 .callButtonContainer .uiIconMiniArrowDown {
@@ -84,7 +109,7 @@
 	color:#ffffff;
 }
 
-#tiptip_content .connectAction>.callButtonSibling, #tiptip_content .connectAction>.callButtonContainer {
+#tiptip_content .connectAction > .callButtonSibling, #tiptip_content .connectAction > .callButtonContainer {
 	margin-top: 1ch !important;
 }
 
@@ -96,12 +121,21 @@
 	text-align: left;
 }
 
-#tiptip_content .callButtonContainer > .btn {
-	padding: 5px 15px;
+#tiptip_content .callButtonContainer > .callButton, #tiptip_content .callButtonContainer > .callButton + .dropdown-toggle {
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+
+#socialTopLayout .callButtonContainer > .callButton + .dropdown-toggle {
+	margin-left: -1px !important;
 }
 
 #UIBreadCrumbsNavigationPortlet .callButtonContainer {
 	margin-top: -40px;
+}
+
+.chatCall {
+	line-height: 16px;
 }
 
 .callButtonContainerWrapper {

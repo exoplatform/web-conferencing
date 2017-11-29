@@ -172,7 +172,7 @@ public class CometdWebConferencingService implements Startable {
         if (wasEmpty && res) {
           webConferencing.addUserCallListener(listener);
           if (LOG.isDebugEnabled()) {
-            LOG.debug("<<< Added user call listener for " + listener.getUserId() + ", client:" + clientId);
+            LOG.debug("<<< Added first user call listener for " + listener.getUserId() + ", client:" + clientId);
           }
         } else if (res) {
           if (LOG.isDebugEnabled()) {
@@ -317,8 +317,6 @@ public class CometdWebConferencingService implements Startable {
                       return true;
                     }
                   };
-                  // TODO don't needed: add listener for removed session cleanup
-                  // remote.addListener(sessionRemoveListener);
                   if (LOG.isDebugEnabled()) {
                     LOG.debug("<<< Created user call context for " + userId + ", client:" + clientId + ", channel:" + channelId);
                   }
@@ -404,10 +402,9 @@ public class CometdWebConferencingService implements Startable {
         } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)
             && channelId.length() > CALL_SUBSCRIPTION_CHANNEL_NAME.length()) {
           String callId = channelId.substring(CALL_SUBSCRIPTION_CHANNEL_NAME.length() + 1);
-          // This call communications ended, in normal way of by network failure - we assume the call ended,
+          // This call communications ended, in normal way or by network failure - we assume the call ended,
           // ensure its parties, including those who received incoming notification but not yet
-          // accepted/rejected it,
-          // will be notified that the call stopped/removed.
+          // accepted/rejected it, will be notified that the call stopped/removed.
           try {
             CallInfo call = webConferencing.getCall(callId);
             if (call != null) {

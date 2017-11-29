@@ -215,6 +215,8 @@ if (eXo.webConferencing) {
 									}
 								}
 								
+								log(">> WebRTC configuratuon: " + JSON.stringify(rtcConfig));
+								
 								var pc = new RTCPeerConnection(rtcConfig);
 								var negotiation = $.Deferred();
 								var connection = $.Deferred();
@@ -354,8 +356,6 @@ if (eXo.webConferencing) {
 								});
 								
 								// Save user state for audio/video mute in local storage
-								//localStorage.removeItem(TOKEN_STORE);
-								//localStorage.setItem(TOKEN_STORE, JSON.stringify(token));
 								var preferenceKey = function(name) {
 									return currentUserId + "@exo.webconferencing.webrtc." + name;
 								};
@@ -490,7 +490,6 @@ if (eXo.webConferencing) {
 								
 								// Subscribe to the call updates
 								var listener = webConferencing.onCallUpdate(callId, function(message) {
-									// TODO handle the remote side data
 									if (message.provider == webrtc.getType()) {
 										if (message.sender != currentUserId) {
 											log(">>> Received call update for " + callId + ": " + JSON.stringify(message));

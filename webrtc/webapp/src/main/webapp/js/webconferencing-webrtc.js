@@ -159,7 +159,19 @@
 							context.details().done(function(target) { // users, convName, convTitle
 								var rndText = Math.floor((Math.random() * 1000000) + 1);
 								var linkId = "WebrtcCall-" + clientId;
-								var callId = "p/" + context.currentUser.id + "@" + target.id;
+								// We want have same ID independently on who started the call
+								var callId;
+								//var callId = "p/" + context.currentUser.id + "@" + target.id;
+								if (target.group) {
+									// This should not happen until group calls will be supported
+									callId = "g/" + (target.type == "chat_room" ? context.roomName : target.id);
+								} else {
+									// Sort IMs to have always the same ID (independently on who started the call)
+									var parts = [context.currentUser.id, target.id];
+									var partsAsc = parts.slice();
+									partsAsc.sort();
+									callId = "p/" + partsAsc.join("@");
+								}
 								var link = settings.callUri + "/" + callId;
 								// TODO Disable call button if call already running
 								//var disabledClass = hasJoinedCall(targetId) ? "callDisabled" : "";
