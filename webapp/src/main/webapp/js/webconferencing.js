@@ -1036,7 +1036,7 @@
 								initializer.resolve($container);
 			        });
 						} else {
-							initializer.reject("Nothing to add");
+							initializer.reject(); // Nothing to add
 						}
 					}
 				} else {
@@ -1208,8 +1208,8 @@
 											log("<< initChat DONE " + context.roomTitle + " for " + currentUser.id);
 										});
 										initializer.fail(function(error) {
-											log("<< initChat ERROR " + context.roomTitle + " for " + currentUser.id + ": " + error);
-											if (error.indexOf("Nothing added") < 0) {
+											if (error) {
+												log("<< initChat ERROR " + context.roomTitle + " for " + currentUser.id + ": " + error);
 												$roomDetail.removeData("roomcallinitialized");
 											}
 										});
@@ -1299,8 +1299,10 @@
 											log("<< initMiniChat DONE " + context.roomTitle + " for " + currentUser.id);
 										});
 										initializer.fail(function(error) {
-											log("<< initMiniChat ERROR " + context.roomTitle + " for " + currentUser.id + ": " + error);
-											$miniChat.removeData("minichatcallinitialized");
+											if (error) {
+												log("<< initMiniChat ERROR " + context.roomTitle + " for " + currentUser.id + ": " + error);
+												$miniChat.removeData("minichatcallinitialized");												
+											}
 										});
 									} else {
 										log("<< initMiniChat WARN no room found for " + roomTitle, err);
@@ -1373,7 +1375,9 @@
 					log("<< initUserPopups DONE " + userId + " for " + currentUser.id);
 				});
 				initializer.fail(function(error) {
-					log("<< initUserPopups ERROR " + userId + " for " + currentUser.id + ": " + error);
+					if (error) {
+						log("<< initUserPopups ERROR " + userId + " for " + currentUser.id + ": " + error);
+					}
 				});
 				return initializer.promise();
 			};
@@ -1514,7 +1518,9 @@
 					log("<< initSpacePopups DONE " + spaceId + " for " + currentUser.id);
 				});
 				initializer.fail(function(error) {
-					log("<< initSpacePopups ERROR " + spaceId + " for " + currentUser.id + ": " + error);
+					if (error) {
+						log("<< initSpacePopups ERROR " + spaceId + " for " + currentUser.id + ": " + error);
+					}
 				});
 				return initializer.promise();
 			};
@@ -1600,7 +1606,9 @@
 						log("<< initSpace DONE " + currentSpaceId + " for " + currentUser.id);
 					});
 					initializer.fail(function(error) {
-						log("<< initSpace ERROR " + currentSpaceId + " for " + currentUser.id + ": " + error);
+						if (error) {
+							log("<< initSpace ERROR " + currentSpaceId + " for " + currentUser.id + ": " + error);
+						}
 					});
 				};
 				
@@ -1748,6 +1756,7 @@
 			// * getType() - major call type name
 			// * getSupportedTypes() - all supported call types
 			// * getTitle() - human-readable title for UI
+			// * getDescription() - human-readable description for UI
 			// * callButton(context) - provider should offer an implementation of a Call button and call invoker in it, 
 			// it returns a promise, when it resolved there will be a JQuery element of a button(s) container. 
 			//
