@@ -263,6 +263,12 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
     }
   }
 
+  /**
+   * Send content.
+   *
+   * @param acontext the acontext
+   * @param content the content
+   */
   private void sendContent(AsyncContext acontext, String content) {
     HttpServletResponse response = (HttpServletResponse) acontext.getResponse();
     response.setContentType("text/json");

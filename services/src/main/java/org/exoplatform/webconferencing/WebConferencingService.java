@@ -326,7 +326,7 @@ public class WebConferencingService implements Startable {
    * @param ownerId the owner id
    * @param ownerType the owner type
    * @param title the title
-   * @param type the provider type
+   * @param providerType the provider type
    * @param parts the parts
    * @return the call info
    * @throws Exception the exception
@@ -457,6 +457,15 @@ public class WebConferencingService implements Startable {
     return info;
   }
 
+  /**
+   * Stop call.
+   *
+   * @param call the call
+   * @param userId the user id
+   * @param remove the remove
+   * @return the call info
+   * @throws Exception the exception
+   */
   protected CallInfo stopCall(CallInfo call, String userId, boolean remove) throws Exception {
     // TODO exception if user not a participant?
     if (remove) {
@@ -534,6 +543,7 @@ public class WebConferencingService implements Startable {
    * {@link InvalidCallStateException} will be thrown.
    *
    * @param id the id
+   * @param userId the user id
    * @return the call info or <code>null</code> if call not found
    * @throws Exception the exception
    */
@@ -570,8 +580,8 @@ public class WebConferencingService implements Startable {
    * If call started, then notify all its parties that given participant leaved. If stopped, then
    * {@link InvalidCallStateException} will be thrown.
    *
-   *
    * @param id the id
+   * @param userId the user id
    * @return the call info or <code>null</code> if call not found
    * @throws Exception the exception
    */
@@ -676,7 +686,7 @@ public class WebConferencingService implements Startable {
    *
    * @param userId the user id
    * @param callId the call id
-   * @param type the provider type
+   * @param providerType the provider type
    * @param callState the call state
    * @param ownerId the caller id
    * @param ownerType the caller type
@@ -707,7 +717,7 @@ public class WebConferencingService implements Startable {
    * Fire user call joined a new part.
    *
    * @param callId the call id
-   * @param type the provider type
+   * @param providerType the provider type
    * @param ownerId the owner id
    * @param ownerType the owner type
    * @param partId the part id
@@ -733,7 +743,7 @@ public class WebConferencingService implements Startable {
    * Fire user call part leaved.
    *
    * @param callId the call id
-   * @param type the provider type
+   * @param providerType the provider type
    * @param ownerId the owner id
    * @param ownerType the owner type
    * @param partId the part id
@@ -812,7 +822,6 @@ public class WebConferencingService implements Startable {
    * Gets the provider configurations.
    *
    * @return the provider configurations
-   * @throws Exception
    */
   public Set<CallProviderConfiguration> getProviderConfigurations() {
     Set<CallProvider> allProviders = new LinkedHashSet<>();
@@ -849,9 +858,9 @@ public class WebConferencingService implements Startable {
   /**
    * Gets the provider configuration.
    *
-   * @param type the provider type
+   * @param providerType the provider type
    * @return the provider configuration or <code>null</code> if provider not found
-   * @throws Exception
+   * @throws Exception the exception
    */
   public CallProviderConfiguration getProviderConfiguration(String providerType) throws Exception {
     CallProvider p = getProvider(providerType);
@@ -872,7 +881,7 @@ public class WebConferencingService implements Startable {
    * Save provider configuration.
    *
    * @param config the config
-   * @throws Exception
+   * @throws Exception the exception
    */
   public void saveProviderConfiguration(CallProviderConfiguration config) throws Exception {
     saveProviderConfig(config);
@@ -1261,6 +1270,13 @@ public class WebConferencingService implements Startable {
     }
   }
 
+  /**
+   * Json to provider config.
+   *
+   * @param json the json
+   * @return the call provider configuration
+   * @throws Exception the exception
+   */
   protected CallProviderConfiguration jsonToProviderConfig(JSONObject json) throws Exception {
     String type = json.getString("type");
     boolean active = json.getBoolean("active");
@@ -1272,6 +1288,13 @@ public class WebConferencingService implements Startable {
     return conf;
   }
 
+  /**
+   * Provider config to json.
+   *
+   * @param conf the conf
+   * @return the JSON object
+   * @throws JSONException the JSON exception
+   */
   protected JSONObject providerConfigToJson(CallProviderConfiguration conf) throws JSONException {
     JSONObject json = new JSONObject();
 
@@ -1286,8 +1309,7 @@ public class WebConferencingService implements Startable {
    *
    * @param type the type
    * @return the configuration
-   * @throws Exception
-   * @throws
+   * @throws Exception the exception
    */
   protected CallProviderConfiguration readProviderConfig(String type) throws Exception {
     final String initialGlobalId = Scope.GLOBAL.getId();

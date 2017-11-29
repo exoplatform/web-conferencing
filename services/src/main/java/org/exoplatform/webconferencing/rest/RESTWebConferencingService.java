@@ -93,6 +93,13 @@ public class RESTWebConferencingService implements ResourceContainer {
     cacheControl.setNoStore(true);
   }
 
+  /**
+   * Gets the provider config.
+   *
+   * @param uriInfo the uri info
+   * @param type the type
+   * @return the provider config
+   */
   @GET
   @RolesAllowed("administrators")
   @Path("/provider/{type}/configuration")
@@ -126,6 +133,14 @@ public class RESTWebConferencingService implements ResourceContainer {
     }
   }
 
+  /**
+   * Post provider config.
+   *
+   * @param uriInfo the uri info
+   * @param type the type
+   * @param active the active
+   * @return the response
+   */
   @POST
   @RolesAllowed("administrators")
   @Path("/provider/{type}/configuration")
@@ -165,6 +180,12 @@ public class RESTWebConferencingService implements ResourceContainer {
     }
   }
 
+  /**
+   * Gets the provider configs.
+   *
+   * @param uriInfo the uri info
+   * @return the provider configs
+   */
   @GET
   @RolesAllowed("administrators")
   @Path("/providers/configuration")
@@ -732,10 +753,10 @@ public class RESTWebConferencingService implements ResourceContainer {
    * Post call.
    *
    * @param uriInfo the uri info
-   * @param type the type
+   * @param type the provider type
    * @param id the id
    * @param title the title
-   * @param type the provider type
+   * @param providerType the provider type
    * @param ownerId the owner id
    * @param ownerType the owner type
    * @param participants the participants
