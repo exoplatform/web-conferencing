@@ -31,6 +31,7 @@
       <name>add.callprovider</name>
       <set-method>addPlugin</set-method>
       <type>org.exoplatform.webconferencing.myconnector.MyConnectorProvider</type>
+      <description>Fake provider for testing. It opens a call window for users but doesn't run any media exchange.</description>
       <init-params>
         <properties-param>
           <name>provider-configuration</name>
