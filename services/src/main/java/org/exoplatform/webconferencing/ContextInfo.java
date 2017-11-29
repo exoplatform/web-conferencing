@@ -18,6 +18,10 @@
  */
 package org.exoplatform.webconferencing;
 
+import java.util.Set;
+
+import org.exoplatform.webconferencing.cometd.CometdWebConferencingService;
+
 /**
  * A lightweight info about current Platform context: space, chat room etc.
  * 
@@ -30,19 +34,22 @@ package org.exoplatform.webconferencing;
 public class ContextInfo {
 
   /** The eXo container name. */
-  private final String containerName;
+  private final String                         containerName;
 
   /** The space id (pretty name). */
-  private final String spaceId;
+  private final String                         spaceId;
 
   /** The room title. */
-  private final String roomTitle;
+  private final String                         roomTitle;
 
   /** CometD server URL path. */
-  private final String cometdPath;
+  private final String                         cometdPath;
 
   /** CometD server token. */
-  private final String cometdToken;
+  private final String                         cometdToken;
+
+  /** The providers config. */
+  private final Set<CallProviderConfiguration> providersConfig;
 
   /**
    * Instantiates a new context info.
@@ -52,14 +59,21 @@ public class ContextInfo {
    * @param roomTitle the room name
    * @param cometdPath the cometd path
    * @param cometdToken the cometd token
+   * @param providersConfig the providers config
    */
-  public ContextInfo(String containerName, String spaceId, String roomTitle, String cometdPath, String cometdToken) {
+  public ContextInfo(String containerName,
+                     String spaceId,
+                     String roomTitle,
+                     String cometdPath,
+                     String cometdToken,
+                     Set<CallProviderConfiguration> providersConfig) {
     super();
     this.containerName = containerName;
     this.spaceId = spaceId;
     this.roomTitle = roomTitle;
     this.cometdPath = cometdPath;
     this.cometdToken = cometdToken;
+    this.providersConfig = providersConfig;
   }
 
   /**
@@ -68,9 +82,10 @@ public class ContextInfo {
    * @param containerName the container name
    * @param spaceId the space id
    * @param roomTitle the room name
+   * @param providersConfig the providers config
    */
-  public ContextInfo(String containerName, String spaceId, String roomTitle) {
-    this(containerName, spaceId, roomTitle, null, null);
+  public ContextInfo(String containerName, String spaceId, String roomTitle, Set<CallProviderConfiguration> providersConfig) {
+    this(containerName, spaceId, roomTitle, null, null, providersConfig);
   }
 
   /**
@@ -116,6 +131,15 @@ public class ContextInfo {
    */
   public String getRoomTitle() {
     return roomTitle;
+  }
+
+  /**
+   * Gets the providers config.
+   *
+   * @return the providers config
+   */
+  public Set<CallProviderConfiguration> getProvidersConfig() {
+    return providersConfig;
   }
 
 }

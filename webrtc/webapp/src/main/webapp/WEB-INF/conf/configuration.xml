@@ -35,7 +35,7 @@
       <init-params>
         <properties-param>
           <name>provider-configuration</name>
-          <property name="disable" value="${webconferencing.webrtc.disable:false}" />
+          <property name="active" value="${webconferencing.webrtc.active:true}" />
         </properties-param>
         <object-param>
           <name>rtc-configuration</name>

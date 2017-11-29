@@ -9,22 +9,25 @@
 	/** For debug logging. */
 	var objId = Math.floor((Math.random() * 1000) + 1);
 	var logPrefix = "[webconferencing_" + objId + "] ";
-	var log = function(msg, e) {
+	var log = function(msg, e, prefix) {
 		if (typeof console != "undefined" && typeof console.log != "undefined") {
+			if (!prefix) {
+				prefix = logPrefix;
+			}
 			var isoTime = " -- " + new Date().toISOString();
 			if (e) {
 				if (e instanceof Error) {
-					console.log(logPrefix + msg + ". " + (e.name && e.message ? e.name + ": " + e.message : e.toString()) + isoTime);
+					console.log(prefix + msg + ". " + (e.name && e.message ? e.name + ": " + e.message : e.toString()) + isoTime);
 				} if (e.name && e.message) {
-					console.log(logPrefix + msg + ". " + e.name + ": " + e.message + isoTime);
+					console.log(prefix + msg + ". " + e.name + ": " + e.message + isoTime);
 				} else {
-					console.log(logPrefix + msg + ". Cause: " + (typeof e == "string" ? e : JSON.stringify(e)) + isoTime);
+					console.log(prefix + msg + ". Cause: " + (typeof e == "string" ? e : JSON.stringify(e)) + isoTime);
 				}
 				if (typeof e.stack != "undefined") {
 					console.log(e.stack);
 				}
 			} else {
-				console.log(logPrefix + msg + isoTime);
+				console.log(prefix + msg + isoTime);
 			}
 		}
 	};
@@ -515,6 +518,36 @@
 		});
 	};
 	
+	var getProvidersConfig = function() {
+		var request = $.ajax({
+			async : true,
+			type : "GET",
+			url : prefixUrl + "/portal/rest/webconferencing/providers/configuration"
+		});
+		return initRequest(request);
+	};
+	
+	var getProviderConfig = function(type) {
+		var request = $.ajax({
+			async : true,
+			type : "GET",
+			url : prefixUrl + "/portal/rest/webconferencing/provider/" + type + "/configuration"
+		});
+		return initRequest(request);
+	};
+	
+	var postProviderConfig = function(type, active) {
+		var request = $.ajax({
+			async : true,
+			type : "POST",
+			url : prefixUrl + "/portal/rest/webconferencing/provider/" + type + "/configuration",
+			data : {
+				active : active
+			}
+		});
+		return initRequest(request);
+	};
+	
 	var getUserStatus = function(userId) {
 		var request = $.ajax({
 			async : true,
@@ -722,8 +755,10 @@
 		// CometD transport bus
 		var cometd, cometdContext;
 		
-		// Registered providers
-		var providers = [];
+		// Providers
+		var providers = []; // loaded providers
+		var providersConfig; // will be assigned in init()
+		var providersInitializer = {}; // map
 		
 		var chat = new Chat();
 		this.getChat = function() {
@@ -817,22 +852,38 @@
 		};
 
 		var initProvider = function(provider) {
-			var process = $.Deferred();
+			var initializer = providersInitializer[provider.getType()]; // deferred may be added by getProvider()
+			if (!initializer) {
+				initializer = providersInitializer[provider.getType()] = $.Deferred();
+			}
 			if (provider.init && provider.hasOwnProperty("init")) {
 				provider.init(initContext()).done(function() {
 					provider.isInitialized = true;
 					log("Initialized call provider: " + provider.getType());
-					process.resolve(true);
+					initializer.resolve(provider, true);
 				}).fail(function(err) {
 					log("ERROR initializing call provider '" + provider.getType() + "': " + err);
-					process.reject(err);
+					initializer.reject(err);
 				});
 			} else {
 				log("Marked call provider as Initialized: " + provider.getType());
 				provider.isInitialized = true;
-				process.resolve(false);
+				initializer.resolve(provider, false);
 			}
-			return process.promise();
+			initializer.done(function(provider) {
+				// if successful - set active flag
+				for (var i=0; i<providersConfig.length; i++) {
+					var conf = providersConfig[i];
+					if (conf.type == provider.getType()) {
+						provider.isActive = conf.active; 
+						break;
+					}
+				}
+				if (typeof provider.isActive == "undefined") {
+					provider.isActive = true; // active by default, TODO it is not required, active will be set by the server always
+				}
+			});
+			return initializer.promise();
 		};
 		
 		var adminContext = function(adminUser) {
@@ -992,13 +1043,17 @@
 						for (var i = 0; i < addProviders.length; i++) {
 							var p = addProviders[i];
 							log(">>> addCallButton > next provider > " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id + " providers: " + addProviders.length);
-							if ($container.data(providerFlag + p.getType())) {
-								log("<<< addCallButton DONE (already) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
+							if (p.isActive) {
+								if ($container.data(providerFlag + p.getType())) {
+									log("<<< addCallButton DONE (already) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
+								} else {
+									// even if adding will fail, we treat it as 'canceled' and mark the provider as added
+									$container.data(providerFlag + p.getType(), true);
+									var b = p.callButton(context);
+									addProviderButton(p, b);
+								}								
 							} else {
-								// even if adding will fail, we treat it as 'canceled' and mark the provider as added
-								$container.data(providerFlag + p.getType(), true);
-								var b = p.callButton(context);
-								addProviderButton(p, b);
+								log("<<< addCallButton CANCELED (not active) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
 							}
 						}
 						if (workers.length > 0) {
@@ -1025,7 +1080,7 @@
 										$container.append($dropdown);
 									}
 									// User preferred provider for this call should be a default (first) button
-									if (preferredProviderId) {
+									if (preferredProviderId && $preferredButton.length > 0) {
 										moveToDefaultButton($preferredButton);
 									} else {
 										// Mark first a default one (for nice CSS)
@@ -1654,6 +1709,7 @@
 		this.init = function(user, context) {
 			if (user) {
 				currentUser = user;
+				providersConfig = context.providersConfig;
 				prepareUser(currentUser);
 				log("User initialized in Web Conferencing: " + user.id + ". ");
 				if (context.spaceId) {
@@ -1700,23 +1756,6 @@
 						initProvider(p);
 					}
 				}
-			}
-		};
-		
-		/**
-		 * Initialize Admin context (for Admin screen etc).
-		 */
-		this.initAdmin = function(adminUser, context) {
-			// TODO init CometD connectivity = probably yes!
-			
-			if (adminUser) {
-				// TODO invoke registered providers settings
-				for (var i = 0; i < providers.length; i++) {
-					var p = providers[i];
-					if (!p.isAdminInitialized) {
-						initProviderAdmin(p, adminUser);
-					}
-				}				
 			}
 		};
 	
@@ -1792,11 +1831,7 @@
 			}
 		};
 		
-		/**
-		 * Return registered provider by its type name.
-		 */
-		this.getProvider = function(type) {
-			// TODO use more fast way with object-map?
+		this.findProvider = function(type) {
 			for (var i = 0; i < providers.length; i++) {
 				var p = providers[i];
 				var ptypes = p.getSupportedTypes();
@@ -1806,6 +1841,18 @@
 					}					
 				}
 			}
+			return null;
+		};
+		
+		/**
+		 * Return a promise that will be resolved when a provider will be loaded (may be never if wrong name).
+		 */
+		this.getProvider = function(type) {
+			var initializer = providersInitializer[type]; // deferred may be added by initProvider()
+			if (!initializer) {
+				initializer = providersInitializer[type] = $.Deferred();
+			}			
+			return initializer.promise();
 		};
 		
 		/**
@@ -2157,6 +2204,24 @@
 			}
 			return process.promise();
 		};
+		
+		this.getProvidersConfig = function(forceUpdate) {
+			var process;
+			if (!forceUpdate && providersConfig) {
+				process = $.Deferred();
+				process.resolve(providersConfig);
+			} else {
+				process = getProvidersConfig();
+				process.done(function(configs) {
+					providersConfig = configs;
+				}).fail(function(err) {
+					log("ERROR loading providers configuration: ", err);
+				});
+			}
+			return process.promise();
+		}
+		this.getProviderConfig = getProviderConfig; // this will ask server
+		this.postProviderConfig = postProviderConfig;
 		
 		this.getUserStatus = getUserStatus;
 		

@@ -45,6 +45,7 @@ import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.CallInfoException;
+import org.exoplatform.webconferencing.CallProviderConfiguration;
 import org.exoplatform.webconferencing.CallState;
 import org.exoplatform.webconferencing.GroupInfo;
 import org.exoplatform.webconferencing.IdentityNotFound;
@@ -90,6 +91,103 @@ public class RESTWebConferencingService implements ResourceContainer {
     this.cacheControl = new CacheControl();
     cacheControl.setNoCache(true);
     cacheControl.setNoStore(true);
+  }
+
+  @GET
+  @RolesAllowed("administrators")
+  @Path("/provider/{type}/configuration")
+  @Deprecated // TODO not used
+  public Response getProviderConfig(@Context UriInfo uriInfo, @PathParam("type") String type) {
+    ConversationState convo = ConversationState.getCurrent();
+    if (convo != null) {
+      String currentUserName = convo.getIdentity().getUserId();
+      try {
+        CallProviderConfiguration conf = webConferencing.getProviderConfiguration(type);
+        if (conf != null) {
+          return Response.ok().cacheControl(cacheControl).entity(conf).build();
+        } else {
+          return Response.status(Status.NOT_FOUND)
+                         .cacheControl(cacheControl)
+                         .entity(ErrorInfo.notFoundError("Provider or configuration not found"))
+                         .build();
+        }
+      } catch (Throwable e) {
+        LOG.error("Error reading provider configuration for '" + type + "' by '" + currentUserName + "'", e);
+        return Response.serverError()
+                       .cacheControl(cacheControl)
+                       .entity(ErrorInfo.serverError("Error reading provider configuration"))
+                       .build();
+      }
+    } else {
+      return Response.status(Status.UNAUTHORIZED)
+                     .cacheControl(cacheControl)
+                     .entity(ErrorInfo.accessError("Unauthorized user"))
+                     .build();
+    }
+  }
+
+  @POST
+  @RolesAllowed("administrators")
+  @Path("/provider/{type}/configuration")
+  public Response postProviderConfig(@Context UriInfo uriInfo,
+                                     @PathParam("type") String type,
+                                     @FormParam("active") String active) {
+    ConversationState convo = ConversationState.getCurrent();
+    if (convo != null) {
+      String currentUserName = convo.getIdentity().getUserId();
+      try {
+        CallProviderConfiguration conf = webConferencing.getProviderConfiguration(type);
+        if (conf != null) {
+          boolean activeVal = Boolean.valueOf(active);
+          if (activeVal != conf.isActive()) {
+            conf.setActive(activeVal);
+            webConferencing.saveProviderConfiguration(conf);
+          }
+          return Response.ok().cacheControl(cacheControl).entity(conf).build();
+        } else {
+          return Response.status(Status.NOT_FOUND)
+                         .cacheControl(cacheControl)
+                         .entity(ErrorInfo.notFoundError("Provider or configuration not found"))
+                         .build();
+        }
+      } catch (Throwable e) {
+        LOG.error("Error saving provider configuration for '" + type + "' by '" + currentUserName + "'", e);
+        return Response.serverError()
+                       .cacheControl(cacheControl)
+                       .entity(ErrorInfo.serverError("Error saving provider configuration"))
+                       .build();
+      }
+    } else {
+      return Response.status(Status.UNAUTHORIZED)
+                     .cacheControl(cacheControl)
+                     .entity(ErrorInfo.accessError("Unauthorized user"))
+                     .build();
+    }
+  }
+
+  @GET
+  @RolesAllowed("administrators")
+  @Path("/providers/configuration")
+  public Response getProviderConfigs(@Context UriInfo uriInfo) {
+    ConversationState convo = ConversationState.getCurrent();
+    if (convo != null) {
+      String currentUserName = convo.getIdentity().getUserId();
+      try {
+        Set<CallProviderConfiguration> confs = webConferencing.getProviderConfigurations();
+        return Response.ok().cacheControl(cacheControl).entity(confs).build();
+      } catch (Throwable e) {
+        LOG.error("Error reading providers configuration by '" + currentUserName + "'", e);
+        return Response.serverError()
+                       .cacheControl(cacheControl)
+                       .entity(ErrorInfo.serverError("Error reading providers configuration"))
+                       .build();
+      }
+    } else {
+      return Response.status(Status.UNAUTHORIZED)
+                     .cacheControl(cacheControl)
+                     .entity(ErrorInfo.accessError("Unauthorized user"))
+                     .build();
+    }
   }
 
   /**
@@ -637,7 +735,7 @@ public class RESTWebConferencingService implements ResourceContainer {
    * @param type the type
    * @param id the id
    * @param title the title
-   * @param providerType the provider type
+   * @param type the provider type
    * @param ownerId the owner id
    * @param ownerType the owner type
    * @param participants the participants

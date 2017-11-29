@@ -66,7 +66,7 @@ public class CallInfo {
    * @param ownerType the owner type
    * @param ownerLink the owner link
    * @param avatarLink the avatar link
-   * @param providerType the provider type
+   * @param type the provider type
    */
   public CallInfo(String id,
                   String title,

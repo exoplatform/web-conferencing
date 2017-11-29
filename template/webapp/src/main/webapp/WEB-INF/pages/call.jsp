@@ -213,7 +213,7 @@
 			  var clientId = myconnector.getClientId() + "-" + rnd;
 				webConferencing.toCallUpdate(callId, {
 	    		"provider" : myconnector.getType(), // required field
-	    		"sender" : currentUserId, // required field
+	    		"sender" : currentUserId,  // required field, see use of onCallUpdate() above
 	    		"yourData" : { // your data here
 	    			"myCallKey" : currentUserId + "@" + clientId
 	    		}

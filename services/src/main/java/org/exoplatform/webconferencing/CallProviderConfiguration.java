@@ -27,9 +27,22 @@ package org.exoplatform.webconferencing;
  * @version $Id: CallProviderConfiguration.java 00000 Nov 24, 2017 pnedonosko $
  * 
  */
-public abstract class CallProviderConfiguration {
+public class CallProviderConfiguration {
 
-  protected String  providerType;
+  static CallProviderConfiguration fromProvider(CallProvider provider) {
+    CallProviderConfiguration conf = new CallProviderConfiguration();
+    conf.setActive(true);
+    conf.setTitle(provider.getTitle());
+    conf.setDescription(provider.getDescription());
+    conf.setType(provider.getType());
+    return conf;
+  }
+  
+  protected String  type;
+
+  protected String  title;
+
+  protected String  description;
 
   protected boolean active;
 
@@ -42,17 +55,53 @@ public abstract class CallProviderConfiguration {
   }
 
   /**
-   * @return the providerType
+   * @return the type
    */
-  public String getProviderType() {
-    return providerType;
+  public String getType() {
+    return type;
   }
 
   /**
-   * @param providerType the providerType to set
+   * @param type the type to set
    */
-  public void setProviderType(String providerType) {
-    this.providerType = providerType;
+  public void setType(String providerType) {
+    this.type = providerType;
+  }
+
+  /**
+   * Gets the title.
+   *
+   * @return the title
+   */
+  public String getTitle() {
+    return title;
+  }
+
+  /**
+   * Sets the title.
+   *
+   * @param title the new title
+   */
+  public void setTitle(String title) {
+    this.title = title;
+  }
+
+  /**
+   * Gets the description.
+   *
+   * @return the description
+   */
+  public String getDescription() {
+    return description;
+  }
+
+  /**
+   * Sets the description.
+   *
+   * @param description the new description
+   */
+  public void setDescription(String description) {
+    this.description = description;
   }
 
 }

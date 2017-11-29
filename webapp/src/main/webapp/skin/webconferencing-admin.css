@@ -89,7 +89,7 @@ input:not (:checked ) +.slider:before {
 	max-width: 100%
 }
 
-.webconferencing .modal.fade {
+#webconferencingAdmin .modal.fade {
 	top: 10%
 }
 

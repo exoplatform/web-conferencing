@@ -21,7 +21,7 @@ import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.Utils;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.webrtc.WebrtcProvider;
-import org.exoplatform.webconferencing.webrtc.WebrtcSettings;
+import org.exoplatform.webconferencing.webrtc.WebrtcProvider.WebrtcSettings;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 

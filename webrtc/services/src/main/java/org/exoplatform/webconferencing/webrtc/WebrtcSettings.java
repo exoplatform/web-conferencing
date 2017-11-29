@@ -27,6 +27,7 @@ import org.exoplatform.webconferencing.webrtc.WebrtcProvider.RTCConfiguration;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: WebrtcSettings.java 00000 Aug 15, 2017 pnedonosko $
  */
+@Deprecated
 public class WebrtcSettings extends CallProviderSettings {
 
   /** The call URI. */

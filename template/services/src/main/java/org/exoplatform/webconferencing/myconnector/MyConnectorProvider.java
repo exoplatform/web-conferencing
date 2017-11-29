@@ -52,6 +52,36 @@ public class MyConnectorProvider extends CallProvider {
   /** The Constant VERSION. */
   public static final String VERSION         = "1.0.0";
 
+  public class MySettings extends Settings {
+
+    /**
+     * Gets the client id.
+     *
+     * @return the client id
+     */
+    public String getClientId() {
+      return MyConnectorProvider.this.getClientId();
+    }
+
+    /**
+     * Gets the url.
+     *
+     * @return the url
+     */
+    public String getUrl() {
+      return MyConnectorProvider.this.getUrl();
+    }
+
+    /**
+     * Gets the api key.
+     *
+     * @return the api key
+     */
+    public String getApiKey() {
+      return MyConnectorProvider.this.getApiKey();
+    }
+  }
+
   /**
    * The Class MyConnectorIMInfo.
    */
@@ -129,16 +159,8 @@ public class MyConnectorProvider extends CallProvider {
    *
    * @return the settings
    */
-  public MyConnectorSettings getSettings() {
-    return new MyConnectorSettings(getType(),
-                                   getSupportedTypes(),
-                                   getTitle(),
-                                   "My Call", // TODO in18n
-                                   "Join", // TODO in18n
-                                   getVersion(),
-                                   getClientId(),
-                                   getUrl(),
-                                   getApiKey());
+  public MySettings getSettings() {
+    return new MySettings();
   }
 
   /**

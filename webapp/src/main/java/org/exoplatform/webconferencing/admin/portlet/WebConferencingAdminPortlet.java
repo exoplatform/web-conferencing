@@ -82,8 +82,9 @@ public class WebConferencingAdminPortlet extends GenericPortlet {
       // Locale locale = userContext.getLocale();
       // ResourceBundle bundle = applicationContext.resolveBundle(locale);
 
-      ContextInfo context = getCurrentContext(remoteUser);
-      String contextJson = asJSON(context);
+      // TODO Do we need Admin context?
+      //ContextInfo context = getCurrentContext(remoteUser);
+      //String contextJson = asJSON(context);
 
       UserInfo exoUser = webConferencing.getUserInfo(remoteUser);
       if (exoUser != null) {
@@ -92,10 +93,9 @@ public class WebConferencingAdminPortlet extends GenericPortlet {
         prDispatcher.include(request, response);
 
         // Javascript
-        String exoUserJson = asJSON(exoUser);
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
         js.require("SHARED/webConferencingAdminPortlet", "webConferencingAdminPortlet")
-          .addScripts("webConferencingAdminPortlet.init(" + exoUserJson + "," + contextJson + ");");
+          .addScripts("webConferencingAdminPortlet.init();");
       } else {
         LOG.warn("Web Conferencing Admin portlet cannot be initialized: user info cannot be obtained for " + remoteUser);
       }

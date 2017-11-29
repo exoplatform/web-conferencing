@@ -55,9 +55,7 @@
 			};
 
 			this.getCallTitle = function() {
-				if (settings) {
-					return settings.callTitle;
-				}
+				return "Call"; // TODO i18n
 			};
 			
 			this.getRtcConfiguration = function() {
@@ -465,15 +463,16 @@
 				return process.promise();
 			};
 			
-			this.initAdmin = function(context) {
+			this.showSettings = function(context) {
+				log("> showSettings");
+				
 				var process = $.Deferred();
-				// TODO init Settings button and its click handler to show WebRTC settings form
+				// TODO Settings button clicked - show WebRTC settings form
 				/////
 				
 				// TODO use Lamia's WebRTC popup code here
 				
 				/////
-				process.reosolve();
 				return process.promise();
 			};
 		}
@@ -483,7 +482,6 @@
 		// Add WebRTC provider into webConferencing object of global eXo namespace (for non AMD uses)
 		if (globalWebConferencing) {
 			globalWebConferencing.webrtc = provider;
-			log("> Added eXo.webConferencing.webrtc");
 		} else {
 			log("eXo.webConferencing not defined");
 		}

@@ -22,7 +22,7 @@
 
 	</script>
 
-<div class="container-fluid webconferencing">
+<div id="webconferencingAdmin" class="container-fluid">
     <div class="header">
         <h3 class="titleWithBorder">Web Conferencing Administration</h3>
     </div>
@@ -40,6 +40,16 @@
                 </tr>
             </thead>
             <tbody>
+            		<tr class="callProvider template" style="display: none;">
+                    <td class="title"></td>
+                    <td class="description"></td>
+                    <td class="center actionContainer active"><label class="switch"><input checked="checked" type="checkbox" /> <span class="slider round btn-primary">&nbsp;</span> </label></td>
+                    <td class="center actionContainer actions">
+                    	<a class="actionIcon settings" data-original-title="Settings" data-placement="bottom" data-toggle="modal" href="javascript: void(0);" rel="tooltip" style="display: none;"><i class="uiIconSetting uiIconBlue"><span>&nbsp;</span></i></a>
+                    	<a class="actionIcon permissions" data-original-title="Lock" data-placement="bottom" rel="tooltip" style="display: none;"><i class="uiIconLockMedium uiIconBlue"><span>&nbsp;</span></i></a>
+                    </td>
+                </tr>
+                <%--
                 <tr>
                     <td>WebRTC</td>
                     <td>Lorem ipsum dolor sit amet, vel perpetua adolescens no. Hinc facilis incorrupte mea</td>
@@ -58,6 +68,7 @@
                     <td class="center actionContainer"><label class="switch"><input checked="checked" type="checkbox" /> <span class="slider round btn-primary">&nbsp;</span> </label></td>
                     <td class="center actionContainer"><a class="actionIcon" data-original-title="Setting" data-placement="bottom" data-toggle="modal" href="#webConfPopup" rel="tooltip"><i class="uiIconSetting uiIconBlue"><span>&nbsp;</span></i> </a> <a class="actionIcon" data-original-title="Lock" data-placement="bottom" rel="tooltip"> <i class="uiIconLockMedium uiIconBlue"><span>&nbsp;</span></i> </a></td>
                 </tr>
+                 --%>
             </tbody>
         </table>
     </div>

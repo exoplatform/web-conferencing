@@ -33,9 +33,9 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.JavascriptManager;
+import org.exoplatform.webconferencing.CallProvider.Settings;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.webrtc.WebrtcProvider;
-import org.exoplatform.webconferencing.webrtc.WebrtcSettings;
 import org.exoplatform.webui.application.WebuiRequestContext;
 
 /**
@@ -85,7 +85,7 @@ public class WebrtcProviderPortlet extends GenericPortlet {
                               "/portal/webrtc/call",
                               null,
                               null);
-        WebrtcSettings settings = provider.settings().callUri(callURI.toString()).build();
+        Settings settings = provider.settings().callUri(callURI.toString()).build();
         String settingsJson = asJSON(settings);
 
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();

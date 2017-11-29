@@ -23,6 +23,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +84,9 @@ public class WebConferencingService implements Startable {
 
   /** The Constant USER_CALLS_SCOPE_NAME. */
   protected static final String USER_CALLS_SCOPE_NAME = "webconferencing.user.calls".intern();
+
+  /** The Constant PROVIDER_SCOPE_NAME. */
+  protected static final String PROVIDER_SCOPE_NAME   = "webconferencing.provider".intern();
 
   /**
    * Represent Space in calls.
@@ -252,7 +256,7 @@ public class WebConferencingService implements Startable {
             String imId = m.get("value");
             if (imId != null && imId.length() > 0) {
               CallProvider provider = getProvider(imType);
-              if (provider != null && provider.isSupportedType(imType)) {
+              if (provider != null && provider.isActive() && provider.isSupportedType(imType)) {
                 try {
                   IMInfo im = provider.getIMInfo(imId);
                   if (im != null) {
@@ -322,7 +326,7 @@ public class WebConferencingService implements Startable {
    * @param ownerId the owner id
    * @param ownerType the owner type
    * @param title the title
-   * @param providerType the provider type
+   * @param type the provider type
    * @param parts the parts
    * @return the call info
    * @throws Exception the exception
@@ -442,12 +446,14 @@ public class WebConferencingService implements Startable {
     CallInfo info = readCallById(id);
     if (info != null) {
       stopCall(info, userId, remove);
-    } /* TODO cleanup -- else if (remove) {
-      // XXX for a case of previous version storage format, cleanup saved call ID
-      if (userId != null && id.startsWith("g/")) {
-        removeUserGroupCallId(userId, id);
-      }
-    }*/
+    } /*
+       * TODO cleanup -- else if (remove) {
+       * // XXX for a case of previous version storage format, cleanup saved call ID
+       * if (userId != null && id.startsWith("g/")) {
+       * removeUserGroupCallId(userId, id);
+       * }
+       * }
+       */
     return info;
   }
 
@@ -670,7 +676,7 @@ public class WebConferencingService implements Startable {
    *
    * @param userId the user id
    * @param callId the call id
-   * @param providerType the provider type
+   * @param type the provider type
    * @param callState the call state
    * @param ownerId the caller id
    * @param ownerType the caller type
@@ -701,7 +707,7 @@ public class WebConferencingService implements Startable {
    * Fire user call joined a new part.
    *
    * @param callId the call id
-   * @param providerType the provider type
+   * @param type the provider type
    * @param ownerId the owner id
    * @param ownerType the owner type
    * @param partId the part id
@@ -727,7 +733,7 @@ public class WebConferencingService implements Startable {
    * Fire user call part leaved.
    *
    * @param callId the call id
-   * @param providerType the provider type
+   * @param type the provider type
    * @param ownerId the owner id
    * @param ownerType the owner type
    * @param partId the part id
@@ -784,26 +790,92 @@ public class WebConferencingService implements Startable {
    * @return the provider
    */
   public CallProvider getProvider(String type) {
-    return providers.get(type);
+    CallProvider p = providers.get(type);
+    if (p != null) {
+      try {
+        // Apply saved configurations (via Admin UI etc)
+        CallProviderConfiguration conf = readProviderConfig(p.getType());
+        if (conf != null) {
+          p.setActive(conf.isActive());
+        } else {
+          p.setActive(true);
+        }
+      } catch (Exception e) {
+        LOG.warn("Error reading provider configuration " + p.getType(), e);
+        p.setActive(true);
+      }
+    }
+    return p;
+  }
+
+  /**
+   * Gets the provider configurations.
+   *
+   * @return the provider configurations
+   * @throws Exception
+   */
+  public Set<CallProviderConfiguration> getProviderConfigurations() {
+    Set<CallProvider> allProviders = new LinkedHashSet<>();
+    // Collect all registered providers via configuration
+    for (CallProvider registeredProvider : providers.values()) {
+      allProviders.add(registeredProvider);
+    }
+    // Read configurations saved in storage for each of them
+    Set<CallProviderConfiguration> allConfs = new LinkedHashSet<>();
+    for (Iterator<CallProvider> piter = allProviders.iterator(); piter.hasNext();) {
+      CallProvider p = piter.next();
+      boolean addDefault = false;
+      try {
+        CallProviderConfiguration conf = readProviderConfig(p.getType());
+        if (conf != null) {
+          conf.setTitle(p.getTitle());
+          conf.setDescription(p.getDescription());
+          allConfs.add(conf);
+        } else {
+          addDefault = true;
+        }
+      } catch (Exception e) {
+        LOG.warn("Error reading providers configuration " + p.getType(), e);
+        addDefault = true; // this way we let read and re-save the erroneous config
+      }
+      if (addDefault) {
+        CallProviderConfiguration defaultConf = CallProviderConfiguration.fromProvider(p);
+        allConfs.add(defaultConf);
+      }
+    }
+    return allConfs;
   }
 
   /**
    * Gets the provider configuration.
    *
-   * @param providerType the provider type
-   * @return the provider configuration
+   * @param type the provider type
+   * @return the provider configuration or <code>null</code> if provider not found
+   * @throws Exception
    */
-  public CallProviderConfiguration getProviderConfiguration(String providerType) {
-    return null; // TODO
+  public CallProviderConfiguration getProviderConfiguration(String providerType) throws Exception {
+    CallProvider p = getProvider(providerType);
+    if (p != null) {
+      CallProviderConfiguration conf = readProviderConfig(p.getType());
+      if (conf == null) {
+        conf = CallProviderConfiguration.fromProvider(p);
+      } else {
+        conf.setTitle(p.getTitle());
+        conf.setDescription(p.getDescription());
+      }
+      return conf;
+    }
+    return null; // not found
   }
-  
+
   /**
    * Save provider configuration.
    *
    * @param config the config
+   * @throws Exception
    */
-  public void saveProviderConfiguration(CallProviderConfiguration config) {
-    // TODO
+  public void saveProviderConfiguration(CallProviderConfiguration config) throws Exception {
+    saveProviderConfig(config);
   }
 
   /**
@@ -866,7 +938,7 @@ public class WebConferencingService implements Startable {
     json.put("avatarLink", call.getAvatarLink());
     json.put("ownerType", call.getOwnerType());
     json.put("ownerLink", call.getOwnerLink());
-    json.put("providerType", call.getProviderType());
+    json.put("type", call.getProviderType());
     if (call.getState() != null) {
       json.put("state", call.getState());
     }
@@ -914,7 +986,7 @@ public class WebConferencingService implements Startable {
     String avatarLink = json.getString("avatarLink");
     String ownerType = json.getString("ownerType");
     String ownerLink = json.getString("ownerLink");
-    String providerType = json.getString("providerType");
+    String providerType = json.getString("type");
     String state = json.optString("state", null);
 
     // Owner
@@ -1189,6 +1261,72 @@ public class WebConferencingService implements Startable {
     }
   }
 
+  protected CallProviderConfiguration jsonToProviderConfig(JSONObject json) throws Exception {
+    String type = json.getString("type");
+    boolean active = json.getBoolean("active");
+
+    CallProviderConfiguration conf = new CallProviderConfiguration();
+    conf.setActive(active);
+    conf.setType(type);
+
+    return conf;
+  }
+
+  protected JSONObject providerConfigToJson(CallProviderConfiguration conf) throws JSONException {
+    JSONObject json = new JSONObject();
+
+    json.put("type", conf.getType());
+    json.put("active", conf.isActive());
+
+    return json;
+  }
+
+  /**
+   * Read saved call provider configuration.
+   *
+   * @param type the type
+   * @return the configuration
+   * @throws Exception
+   * @throws
+   */
+  protected CallProviderConfiguration readProviderConfig(String type) throws Exception {
+    final String initialGlobalId = Scope.GLOBAL.getId();
+    try {
+      String safeType = URLEncoder.encode(type, "UTF-8");
+      SettingValue<?> val = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(PROVIDER_SCOPE_NAME), safeType);
+      if (val != null) {
+        String str = String.valueOf(val.getValue());
+        if (str.startsWith("{")) {
+          // Assuming it's JSON
+          CallProviderConfiguration conf = jsonToProviderConfig(new JSONObject(str));
+          return conf;
+        } else {
+          LOG.warn("Cannot parse saved CallProviderConfiguration: " + str);
+        }
+      }
+      return null;
+    } finally {
+      Scope.GLOBAL.id(initialGlobalId);
+    }
+  }
+
+  /**
+   * Save provider configuration.
+   *
+   * @param conf the conf
+   * @throws Exception the exception
+   */
+  protected void saveProviderConfig(CallProviderConfiguration conf) throws Exception {
+    final String initialGlobalId = Scope.GLOBAL.getId();
+    try {
+      JSONObject json = providerConfigToJson(conf);
+      String safeType = URLEncoder.encode(conf.getType(), "UTF-8");
+      settingService.set(Context.GLOBAL, Scope.GLOBAL.id(PROVIDER_SCOPE_NAME), safeType, SettingValue.create(json.toString()));
+    } finally {
+      Scope.GLOBAL.id(initialGlobalId);
+    }
+  }
+
   /**
    * Room info.
    *
@@ -1240,7 +1378,7 @@ public class WebConferencingService implements Startable {
   protected void notifyUserCallState(CallInfo call, String initiatorId, String state) {
     for (UserInfo part : call.getParticipants()) {
       if (part.getType() == UserInfo.TYPE_NAME) {
-        // We notify to other part, and in case of deletion including to one who may caused the update 
+        // We notify to other part, and in case of deletion including to one who may caused the update
         // for a case if several user clients listening.
         if (initiatorId == null || !initiatorId.equals(part.getId()) || CallState.STOPPED.equals(state)) {
           fireUserCallState(part.getId(),

@@ -36,11 +36,8 @@ import org.exoplatform.webconferencing.UserInfo.IMInfo;
  */
 public abstract class CallProvider extends BaseComponentPlugin {
 
-  /** The Constant CONFIG_PROVIDER_TYPE. */
-  public static final String          CONFIG_PROVIDER_TYPE          = "type";
-
-  /** The Constant CONFIG_PROVIDER_NAME. */
-  public static final String          CONFIG_PROVIDER_NAME          = "name";
+  /** The Constant CONFIG_PROVIDER_ACTIVE. */
+  public static final String          CONFIG_PROVIDER_ACTIVE        = "active";
 
   /** The Constant CONFIG_PROVIDER_DESCRIPTION. */
   public static final String          CONFIG_PROVIDER_DESCRIPTION   = "description";
@@ -52,12 +49,65 @@ public abstract class CallProvider extends BaseComponentPlugin {
   protected static final String       EMAIL_REGEX                   =
                                                   "^(?=[A-Z0-9][A-Z0-9@._%+-]{5,253}+$)[A-Z0-9._%+-]{1,64}+@(?:(?=[A-Z0-9-]{1,63}+\\.)[A-Z0-9]++(?:-[A-Z0-9]++)*+\\.){1,8}+[A-Z]{2,63}+$";
 
+  /**
+   * Call Provider runtime Settings (for serialization in JSON to remote clients).
+   */
+  public abstract class Settings {
+    /**
+     * Checks if is active.
+     *
+     * @return true, if is active
+     */
+    public final boolean isActive() {
+      return CallProvider.this.isActive();
+    }
+
+    /**
+     * Gets the name.
+     *
+     * @return the name
+     */
+    public String getType() {
+      return CallProvider.this.getType();
+    }
+
+    /**
+     * Gets the supported types.
+     *
+     * @return the supported types
+     */
+    public String[] getSupportedTypes() {
+      return CallProvider.this.getSupportedTypes();
+    }
+
+    /**
+     * Gets the title.
+     *
+     * @return the title
+     */
+    public String getTitle() {
+      return CallProvider.this.getTitle();
+    }
+    
+    /**
+     * Gets the version.
+     *
+     * @return the version
+     */
+    public String getVersion() {
+      return CallProvider.this.getVersion();
+    }
+  }
+  
   /** The email test. */
   protected final Pattern             emailTest                     =
                                                 Pattern.compile(EMAIL_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   /** The config. */
   protected final Map<String, String> config;
+
+  /** The active flag. */
+  protected boolean                   active;
 
   /**
    * Instantiates a new video calls provider.
@@ -70,9 +120,77 @@ public abstract class CallProvider extends BaseComponentPlugin {
     PropertiesParam param = params.getPropertiesParam(CONFIG_PROVIDER_CONFIGURATION);
     if (param != null) {
       this.config = Collections.unmodifiableMap(param.getProperties());
+      this.active = Boolean.valueOf(this.config.getOrDefault(CONFIG_PROVIDER_ACTIVE, Boolean.TRUE.toString()));
     } else {
       throw new ConfigurationException("Property parameters provider-configuration required.");
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public int hashCode() {
+    // TODO consider calc the hash once and save in instance variable
+    final String type = getType();
+    if (type != null && type.length() > 0) {
+      int hc = 7 + type.hashCode();
+      final String version = getVersion();
+      if (version != null) {
+        hc = hc * 31 + version.hashCode();
+      }
+      // TODO not sure it should depend on supported types, they are optional and may be dynamic in runtime
+      /*
+       * final String[] stypes = getSupportedTypes();
+       * if (stypes != null) {
+       * for (String stype : stypes) {
+       * hc = hc * 31 + stype.hashCode();
+       * }
+       * }
+       */
+      return hc;
+    } else {
+      return super.hashCode();
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (obj != null && CallProvider.class.isAssignableFrom(obj.getClass())) {
+      return CallProvider.class.cast(obj).getType().equals(this.getType());
+    }
+    return false;
+  }
+
+  /**
+   * Checks if is active.
+   *
+   * @return true, if is active
+   */
+  public final boolean isActive() {
+    return active;
+  }
+
+  /**
+   * Sets the active.
+   *
+   * @param active the new active
+   */
+  final void setActive(boolean active) {
+    this.active = active;
+  }
+  
+  /**
+   * Checks if it is a supported type by this provider.
+   *
+   * @param type the type
+   * @return <code>true</code>, if is supported type, <code>false</code> otherwise
+   */
+  public boolean isSupportedType(String type) {
+    return getType().equals(type);
   }
 
   /**
@@ -88,7 +206,9 @@ public abstract class CallProvider extends BaseComponentPlugin {
    *
    * @return the details
    */
-  public abstract String getDetails();
+  public String getDetails() {
+    return this.getDescription();
+  }
 
   /**
    * Gets the version.
@@ -106,16 +226,6 @@ public abstract class CallProvider extends BaseComponentPlugin {
    * @return the type
    */
   public abstract String getType();
-
-  /**
-   * Checks if it is a supported type by this provider.
-   *
-   * @param type the type
-   * @return <code>true</code>, if is supported type, <code>false</code> otherwise
-   */
-  public boolean isSupportedType(String type) {
-    return getType().equals(type);
-  }
 
   /**
    * Gets all types supported by this provider. Provider type should be in lower case and without

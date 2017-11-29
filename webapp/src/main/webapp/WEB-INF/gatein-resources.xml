@@ -153,6 +153,9 @@
     <depends>
       <module>webConferencing</module>
     </depends>
+    <depends>
+      <module>webConferencingPortlet</module>
+    </depends>
   </module>
   
   <!-- portlet>

@@ -18,7 +18,7 @@
 		/** For debug logging. */
 		var objId = Math.floor((Math.random() * 1000) + 1);
 		var logPrefix = "[myconnector_" + objId + "] ";
-		var log = function(msg, e, logPrefix) {
+		var log = function(msg, e) {
 			webConferencing.log(msg, e, logPrefix);
 		};
 		//log("> Loading at " + location.origin + location.pathname);
@@ -525,10 +525,7 @@
 			 * Used in the callButton() code. Also can be used by dependent modules (e.g. when need run a call page in a window).
 			 */
 			this.getCallTitle = function() {
-				if (settings) {
-					return settings.callTitle;
-				}
-				return "";
+				return "My Call"; // TODO i18n
 			};
 			
 			/**

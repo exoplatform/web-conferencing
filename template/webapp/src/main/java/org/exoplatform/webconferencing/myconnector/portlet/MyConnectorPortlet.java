@@ -34,7 +34,6 @@ import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.myconnector.MyConnectorProvider;
-import org.exoplatform.webconferencing.myconnector.MyConnectorSettings;
 import org.exoplatform.webui.application.WebuiRequestContext;
 
 /**
@@ -88,17 +87,16 @@ public class MyConnectorPortlet extends GenericPortlet {
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
         // first load Web Conferencing itself,
         js.require("SHARED/webConferencing", "webConferencing")
-        // load our connector module to myProvider variable
+          // load our connector module to myProvider variable
           .require("SHARED/webConferencing_myconnector", "myProvider")
-          // check if the variable contains an object to ensure the connector was loaded successfully 
+          // check if the variable contains an object to ensure the connector was loaded successfully
           .addScripts("if (myProvider) { "
-          // optionally configure the connector with settings (from the server-side)
+              // optionally configure the connector with settings (from the server-side)
               + "myProvider.configure(" + settingsJson + "); "
-          // then add an instance of the connector as a provider to the Web Conferencing client
+              // then add an instance of the connector as a provider to the Web Conferencing client
               + "webConferencing.addProvider(myProvider); "
-          // and force Web Conferencing client update (to update call buttons and related stuff)
-              + "webConferencing.update(); "
-              + "}");
+              // and force Web Conferencing client update (to update call buttons and related stuff)
+              + "webConferencing.update(); " + "}");
       } catch (Exception e) {
         LOG.error("Error processing My Connector calls portlet for user " + request.getRemoteUser(), e);
       }

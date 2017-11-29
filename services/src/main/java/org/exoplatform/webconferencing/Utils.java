@@ -125,15 +125,20 @@ public class Utils {
       spacePrettyName = spaceRoomName = IdentityInfo.EMPTY;
     }
     ExoContainer exo = ExoContainerContext.getCurrentContainer();
+    WebConferencingService webConferencing = exo.getComponentInstanceOfType(WebConferencingService.class);
     CometdWebConferencingService cometdService = exo.getComponentInstanceOfType(CometdWebConferencingService.class);
     if (cometdService != null) {
       return new ContextInfo(exo.getContext().getName(),
                              spacePrettyName,
                              spaceRoomName,
                              cometdService.getCometdServerPath(),
-                             cometdService.getUserToken(userId));
+                             cometdService.getUserToken(userId),
+                             webConferencing.getProviderConfigurations());
     } else {
-      return new ContextInfo(exo.getContext().getName(), spacePrettyName, spaceRoomName);
+      return new ContextInfo(exo.getContext().getName(),
+                             spacePrettyName,
+                             spaceRoomName,
+                             webConferencing.getProviderConfigurations());
     }
   }
 

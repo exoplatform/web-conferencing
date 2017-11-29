@@ -38,7 +38,7 @@
           <property name="my-clientId" value="${webconferencing.myconnector.clientId:myClientId}" />
           <!-- use /portal/intranet/myconnector by default, it will open a page on intranet site -->
           <property name="my-serviceUrl" value="${webconferencing.myconnector.serviceUrl:/portal/myconnector}" />
-          <property name="disable" value="${webconferencing.myconnector.disable:false}" />
+          <property name="active" value="${webconferencing.myconnector.active:true}" />
         </properties-param>
       </init-params>
     </component-plugin>

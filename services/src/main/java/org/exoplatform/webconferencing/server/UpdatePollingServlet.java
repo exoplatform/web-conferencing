@@ -84,7 +84,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
                 body.append("\"eventType\": \"call_state\",");
                 body.append("\"callId\": \"");
                 body.append(callId);
-                body.append("\",\"providerType\": \"");
+                body.append("\",\"type\": \"");
                 body.append(providerType);
                 body.append("\",\"callState\": \"");
                 body.append(callState);
@@ -110,7 +110,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
                 body.append("\"eventType\": \"call_joined\",");
                 body.append("\"callId\": \"");
                 body.append(callId);
-                body.append("\",\"providerType\": \"");
+                body.append("\",\"type\": \"");
                 body.append(providerType);
                 body.append("\",\"part\": {");
                 body.append("\"id\": \"");
@@ -137,7 +137,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
                 body.append("\"eventType\": \"call_leaved\",");
                 body.append("\"callId\": \"");
                 body.append(callId);
-                body.append("\",\"providerType\": \"");
+                body.append("\",\"type\": \"");
                 body.append(providerType);
                 body.append("\",\"part\": {");
                 body.append("\"id\": \"");

@@ -55,6 +55,51 @@ public class WebrtcProvider extends CallProvider {
   /** The Constant LOG. */
   protected static final Log LOG                      = ExoLogger.getLogger(WebrtcProvider.class);
 
+  public class WebrtcSettings extends Settings {
+
+    /** The call URI. */
+    protected final String           callUri;
+
+    /** The rtc configuration. */
+    protected final RTCConfiguration rtcConfiguration;
+
+    /**
+     * Instantiates a new webrtc settings.
+     *
+     * @param type the type
+     * @param supportedTypes the supported types
+     * @param title the title
+     * @param callTitle the call title
+     * @param joinTitle the join title
+     * @param version the version
+     * @param callUri the call URI
+     * @param rtcConfiguration the rtc configuration
+     */
+    public WebrtcSettings(String callUri, RTCConfiguration rtcConfiguration) {
+      this.callUri = callUri;
+      this.rtcConfiguration = rtcConfiguration;
+    }
+
+    /**
+     * Gets the call URI.
+     *
+     * @return the call URI
+     */
+    public String getCallUri() {
+      return callUri;
+    }
+
+    /**
+     * Gets the rtc configuration.
+     *
+     * @return the rtcConfiguration
+     */
+    public RTCConfiguration getRtcConfiguration() {
+      return rtcConfiguration;
+    }
+
+  }
+
   /**
    * The Class SettingsBuilder.
    */
@@ -80,14 +125,7 @@ public class WebrtcProvider extends CallProvider {
      * @return the WebRTC settings
      */
     public WebrtcSettings build() {
-      return new WebrtcSettings(getType(),
-                                getSupportedTypes(),
-                                getTitle(),
-                                "Call", // TODO in18n
-                                "Join", // TODO in18n
-                                getVersion(),
-                                callUri,
-                                rtcConfiguration.cloneEnabled());
+      return new WebrtcSettings(callUri, rtcConfiguration.cloneEnabled());
     }
   }
 
@@ -320,14 +358,6 @@ public class WebrtcProvider extends CallProvider {
   @Override
   public String getTitle() {
     return WEBRTC_TITLE;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public String getDetails() {
-    return this.getDescription();
   }
 
 }

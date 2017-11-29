@@ -94,8 +94,7 @@ if (eXo.webConferencing) {
 		eXo.webConferencing.startCall = function(call) {
 			var process = $.Deferred();
 			$(function() {
-				var webrtc = webConferencing.getProvider("webrtc");
-				if (webrtc) {
+				webConferencing.getProvider("webrtc").done(function(webrtc) {
 					if (webrtc.isSupportedPlatform()) {
 						log(">> WebRTC call: " + location.origin + location.pathname);
 						var callId = call.id;
@@ -794,9 +793,9 @@ if (eXo.webConferencing) {
 						process.reject("WebRTC not supported in this browser: " + navigator.userAgent);
 						showError("Not supported platform", "Your browser does not support WebRTC calls.");
 					}
-				} else {
-					process.reject("WebRTC provider not found");
-				}
+				}).fail(function(err) {
+					process.reject("WebRTC provider not available: " + err);
+				});
 			});
 			return process.promise();
 		};

@@ -24,6 +24,7 @@ package org.exoplatform.webconferencing;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: CallProviderSettings.java 00000 Aug 15, 2017 pnedonosko $
  */
+@Deprecated
 public class CallProviderSettings {
 
   /** The name. */
@@ -43,6 +44,9 @@ public class CallProviderSettings {
 
   /** The version. */
   protected final String   version;
+
+  /** The active. */
+  protected boolean        active;
 
   /**
    * Instantiates a new settings.
@@ -67,6 +71,24 @@ public class CallProviderSettings {
     this.callTitle = callTitle;
     this.joinTitle = joinTitle;
     this.version = version;
+  }
+
+  /**
+   * Checks if is active.
+   *
+   * @return true, if is active
+   */
+  public final boolean isActive() {
+    return active;
+  }
+
+  /**
+   * Sets the active.
+   *
+   * @param active the new active
+   */
+  void setActive(boolean active) {
+    this.active = active;
   }
 
   /**
