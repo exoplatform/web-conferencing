@@ -55,6 +55,9 @@ public class WebrtcProvider extends CallProvider {
   /** The Constant LOG. */
   protected static final Log LOG                      = ExoLogger.getLogger(WebrtcProvider.class);
 
+  /**
+   * The Class WebrtcSettings.
+   */
   public class WebrtcSettings extends Settings {
 
     /** The call URI. */
@@ -66,12 +69,6 @@ public class WebrtcProvider extends CallProvider {
     /**
      * Instantiates a new webrtc settings.
      *
-     * @param type the type
-     * @param supportedTypes the supported types
-     * @param title the title
-     * @param callTitle the call title
-     * @param joinTitle the join title
-     * @param version the version
      * @param callUri the call URI
      * @param rtcConfiguration the rtc configuration
      */
@@ -129,17 +126,26 @@ public class WebrtcProvider extends CallProvider {
     }
   }
 
+  /**
+   * The Class RTCConfiguration.
+   */
   public static class RTCConfiguration {
 
+    /** The bundle policy. */
     protected String bundlePolicy;
 
+    /** The ice candidate pool size. */
     protected int    iceCandidatePoolSize;
 
+    /** The ice transport policy. */
     protected String iceTransportPolicy;
 
+    /** The ice servers. */
     protected Set<?> iceServers = new LinkedHashSet<>();
 
     /**
+     * Gets the bundle policy.
+     *
      * @return the bundlePolicy
      */
     public String getBundlePolicy() {
@@ -147,6 +153,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Sets the bundle policy.
+     *
      * @param bundlePolicy the bundlePolicy to set
      */
     public void setBundlePolicy(String bundlePolicy) {
@@ -154,6 +162,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Gets the ice candidate pool size.
+     *
      * @return the iceCandidatePoolSize
      */
     public int getIceCandidatePoolSize() {
@@ -161,6 +171,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Sets the ice candidate pool size.
+     *
      * @param iceCandidatePoolSize the iceCandidatePoolSize to set
      */
     public void setIceCandidatePoolSize(int iceCandidatePoolSize) {
@@ -168,6 +180,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Gets the ice transport policy.
+     *
      * @return the iceTransportPolicy
      */
     public String getIceTransportPolicy() {
@@ -175,6 +189,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Sets the ice transport policy.
+     *
      * @param iceTransportPolicy the iceTransportPolicy to set
      */
     public void setIceTransportPolicy(String iceTransportPolicy) {
@@ -182,6 +198,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Gets the ice servers.
+     *
      * @return the iceServers
      */
     public Set<?> getIceServers() {
@@ -189,12 +207,19 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Sets the ice servers.
+     *
      * @param iceServers the iceServers to set
      */
     public void setIceServers(Set<?> iceServers) {
       this.iceServers = iceServers;
     }
 
+    /**
+     * Clone enabled.
+     *
+     * @return the RTC configuration
+     */
     RTCConfiguration cloneEnabled() {
       RTCConfiguration enabled = new RTCConfiguration();
       if (this.bundlePolicy != null && this.bundlePolicy.length() > 0) {
@@ -220,16 +245,26 @@ public class WebrtcProvider extends CallProvider {
     }
   }
 
+  /**
+   * The Class ICEServer.
+   */
   public static class ICEServer {
+    
+    /** The enabled. */
     protected boolean enabled;
 
+    /** The username. */
     protected String  username;
 
+    /** The credential. */
     protected String  credential;
 
+    /** The urls. */
     protected List<?> urls = new ArrayList<>();
 
     /**
+     * Checks if is enabled.
+     *
      * @return the enabled
      */
     public boolean isEnabled() {
@@ -237,6 +272,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Sets the enabled.
+     *
      * @param enabled the enabled to set
      */
     public void setEnabled(boolean enabled) {
@@ -244,6 +281,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Gets the username.
+     *
      * @return the username
      */
     public String getUsername() {
@@ -251,6 +290,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Sets the username.
+     *
      * @param username the username to set
      */
     public void setUsername(String username) {
@@ -258,6 +299,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Gets the credential.
+     *
      * @return the credential
      */
     public String getCredential() {
@@ -265,6 +308,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Sets the credential.
+     *
      * @param credential the credential to set
      */
     public void setCredential(String credential) {
@@ -272,6 +317,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Gets the urls.
+     *
      * @return the urls
      */
     public List<?> getUrls() {
@@ -279,6 +326,8 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
+     * Sets the urls.
+     *
      * @param urls the urls to set
      */
     public void setUrls(List<?> urls) {
@@ -286,6 +335,7 @@ public class WebrtcProvider extends CallProvider {
     }
   }
 
+  /** The rtc configuration. */
   protected final RTCConfiguration rtcConfiguration;
 
   /**

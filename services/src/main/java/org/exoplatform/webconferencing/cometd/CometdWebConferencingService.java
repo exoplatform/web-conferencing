@@ -72,81 +72,136 @@ import org.mortbay.cometd.continuation.EXoContinuationBayeux;
 import org.picocontainer.Startable;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: CometdWebConferencingService.java 00000 Aug 17, 2017 pnedonosko $
- * 
  */
 public class CometdWebConferencingService implements Startable {
 
+  /** The Constant CALLS_CHANNEL_NAME. */
   public static final String             CALLS_CHANNEL_NAME                    = "/webconferencing/calls";
 
+  /** The Constant CALLS_SERVICE_CHANNEL_NAME. */
   public static final String             CALLS_SERVICE_CHANNEL_NAME            = "/service" + CALLS_CHANNEL_NAME;
 
+  /** The Constant USERS_SERVICE_CHANNEL_NAME. */
   public static final String             USERS_SERVICE_CHANNEL_NAME            = "/service/webconferencing/users";
 
+  /** The Constant CALL_SUBSCRIPTION_CHANNEL_NAME. */
   public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME        = "/eXo/Application/WebConferencing/call";
 
+  /** The Constant CALL_SUBSCRIPTION_CHANNEL_NAME_ALL. */
   public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME_ALL    = CALL_SUBSCRIPTION_CHANNEL_NAME + "/**";
 
+  /** The Constant CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS. */
   public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS =
                                                                                "/eXo/Application/WebConferencing/call/{callType}/{callInfo}";
 
+  /** The Constant USER_SUBSCRIPTION_CHANNEL_NAME. */
   public static final String             USER_SUBSCRIPTION_CHANNEL_NAME        = "/eXo/Application/WebConferencing/user";
 
+  /** The Constant USER_SUBSCRIPTION_CHANNEL_PATTERN. */
   public static final String             USER_SUBSCRIPTION_CHANNEL_PATTERN     = USER_SUBSCRIPTION_CHANNEL_NAME + "/{userId}";
 
+  /** The Constant COMMAND_GET. */
   public static final String             COMMAND_GET                           = "get";
 
+  /** The Constant COMMAND_CREATE. */
   public static final String             COMMAND_CREATE                        = "create";
 
+  /** The Constant COMMAND_UPDATE. */
   public static final String             COMMAND_UPDATE                        = "update";
 
+  /** The Constant COMMAND_DELETE. */
   public static final String             COMMAND_DELETE                        = "delete";
 
+  /** The Constant COMMAND_GET_CALLS_STATE. */
   public static final String             COMMAND_GET_CALLS_STATE               = "get_calls_state";
 
+  /** The Constant LOG. */
   private static final Log               LOG                                   =
                                              ExoLogger.getLogger(CometdWebConferencingService.class);
 
+  /** The web conferencing. */
   protected final WebConferencingService webConferencing;
 
+  /** The exo bayeux. */
   protected final EXoContinuationBayeux  exoBayeux;
 
+  /** The service. */
   protected final CallService            service;
 
+  /** The organization. */
   protected final OrganizationService    organization;
 
+  /** The session providers. */
   protected final SessionProviderService sessionProviders;
 
+  /** The identity registry. */
   protected final IdentityRegistry       identityRegistry;
 
+  /**
+   * The Class CallService.
+   */
   @Service("webconferencing")
   public class CallService {
 
+    /**
+     * The Class ChannelContext.
+     */
     class ChannelContext {
+      
+      /** The clients. */
       final Set<String>      clients = ConcurrentHashMap.newKeySet();
 
+      /** The listener. */
       final UserCallListener listener;
 
+      /**
+       * Instantiates a new channel context.
+       *
+       * @param listener the listener
+       */
       ChannelContext(UserCallListener listener) {
         super();
         this.listener = listener;
       }
 
+      /**
+       * Gets the listener.
+       *
+       * @return the listener
+       */
       UserCallListener getListener() {
         return listener;
       }
 
+      /**
+       * Checks for no clients.
+       *
+       * @return true, if successful
+       */
       boolean hasNoClients() {
         return clients.isEmpty();
       }
 
+      /**
+       * Checks for client.
+       *
+       * @param clientId the client id
+       * @return true, if successful
+       */
       boolean hasClient(String clientId) {
         return clients.contains(clientId);
       }
 
+      /**
+       * Removes the client.
+       *
+       * @param clientId the client id
+       * @return true, if successful
+       */
       boolean removeClient(String clientId) {
         boolean res = clients.remove(clientId);
         if (clients.size() == 0) {
@@ -166,6 +221,12 @@ public class CometdWebConferencingService implements Startable {
         return res;
       }
 
+      /**
+       * Adds the client.
+       *
+       * @param clientId the client id
+       * @return true, if successful
+       */
       boolean addClient(String clientId) {
         boolean wasEmpty = clients.size() == 0;
         boolean res = clients.add(clientId);
@@ -187,8 +248,23 @@ public class CometdWebConferencingService implements Startable {
       }
     }
 
+    /**
+     * The listener interface for receiving sessionRemove events.
+     * The class that is interested in processing a sessionRemove
+     * event implements this interface, and the object created
+     * with that class is registered with a component using the
+     * component's <code>addSessionRemoveListener<code> method. When
+     * the sessionRemove event occurs, that object's appropriate
+     * method is invoked.
+     *
+     * @see SessionRemoveEvent
+     */
     @Deprecated
     class SessionRemoveListener implements RemoveListener {
+      
+      /**
+       * {@inheritDoc}
+       */
       @Override
       public void removed(ServerSession session, boolean timeout) {
         if (LOG.isDebugEnabled()) {
@@ -208,7 +284,22 @@ public class CometdWebConferencingService implements Startable {
       }
     }
 
+    /**
+     * The listener interface for receiving channelSubscription events.
+     * The class that is interested in processing a channelSubscription
+     * event implements this interface, and the object created
+     * with that class is registered with a component using the
+     * component's <code>addChannelSubscriptionListener<code> method. When
+     * the channelSubscription event occurs, that object's appropriate
+     * method is invoked.
+     *
+     * @see ChannelSubscriptionEvent
+     */
     class ChannelSubscriptionListener implements SubscriptionListener {
+      
+      /**
+       * {@inheritDoc}
+       */
       @Override
       public void subscribed(ServerSession remote, ServerChannel channel, ServerMessage message) {
         // FYI message will be null for server-side subscription
@@ -348,6 +439,9 @@ public class CometdWebConferencingService implements Startable {
         }
       }
 
+      /**
+       * {@inheritDoc}
+       */
       @Override
       public void unsubscribed(ServerSession session, ServerChannel channel, ServerMessage message) {
         // FYI message will be null for server-side unsubscription
@@ -360,12 +454,30 @@ public class CometdWebConferencingService implements Startable {
       }
     }
 
+    /**
+     * The listener interface for receiving userChannel events.
+     * The class that is interested in processing a userChannel
+     * event implements this interface, and the object created
+     * with that class is registered with a component using the
+     * component's <code>addUserChannelListener<code> method. When
+     * the userChannel event occurs, that object's appropriate
+     * method is invoked.
+     *
+     * @see UserChannelEvent
+     */
     class UserChannelListener implements ChannelListener {
+      
+      /**
+       * {@inheritDoc}
+       */
       @Override
       public void configureChannel(ConfigurableServerChannel channel) {
         // TODO need something special?
       }
 
+      /**
+       * {@inheritDoc}
+       */
       @Override
       public void channelAdded(ServerChannel channel) {
         // Add sub/unsub listener to WebConferencing channel
@@ -381,6 +493,9 @@ public class CometdWebConferencingService implements Startable {
         }
       }
 
+      /**
+       * {@inheritDoc}
+       */
       @Override
       public void channelRemoved(String channelId) {
         if (LOG.isDebugEnabled()) {
@@ -418,30 +533,43 @@ public class CometdWebConferencingService implements Startable {
       }
     }
 
+    /** The bayeux. */
     @Inject
     private BayeuxServer                      bayeux;
 
+    /** The local session. */
     @Session
     private LocalSession                      localSession;
 
+    /** The server session. */
     @Session
     private ServerSession                     serverSession;
 
+    /** The channel context. */
     private final Map<String, ChannelContext> channelContext        = new ConcurrentHashMap<>();
 
+    /** The session remove listener. */
     @Deprecated
     private final RemoveListener              sessionRemoveListener = new SessionRemoveListener();
 
+    /** The subscription listener. */
     private final ChannelSubscriptionListener subscriptionListener  = new ChannelSubscriptionListener();
 
+    /** The channel listener. */
     private final UserChannelListener         channelListener       = new UserChannelListener();
 
+    /**
+     * Post construct.
+     */
     @PostConstruct
     public void postConstruct() {
       bayeux.addListener(channelListener);
       serverSession.addListener(sessionRemoveListener);
     }
 
+    /**
+     * Pre destroy.
+     */
     @PreDestroy
     public void preDestroy() {
       // cleanup listeners
@@ -453,6 +581,13 @@ public class CometdWebConferencingService implements Startable {
       channelContext.clear();
     }
 
+    /**
+     * Subscribe calls.
+     *
+     * @param message the message
+     * @param callType the call type
+     * @param callInfo the call info
+     */
     @Subscription(CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS)
     public void subscribeCalls(Message message, @Param("callType") String callType, @Param("callInfo") String callInfo) {
       String callId = callId(callType, callInfo);
@@ -463,6 +598,12 @@ public class CometdWebConferencingService implements Startable {
       // TODO all data exchanged between peers of a call will go there, WebRTC stuff etc.
     }
 
+    /**
+     * Subscribe user.
+     *
+     * @param message the message
+     * @param userId the user id
+     */
     @Subscription(USER_SUBSCRIPTION_CHANNEL_NAME)
     public void subscribeUser(Message message, @Param("userId") String userId) {
       final String channelId = message.getChannel();
@@ -473,6 +614,12 @@ public class CometdWebConferencingService implements Startable {
       // here will come user publications about his state
     }
 
+    /**
+     * Rc calls.
+     *
+     * @param caller the caller
+     * @param data the data
+     */
     @RemoteCall(CALLS_CHANNEL_NAME)
     public void rcCalls(final RemoteCall.Caller caller, final Object data) {
       final ServerSession session = caller.getServerSession();
@@ -686,6 +833,12 @@ public class CometdWebConferencingService implements Startable {
       }).start();
     }
 
+    /**
+     * Cleanup channel client.
+     *
+     * @param channelId the channel id
+     * @param clientId the client id
+     */
     void cleanupChannelClient(String channelId, String clientId) {
       if (channelId.startsWith(USER_SUBSCRIPTION_CHANNEL_NAME)) {
         // cleanup session stuff, note that disconnected session already unsubscribed and has not channels
@@ -704,7 +857,11 @@ public class CometdWebConferencingService implements Startable {
   /**
    * Instantiates a new CometD interaction service for WebConferencing.
    *
+   * @param sessionProviders the session providers
+   * @param identityRegistry the identity registry
+   * @param organization the organization
    * @param webConferencing the video calls
+   * @param exoBayeux the exo bayeux
    */
   public CometdWebConferencingService(SessionProviderService sessionProviders,
                                       IdentityRegistry identityRegistry,
@@ -719,6 +876,9 @@ public class CometdWebConferencingService implements Startable {
     this.service = new CallService();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void start() {
     // instantiate processor after the eXo container start, to let start-dependent logic worked before us
@@ -776,6 +936,9 @@ public class CometdWebConferencingService implements Startable {
     });
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void stop() {
     //
@@ -831,6 +994,12 @@ public class CometdWebConferencingService implements Startable {
     return channelId.substring(USER_SUBSCRIPTION_CHANNEL_NAME.length() + 1);
   }
 
+  /**
+   * Channels as string.
+   *
+   * @param channles the channles
+   * @return the string
+   */
   protected String channelsAsString(Set<ServerChannel> channles) {
     return channles.stream().map(c -> c.getId()).collect(Collectors.joining(", "));
   }

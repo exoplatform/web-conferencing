@@ -26,9 +26,7 @@ package org.exoplatform.webconferencing;
  */
 public class InvalidCallStateException extends WebConferencingException {
 
-  /**
-   * 
-   */
+  /** The Constant serialVersionUID. */
   private static final long serialVersionUID = 3073182166981855568L;
 
   /**

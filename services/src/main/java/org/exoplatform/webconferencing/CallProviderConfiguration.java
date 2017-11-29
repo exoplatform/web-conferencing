@@ -21,14 +21,19 @@ package org.exoplatform.webconferencing;
 /**
  * Provider configuration object for saving (in Admin UI) and
  * 
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: CallProviderConfiguration.java 00000 Nov 24, 2017 pnedonosko $
- * 
  */
 public class CallProviderConfiguration {
 
+  /**
+   * From provider.
+   *
+   * @param provider the provider
+   * @return the call provider configuration
+   */
   static CallProviderConfiguration fromProvider(CallProvider provider) {
     CallProviderConfiguration conf = new CallProviderConfiguration();
     conf.setActive(true);
@@ -38,23 +43,39 @@ public class CallProviderConfiguration {
     return conf;
   }
   
+  /** The type. */
   protected String  type;
 
+  /** The title. */
   protected String  title;
 
+  /** The description. */
   protected String  description;
 
+  /** The active. */
   protected boolean active;
 
+  /**
+   * Checks if is active.
+   *
+   * @return true, if is active
+   */
   public boolean isActive() {
     return active;
   }
 
+  /**
+   * Sets the active.
+   *
+   * @param active the new active
+   */
   public void setActive(boolean active) {
     this.active = active;
   }
 
   /**
+   * Gets the type.
+   *
    * @return the type
    */
   public String getType() {
@@ -62,7 +83,9 @@ public class CallProviderConfiguration {
   }
 
   /**
-   * @param type the type to set
+   * Sets the type.
+   *
+   * @param providerType the new type
    */
   public void setType(String providerType) {
     this.type = providerType;
