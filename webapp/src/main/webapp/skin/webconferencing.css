@@ -44,20 +44,25 @@
 	display: inline-block;
 	vertical-align: middle;
 	white-space: nowrap;
+    display: inline-flex;
+    min-height: 30px;
 }
 
 .callButtonContainer .btn {
 	min-width: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.btn.callButton {
-	padding-left: 15px;
-	padding-right: 15px;
+.callButtonContainer .btn > * {
+	position: static;
 }
 
 .callButton.preferred {
 	margin-right: 0px;
-	padding-right: 10px;
+	padding-right: 15px;
+    padding-left: 15px;
 	/*border-right-color: transparent;*/
 	-webkit-border-radius: 3px 0 0 3px;
 	-moz-border-radius: 3px 0 0 3px;
@@ -77,8 +82,7 @@
 
 .callButton .callTitle {
 	margin-left: 5px;
-	position: relative;
-  /*top: 1px;*/
+	line-height: 1;
 }
 
 .spaceCall {
@@ -121,9 +125,8 @@
 	text-align: left;
 }
 
-#tiptip_content .callButtonContainer > .callButton, #tiptip_content .callButtonContainer > .callButton + .dropdown-toggle {
-	padding-top: 5px;
-	padding-bottom: 5px;
+#tiptip_holder .callButtonContainer > .callButton > .callTitle {
+	display: none;
 }
 
 #socialTopLayout .callButtonContainer > .callButton + .dropdown-toggle {
