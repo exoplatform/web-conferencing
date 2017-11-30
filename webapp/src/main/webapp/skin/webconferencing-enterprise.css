@@ -72,15 +72,19 @@
 .callButton.chatCall, .callButton.chatCall + .dropdown-toggle {
 	padding-top: 4px;
 	padding-bottom: 4px;
+    background: none;
+    border: 1px solid #fff;
+    color: #fff;
+    border-radius: 0;
 }
 
-.btn.chatCall.preferred {
-	padding-right: 10px;
+.callButton.chatCall {
+	padding-left: 15px;
+	padding-right: 15px;
 }
 
-.btn.chatCall.preferred + .dropdown-toggle {
-	padding-left: 5px;
-	padding-right: 5px;
+.callButton.chatCall [class*="Icon"], .callButton.chatCall + .dropdown-toggle .uiIconMiniArrowDown:before {
+	color: #fff
 }
 
 #UIBreadCrumbsNavigationPortlet .callButtonContainer {
