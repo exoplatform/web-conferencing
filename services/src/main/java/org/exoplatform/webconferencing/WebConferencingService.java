@@ -947,7 +947,7 @@ public class WebConferencingService implements Startable {
     json.put("avatarLink", call.getAvatarLink());
     json.put("ownerType", call.getOwnerType());
     json.put("ownerLink", call.getOwnerLink());
-    json.put("type", call.getProviderType());
+    json.put("providerType", call.getProviderType());
     if (call.getState() != null) {
       json.put("state", call.getState());
     }
@@ -995,7 +995,7 @@ public class WebConferencingService implements Startable {
     String avatarLink = json.getString("avatarLink");
     String ownerType = json.getString("ownerType");
     String ownerLink = json.getString("ownerLink");
-    String providerType = json.getString("type");
+    String providerType = json.getString("providerType");
     String state = json.optString("state", null);
 
     // Owner

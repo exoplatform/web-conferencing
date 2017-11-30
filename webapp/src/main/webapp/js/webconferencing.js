@@ -663,18 +663,6 @@
 			var process = $.Deferred(); 
 
 			var url, currentUser, dbName, token;
-			// TODO cleanup
-			/*function detectRoomType() {
-				if (!type) {
-					if (id.startsWith("space-") || id.startsWith("team-") || id.startsWith("external-")) {
-						type = "room-id";
-						id = id.substring(id.indexOf("-") + 1);
-						log("WARN eXoChat.getRoom(): Chat room type was not given. Will use autodetected as room-id: " + id);
-					} else {
-						process.reject("Room type required");
-					}
-				}
-			}*/
 			
 			if (isApplication()) {
 				if (!id) {
@@ -687,11 +675,8 @@
 				currentUser = chatApplication.username;
 				dbName = chatApplication.dbName;
 				token = chatApplication.token;
-				//detectRoomType();
 			} else if (isEmbedded()) {
 				if (!id) {
-					//detectRoomType();
-				//} else {
 					id = jzGetParam(chatNotification.sessionId + "miniChatRoom");
 					type = jzGetParam(chatNotification.sessionId + "miniChatType");
 				}
@@ -886,42 +871,6 @@
 			return initializer.promise();
 		};
 		
-		var adminContext = function(adminUser) {
-			var context = {
-				adminUser : adminUser,
-				isIOS : isIOS,
-				isAndroid : isAndroid,
-				isWindowsMobile : isWindowsMobile,
-				isActivated : function() {
-					// TODO detect in runtime if the provider activated
-					var activated = true;
-					var res = $.Deferred();
-					res.resolve(activated);
-					return res.promise();
-				}
-			};
-			return context;
-		};
-		
-		var initProviderAdmin = function(provider, adminUser) {
-			var process = $.Deferred();
-			if (provider.initAdmin && provider.hasOwnProperty("initAdmin")) {
-				provider.initAdmin(adminContext(adminUser)).done(function() {
-					provider.isAdminInitialized = true;
-					log("Initialized call provider admin: " + provider.getType());
-					process.resolve(true);
-				}).fail(function(err) {
-					log("ERROR initializing call provider admin for '" + provider.getType() + "': " + err);
-					process.reject(err);
-				});
-			} else {
-				log("Marked call provider admin as Initialized: " + provider.getType());
-				provider.isAdminInitialized = true;
-				process.resolve(false);
-			}
-			return process.promise();
-		};
-		
 		/**
 		 * Add call button to given target element.
 		 */
@@ -1065,16 +1014,6 @@
 										var $toggle = $("<button class='btn dropdown-toggle' data-toggle='dropdown'>" + //  
 												"<i class='uiIconMiniArrowDown uiIconLightGray'></i></span></button>");
 										// "<i class='callButtonIconVideo'></i><span class='callButtonTitle'>Call</span>" +
-										//$toggle.addClass(buttonClass);
-										// move first button to the dropdown as first element
-										/*$container.find(".btn." + buttonClass).each(function(index, elem) {
-											var $btn = $(elem);
-											$btn.removeClass("btn");
-											var $li = $("<li></li>");
-											$li.append($btn);
-											$dropdown.prepend($li);
-										});*/
-										// 
 										// add dropdown and its toggle finally
 										$container.append($toggle);
 										$container.append($dropdown);
@@ -1641,9 +1580,9 @@
 					initializer.done(function($container) {
 						var $button = $container.find(".callButton");
 						var $first = $button.first();
-						$first.addClass("spaceCall");
+						$first.addClass("spaceCall transparentButton");
 						var $dropdown = $first.siblings(".dropdown-toggle");
-						var $hover = $();
+						/*var $hover = $();
 						if ($first.hasClass("transparentButton")) {
 							if ($dropdown.length == 1) {
 								$hover = $hover.add($dropdown);							
@@ -1653,7 +1592,7 @@
 							$hover = $hover.add($first).add($dropdown);
 						}
 						// TODO space call button always transparent
-						/*$hover.hover(function() {
+						$hover.hover(function() {
 							$first.removeClass("transparentButton");
 						}, function() {
 							$first.addClass("transparentButton");
@@ -1795,12 +1734,12 @@
 			// * getType() - major call type name
 			// * getSupportedTypes() - all supported call types
 			// * getTitle() - human-readable title for UI
-			// * getDescription() - human-readable description for UI
 			// * callButton(context) - provider should offer an implementation of a Call button and call invoker in it, 
 			// it returns a promise, when it resolved there will be a JQuery element of a button(s) container. 
 			//
 			// A provider may support following of API methods:
 			// * init() - will be called when web conferencing user will be initialized in this.init(), this method returns a promise
+			// * getDescription() - human-readable description for UI (use it if description from server configuration isn't enough)
 			
 			// TODO avoid duplicates, use map like?
 			if (provider.getSupportedTypes && provider.hasOwnProperty("getSupportedTypes") && provider.getTitle && provider.hasOwnProperty("getTitle")) {

@@ -222,6 +222,7 @@
 													callWindow.startCall(call, isNew).done(function(state) {
 														log("<<< Call " + state + " " + callId);
 														$button.addClass("callDisabled"); // should be removed on stop/leaved event in init()
+														$button.data("callid", callId);
 													}).fail(function(err) {
 														webConferencing.showError("Error " + (isNewCall ? "starting" : "joining") + " call", webConferencing.errorText(err));
 													});	
@@ -234,7 +235,7 @@
 										log("Call disabled for " + target.id);
 									}
 								});
-								// Assign target ID to the button for later use in init()
+								// Assign target ID to the button for later use on started event in init()
 								$button.data("targetid", target.id);
 								// Resolve with our button
 								button.resolve($button);
@@ -349,7 +350,7 @@
 					};
 					// When call is already running we want lock a call button and then unlock on stop.
 					// As we may find several call buttons on eXo pages, need update only related to the call.  
-					// On space pages (space call button) we can rely on ownerId (it will be a space pretty_name),
+					// On space pages (space call button) we can rely on call ownerId (it will be a space pretty_name),
 					// for Chat page we need use its internal room name to distinguish rooms and ownerId for users.
 					var lockCallButton = function(targetId, callId) {
 						var $buttons = $(".myCallAction");
@@ -357,17 +358,21 @@
 							var $button = $(this);
 							if ($button.data("targetid") == targetId) {
 								if (!$button.hasClass("callDisabled")) {
+									//log(">> lockCallButton " + targetId);
 									$button.addClass("callDisabled");
+									$button.data("callid", callId);
 								}
 							}
 						});
 					};
-					var unlockCallButton = function(targetId) {
+					var unlockCallButton = function(callId) {
 						var $buttons = $(".myCallAction");
 						$buttons.each(function() {
 							var $button = $(this);
-							if ($button.data("targetid") == targetId) {
+							if ($button.data("callid") == callId) {
+								//log(">> unlockCallButton " + callId + " " + $button.data("targetid"));
 								$button.removeClass("callDisabled");
+								$button.removeData("callid"); // we don't touch targetid, it managed by callButton()
 							}
 						});
 					};
@@ -419,7 +424,7 @@
 													if (callWindow.startCall) {
 														callWindow.startCall(call).done(function(state) {
 															log("<<< Call " + state + " " + callId);
-															lockCallButton(callerId, callId);
+															lockCallButton(update.owner.id, callId);
 														}).fail(function(err) {
 															webConferencing.showError("Error starting call", webConferencing.errorText(err));
 														});	
@@ -467,7 +472,7 @@
 									// Hide call popover for this call, if any
 									closeCallPopup(callId, update.callState);
 									// Unclock the call button
-									unlockCallButton(update.owner.id);
+									unlockCallButton(callId);
 								}
 							} else if (update.eventType == "call_joined") {
 								// If user has incoming popup open for this call (in several user's windows/clients), then close it
@@ -479,7 +484,7 @@
 								// When user leaves a call, we unlock his button, thus it will be possible to join the call again - 
 								// actual for group conversations.
 								if (currentUserId == update.part.id) {
-									unlockCallButton(update.owner.id);
+									unlockCallButton(callId);
 								}
 							} else {
 								log("<<< Unexpected user update: " + JSON.stringify(update) + " [" + status + "]");
