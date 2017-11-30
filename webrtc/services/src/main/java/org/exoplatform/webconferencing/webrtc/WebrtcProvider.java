@@ -29,8 +29,10 @@ import org.exoplatform.container.xml.ObjectParameter;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.webconferencing.CallProvider;
+import org.exoplatform.webconferencing.CallProviderConfiguration;
 import org.exoplatform.webconferencing.CallProviderException;
 import org.exoplatform.webconferencing.UserInfo.IMInfo;
+import org.json.JSONObject;
 
 /**
  * Created by The eXo Platform SAS.
@@ -122,7 +124,7 @@ public class WebrtcProvider extends CallProvider {
      * @return the WebRTC settings
      */
     public WebrtcSettings build() {
-      return new WebrtcSettings(callUri, rtcConfiguration.cloneEnabled());
+      return new WebrtcSettings(callUri, rtcConfiguration.clone(true));
     }
   }
 
@@ -220,7 +222,7 @@ public class WebrtcProvider extends CallProvider {
      *
      * @return the RTC configuration
      */
-    RTCConfiguration cloneEnabled() {
+    RTCConfiguration clone(boolean onlyEnabled) {
       RTCConfiguration enabled = new RTCConfiguration();
       if (this.bundlePolicy != null && this.bundlePolicy.length() > 0) {
         enabled.setBundlePolicy(this.bundlePolicy);
@@ -235,7 +237,7 @@ public class WebrtcProvider extends CallProvider {
       if (this.iceServers.size() > 0) {
         for (Object o : this.iceServers) {
           ICEServer ices = (ICEServer) o;
-          if (ices.isEnabled()) {
+          if (!onlyEnabled || ices.isEnabled()) {
             iceServers.add(ices);
           }
         }
@@ -336,7 +338,7 @@ public class WebrtcProvider extends CallProvider {
   }
 
   /** The rtc configuration. */
-  protected final RTCConfiguration rtcConfiguration;
+  protected RTCConfiguration rtcConfiguration;
 
   /**
    * Instantiates a new WebRTC provider.
@@ -347,6 +349,8 @@ public class WebrtcProvider extends CallProvider {
   public WebrtcProvider(InitParams params) throws ConfigurationException {
     super(params);
 
+    // TODO try read RTC config from storage first
+    
     ObjectParameter objParam = params.getObjectParam(CONFIG_RTC_CONFIGURATION);
     if (objParam != null) {
       Object obj = objParam.getObject();
@@ -359,6 +363,19 @@ public class WebrtcProvider extends CallProvider {
     } else {
       this.rtcConfiguration = new RTCConfiguration();
     }
+  }
+  
+  /**
+   * Gets the rtc configuration.
+   *
+   * @return the rtc configuration
+   */
+  public RTCConfiguration getRtcConfiguration() {
+    return this.rtcConfiguration.clone(false); // all ICE servers will be here
+  }
+  
+  public void saveRtcConfiguration(RTCConfiguration conf) {
+    // TODO
   }
 
   /**
@@ -408,6 +425,29 @@ public class WebrtcProvider extends CallProvider {
   @Override
   public String getTitle() {
     return WEBRTC_TITLE;
+  }
+  
+  
+  ///////
+  
+  /**
+   * Json to provider config.
+   *
+   * @param json the json
+   * @return the call provider configuration
+   * @throws Exception the exception
+   */
+  protected RTCConfiguration jsonToRtcConfig(JSONObject json) throws Exception {
+    //ObjectMapper mapper = new ObjectMapper();
+    
+    String type = json.getString("type");
+    boolean active = json.getBoolean("active");
+
+    CallProviderConfiguration conf = new CallProviderConfiguration();
+    conf.setActive(active);
+    conf.setType(type);
+
+    return null;
   }
 
 }

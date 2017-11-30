@@ -470,6 +470,22 @@
 				// TODO Settings button clicked - show WebRTC settings form
 				/////
 				
+				// load HTML with settings
+				var $popup = $("<div class='maskPopup hide' id='webrtcSettingsPopup'><div>"); // don't need id?
+				// TODO use jsp/servlet/filter for pretty URL /webrtc/settings
+				$popup.load("/webrtc/WEB-INF/pages/settings.html").done(function() {
+					$popup.find(".popupTitle"); // need set title?
+					var $serverTemplate = $popup.find(".serverTemplate");
+					// TODO load ICE servers from server side and show them
+					
+					// TODO add change handlers
+					
+					//
+					$(document.body).append($popup);	
+				}).fail(function(err) {
+					log("ERROR loading settings page: ", err);
+				});
+				
 				// TODO use Lamia's WebRTC popup code here
 				
 				/////

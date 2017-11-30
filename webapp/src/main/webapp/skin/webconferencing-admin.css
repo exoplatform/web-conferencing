@@ -116,7 +116,7 @@ input:not (:checked ) +.slider:before {
 	overflow: auto;
 }
 /**/
-#webConfPopup .title {
+#webrtcSettingsPopup .title {
 	font-weight: bold;
 	text-align: left;
 }

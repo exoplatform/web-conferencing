@@ -1582,6 +1582,7 @@
 						var $first = $button.first();
 						$first.addClass("spaceCall transparentButton");
 						var $dropdown = $first.siblings(".dropdown-toggle");
+						// TODO cleanup
 						/*var $hover = $();
 						if ($first.hasClass("transparentButton")) {
 							if ($dropdown.length == 1) {

@@ -114,7 +114,7 @@
 					//$(".maskPopup").removeClass("hide");
 				});
 
-				$("#webConfPopup .uiIconClose.pull-right").click(function() {
+				$("#webrtcPopup .uiIconClose.pull-right").click(function() {
 					$(".maskPopup").addClass("hide");
 				});
 
