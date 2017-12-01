@@ -84,6 +84,25 @@
 				var rnd = Math.floor(getRandomArbitrary(10000, 99998) + 1);
 				return prefix + "-" + rnd;
 			};
+			
+			var getSettings = function() {
+				var request = $.ajax({
+					async : true,
+					type : "GET",
+					url : prefixUrl + "/portal/rest/webrtc/webconferencing/settings"
+				});
+				return webConferencing.initRequest(request);
+			};
+			
+			var postSettings = function(settings) {
+				var request = $.ajax({
+					async : true,
+					type : "POST",
+					url : prefixUrl + "/portal/rest/webrtc/webconferencing/settings",
+					data : settings
+				});
+				return webConferencing.initRequest(request);
+			};
 
 			var joinedCall = function(callId) {
 				return webConferencing.updateUserCall(callId, "joined").fail(function(err, status) {
@@ -467,26 +486,81 @@
 				log("> showSettings");
 				
 				var process = $.Deferred();
-				// TODO Settings button clicked - show WebRTC settings form
-				/////
 				
 				// load HTML with settings
-				var $popup = $("<div class='maskPopup hide' id='webrtcSettingsPopup'><div>"); // don't need id?
+				var $popup = $("#webrtcSettingsPopup");
+				if ($popup.length == 0) {
+					$popup = $("<div class='maskPopup' id='webrtcSettingsPopup' style='display: none;'><div>");
+					$(document.body).append($popup);
+				}
 				// TODO use jsp/servlet/filter for pretty URL /webrtc/settings
-				$popup.load("/webrtc/WEB-INF/pages/settings.html").done(function() {
-					$popup.find(".popupTitle"); // need set title?
-					var $serverTemplate = $popup.find(".serverTemplate");
-					// TODO load ICE servers from server side and show them
-					
-					// TODO add change handlers
-					
-					//
-					$(document.body).append($popup);	
-				}).fail(function(err) {
-					log("ERROR loading settings page: ", err);
+				$popup.load("/webrtc/settings.html", function(content, textStatus) {
+					if (textStatus == "success" || textStatus == "notmodified") {
+						//$popup.find(".popupTitle"); // need set title?
+						$popup.find("a.uiIconClose").click(function(){
+							$popup.hide();
+						});
+						var $serverTemplate = $popup.find(".iceServer");
+						// load ICE servers from server side and show them
+						$.each(settings.rtcConfiguration.iceServers, function(si, ices) {
+							var $ices = $serverTemplate.clone();
+							// Fill URLs
+							//var $url = $ices.find("label[for='url']");
+							var $urlsGroup = $ices.find(".urlsGroup");
+							$.each(ices.urls, function(ui, url) {
+								var $urlGroup = $urlsGroup.find(".urlGroup").first();
+								if (ui > 1) {
+									$urlGroup = $urlGroup.clone();
+									$urlsGroup.append($urlGroup);
+								}
+								var $url = $urlGroup.find("input[name='url']");
+								$url.val(url);
+								$url.change(function() {
+									ices.urls[ui] = $(this).val();
+								});
+							});
+							// Fill username/credential
+							var $credentialsGroup = $ices.find(".credentialsGroup");
+							var $enabler = $credentialsGroup.find(".enabler input");
+							var $credentials = $credentialsGroup.find(".credentials");
+							$enabler.click(function() {
+								if ($enabler.prop("checked") && !$credentials.is(":visible")) {
+									var $username = $credentials.find("input[name='username']");
+									var $credential = $credentials.find("input[name='credential']");
+									if (typeof ices.username == "string" && typeof ices.credential == "string") {
+										$username.val(ices.username);
+										$credential.val(ices.credential);
+									}
+									if (!$credentials.data("initialized")) {
+										$credentials.data("initialized", true);
+										$username.change(function() {
+											ices.username = $(this).val();
+										});
+										$credential.change(function() {
+											ices.credential = $(this).val();
+										});
+									}
+									$credentials.show();
+								} else {
+									$credentials.hide();
+									ices.username = null;
+									ices.credentials = null;
+								}
+							});
+							if (typeof ices.username == "string" && typeof ices.credential == "string") {
+								//$enabler.prop("checked", true);
+								$enabler.click();
+							}
+							$ices.show();
+							$popup.find(".popupContent").append($ices);
+						});
+						// TODO Save action
+						
+						$popup.show();
+					} else {
+						log("ERROR loading settings page: " + content);
+					}
 				});
-				
-				// TODO use Lamia's WebRTC popup code here
 				
 				/////
 				return process.promise();

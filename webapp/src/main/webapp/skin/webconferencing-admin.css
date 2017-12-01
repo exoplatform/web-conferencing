@@ -4,10 +4,12 @@
 i[class^="uiIcon"] {
 	cursor: pointer
 }
+
 /*Header page*/
 .header {
 	margin: 40px 0
 }
+
 /**/
 /* SWICHER */
 /**/
@@ -49,7 +51,6 @@ i[class^="uiIcon"] {
 
 input:checked+.slider {
 	/*  background-color: #2196F3;*/
-	
 }
 
 input:focus+.slider {
@@ -70,6 +71,7 @@ input:not (:checked ) +.slider {
 input:not (:checked ) +.slider:before {
 	background-color: #ccc;
 }
+
 /* Rounded sliders */
 .slider.round {
 	border-radius: 34px;
@@ -81,59 +83,11 @@ input:not (:checked ) +.slider:before {
 /**/
 /* END SWICHER */
 /**/
+
 .actionIcon>i>span {
 	font-size: 0;
 }
 
-.uiPopup, .modal.uiPopup {
-	max-width: 100%
-}
-
 #webconferencingAdmin .modal.fade {
 	top: 10%
-}
-
-.maskPopup {
-	background: #0000005c;
-	text-align: center;
-	position: fixed;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	top: 0;
-	width: auto;
-	height: auto;
-}
-
-.NormalStyle.popupContainer {
-	position: relative;
-	background: #FFF;
-	top: 18%;
-	max-width: 95%;
-	margin: auto;
-	width: 560px;
-	max-height: 70%;
-	overflow: auto;
-}
-/**/
-#webrtcSettingsPopup .title {
-	font-weight: bold;
-	text-align: left;
-}
-
-.control-group>*, #ContainerUrlGroup>label, #ContainerUrlGroup>div[id^="urlGroup"] {
-	display: inline-block;
-	vertical-align: text-top;
-}
-
-div[id^="urlGroup"] * {
-	text-align: left;
-}
-
-div#ContainerUrlGroup {
-	display: block
-}
-
-.hideInputs {
-	display: none;
 }

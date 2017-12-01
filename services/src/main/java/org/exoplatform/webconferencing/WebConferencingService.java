@@ -938,7 +938,7 @@ public class WebConferencingService implements Startable {
    * @return the JSON object
    * @throws JSONException the JSON exception
    */
-  protected JSONObject callToJSON(CallInfo call) throws JSONException {
+  protected JSONObject callToJson(CallInfo call) throws JSONException {
     // We follow a minimal data required to restore the persisted call
 
     JSONObject json = new JSONObject();
@@ -1054,7 +1054,7 @@ public class WebConferencingService implements Startable {
     saveOwnerCallId(call.getOwner().getId(), call.getId());
     final String initialGlobalId = Scope.GLOBAL.getId();
     try {
-      JSONObject json = callToJSON(call);
+      JSONObject json = callToJson(call);
       String safeCallId = URLEncoder.encode(call.getId(), "UTF-8");
       settingService.set(Context.GLOBAL, Scope.GLOBAL.id(CALL_ID_SCOPE_NAME), safeCallId, SettingValue.create(json.toString()));
     } finally {

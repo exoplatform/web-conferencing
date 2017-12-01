@@ -18,11 +18,16 @@
  */
 package org.exoplatform.webconferencing.webrtc;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.exoplatform.commons.api.settings.SettingService;
+import org.exoplatform.commons.api.settings.SettingValue;
+import org.exoplatform.commons.api.settings.data.Context;
+import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.container.configuration.ConfigurationException;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ObjectParameter;
@@ -32,6 +37,7 @@ import org.exoplatform.webconferencing.CallProvider;
 import org.exoplatform.webconferencing.CallProviderConfiguration;
 import org.exoplatform.webconferencing.CallProviderException;
 import org.exoplatform.webconferencing.UserInfo.IMInfo;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -43,19 +49,25 @@ import org.json.JSONObject;
 public class WebrtcProvider extends CallProvider {
 
   /** The Constant WEBRTC_TYPE. */
-  public static final String WEBRTC_TYPE              = "webrtc";
+  public static final String    WEBRTC_TYPE              = "webrtc";
 
   /** The Constant WEBRTC_TITLE. */
-  public static final String WEBRTC_TITLE             = "WebRTC";
+  public static final String    WEBRTC_TITLE             = "WebRTC";
 
   /** The Constant CONFIG_RTC_CONFIGURATION. */
-  public static final String CONFIG_RTC_CONFIGURATION = "rtc-configuration";
+  public static final String    CONFIG_RTC_CONFIGURATION = "rtc-configuration";
+
+  /** The Constant WEBRTC_SCOPE_NAME. */
+  protected static final String WEBRTC_SCOPE_NAME        = "webconferencing.webrtc".intern();
+
+  /** The Constant KEY_RTC_SETTINGS. */
+  protected static final String KEY_RTC_SETTINGS         = "rtc-settings".intern();
 
   /** The Constant VERSION. */
-  public static final String VERSION                  = "1.0.0";
+  public static final String    VERSION                  = "1.0.0";
 
   /** The Constant LOG. */
-  protected static final Log LOG                      = ExoLogger.getLogger(WebrtcProvider.class);
+  protected static final Log    LOG                      = ExoLogger.getLogger(WebrtcProvider.class);
 
   /**
    * The Class WebrtcSettings.
@@ -134,16 +146,16 @@ public class WebrtcProvider extends CallProvider {
   public static class RTCConfiguration {
 
     /** The bundle policy. */
-    protected String bundlePolicy;
+    protected String         bundlePolicy;
 
     /** The ice candidate pool size. */
-    protected int    iceCandidatePoolSize;
+    protected int            iceCandidatePoolSize;
 
     /** The ice transport policy. */
-    protected String iceTransportPolicy;
+    protected String         iceTransportPolicy;
 
     /** The ice servers. */
-    protected Set<?> iceServers = new LinkedHashSet<>();
+    protected Set<ICEServer> iceServers = new LinkedHashSet<>();
 
     /**
      * Gets the bundle policy.
@@ -204,7 +216,7 @@ public class WebrtcProvider extends CallProvider {
      *
      * @return the iceServers
      */
-    public Set<?> getIceServers() {
+    public Set<ICEServer> getIceServers() {
       return iceServers;
     }
 
@@ -213,7 +225,7 @@ public class WebrtcProvider extends CallProvider {
      *
      * @param iceServers the iceServers to set
      */
-    public void setIceServers(Set<?> iceServers) {
+    public void setIceServers(Set<ICEServer> iceServers) {
       this.iceServers = iceServers;
     }
 
@@ -251,18 +263,18 @@ public class WebrtcProvider extends CallProvider {
    * The Class ICEServer.
    */
   public static class ICEServer {
-    
+
     /** The enabled. */
-    protected boolean enabled;
+    protected boolean      enabled;
 
     /** The username. */
-    protected String  username;
+    protected String       username;
 
     /** The credential. */
-    protected String  credential;
+    protected String       credential;
 
     /** The urls. */
-    protected List<?> urls = new ArrayList<>();
+    protected List<String> urls = new ArrayList<>();
 
     /**
      * Checks if is enabled.
@@ -323,7 +335,7 @@ public class WebrtcProvider extends CallProvider {
      *
      * @return the urls
      */
-    public List<?> getUrls() {
+    public List<String> getUrls() {
       return urls;
     }
 
@@ -332,13 +344,16 @@ public class WebrtcProvider extends CallProvider {
      *
      * @param urls the urls to set
      */
-    public void setUrls(List<?> urls) {
+    public void setUrls(List<String> urls) {
       this.urls = urls;
     }
   }
 
+  /** The settings service. */
+  protected final SettingService settingService;
+
   /** The rtc configuration. */
-  protected RTCConfiguration rtcConfiguration;
+  protected RTCConfiguration     rtcConfiguration;
 
   /**
    * Instantiates a new WebRTC provider.
@@ -346,25 +361,38 @@ public class WebrtcProvider extends CallProvider {
    * @param params the params
    * @throws ConfigurationException the configuration exception
    */
-  public WebrtcProvider(InitParams params) throws ConfigurationException {
+  public WebrtcProvider(InitParams params, SettingService settingService) throws ConfigurationException {
     super(params);
 
-    // TODO try read RTC config from storage first
-    
-    ObjectParameter objParam = params.getObjectParam(CONFIG_RTC_CONFIGURATION);
-    if (objParam != null) {
-      Object obj = objParam.getObject();
-      if (obj != null) {
-        this.rtcConfiguration = (RTCConfiguration) obj;
+    this.settingService = settingService;
+
+    // try read RTC config from storage first
+    RTCConfiguration rtcConfiguration;
+    try {
+      rtcConfiguration = readRtcConfig();
+    } catch (Exception e) {
+      LOG.error("Error reading RTC configuration", e);
+      rtcConfiguration = null;
+    }
+
+    if (rtcConfiguration == null) {
+      ObjectParameter objParam = params.getObjectParam(CONFIG_RTC_CONFIGURATION);
+      if (objParam != null) {
+        Object obj = objParam.getObject();
+        if (obj != null) {
+          this.rtcConfiguration = (RTCConfiguration) obj;
+        } else {
+          LOG.warn("Predefined services configuration found but null object returned.");
+          this.rtcConfiguration = new RTCConfiguration();
+        }
       } else {
-        LOG.warn("Predefined services configuration found but null object returned.");
         this.rtcConfiguration = new RTCConfiguration();
       }
     } else {
-      this.rtcConfiguration = new RTCConfiguration();
+      this.rtcConfiguration = rtcConfiguration;
     }
   }
-  
+
   /**
    * Gets the rtc configuration.
    *
@@ -373,9 +401,16 @@ public class WebrtcProvider extends CallProvider {
   public RTCConfiguration getRtcConfiguration() {
     return this.rtcConfiguration.clone(false); // all ICE servers will be here
   }
-  
-  public void saveRtcConfiguration(RTCConfiguration conf) {
-    // TODO
+
+  /**
+   * Save rtc configuration.
+   *
+   * @param conf the conf
+   * @throws Exception the exception
+   */
+  public void saveRtcConfiguration(RTCConfiguration conf) throws Exception {
+    saveRtcConfig(conf);
+    this.rtcConfiguration = conf;
   }
 
   /**
@@ -426,28 +461,158 @@ public class WebrtcProvider extends CallProvider {
   public String getTitle() {
     return WEBRTC_TITLE;
   }
-  
-  
-  ///////
-  
+
   /**
-   * Json to provider config.
+   * Json to RTC config.
    *
    * @param json the json
-   * @return the call provider configuration
+   * @return the RTC configuration
    * @throws Exception the exception
    */
-  protected RTCConfiguration jsonToRtcConfig(JSONObject json) throws Exception {
-    //ObjectMapper mapper = new ObjectMapper();
-    
-    String type = json.getString("type");
-    boolean active = json.getBoolean("active");
+  public RTCConfiguration jsonToRtcConfig(JSONObject json) throws Exception {
+    JSONArray jsonIceServers = json.optJSONArray("iceServers");
+    if (jsonIceServers == null) {
+      throw new WebrtcProviderException("ICE Servers not found");
+    }
 
-    CallProviderConfiguration conf = new CallProviderConfiguration();
-    conf.setActive(active);
-    conf.setType(type);
+    Set<ICEServer> iceServers = new LinkedHashSet<>();
+    for (int si = 0; si < jsonIceServers.length(); si++) {
+      JSONObject jsonIs = jsonIceServers.getJSONObject(si);
+      ICEServer ices = new ICEServer();
+      boolean enabled = jsonIs.optBoolean("enabled", true);
+      ices.setEnabled(enabled);
+      JSONArray jsonUrls = json.optJSONArray("urls");
+      if (jsonUrls == null) {
+        throw new WebrtcProviderException("ICE Server has no URLs");
+      }
+      List<String> urls = new ArrayList<>();
+      for (int ui = 0; ui < jsonUrls.length(); ui++) {
+        String url = jsonUrls.optString(ui, null);
+        if (url != null) {
+          urls.add(url);
+        }
+      }
+      if (urls.size() > 0) {
+        ices.setUrls(urls);
+      } else {
+        throw new WebrtcProviderException("ICE Server has empty URLs");
+      }
 
-    return null;
+      String username = jsonIs.optString("username", null);
+      if (username != null) {
+        ices.setUsername(username);
+      }
+      String credential = jsonIs.optString("credential", null);
+      if (credential != null) {
+        ices.setCredential(credential);
+      }
+      iceServers.add(ices);
+    }
+
+    RTCConfiguration rtcConf = new RTCConfiguration();
+    rtcConf.setIceServers(iceServers);
+
+    String bundlePolicy = json.optString("bundlePolicy", null);
+    if (bundlePolicy != null) {
+      rtcConf.setBundlePolicy(bundlePolicy);
+    }
+    String iceTransportPolicy = json.optString("iceTransportPolicy", null);
+    if (iceTransportPolicy != null) {
+      rtcConf.setIceTransportPolicy(iceTransportPolicy);
+    }
+    int iceCandidatePoolSize = json.optInt("iceCandidatePoolSize", -1);
+    if (iceCandidatePoolSize >= 0) {
+      rtcConf.setIceCandidatePoolSize(iceCandidatePoolSize);
+    }
+
+    return rtcConf;
+  }
+
+  /**
+   * RTC config to json.
+   *
+   * @param rtcConf the rtc conf
+   * @return the JSON object
+   * @throws Exception the exception
+   */
+  public JSONObject rtcConfigToJson(RTCConfiguration rtcConf) throws Exception {
+    JSONObject json = new JSONObject();
+
+    JSONArray jsonIces = new JSONArray();
+    for (ICEServer is : rtcConf.getIceServers()) {
+      JSONObject jsonIs = new JSONObject();
+      jsonIs.put("enabled", is.isEnabled());
+      JSONArray jsonUrls = new JSONArray();
+      for (String url : is.getUrls()) {
+        jsonUrls.put(url);
+      }
+      jsonIs.put("urls", jsonUrls);
+      if (is.getUsername() != null) {
+        jsonIs.put("username", is.getUsername());
+      }
+      if (is.getCredential() != null) {
+        jsonIs.put("credential", is.getCredential());
+      }
+      jsonIces.put(jsonIs);
+    }
+    json.put("iceServers", jsonIces);
+
+    if (rtcConf.getBundlePolicy() != null) {
+      json.put("bundlePolicy", rtcConf.getBundlePolicy());
+    }
+    if (rtcConf.getIceTransportPolicy() != null) {
+      json.put("iceTransportPolicy", rtcConf.getIceTransportPolicy());
+    }
+    if (rtcConf.getIceCandidatePoolSize() >= 0) {
+      json.put("iceCandidatePoolSize", rtcConf.getIceCandidatePoolSize());
+    }
+
+    return json;
+  }
+
+  /**
+   * Save rtc config.
+   *
+   * @param conf the conf
+   * @throws Exception the exception
+   */
+  protected void saveRtcConfig(RTCConfiguration conf) throws Exception {
+    final String initialGlobalId = Scope.GLOBAL.getId();
+    try {
+      JSONObject json = rtcConfigToJson(conf);
+      settingService.set(Context.GLOBAL,
+                         Scope.GLOBAL.id(WEBRTC_SCOPE_NAME),
+                         KEY_RTC_SETTINGS,
+                         SettingValue.create(json.toString()));
+    } finally {
+      Scope.GLOBAL.id(initialGlobalId);
+    }
+  }
+
+  /**
+   * Read rtc config.
+   *
+   * @return the RTC configuration
+   * @throws Exception the exception
+   */
+  protected RTCConfiguration readRtcConfig() throws Exception {
+    final String initialGlobalId = Scope.GLOBAL.getId();
+    try {
+      SettingValue<?> val = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(WEBRTC_SCOPE_NAME), KEY_RTC_SETTINGS);
+      if (val != null) {
+        String str = String.valueOf(val.getValue());
+        if (str.startsWith("{")) {
+          // Assuming it's JSON
+          RTCConfiguration conf = jsonToRtcConfig(new JSONObject(str));
+          return conf;
+        } else {
+          LOG.warn("Cannot parse saved RTCConfiguration: " + str);
+        }
+      }
+      return null;
+    } finally {
+      Scope.GLOBAL.id(initialGlobalId);
+    }
   }
 
 }

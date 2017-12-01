@@ -33,7 +33,5 @@
   <modules>
     <module>services</module>
     <module>webapp</module>
-    <!-- WebRTC packaged directly into Web Conferencing as default connector -->
-    <!-- module>packaging</module -->
   </modules>
 </project>
