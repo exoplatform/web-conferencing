@@ -132,7 +132,7 @@
                   <!-- Xirsys STUN server for testing -->
                   <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$ICEServer">
                     <field name="enabled">
-                      <boolean>${webconferencing.webrtc.xirsys.stun.enabled:false}</boolean>
+                      <boolean>${webconferencing.webrtc.xirsys.stun.enabled_no:false}</boolean>
                     </field>
                     <field name="urls">
                       <collection type="java.util.ArrayList">
@@ -154,7 +154,7 @@
                         <value>
                           <string>turn:e2.xirsys.com:80?transport=udp</string>
                         </value>
-                        <value>
+                        <!-- value>
                           <string>turn:e2.xirsys.com:3478?transport=udp</string>
                         </value>
                         <value>
@@ -168,7 +168,7 @@
                         </value>
                         <value>
                           <string>turns:e2.xirsys.com:5349?transport=tcp</string>
-                        </value>
+                        </value -->
                       </collection>
                     </field>
                     <field name="username">
