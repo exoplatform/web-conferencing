@@ -18,6 +18,8 @@
  */
 package org.exoplatform.webconferencing.webrtc;
 
+import static org.json.JSONObject.NULL;
+
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -369,7 +371,8 @@ public class WebrtcProvider extends CallProvider {
     // try read RTC config from storage first
     RTCConfiguration rtcConfiguration;
     try {
-      rtcConfiguration = readRtcConfig();
+      // rtcConfiguration = readRtcConfig();
+      rtcConfiguration = null;
     } catch (Exception e) {
       LOG.error("Error reading RTC configuration", e);
       rtcConfiguration = null;
@@ -481,15 +484,15 @@ public class WebrtcProvider extends CallProvider {
       ICEServer ices = new ICEServer();
       boolean enabled = jsonIs.optBoolean("enabled", true);
       ices.setEnabled(enabled);
-      JSONArray jsonUrls = json.optJSONArray("urls");
+      JSONArray jsonUrls = jsonIs.optJSONArray("urls");
       if (jsonUrls == null) {
         throw new WebrtcProviderException("ICE Server has no URLs");
       }
       List<String> urls = new ArrayList<>();
       for (int ui = 0; ui < jsonUrls.length(); ui++) {
-        String url = jsonUrls.optString(ui, null);
-        if (url != null) {
-          urls.add(url);
+        Object url = jsonUrls.opt(ui);
+        if (isNotNull(url)) {
+          urls.add((String) url);
         }
       }
       if (urls.size() > 0) {
@@ -497,14 +500,13 @@ public class WebrtcProvider extends CallProvider {
       } else {
         throw new WebrtcProviderException("ICE Server has empty URLs");
       }
-
-      String username = jsonIs.optString("username", null);
-      if (username != null) {
-        ices.setUsername(username);
+      Object username = jsonIs.opt("username");
+      if (isNotNull(username)) {
+        ices.setUsername((String) username);
       }
-      String credential = jsonIs.optString("credential", null);
-      if (credential != null) {
-        ices.setCredential(credential);
+      Object credential = jsonIs.opt("credential");
+      if (isNotNull(credential)) {
+        ices.setCredential((String) credential);
       }
       iceServers.add(ices);
     }
@@ -512,13 +514,13 @@ public class WebrtcProvider extends CallProvider {
     RTCConfiguration rtcConf = new RTCConfiguration();
     rtcConf.setIceServers(iceServers);
 
-    String bundlePolicy = json.optString("bundlePolicy", null);
-    if (bundlePolicy != null) {
-      rtcConf.setBundlePolicy(bundlePolicy);
+    Object bundlePolicy = json.opt("bundlePolicy");
+    if (isNotNull(bundlePolicy)) {
+      rtcConf.setBundlePolicy((String) bundlePolicy);
     }
-    String iceTransportPolicy = json.optString("iceTransportPolicy", null);
-    if (iceTransportPolicy != null) {
-      rtcConf.setIceTransportPolicy(iceTransportPolicy);
+    Object iceTransportPolicy = json.opt("iceTransportPolicy");
+    if (isNotNull(iceTransportPolicy)) {
+      rtcConf.setIceTransportPolicy((String) iceTransportPolicy);
     }
     int iceCandidatePoolSize = json.optInt("iceCandidatePoolSize", -1);
     if (iceCandidatePoolSize >= 0) {
@@ -563,7 +565,7 @@ public class WebrtcProvider extends CallProvider {
     if (rtcConf.getIceTransportPolicy() != null) {
       json.put("iceTransportPolicy", rtcConf.getIceTransportPolicy());
     }
-    if (rtcConf.getIceCandidatePoolSize() >= 0) {
+    if (rtcConf.getIceCandidatePoolSize() > 0) {
       json.put("iceCandidatePoolSize", rtcConf.getIceCandidatePoolSize());
     }
 
@@ -613,6 +615,16 @@ public class WebrtcProvider extends CallProvider {
     } finally {
       Scope.GLOBAL.id(initialGlobalId);
     }
+  }
+
+  /**
+   * Checks if is not <code>null</code> or JSON NULL.
+   *
+   * @param obj the obj
+   * @return true, if is null
+   */
+  protected boolean isNotNull(Object obj) {
+    return obj != null && obj != NULL;
   }
 
 }

@@ -351,11 +351,6 @@ public class RESTWebConferencingService implements ResourceContainer {
         }
         if (userName.equals(currentUserName)) {
           String callId = callId(type, id);
-          /*
-           * if (callState != null && callState.length() == 0) {
-           * callState = null;
-           * }
-           */
           try {
             if (UserState.JOINED.equals(state)) {
               CallInfo call = webConferencing.joinCall(callId, userName);
