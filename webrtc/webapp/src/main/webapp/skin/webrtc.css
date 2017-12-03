@@ -1,6 +1,6 @@
 /* Styles for WebRTC provider */
 .uiIconSocWebrtc:before {
-    content: url("/webrtc/skin/icons/webrtcicon_14px.png") !important;
+	content: url("/webrtc/skin/icons/webrtcicon_14px.png") !important;
 }
 
 .uiIconWebrtcCall {
@@ -8,8 +8,8 @@
 }
 
 .uiIconWebrtcCall:before {
-    content: url("/webrtc/skin/icons/webrtcicon_14px.png") !important;
-    position: relative;
+	content: url("/webrtc/skin/icons/webrtcicon_14px.png") !important;
+	position: relative;
 	margin-right: 3px;
 }
 
@@ -24,19 +24,112 @@
 
 .uiIncomingCall .messageText {
 	position: relative;
-    top: -5px;
-    display: inline-block;
-    margin: 5px;
+	top: -5px;
+	display: inline-block;
+	margin: 5px;
 }
 
 .uiIncomingCall .messageAuthor a>img {
 	max-height: 64px;
-    max-width: 64px;
-    height: 64px;
-    margin: 0;
-    padding: 0;
-    -webkit-border-radius: 6px;
-    -moz-border-radius: 6px;
-    border-radius: 6px;
-    display: block;
+	max-width: 64px;
+	height: 64px;
+	margin: 0;
+	padding: 0;
+	-webkit-border-radius: 6px;
+	-moz-border-radius: 6px;
+	border-radius: 6px;
+	display: block;
 }
+
+/* Settings form BEGIN */
+.uiPopup, .modal.uiPopup {
+	max-width: 100%
+}
+
+.maskPopup {
+	background: #0000005c;
+	text-align: center;
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: 0;
+	width: auto;
+	height: auto;
+}
+
+.NormalStyle.popupContainer {
+	position: relative;
+	background: #FFF;
+	top: 18%;
+	max-width: 95%;
+	margin: auto;
+	width: 640px;
+	max-height: 70%;
+	overflow: auto;
+}
+
+#webrtcSettingsPopup .title {
+	font-weight: bold;
+	text-align: left;
+}
+
+.control-group>* { /* TODO use exact classes: .credentialsGroup>div:not(.settingGroup) */
+	display: inline-block;
+	vertical-align: text-top;
+}
+
+.iceServer * { /* TODO use exact classes: div:not(.settingGroup) */
+	text-align: left;
+}
+
+.iceServer {
+	margin-bottom: 20px;
+}
+
+.urlsGroup {
+	margin-bottom: 5px;
+}
+
+.enabler {
+	padding-right: 330px;
+}
+
+.enabler .uiCheckbox {
+	margin-left: 0px;
+}
+
+.credentials {
+	margin-top: 5px;
+}
+
+.urlGroup input {
+	width: 420px;
+}
+
+.urlGroup input + .uiIconPlus {
+	padding-right: 21px;
+}
+
+.credentialsGroup {
+	margin-right: 14px;
+}
+
+.credentials label {
+	margin-right: 8px;
+}
+
+.credentials input {
+	width: 345px;
+}
+
+.buttonsGroup {
+	padding-right: 20px;
+	padding-bottom: 5px;
+	text-align: right;
+}
+
+.buttonsGroup .btn {
+	width: 125px;
+}
+/* Settings form END */

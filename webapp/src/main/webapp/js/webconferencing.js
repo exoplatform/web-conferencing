@@ -446,7 +446,7 @@
 		return getCached(userId, cachedUsers, getUserInfoReq);
 	};
 
-	/** @Deprecated TODO not yet used */
+	/** TODO not yet used */
 	var getUsersInfoReq = function(names) {
 		var request = $.ajax({
 			async : true,
@@ -1582,6 +1582,7 @@
 						var $first = $button.first();
 						$first.addClass("spaceCall transparentButton");
 						var $dropdown = $first.siblings(".dropdown-toggle");
+						// TODO cleanup
 						/*var $hover = $();
 						if ($first.hasClass("transparentButton")) {
 							if ($dropdown.length == 1) {
@@ -2186,6 +2187,8 @@
 				} // else, already added
 			}
 		};
+		
+		this.initRequest = initRequest; // for use in other modules (providers, portlets etc)
 	}
 	
 	var webConferencing = new WebConferencing();

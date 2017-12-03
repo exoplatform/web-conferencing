@@ -141,7 +141,6 @@ if (eXo.webConferencing) {
 							
 							// WebRTC connection to establish a call connection
 							log("Creating RTC peer connection for " + callId);
-							// TODO use configurable stun/turn server (from server-side)
 							try {
 								/*var pc = new RTCPeerConnection({
 									iceServers: [
@@ -195,12 +194,7 @@ if (eXo.webConferencing) {
 										}
 									}
 									rtcConfig.iceServers = onlyTurn;
-								}/* else {
-									rtcConfig = {
-										iceServers: [ { urls: "stun:stun.l.google.com:19302" },
-											{ urls: "stun:stunserver.org" } ]
-									};									
-								}*/
+								}
 								// Also clean not actually meaningful fields
 								for (var i=0; i<rtcConfig.iceServers.length; i++) {
 									var server = rtcConfig.iceServers[i];

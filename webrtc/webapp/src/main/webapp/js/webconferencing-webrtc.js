@@ -84,6 +84,28 @@
 				var rnd = Math.floor(getRandomArbitrary(10000, 99998) + 1);
 				return prefix + "-" + rnd;
 			};
+			
+			/**
+			 * TODO not used, setting loaded with the module (see in init())
+			 */
+			var getSettings = function() {
+				var request = $.ajax({
+					async : true,
+					type : "GET",
+					url : "/portal/rest/webrtc/webconferencing/settings"
+				});
+				return webConferencing.initRequest(request);
+			};
+			
+			var postSettings = function(settings) {
+				var request = $.ajax({
+					async : true,
+					type : "POST",
+					url : "/portal/rest/webrtc/webconferencing/settings",
+					data : settings
+				});
+				return webConferencing.initRequest(request);
+			};
 
 			var joinedCall = function(callId) {
 				return webConferencing.updateUserCall(callId, "joined").fail(function(err, status) {
@@ -467,10 +489,154 @@
 				log("> showSettings");
 				
 				var process = $.Deferred();
-				// TODO Settings button clicked - show WebRTC settings form
-				/////
 				
-				// TODO use Lamia's WebRTC popup code here
+				// load HTML with settings
+				var $popup = $("#webrtcSettingsPopup");
+				if ($popup.length == 0) {
+					$popup = $("<div class='maskPopup' id='webrtcSettingsPopup' style='display: none;'><div>");
+					$(document.body).append($popup);
+				}
+				// TODO use jsp/servlet/filter for pretty URL /webrtc/settings
+				$popup.load("/webrtc/settings.html", function(content, textStatus) {
+					if (textStatus == "success" || textStatus == "notmodified") {
+						var $iceServers = $popup.find(".iceServers");
+						var $serverTemplate = $iceServers.find(".iceServer");
+						// copy ICE servers from the working settings and use them for updates
+						// Deep copy of the settings.rtcConfiguration as a working copy for the form 
+						var rtcConfiguration = $.extend(true, {}, settings.rtcConfiguration);
+						function addIceServer(ices, $sibling) {
+							var $ices = $serverTemplate.clone();
+							// Fill URLs
+							var $urlsGroup = $ices.find(".urlsGroup");
+							$.each(ices.urls, function(ui, url) {
+								var $urlGroup = $urlsGroup.find(".urlGroup").first();
+								if (ui > 0) {
+									$urlGroup = $urlGroup.clone();
+									$urlGroup.find("i.uiIconPlus").remove();
+									$urlGroup.find("i.uiIconTrash").remove();
+									$urlsGroup.append($urlGroup);
+								} else {
+									$urlGroup.find("i.uiIconPlus").click(function() {
+										// Add new ICE server (not URL - this unsupported for the moment)
+										var newIces = {
+											enabled : true,
+											urls : [ "" ]
+										};
+										addIceServer(newIces, $ices); // add in DOM
+										// add in RTC config
+										rtcConfiguration.iceServers.push(newIces);
+									});
+									if ($iceServers.find(".iceServer").length == 1) { // 1 is for template
+										// Remove trash on first server
+										$urlGroup.find("i.uiIconTrash").remove();
+									}
+								}
+								var $url = $urlGroup.find("input[name='url']");
+								$url.val(url);
+								$url.change(function() {
+									ices.urls[ui] = $(this).val();
+								});
+							});
+							// Server removal (trash icon)
+							$urlsGroup.find("i.uiIconTrash").click(function() {
+								// Remove this ICE server in DOM
+								$ices.remove(); 
+								// in RTC config
+								rtcConfiguration.iceServers = rtcConfiguration.iceServers.filter(function(nextIces) {
+									return ices === nextIces;
+								});
+							});
+							// Fill username/credential
+							var $credentialsGroup = $ices.find(".credentialsGroup");
+							var $enabler = $credentialsGroup.find(".enabler input");
+							var $credentials = $credentialsGroup.find(".credentials");
+							$enabler.click(function() {
+								var $username = $credentials.find("input[name='username']");
+								var $credential = $credentials.find("input[name='credential']");
+								if ($enabler.prop("checked") && !$credentials.is(":visible")) {
+									if (typeof ices.username == "string" && typeof ices.credential == "string") {
+										$username.val(ices.username);
+										$credential.val(ices.credential);
+									} else {
+										$username.val("");
+										$credential.val("");
+										ices.username = "";
+										ices.credential = "";
+									}
+									if (!$credentials.data("initialized")) {
+										$credentials.data("initialized", true);
+										$username.change(function() {
+											ices.username = $(this).val();
+										});
+										$credential.change(function() {
+											ices.credential = $(this).val();
+										});
+									}
+									$credentials.show();
+								} else {
+									$credentials.hide();
+									$username.val("");
+									$credential.val("");
+									ices.username = null;
+									ices.credential = null;
+								}
+							});
+							if (typeof ices.username == "string" && typeof ices.credential == "string") {
+								$enabler.click();
+							}
+							$ices.show();
+							if ($sibling) {
+								$sibling.after($ices);
+							} else {
+								$iceServers.append($ices);
+							}
+						}
+						$.each(rtcConfiguration.iceServers, function(si, ices) {
+							addIceServer(ices);
+						});
+						// Save action
+						$popup.find(".saveButton").click(function() {
+							setTimeout(function() { // timeout to let change events populate config object
+								// Validation to do not have an ICE server w/o URL
+								var confOk = true;
+								for (var si=0; si<rtcConfiguration.iceServers.length; si++) {
+									var is = rtcConfiguration.iceServers[si];
+									for (var ui=0; ui<is.urls.length; ui++) {
+										if (!is.urls[ui]) {
+											// Empty URL
+											confOk = false;
+											break;
+										}
+									}
+									if (!confOk) {
+										break;
+									}
+								}
+								if (confOk) {
+									var rtcConfStr = JSON.stringify(rtcConfiguration);
+									log("Saving RTC configuration: " + rtcConfStr);
+									postSettings({
+										rtcConfiguration : rtcConfStr
+									}).done(function(savedRtcConfig) {
+										$popup.hide();
+										settings.rtcConfiguration = savedRtcConfig;
+									}).fail(function(err) {
+										log("ERROR saving settings", err);
+										webConferencing.showError("Error saving settings", webConferencing.errorText(err));
+									});
+								} else {
+									webConferencing.showWarn("Wrong settings", "An URL is mandatory for server.");
+								}
+							}, 100);
+						});
+						$popup.find("a.uiIconClose, .cancelButton").click(function(){
+							$popup.hide();
+						});
+						$popup.show();
+					} else {
+						log("ERROR loading settings page: " + content);
+					}
+				});
 				
 				/////
 				return process.promise();
