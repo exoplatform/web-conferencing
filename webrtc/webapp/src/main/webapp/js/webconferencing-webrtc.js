@@ -26,6 +26,11 @@
 			var NON_WHITESPACE_PATTERN = /\s+/;
 			var self = this;
 			var settings, currentKey, clientId;
+			var messages = {};
+			
+			var message = function(key) {
+				return messages["webrtc." + key];
+			};
 			
 			var message = function(key) {
 				return settings ? settings.messages["webrtc." + key] : "";
@@ -281,7 +286,7 @@
 			  dialogSettings.buttons[message("decline")] = function() {
 			  	process.reject("declined");
 			  	$call.dialog("close");
-			  };
+				};
 				$call.dialog(dialogSettings);
 				$call.on("dialogclose", function( event, ui ) {
 					if (process.state() == "pending") {
@@ -313,6 +318,9 @@
 			};
 			
 			this.init = function(context) {
+				
+				messages = context.messages;
+				
 				var process = $.Deferred();
 				if (self.isSupportedPlatform()) {
 					var currentUserId = webConferencing.getUser().id;
