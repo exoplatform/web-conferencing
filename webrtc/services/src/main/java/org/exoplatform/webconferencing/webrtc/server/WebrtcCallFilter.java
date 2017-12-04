@@ -19,6 +19,10 @@
  */
 package org.exoplatform.webconferencing.webrtc.server;
 
+import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.CALL_SERVLET;
+import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.WEBRTC_CALL_REDIRECT;
+import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.WEBRTC_SERVLET_CTX;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -37,7 +41,7 @@ import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 
 /**
- * Filter forwards requests to Skype call URLs to related servlets.<br>
+ * Filter forwards requests to WebRTC call URLs to related servlets.<br>
  * 
  * Created by The eXo Platform SAS
  * 
@@ -48,22 +52,13 @@ import org.gatein.common.logging.LoggerFactory;
 public class WebrtcCallFilter extends AbstractFilter implements Filter {
 
   /** The Constant LOG. */
-  protected static final Logger LOG                  = LoggerFactory.getLogger(WebrtcCallFilter.class);
-
-  /** The Constant WEBRTC_CALL_REDIRECT. */
-  public static final String    WEBRTC_CALL_REDIRECT = "webrtccall_redirect";
-
-  /** The Constant WEBRTC_SERVLET_CTX. */
-  public static final String    WEBRTC_SERVLET_CTX   = "/webrtc";
-
-  /** The Constant CALL_SERVLET. */
-  public static final String    CALL_SERVLET         = "/webrtccallservlet".intern();
+  protected static final Logger LOG          = LoggerFactory.getLogger(WebrtcCallFilter.class);
 
   /** The Constant SCHEME_HTTP. */
-  public static final String    SCHEME_HTTP          = "http";
+  public static final String    SCHEME_HTTP  = "http";
 
   /** The Constant SCHEME_HTTPS. */
-  public static final String    SCHEME_HTTPS         = "https";
+  public static final String    SCHEME_HTTPS = "https";
 
   /**
    * {@inheritDoc}

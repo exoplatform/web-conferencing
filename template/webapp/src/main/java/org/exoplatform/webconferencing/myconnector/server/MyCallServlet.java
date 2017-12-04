@@ -19,6 +19,7 @@
 package org.exoplatform.webconferencing.myconnector.server;
 
 import static org.exoplatform.webconferencing.Utils.asJSON;
+import static org.exoplatform.webconferencing.Utils.getCurrentContext;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -31,7 +32,6 @@ import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.web.AbstractHttpServlet;
 import org.exoplatform.webconferencing.ContextInfo;
 import org.exoplatform.webconferencing.UserInfo;
-import org.exoplatform.webconferencing.Utils;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.myconnector.MyConnectorProvider;
 import org.gatein.common.logging.Logger;
@@ -101,7 +101,7 @@ public class MyCallServlet extends AbstractHttpServlet {
           try {
             // init page scope with settings for webConferencing and My Connector provider
 
-            ContextInfo context = Utils.getCurrentContext(remoteUser);
+            ContextInfo context = getCurrentContext(remoteUser, req.getLocale());
             httpReq.setAttribute("contextInfo", asJSON(context));
 
             UserInfo exoUser = webConferencing.getUserInfo(remoteUser);

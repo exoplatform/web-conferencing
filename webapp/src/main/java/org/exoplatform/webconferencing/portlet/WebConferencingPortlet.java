@@ -20,8 +20,14 @@ package org.exoplatform.webconferencing.portlet;
 
 import static org.exoplatform.webconferencing.Utils.asJSON;
 import static org.exoplatform.webconferencing.Utils.getCurrentContext;
+import static org.exoplatform.webconferencing.Utils.getResourceMessages;
 
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 import javax.portlet.GenericPortlet;
 import javax.portlet.PortletException;
@@ -32,9 +38,11 @@ import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.resources.ResourceBundleService;
 import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.webconferencing.ContextInfo;
 import org.exoplatform.webconferencing.UserInfo;
+import org.exoplatform.webconferencing.Utils;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webui.application.WebuiRequestContext;
 
@@ -69,13 +77,8 @@ public class WebConferencingPortlet extends GenericPortlet {
   @Override
   protected void doView(final RenderRequest request, final RenderResponse response) throws PortletException, IOException {
     final String remoteUser = request.getRemoteUser();
-
     try {
-      // TODO Get bundle messages for status/error texts
-      // Locale locale = userContext.getLocale();
-      // ResourceBundle bundle = applicationContext.resolveBundle(locale);
-
-      ContextInfo context = getCurrentContext(remoteUser);
+      ContextInfo context = getCurrentContext(remoteUser, request.getLocale());
       String contextJson = asJSON(context);
 
       UserInfo exoUser = webConferencing.getUserInfo(remoteUser);

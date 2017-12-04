@@ -19,6 +19,7 @@
 package org.exoplatform.webconferencing;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -53,6 +54,10 @@ public abstract class CallProvider extends BaseComponentPlugin {
    * Call Provider runtime Settings (for serialization in JSON to remote clients).
    */
   public abstract class Settings {
+
+    /** The locale resources. */
+    private final Map<String, String>                  messages = new HashMap<String, String>();
+    
     /**
      * Checks if is active.
      *
@@ -96,6 +101,24 @@ public abstract class CallProvider extends BaseComponentPlugin {
      */
     public String getVersion() {
       return CallProvider.this.getVersion();
+    }
+
+    /**
+     * Gets the messages.
+     *
+     * @return the messages
+     */
+    public Map<String, String> getMessages() {
+      return messages;
+    }
+
+    /**
+     * Add the messages.
+     *
+     * @param messages the messages
+     */
+    public void addMessages(Map<String, String> messages) {
+      this.messages.putAll(messages);
     }
   }
   
@@ -209,7 +232,7 @@ public abstract class CallProvider extends BaseComponentPlugin {
   public String getDetails() {
     return this.getDescription();
   }
-
+  
   /**
    * Gets the version.
    *

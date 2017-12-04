@@ -18,9 +18,9 @@
  */
 package org.exoplatform.webconferencing;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
-
-import org.exoplatform.webconferencing.cometd.CometdWebConferencingService;
 
 /**
  * A lightweight info about current Platform context: space, chat room etc.
@@ -50,6 +50,9 @@ public class ContextInfo {
 
   /** The providers config. */
   private final Set<CallProviderConfiguration> providersConfig;
+
+  /** The locale resources. */
+  private final Map<String, String>                  messages = new HashMap<String, String>();
 
   /**
    * Instantiates a new context info.
@@ -140,6 +143,24 @@ public class ContextInfo {
    */
   public Set<CallProviderConfiguration> getProvidersConfig() {
     return providersConfig;
+  }
+
+  /**
+   * Gets the localized messages.
+   *
+   * @return the locale resources
+   */
+  public Map<String, String> getMessages() {
+    return messages;
+  }
+
+  /**
+   * Adds the localized messages.
+   *
+   * @param localeResources the locale resources
+   */
+  public void addMessages(Map<String, String> localeResources) {
+    this.messages.putAll(localeResources);
   }
 
 }

@@ -18,43 +18,15 @@
 	function Admin() {
 
 		var self = this;
+		var messages = {}; 
 
-		this.init = function() {
+		this.init = function(context) {
 			// UI init and action handlers
-			/**
-			 * OPEN HIDE POPUPs String id; contain the Id of element to duplicate INT inputID; Contain the number of elements
-			 * 
-			 * TODO it's WebRTC provider related stuff, move to the connector code 
-			 */
-			function addInput(id, inputID) {
-				var domToAdd = $("#" + id + " > .group-container" + inputID).html();
-				newId = $('#urlGroup > div').length;
-				console.log(newId);
-				$("#" + id).append("<div class='group-container" + newId + "'>" + domToAdd + "</div>");
-				$("#" + id + " > .group-container" + newId + " > input").attr("id", "url" + newId);
-				$("#" + id + " > .group-container" + newId + " > i.uiIconPlus ").attr("onclick",
-							"addInput('urlGroup', " + newId + ")");
 
-				if ($("#" + id + " > .group-container" + newId + " > i.uiIconTrash").length > 0) {
-					$("#" + id + " > .group-container" + newId + " > i.uiIconTrash").attr("onclick",
-								"removeInput(" + newId + ")");
-				} else {
-					$("<i class='uiIconTrash uiIconLightGray' onclick='removeInput(" + newId + ")'>&nbsp;</i>")
-								.insertBefore("#" + id + " > .group-container" + newId + " > i.uiIconPlus ");
-				}
-			}
-
-			/**
-			 * TODO it's WebRTC provider related stuff, move to the connector code
-			 */
-			function removeInput(inputID) {
-				$(".group-container" + inputID).remove();
-			}
+			messages = context.messages;
 			
-			//////
-
 			$(function() {
-				log("Initializing Web Conferencing Admin "); // webConferencing.getUser().id
+				log("Initializing Web Conferencing Admin ");
 				
 				var $admin = $("#webconferencingAdmin");
 				var $tbody = $admin.find(".content table tbody");
@@ -71,7 +43,7 @@
 						// Activation handler
 						var $checkbox = $provider.find(".active input[type=checkbox]");
 						$checkbox[0].checked = conf.active;
-						$checkbox.click(function() { // TODO $.change ?
+						$checkbox.click(function() {
 							var checkbox = this;
 							webConferencing.postProviderConfig(conf.type, this.checked).done(function(conf) {
 								// Ensure we show actual value

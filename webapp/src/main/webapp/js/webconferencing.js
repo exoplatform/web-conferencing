@@ -744,6 +744,7 @@
 		var providers = []; // loaded providers
 		var providersConfig; // will be assigned in init()
 		var providersInitializer = {}; // map
+		var messages = {}; // i18n
 		
 		var chat = new Chat();
 		this.getChat = function() {
@@ -1195,8 +1196,7 @@
 									if (context.roomTitle) {
 										var initializer = addCallButton($wrapper, context);
 										initializer.done(function($container) {
-											$container.find(".callButton").first().addClass("chatCall"); // pull-right
-											//$container.find(".dropdown-toggle").addClass("pull-right");
+											$container.find(".callButton").first().addClass("chatCall");
 											$container.find(".dropdown-menu").addClass("pull-right");
 											$wrapper.show();
 											log("<< initChat DONE " + context.roomTitle + " for " + currentUser.id);
@@ -1452,8 +1452,7 @@
 						$container.addClass("pull-left");
 					});
 					// Copied from Chat app: Fix PLF-6493: Only let hover happens on
-					// connection buttons instead
-					// of all in .user-actions
+					// connection buttons instead of all in .user-actions
 					var $btnConnections = $userActions.find(".show-default, .hide-default");
 					var $btnShowConnection = $userActions.find(".show-default");
 					var $btnHideConnection = $userActions.find(".hide-default");
@@ -1582,22 +1581,6 @@
 						var $first = $button.first();
 						$first.addClass("spaceCall transparentButton");
 						var $dropdown = $first.siblings(".dropdown-toggle");
-						// TODO cleanup
-						/*var $hover = $();
-						if ($first.hasClass("transparentButton")) {
-							if ($dropdown.length == 1) {
-								$hover = $hover.add($dropdown);							
-							}
-						} else {
-							$first.addClass("transparentButton");
-							$hover = $hover.add($first).add($dropdown);
-						}
-						// TODO space call button always transparent
-						$hover.hover(function() {
-							$first.removeClass("transparentButton");
-						}, function() {
-							$first.addClass("transparentButton");
-						});*/						
 						log("<< initSpace DONE " + currentSpaceId + " for " + currentUser.id);
 					});
 					initializer.fail(function(error) {
@@ -1835,21 +1818,9 @@
 			}
 		};
 		
-		this.showWarn = function(title, text, onInit) {
-			showWarn(title, text, onInit);
-		};
-		
-		this.showWarnBar = function(title, text, onInit) {
-			showWarnBar(title, text, onInit);
-		};
-		
-		this.showError = function(title, text, onInit) {
-			showError(title, text, onInit);
-		};
-		
-		this.showInfo = function(title, text, onInit) {
-			showInfo(title, text, onInit);
-		};
+		this.showWarn = showWarn;
+		this.showError = showError;
+		this.showInfo = showInfo;
 
 		this.getUserInfo = getUserInfoReq; 
 		this.getSpaceInfo = getSpaceInfoReq;
@@ -2020,9 +1991,6 @@
 			}
 		}
 		
-		//this.addUserGroupCall = postUserCallId;
-		//this.removeUserGroupCall = deleteUserCallId; // TODO not used
-		
 		this.onUserUpdate = function(userId, onUpdate, onError) {
 			if (cometd) {
 				// /service/webconferencing/calls
@@ -2183,7 +2151,6 @@
 					style.rel = "stylesheet";
 					style.href = cssUrl;
 					headElems[headElems.length - 1].appendChild(style);
-					// $("head").append($("<link href='" + cssUrl + "' rel='stylesheet' type='text/css' />"));
 				} // else, already added
 			}
 		};

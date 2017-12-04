@@ -1,34 +1,29 @@
-<%@ page language="java"%>
-<%--  contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" --%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%-- @ taglib uri="http://java.sun.com/portlet.tld" prefix="portlet" --%>
 
-<%@ page import="java.util.ResourceBundle"%>
-<%@ page import="javax.portlet.PortletURL"%>
+<%@ page import="java.util.Map"%>
+<%-- @ page import="javax.portlet.PortletURL"%>
 <%@ page import="javax.portlet.PortletMode"%>
-<%@ page import="javax.portlet.PortletPreferences"%>
-
+<%@ page import="javax.portlet.PortletPreferences"--%>
 <%-- <portlet:defineObjects /> --%>
 
 <%
-  // TODO It's sample properties...
-  //String navigation_uri = request.getParameter("navigation_uri");
-  //String page_name = request.getParameter("page_name");
-  //String site_type = request.getParameter("site_type");
+  Map<String, String> messages = (Map<String, String>) request.getAttribute("messages");
 %>
 
 <div id="webconferencingAdmin" class="container-fluid">
 	<div class="header">
-		<h3 class="titleWithBorder">Web Conferencing Administration</h3>
+		<h3 class="titleWithBorder">${messages["webconferencing.admin.title"]}</h3>
 	</div>
 	<div class="content">
-		<p>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</p>
+		<p>${messages["webconferencing.admin.info"]}</p>
 		<table class="uiGrid table table-hover table-striped">
 			<thead>
 				<tr>
-					<th>Provider</th>
-					<th>Description</th>
-					<th class="center actionContainer">Active</th>
-					<th class="center actionContainer">Actions</th>
+					<th>${messages["webconferencing.admin.provider"]}</th>
+					<th>${messages["webconferencing.admin.description"]}</th>
+					<th class="center actionContainer">${messages["webconferencing.admin.active"]}</th>
+					<th class="center actionContainer">${messages["webconferencing.admin.actions"]}</th>
 				</tr>
 			</thead>
 			<tbody>

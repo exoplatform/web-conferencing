@@ -117,10 +117,11 @@
 
 .credentials label {
 	margin-right: 8px;
+	width: 75px;
 }
 
 .credentials input {
-	width: 345px;
+	width: 335px;
 }
 
 .buttonsGroup {

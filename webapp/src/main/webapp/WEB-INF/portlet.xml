@@ -11,7 +11,7 @@
     <supports>
       <mime-type>text/html</mime-type>
     </supports>
-    <resource-bundle>locale.webconferencing.WebConferencing</resource-bundle>
+    <resource-bundle>locale.webconferencing.WebConferencingClient</resource-bundle>
     <portlet-info>
       <title>Web Conferencing portelt for eXo Platform</title>
       <short-title>Web Conferencing</short-title>
@@ -25,7 +25,7 @@
     <supports>
       <mime-type>text/html</mime-type>
     </supports>
-    <resource-bundle>locale.webconferencing.WebConferencing</resource-bundle>
+    <resource-bundle>locale.webconferencing.WebConferencingAdmin</resource-bundle>
     <portlet-info>
       <title>Web Conferencing Admin portelt for eXo Platform</title>
       <short-title>Web Conferencing Admin</short-title>
