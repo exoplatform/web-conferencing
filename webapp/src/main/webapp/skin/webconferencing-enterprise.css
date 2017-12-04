@@ -69,21 +69,25 @@
 	color: #ffffff !important;
 }
 
-.callButton.chatCall, .callButton.chatCall + .dropdown-toggle {
-	padding-top: 4px;
-	padding-bottom: 4px;
+.callButton.chatCall, .callButton.chatCall + .dropdown-toggle { /* !important should be removed after removing skype css from Enterprise skin  */
+	padding-top: 4px !important; 
+	padding-bottom: 4px !important;
     background: none;
-    border: 1px solid #fff;
+    border: 1px solid #fff !important;
     color: #fff;
     border-radius: 0;
 }
 
-.callButton.chatCall {
-	padding-left: 15px;
-	padding-right: 15px;
+.callButton.chatCall { /* !important should be removed after removing skype css from Enterprise skin  */
+	padding-left: 15px !important;
+	padding-right: 15px !important;
 }
 
-.callButton.chatCall [class*="Icon"], .callButton.chatCall + .dropdown-toggle .uiIconMiniArrowDown:before {
+.callButton.chatCall [class*="Icon"], 
+.callButton.chatCall + .dropdown-toggle 
+.uiIconMiniArrowDown:before, 
+.callButton.chatCall:active, 
+.callButton.chatCall:focus {
 	color: #fff
 }
 

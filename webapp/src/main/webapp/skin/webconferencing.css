@@ -82,7 +82,6 @@
 
 .callButton .callTitle {
 	margin-left: 5px;
-	line-height: 1;
 }
 
 .spaceCall {
@@ -125,9 +124,9 @@
 	text-align: left;
 }
 
-#tiptip_holder .callButtonContainer > .callButton > .callTitle {
+/*#tiptip_holder .callButtonContainer > .callButton > .callTitle { Should be added later
 	display: none;
-}
+}*/
 
 #socialTopLayout .callButtonContainer > .callButton + .dropdown-toggle {
 	margin-left: -1px !important;
@@ -138,7 +137,7 @@
 }
 
 .chatCall {
-	line-height: 16px;
+	line-height: 1;
 }
 
 .callButtonContainerWrapper {
