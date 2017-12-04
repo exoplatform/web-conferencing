@@ -4,6 +4,8 @@
 package org.exoplatform.webconferencing.webrtc.server;
 
 import static org.exoplatform.webconferencing.Utils.asJSON;
+import static org.exoplatform.webconferencing.Utils.getCurrentContext;
+import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.WEBRTC_CALL_REDIRECT;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -18,7 +20,6 @@ import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.web.AbstractHttpServlet;
 import org.exoplatform.webconferencing.ContextInfo;
 import org.exoplatform.webconferencing.UserInfo;
-import org.exoplatform.webconferencing.Utils;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.webrtc.WebrtcProvider;
 import org.exoplatform.webconferencing.webrtc.WebrtcProvider.WebrtcSettings;
@@ -42,9 +43,6 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
   /** The Constant SERVER_ERROR_PAGE. */
   private final static String   SERVER_ERROR_PAGE = "/WEB-INF/pages/servererror.html";
 
-  /** The Constant EMPTY_STRING. */
-  private final static String   EMPTY_STRING      = "".intern();
-
   /**
    * Instantiates a new WebRTC call servlet.
    */
@@ -61,7 +59,7 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
     HttpServletRequest httpReq = (HttpServletRequest) req;
     HttpServletResponse httpRes = (HttpServletResponse) resp;
 
-    Object redirectUri = httpReq.getAttribute(WebrtcCallFilter.WEBRTC_CALL_REDIRECT);
+    Object redirectUri = httpReq.getAttribute(WEBRTC_CALL_REDIRECT);
     if (redirectUri != null) {
       // Home page registered per app in Active Directory - redirect it to the portal default page
       String ruri = (String) redirectUri;
@@ -96,7 +94,7 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
           if (remoteUser != null) {
             try {
               // init page scope with settings for webConferencing and WebRTC provider
-              ContextInfo context = Utils.getCurrentContext(remoteUser);
+              ContextInfo context = getCurrentContext(remoteUser, req.getLocale());
               httpReq.setAttribute("contextInfo", asJSON(context));
 
               UserInfo exoUser = webConferencing.getUserInfo(remoteUser);
@@ -110,7 +108,7 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
                                       "/portal/webrtc/call",
                                       null,
                                       null);
-                WebrtcSettings settings = provider.settings().callUri(callURI.toString()).build();
+                WebrtcSettings settings = provider.settings().callUri(callURI.toString()).locale(httpReq.getLocale()).build();
                 httpReq.setAttribute("settings", asJSON(settings));
 
                 // XXX nasty-nasty-nasty include of CometD script
@@ -134,7 +132,7 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
             httpReq.getRequestDispatcher(UNAUTHORIZED_PAGE).include(httpReq, httpRes);
           }
         } else {
-          LOG.error("Skype provider not found for call page and user " + remoteUser);
+          LOG.error("WebRTC provider not found for call page and user " + remoteUser);
           httpRes.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
           httpReq.getRequestDispatcher(SERVER_ERROR_PAGE).include(httpReq, httpRes);
         }

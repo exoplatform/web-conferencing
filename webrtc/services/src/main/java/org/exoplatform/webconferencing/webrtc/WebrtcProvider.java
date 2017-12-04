@@ -18,12 +18,13 @@
  */
 package org.exoplatform.webconferencing.webrtc;
 
+import static org.exoplatform.webconferencing.Utils.getResourceMessages;
 import static org.json.JSONObject.NULL;
 
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.exoplatform.commons.api.settings.SettingService;
@@ -36,7 +37,6 @@ import org.exoplatform.container.xml.ObjectParameter;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.webconferencing.CallProvider;
-import org.exoplatform.webconferencing.CallProviderConfiguration;
 import org.exoplatform.webconferencing.CallProviderException;
 import org.exoplatform.webconferencing.UserInfo.IMInfo;
 import org.json.JSONArray;
@@ -120,6 +120,9 @@ public class WebrtcProvider extends CallProvider {
 
     /** The call URI. */
     protected String callUri;
+    
+    /** The locale. */
+    protected Locale locale;
 
     /**
      * Call URI.
@@ -131,6 +134,17 @@ public class WebrtcProvider extends CallProvider {
       this.callUri = callUri;
       return this;
     }
+    
+    /**
+     * Locale for internationalized messages to load in the settings.
+     *
+     * @param locale the locale
+     * @return the settings builder
+     */
+    public SettingsBuilder locale(Locale locale) {
+      this.locale = locale;
+      return this;
+    }
 
     /**
      * Builds the WebRTC settings.
@@ -138,7 +152,11 @@ public class WebrtcProvider extends CallProvider {
      * @return the WebRTC settings
      */
     public WebrtcSettings build() {
-      return new WebrtcSettings(callUri, rtcConfiguration.clone(true));
+      WebrtcSettings settings = new WebrtcSettings(callUri, rtcConfiguration.clone(true));
+      if (locale != null) {
+        settings.addMessages(getResourceMessages("locale.webrtc.WebRTCClient", locale));
+      }
+      return settings;
     }
   }
 
@@ -371,8 +389,7 @@ public class WebrtcProvider extends CallProvider {
     // try read RTC config from storage first
     RTCConfiguration rtcConfiguration;
     try {
-      // rtcConfiguration = readRtcConfig();
-      rtcConfiguration = null;
+      rtcConfiguration = readRtcConfig();
     } catch (Exception e) {
       LOG.error("Error reading RTC configuration", e);
       rtcConfiguration = null;

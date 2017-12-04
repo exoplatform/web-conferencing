@@ -19,9 +19,10 @@
 package org.exoplatform.webconferencing.admin.portlet;
 
 import static org.exoplatform.webconferencing.Utils.asJSON;
-import static org.exoplatform.webconferencing.Utils.getCurrentContext;
+import static org.exoplatform.webconferencing.Utils.getResourceMessages;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.portlet.GenericPortlet;
 import javax.portlet.PortletException;
@@ -34,7 +35,6 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.JavascriptManager;
-import org.exoplatform.webconferencing.ContextInfo;
 import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webui.application.WebuiRequestContext;
@@ -49,7 +49,7 @@ import org.exoplatform.webui.application.WebuiRequestContext;
 public class WebConferencingAdminPortlet extends GenericPortlet {
 
   /** The Constant LOG. */
-  private static final Log       LOG = ExoLogger.getLogger(WebConferencingAdminPortlet.class);
+  private static final Log       LOG                   = ExoLogger.getLogger(WebConferencingAdminPortlet.class);
 
   /** The Web Conferencing service. */
   private WebConferencingService webConferencing;
@@ -76,26 +76,28 @@ public class WebConferencingAdminPortlet extends GenericPortlet {
   @Override
   public void doView(RenderRequest request, RenderResponse response) throws IOException, PortletException {
     final String remoteUser = request.getRemoteUser();
-
     try {
-      // TODO Get bundle messages for status/error texts
-      // Locale locale = userContext.getLocale();
-      // ResourceBundle bundle = applicationContext.resolveBundle(locale);
-
-      // TODO Do we need Admin context?
-      //ContextInfo context = getCurrentContext(remoteUser);
-      //String contextJson = asJSON(context);
-
       UserInfo exoUser = webConferencing.getUserInfo(remoteUser);
       if (exoUser != null) {
+        // i18n messages
+        Map<String, String> messages = getResourceMessages("locale.webconferencing.WebConferencingAdmin", request.getLocale());
+        // Reduce and simplify the map for use in JSP: no real sense with small amount of messages
+        //        messages = messages.entrySet().stream()
+        //                   .filter(e -> e.getKey().startsWith(ADMIN_RESOURCE_PREFIX))
+        //                   .collect(Collectors.toMap(e -> e.getKey()
+        //                                                   .substring(ADMIN_RESOURCE_PREFIX.length()),
+        //                                             a -> a.getValue()));
+        
         // Markup
+        request.setAttribute("messages", messages);
         PortletRequestDispatcher prDispatcher = getPortletContext().getRequestDispatcher("/WEB-INF/pages/admin.jsp");
         prDispatcher.include(request, response);
 
         // Javascript
+        String messagesJson = asJSON(messages);
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
         js.require("SHARED/webConferencingAdminPortlet", "webConferencingAdminPortlet")
-          .addScripts("webConferencingAdminPortlet.init();");
+          .addScripts("webConferencingAdminPortlet.init({messages: " + messagesJson + "});");
       } else {
         LOG.warn("Web Conferencing Admin portlet cannot be initialized: user info cannot be obtained for " + remoteUser);
       }

@@ -18,11 +18,20 @@
  */
 package org.exoplatform.webconferencing;
 
+import static org.exoplatform.webconferencing.Utils.getResourceMessages;
+
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.ResourceBundle;
+
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.portal.application.RequestNavigationData;
 import org.exoplatform.portal.mop.SiteType;
+import org.exoplatform.services.resources.ResourceBundleService;
 import org.exoplatform.social.common.router.ExoRouter;
 import org.exoplatform.social.common.router.ExoRouter.Route;
 import org.exoplatform.social.core.space.SpaceUtils;
@@ -113,9 +122,10 @@ public class Utils {
    * Gets the current context.
    *
    * @param userId the user id
+   * @param locale the locale
    * @return the current context
    */
-  public static ContextInfo getCurrentContext(String userId) {
+  public static ContextInfo getCurrentContext(String userId, Locale locale) {
     String spaceRoomName;
     String spacePrettyName = Utils.getSpaceNameByContext();
     if (spacePrettyName != null) {
@@ -127,19 +137,43 @@ public class Utils {
     ExoContainer exo = ExoContainerContext.getCurrentContainer();
     WebConferencingService webConferencing = exo.getComponentInstanceOfType(WebConferencingService.class);
     CometdWebConferencingService cometdService = exo.getComponentInstanceOfType(CometdWebConferencingService.class);
+    ContextInfo context;
     if (cometdService != null) {
-      return new ContextInfo(exo.getContext().getName(),
-                             spacePrettyName,
-                             spaceRoomName,
-                             cometdService.getCometdServerPath(),
-                             cometdService.getUserToken(userId),
-                             webConferencing.getProviderConfigurations());
+      context = new ContextInfo(exo.getContext().getName(),
+                                spacePrettyName,
+                                spaceRoomName,
+                                cometdService.getCometdServerPath(),
+                                cometdService.getUserToken(userId),
+                                webConferencing.getProviderConfigurations());
     } else {
-      return new ContextInfo(exo.getContext().getName(),
-                             spacePrettyName,
-                             spaceRoomName,
-                             webConferencing.getProviderConfigurations());
+      context = new ContextInfo(exo.getContext().getName(),
+                                spacePrettyName,
+                                spaceRoomName,
+                                webConferencing.getProviderConfigurations());
     }
+    if (locale != null) {
+      context.addMessages(getResourceMessages("locale.webconferencing.WebConferencingClient", locale));
+    }
+    return context;
+  }
+
+  /**
+   * Gets the resource messages.
+   *
+   * @param bundleName the bundle name
+   * @param locale the locale
+   * @return the resource messages
+   */
+  public static Map<String, String> getResourceMessages(String bundleName, Locale locale) {
+    ExoContainer exo = ExoContainerContext.getCurrentContainer();
+    ResourceBundleService service = exo.getComponentInstanceOfType(ResourceBundleService.class);
+    ResourceBundle res = service.getResourceBundle(bundleName, locale);
+    Map<String, String> resMap = new HashMap<String, String>();
+    for (Enumeration<String> keys = res.getKeys(); keys.hasMoreElements();) {
+      String key = keys.nextElement();
+      resMap.put(key, res.getString(key));
+    }
+    return resMap;
   }
 
   /**

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <webrtc>
+    <call>Call</call>
+    <callingYou>is calling you...</callingYou>
+    <callWith>Call with</callWith>
+    <callTo>Call to</callTo>
+    <incomingCall>Incoming call</incomingCall>
+    <answer>Answer</answer>
+    <decline>Decline</decline>
+    
+    <errorAddCall>Error saving call</errorAddCall>
+    <errorGettingCall>Error opening call</errorGettingCall>
+    <errorStartingCall>Error starting call</errorStartingCall>
+    <errorIncomingCall>Incoming call error</errorIncomingCall>
+    <errorReadUserStatus>Error read user status information from the server</errorReadUserStatus>
+    <errorReadCall>Error read call information from the server</errorReadCall>
+    
+    <admin>
+      <wrongSettings>Wrong settings</wrongSettings>
+      <serverUrlMandatory>An URL is mandatory for server.</serverUrlMandatory>
+      <errorSavingSettings>Error saving settings</errorSavingSettings>
+    </admin>
+  </webrtc>
+</bundle>

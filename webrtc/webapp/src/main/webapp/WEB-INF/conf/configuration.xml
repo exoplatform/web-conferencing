@@ -276,6 +276,22 @@
             </field>
           </object>
         </object-param>
+        <!-- This filter sets URL paths rules for redirection to settings servlet -->
+        <object-param>
+          <name>WebRTC settings page filter</name>
+          <object type="org.exoplatform.web.filter.FilterDefinition">
+            <field name="filter">
+              <object type="org.exoplatform.webconferencing.webrtc.server.WebrtcSettingsFilter" />
+            </field>
+            <field name="patterns">
+              <collection type="java.util.ArrayList" item-type="java.lang.String">
+                <value>
+                  <string>/webrtc/settings</string>
+                </value>
+              </collection>
+            </field>
+          </object>
+        </object-param>
       </init-params>
     </component-plugin>
   </external-component-plugins>
@@ -290,13 +306,15 @@
         <values-param>
           <name>init.resources</name>
           <description>Store the following resources into the db for the first launch</description>
-          <value>locale.webrtc.WebRTC</value>
+          <value>locale.webrtc.WebRTCAdmin</value>
+          <value>locale.webrtc.WebRTCClient</value>
         </values-param>
         <values-param>
           <name>portal.resource.names</name>
           <description>The properties files of the portal , those file will be merged into one ResoruceBundle
             properties</description>
-          <value>locale.webrtc.WebRTC</value>
+          <value>locale.webrtc.WebRTCAdmin</value>
+          <value>locale.webrtc.WebRTCClient</value>
         </values-param>
       </init-params>
     </component-plugin>

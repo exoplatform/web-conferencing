@@ -11,7 +11,7 @@
     <supports>
       <mime-type>text/html</mime-type>
     </supports>
-    <resource-bundle>locale.webrtc.WebRTC</resource-bundle>
+    <resource-bundle>locale.webrtc.WebRTCClient</resource-bundle>
     <portlet-info>
       <title>WebRTC Provider for Video Calls</title>
       <short-title>WebRTC</short-title>

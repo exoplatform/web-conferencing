@@ -52,6 +52,11 @@
     <servlet-class>org.exoplatform.webconferencing.webrtc.server.WebrtcCallServlet</servlet-class>
     <load-on-startup>0</load-on-startup>
   </servlet>
+  <servlet>
+    <servlet-name>WebrtcSettingsServlet</servlet-name>
+    <servlet-class>org.exoplatform.webconferencing.webrtc.server.WebrtcSettingsServlet</servlet-class>
+    <load-on-startup>0</load-on-startup>
+  </servlet>
   
   <servlet-mapping>
     <servlet-name>GateInServlet</servlet-name>
@@ -60,6 +65,10 @@
   <servlet-mapping>
     <servlet-name>WebrtcCallServlet</servlet-name>
     <url-pattern>/webrtccallservlet</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>WebrtcSettingsServlet</servlet-name>
+    <url-pattern>/webrtcsettingsservlet</url-pattern>
   </servlet-mapping>
   
 </web-app>
