@@ -26,10 +26,9 @@
 			var NON_WHITESPACE_PATTERN = /\s+/;
 			var self = this;
 			var settings, currentKey, clientId;
-			var messages = {};
 			
 			var message = function(key) {
-				return messages["webrtc." + key];
+				return settings ? settings.messages["webrtc." + key] : "";
 			};
 			
 			this.isSupportedPlatform = function() {
@@ -272,13 +271,14 @@
 					resizable: false,
 					height: "auto",
 					width: 400,
-					modal: false
+					modal: false,
+					buttons: {}
 				};
-				dialogSettings[message("answer")] = function() {
+				dialogSettings.buttons[message("answer")] = function() {
 			  	process.resolve("accepted");
 			  	$call.dialog("close");
 			  };
-			  dialogSettings[message("decline")] = function() {
+			  dialogSettings.buttons[message("decline")] = function() {
 			  	process.reject("declined");
 			  	$call.dialog("close");
 			  };
@@ -313,9 +313,6 @@
 			};
 			
 			this.init = function(context) {
-				
-				messages = context.messages;
-				
 				var process = $.Deferred();
 				if (self.isSupportedPlatform()) {
 					var currentUserId = webConferencing.getUser().id;
