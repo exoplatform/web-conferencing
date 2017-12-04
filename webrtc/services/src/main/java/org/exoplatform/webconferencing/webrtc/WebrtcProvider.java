@@ -252,6 +252,7 @@ public class WebrtcProvider extends CallProvider {
     /**
      * Clone enabled.
      *
+     * @param onlyEnabled the only enabled
      * @return the RTC configuration
      */
     RTCConfiguration clone(boolean onlyEnabled) {
@@ -379,6 +380,7 @@ public class WebrtcProvider extends CallProvider {
    * Instantiates a new WebRTC provider.
    *
    * @param params the params
+   * @param settingService the setting service
    * @throws ConfigurationException the configuration exception
    */
   public WebrtcProvider(InitParams params, SettingService settingService) throws ConfigurationException {

@@ -79,8 +79,7 @@ public class RESTWebRTCService implements ResourceContainer {
    * Post RTC settings.
    *
    * @param uriInfo the uri info
-   * @param type the type
-   * @param active the active
+   * @param rtcConfig the rtc config
    * @return the response
    */
   @POST
@@ -117,6 +116,12 @@ public class RESTWebRTCService implements ResourceContainer {
     }
   }
 
+  /**
+   * Gets the settings.
+   *
+   * @param uriInfo the uri info
+   * @return the settings
+   */
   @GET
   @RolesAllowed("administrators")
   @Path("/settings")

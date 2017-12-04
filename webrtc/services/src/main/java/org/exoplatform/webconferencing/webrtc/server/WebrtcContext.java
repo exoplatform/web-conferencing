@@ -19,11 +19,10 @@
 package org.exoplatform.webconferencing.webrtc.server;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: WebrtcContext.java 00000 Dec 4, 2017 pnedonosko $
- * 
  */
 public class WebrtcContext {
 
