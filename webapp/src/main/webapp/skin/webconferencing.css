@@ -151,6 +151,9 @@
 	border: solid 1px transparent;
 	box-shadow: none;
 }
+.mini-chat .callButtonContainer {
+    min-height: 0;
+}
 
 .uiActionWithLabel.miniChatCall:hover:active, .uiActionWithLabel.miniChatCall:hover:focus {
 	background: transparent !important;
