@@ -55,7 +55,6 @@
 
 .spaceCall > [class^="uiIcon"], 
 .spaceCall > .callButtonIconVideo, 
-.spaceCall > .callButtonTitle, 
 .spaceCall > .callTitle,
 .spaceCall ~ .dropdown-toggle > .uiIconMiniArrowDown:before {
 	color: #ffffff !important;
@@ -63,7 +62,6 @@
 
 .spaceCall:hover > [class^="uiIcon"], 
 .spaceCall:hover > .callButtonIconVideo, 
-.spaceCall:hover > .callButtonTitle, 
 .spaceCall:hover > .callTitle,
 .spaceCall:hover ~ .dropdown-toggle > .uiIconMiniArrowDown:before {
 	color: #ffffff !important;
@@ -72,10 +70,10 @@
 .callButton.chatCall, .callButton.chatCall + .dropdown-toggle { /* !important should be removed after removing skype css from Enterprise skin  */
 	padding-top: 4px !important; 
 	padding-bottom: 4px !important;
-    background: none;
-    border: 1px solid #fff !important;
-    color: #fff;
-    border-radius: 0;
+  background: none;
+  border: 1px solid #fff !important;
+  color: #fff;
+  border-radius: 0;
 }
 
 .callButton.chatCall { /* !important should be removed after removing skype css from Enterprise skin  */
@@ -84,8 +82,8 @@
 }
 
 .callButton.chatCall [class*="Icon"], 
-.callButton.chatCall + .dropdown-toggle 
-.uiIconMiniArrowDown:before, 
+.callButton.chatCall + .dropdown-toggle .uiIconMiniArrowDown:before, 
+.callButton.miniChatCall + .dropdown-toggle .uiIconMiniArrowDown:before,
 .callButton.chatCall:active, 
 .callButton.chatCall:focus {
 	color: #fff

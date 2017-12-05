@@ -1010,12 +1010,8 @@
 							$.when.apply($, workers).always(function() {
 								if ($dropdown.length > 0) {
 									if (addDropdown) {
-										// Complete dropdown as a Call button: build toggle and append all this to the container
-										// TODO i18n for Call title
-										var $toggle = $("<button class='btn dropdown-toggle' data-toggle='dropdown'>" + //  
+										var $toggle = $("<button class='btn dropdown-toggle' data-toggle='dropdown'>" +
 												"<i class='uiIconMiniArrowDown uiIconLightGray'></i></span></button>");
-										// "<i class='callButtonIconVideo'></i><span class='callButtonTitle'>Call</span>" +
-										// add dropdown and its toggle finally
 										$container.append($toggle);
 										$container.append($dropdown);
 									}
@@ -1267,12 +1263,15 @@
 										var initializer = addCallButton($wrapper, context);
 										initializer.done(function($container) {
 											var $first = $container.find(".callButton").first();
-											$first.removeClass("btn preferred");
+											$first.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
+											$first.children(".callTitle").remove();
+											$first.children(".uiIconLightGray").add($container.find(".dropdown-toggle > .uiIconLightGray"))
+													.removeClass("uiIconLightGray").addClass("uiIconWhite");
 											// XXX No default button in mini chat yet
 											//$first.children(".callButtonTitle, .callTitle, .uiIconMiniArrowDown").remove();
 											//$first.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
 											//$first.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
-											var $dropdown = $container.find(".dropdown-menu");
+											/*var $dropdown = $container.find(".dropdown-menu");
 											if ($dropdown.length > 0) {
 												$dropdown.addClass("pull-right");
 												var $li = $("<li></li>");
@@ -1288,7 +1287,7 @@
 												$first.children(".callButtonTitle, .callTitle").remove();
 												$first.addClass("uiActionWithLabel btn-mini miniChatCall");
 												$first.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
-											}
+											}*/
 											$titleBar.prepend($wrapper);
 											log("<< initMiniChat DONE " + context.roomTitle + " for " + currentUser.id);
 										});
