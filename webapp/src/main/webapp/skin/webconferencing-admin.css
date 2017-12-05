@@ -1,12 +1,9 @@
 /* 
  * Web Conferencing Admin styles (common for all skins) 
  */
-i[class^="uiIcon"] {
-	cursor: pointer
-}
 
 /*Header page*/
-.header {
+#webconferencingAdmin .titleWithBorder {
 	margin: 40px 0
 }
 
@@ -16,8 +13,8 @@ i[class^="uiIcon"] {
 .switch {
 	position: relative;
 	display: inline-block;
-	width: 60px;
-	height: 24px;
+	width: 45px;
+	height: 10px;
 	margin-bottom: 0;
 }
 
@@ -25,69 +22,40 @@ i[class^="uiIcon"] {
 	display: none;
 }
 
-.slider {
+.switch .slider {
 	position: absolute;
 	cursor: pointer;
 	top: 0;
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background-color: #ccc;
+	background-color: #d8dadd;
+    border-radius: 8px;
 	-webkit-transition: .4s;
 	transition: .4s;
 }
 
-.slider:before {
+.switch .slider:before {
 	position: absolute;
 	content: "";
-	height: 17px;
-	width: 17px;
-	left: 4px;
-	bottom: 3px;
-	background-color: white;
-	-webkit-transition: .4s;
-	transition: .4s;
+	height: 18px;
+	width: 18px;
+	left: 5px;
+    bottom: -4px;
+	background: #9ea6b2;
+    border-radius: 50%;
+	transition: transform .4s;
 }
 
-input:checked+.slider {
-	/*  background-color: #2196F3;*/
-}
-
-input:focus+.slider {
+.switch input:focus + .slider {
 	box-shadow: 0 0 1px #2196F3;
 }
 
-input:checked+.slider:before {
-	-webkit-transform: translateX(33px);
-	-ms-transform: translateX(33px);
-	transform: translateX(33px);
+.switch input:checked + .slider:before {
+	transform: translateX(18px);
+	background: #578dc9;
 }
 
-input:not (:checked ) +.slider {
-	background: #f0f0f0;
-	border-color: #f0f0f0
-}
-
-input:not (:checked ) +.slider:before {
-	background-color: #ccc;
-}
-
-/* Rounded sliders */
-.slider.round {
-	border-radius: 34px;
-}
-
-.slider.round:before {
-	border-radius: 50%;
-}
 /**/
 /* END SWICHER */
 /**/
-
-.actionIcon>i>span {
-	font-size: 0;
-}
-
-#webconferencingAdmin .modal.fade {
-	top: 10%
-}
