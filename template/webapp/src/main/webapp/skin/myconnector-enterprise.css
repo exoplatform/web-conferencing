@@ -4,11 +4,6 @@
 	content: "\e829";
 }
 
-.uiIconMyCall:before {
-	/*top: -1px;*/
-}
-
-.spaceCall .uiIconMyCall {
-	top: 2px;
-	font-size: 15px;	
+.spaceCall i.uiIconMyCall {
+	font-size: 14px;
 }
