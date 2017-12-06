@@ -399,7 +399,7 @@ public class WebConferencingService implements Startable {
       // it's group call
       saveOwnerCallId(ownerId, id);
       for (UserInfo part : participants) {
-        if (part.getType() == UserInfo.TYPE_NAME) {
+        if (UserInfo.TYPE_NAME.equals(part.getType())) {
           if (prevId != null) {
             // XXX For a case when some client failed to delete an existing (but outdated etc.) call but
             // already starting a new one
@@ -410,13 +410,13 @@ public class WebConferencingService implements Startable {
           saveUserGroupCallId(part.getId(), id);
           if (!userId.equals(part.getId())) {
             // fire group's user listener for incoming, except of the caller
-            fireUserCallState(part.getId(), id, providerType, CallState.STARTED, ownerId, ownerType);
+            fireUserCallStateChanged(part.getId(), id, providerType, CallState.STARTED, ownerId, ownerType);
           }
         }
       }
     } else if (isUser) {
       // It's P2P call
-      notifyUserCallState(call, userId, CallState.STARTED);
+      notifyUserCallStateChanged(call, userId, CallState.STARTED);
     }
 
     return call;
@@ -477,14 +477,14 @@ public class WebConferencingService implements Startable {
     if (call.getOwner().isGroup()) {
       String callId = call.getId();
       for (UserInfo part : call.getParticipants()) {
-        if (part.getType() == UserInfo.TYPE_NAME) {
+        if (UserInfo.TYPE_NAME.equals(part.getType())) {
           // It's eXo user: fire user listener for stopped call,
           // but, in case if stopped with removal (deleted call), not to the initiator (of deletion)
           // - a given user.
           // A given user also can be null when not possible to define it (e.g. on CometD channel removal, or
           // other server side action) - then we notify to all participants.
           if (userId == null || !(remove && userId.equals(part.getId()))) {
-            fireUserCallState(part.getId(),
+            fireUserCallStateChanged(part.getId(),
                               call.getId(),
                               call.getProviderType(),
                               CallState.STOPPED,
@@ -498,7 +498,7 @@ public class WebConferencingService implements Startable {
         }
       }
     } else {
-      notifyUserCallState(call, userId, CallState.STOPPED);
+      notifyUserCallStateChanged(call, userId, CallState.STOPPED);
     }
     return call;
   }
@@ -518,12 +518,12 @@ public class WebConferencingService implements Startable {
       if (call.getOwner().isGroup()) {
         String userId = currentUserId();
         for (UserInfo part : call.getParticipants()) {
-          if (part.getType() == UserInfo.TYPE_NAME) {
+          if (UserInfo.TYPE_NAME.equals(part.getType())) {
             if (userId.equals(part.getId())) {
               part.setState(UserState.JOINED);
             } else {
               // it's eXo user: fire user listener for started call, but not to the starter (current user)
-              fireUserCallState(part.getId(),
+              fireUserCallStateChanged(part.getId(),
                                 id,
                                 call.getProviderType(),
                                 CallState.STARTED,
@@ -554,7 +554,7 @@ public class WebConferencingService implements Startable {
       if (CallState.STARTED.equals(call.getState())) {
         // if (info.getOwner().isGroup()) {
         for (UserInfo part : call.getParticipants()) {
-          if (part.getType() == UserInfo.TYPE_NAME) {
+          if (UserInfo.TYPE_NAME.equals(part.getType())) {
             if (userId.equals(part.getId())) {
               part.setState(UserState.JOINED);
               saveCall(call);
@@ -593,7 +593,7 @@ public class WebConferencingService implements Startable {
         int leaved = 0;
         boolean userLeaved = false;
         for (UserInfo part : call.getParticipants()) {
-          if (part.getType() == UserInfo.TYPE_NAME) {
+          if (UserInfo.TYPE_NAME.equals(part.getType())) {
             if (userId.equals(part.getId())) {
               part.setState(UserState.LEAVED);
               userLeaved = true;
@@ -691,7 +691,7 @@ public class WebConferencingService implements Startable {
    * @param ownerId the caller id
    * @param ownerType the caller type
    */
-  protected void fireUserCallState(String userId,
+  protected void fireUserCallStateChanged(String userId,
                                    String callId,
                                    String providerType,
                                    String callState,
@@ -707,7 +707,7 @@ public class WebConferencingService implements Startable {
         // As a solution, we need a temporal pool to save (deferred) events for given user
         // (listener.getUserId()) until it will send a new request or the pool expired
         if (listener.isListening()) {
-          listener.onCallState(callId, providerType, callState, ownerId, ownerType);
+          listener.onCallStateChanged(callId, providerType, callState, ownerId, ownerType);
         }
       }
     }
@@ -775,7 +775,7 @@ public class WebConferencingService implements Startable {
     if (pclass.isAssignableFrom(plugin.getClass())) {
       addProvider(pclass.cast(plugin));
     } else {
-      LOG.warn("Video Calls provider plugin is not an instance of " + pclass.getName() + ". Skipped plugin: " + plugin);
+      LOG.warn("Web Conferencing provider plugin is not an instance of " + pclass.getName() + ". Skipped plugin: " + plugin);
     }
   }
 
@@ -1391,19 +1391,19 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Notify user call state.
+   * Notify user call state changed.
    *
    * @param call the call
    * @param initiatorId the initiator id
    * @param state the state
    */
-  protected void notifyUserCallState(CallInfo call, String initiatorId, String state) {
+  protected void notifyUserCallStateChanged(CallInfo call, String initiatorId, String state) {
     for (UserInfo part : call.getParticipants()) {
-      if (part.getType() == UserInfo.TYPE_NAME) {
+      if (UserInfo.TYPE_NAME.equals(part.getType())) {
         // We notify to other part, and in case of deletion including to one who may caused the update
         // for a case if several user clients listening.
         if (initiatorId == null || !initiatorId.equals(part.getId()) || CallState.STOPPED.equals(state)) {
-          fireUserCallState(part.getId(),
+          fireUserCallStateChanged(part.getId(),
                             call.getId(),
                             call.getProviderType(),
                             state,

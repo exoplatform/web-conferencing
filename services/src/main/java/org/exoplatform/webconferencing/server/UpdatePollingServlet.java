@@ -77,7 +77,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
             }
 
             @Override
-            public void onCallState(String callId, String providerType, String callState, String ownerId, String ownerType) {
+            public void onCallStateChanged(String callId, String providerType, String callState, String ownerId, String ownerType) {
               if (polling.compareAndSet(true, false)) {
                 StringBuilder body = new StringBuilder();
                 body.append('{');

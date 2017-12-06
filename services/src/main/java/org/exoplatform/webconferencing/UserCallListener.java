@@ -55,7 +55,7 @@ public abstract class UserCallListener {
   public abstract boolean isListening();
 
   /**
-   * Notify.
+   * On call state changed.
    *
    * @param callId the call id
    * @param providerType the provider type
@@ -63,7 +63,7 @@ public abstract class UserCallListener {
    * @param ownerId the caller id
    * @param ownerType the caller type
    */
-  public abstract void onCallState(String callId, String providerType, String callState, String ownerId, String ownerType);
+  public abstract void onCallStateChanged(String callId, String providerType, String callState, String ownerId, String ownerType);
 
   /**
    * On participant joined.

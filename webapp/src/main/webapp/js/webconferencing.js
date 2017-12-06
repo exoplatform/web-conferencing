@@ -1254,12 +1254,15 @@
 						var roomTitle = $fullName.text().trim();
 						if ($titleBar.length > 0 && roomTitle.length > 0) {
 							$miniChat.data("minichatcallinitialized", true);
-							$titleBar.find(".callButtonContainer").remove(); // clean the previous state, if have one
+							var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
+							$wrapper.children().remove(); // clean the previous state, if have one
 							// Wait a bit for completing Chat workers
 							setTimeout(function() {
 								getChatContext().done(function(context) {
 									if (context.roomTitle) {
-										var $wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");
+										if ($wrapper.length == 0) {
+											$wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");											
+										}
 										var initializer = addCallButton($wrapper, context);
 										initializer.done(function($container) {
 											var $first = $container.find(".callButton").first();
@@ -1270,6 +1273,10 @@
 											$container.find(".dropdown-menu").addClass("pull-right");
 											$titleBar.prepend($wrapper);
 											log("<< initMiniChat DONE " + context.roomTitle + " for " + currentUser.id);
+											setTimeout(function() {
+												// finally we need reset it to let be initialized for other users 
+												$miniChat.removeData("minichatcallinitialized");
+											}, 2500);
 										});
 										initializer.fail(function(error) {
 											if (error) {

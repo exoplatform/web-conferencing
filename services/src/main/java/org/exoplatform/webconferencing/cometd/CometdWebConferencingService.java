@@ -375,7 +375,7 @@ public class CometdWebConferencingService implements Startable {
                     }
 
                     @Override
-                    public void onCallState(String callId,
+                    public void onCallStateChanged(String callId,
                                             String providerType,
                                             String callState,
                                             String ownerId,

@@ -88,11 +88,3 @@
 .callButton.chatCall:focus {
 	color: #fff
 }
-
-#UIBreadCrumbsNavigationPortlet .callButtonContainer {
-	/*padding-top: 3px;*/
-}
-
-.callButtonIconVideo {
-	top: 3px;
-}
