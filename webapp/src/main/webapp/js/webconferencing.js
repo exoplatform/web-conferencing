@@ -761,7 +761,7 @@
 		};
 
 		var getContextName = function(context) {
-			return context.spaceId ? context.spaceId : (context.roomTitle ? context.roomTitle : context.userId);
+			return context.spaceId ? context.spaceId : (context.roomId ? context.roomId : context.userId);
 		};
 		
 		var userPreferenceKey = function(name) {
@@ -1267,27 +1267,7 @@
 											$first.children(".callTitle").remove();
 											$first.children(".uiIconLightGray").add($container.find(".dropdown-toggle > .uiIconLightGray"))
 													.removeClass("uiIconLightGray").addClass("uiIconWhite");
-											// XXX No default button in mini chat yet
-											//$first.children(".callButtonTitle, .callTitle, .uiIconMiniArrowDown").remove();
-											//$first.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
-											//$first.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
-											/*var $dropdown = $container.find(".dropdown-menu");
-											if ($dropdown.length > 0) {
-												$dropdown.addClass("pull-right");
-												var $li = $("<li></li>");
-												$li.append($first);
-												$dropdown.prepend($li);
-												var $toggle = $container.find(".dropdown-toggle");
-												$toggle.addClass("callButton");
-												$toggle.children(".uiIconMiniArrowDown").remove();
-												$toggle.prepend($("<i class='callButtonIconVideo'></i>"));
-												$toggle.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
-												$toggle.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
-											} else {
-												$first.children(".callButtonTitle, .callTitle").remove();
-												$first.addClass("uiActionWithLabel btn-mini miniChatCall");
-												$first.children(".uiIconLightGray").removeClass("uiIconLightGray").addClass("uiIconWhite");
-											}*/
+											$container.find(".dropdown-menu").addClass("pull-right");
 											$titleBar.prepend($wrapper);
 											log("<< initMiniChat DONE " + context.roomTitle + " for " + currentUser.id);
 										});
