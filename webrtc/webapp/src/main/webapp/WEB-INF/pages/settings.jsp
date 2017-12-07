@@ -3,7 +3,6 @@
 
 <%
   Map<String, String> messages = (Map<String, String>) request.getAttribute("messages");
-	messages.toString();
 %>
 
 <div class="uiPopup settingsForm">
@@ -12,8 +11,7 @@
 	</div>
 
 	<div class="popupContent">
-		<p class="title">
-			${messages["webrtc.admin.servers"]}&nbsp;&nbsp;<i class="uiIconInformation uiIconBlue" data-placement="top" data-toggle="tooltip"
+		<p class="title">${messages["webrtc.admin.servers"]}&nbsp;&nbsp;<i class="uiIconInformation uiIconBlue" data-placement="top" data-toggle="tooltip"
 				title="${messages["webrtc.admin.serversTip"]}"></i>
 		</p>
 

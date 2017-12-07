@@ -249,7 +249,7 @@
 				return button.promise();
 			};
 			
-			var acceptCallPopover = function(callerLink, callerAvatar, callerMessage, playRingtone) {
+			var acceptCallPopover_old = function(callerLink, callerAvatar, callerMessage, playRingtone) {
 				// TODO show an info popover in bottom right corner of the screen as specified in CALLEE_01
 				log(">> acceptCallPopover '" + callerMessage + "' caler:" + callerLink + " avatar:" + callerAvatar);
 				var process = $.Deferred();
@@ -317,6 +317,59 @@
 				return process.promise();
 			};
 			
+			var acceptCallPopover = function(callerLink, callerAvatar, callerMessage, playRingtone) {
+				log(">> acceptCallPopover '" + callerMessage + "' caler:" + callerLink + " avatar:" + callerAvatar);
+				var process = $.Deferred();
+				var $call = $(".incomingCall");
+				$call = $.extend($call, {
+					close : function() {
+						$call.hide();
+						if (process.state() == "pending") {
+							process.reject("closed");
+						}
+					}
+				});
+				$call.find(".avatar a").attr("href", callerLink);
+				$call.find(".avatar img").attr("src", callerAvatar);
+				$call.find(".messageText").text(callerMessage);
+				$call.find(".uiIconClose").click(function () {
+					$call.close();
+				});
+				$call.find(".answerButton").click(function () {
+					process.resolve("accepted");
+					$call.hide();
+				});
+				$call.find(".declineButton").click(function () {
+					process.resolve("declined");
+					$call.hide();
+				});
+				process.notify($call);
+				
+				if (playRingtone) {
+					// Start ringing incoming sound only if requested (depends on user status)
+					var $ring = $("<audio loop autoplay style='display: none;'>" // controls 
+								+ "<source src='/webrtc/audio/line.mp3' type='audio/mpeg'>"  
+								+ "Your browser does not support the audio element.</audio>");
+					$(document.body).append($ring);
+					process.fail(function() {
+						var $cancel = $("<audio autoplay style='display: none;'>" // controls 
+									+ "<source src='/webrtc/audio/manner_cancel.mp3' type='audio/mpeg'>"  
+									+ "Your browser does not support the audio element.</audio>");
+						$(document.body).append($cancel);
+						setTimeout(function() {
+							$cancel.remove();
+						}, 3000);
+					});
+					process.always(function() {
+						// Stop incoming ringing on dialog completion
+						$ring.remove();
+					});					
+				}
+				
+				$popup.show();
+				return process.promise();
+			};
+			
 			this.init = function(context) {
 				
 				messages = context.messages;
@@ -333,7 +386,7 @@
 								if (typeof state != "undefined") {
 									$callPopup.callState = state;	
 								}
-								$callPopup.dialog("close");
+								$callPopup.close();
 							}								
 						}
 					};

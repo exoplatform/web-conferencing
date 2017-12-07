@@ -19,13 +19,13 @@
 package org.exoplatform.webconferencing.webrtc.portlet;
 
 import static org.exoplatform.webconferencing.Utils.asJSON;
-import static org.exoplatform.webconferencing.Utils.getResourceMessages;
 
 import java.io.IOException;
 import java.net.URI;
 
 import javax.portlet.GenericPortlet;
 import javax.portlet.PortletException;
+import javax.portlet.PortletRequestDispatcher;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
@@ -87,6 +87,12 @@ public class WebrtcProviderPortlet extends GenericPortlet {
                               null,
                               null);
         Settings settings = provider.settings().callUri(callURI.toString()).locale(request.getLocale()).build();
+
+        // Markup (incoming call popup etc)
+        request.setAttribute("messages", settings.getMessages());
+        PortletRequestDispatcher prDispatcher = getPortletContext().getRequestDispatcher("/WEB-INF/pages/incoming-call.jsp");
+        prDispatcher.include(request, response);
+
         String settingsJson = asJSON(settings);
 
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();

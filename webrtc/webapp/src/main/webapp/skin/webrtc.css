@@ -1,8 +1,7 @@
 /* Styles for WebRTC provider */
-.uiIconSocWebrtc:before {
+/*.uiIconSocWebrtc:before {
 	content: url("/webrtc/skin/icons/webrtcicon_14px.png") !important;
-}
-
+}*/
 .uiIconWebrtcCall {
 	vertical-align: text-bottom;
 }
@@ -13,23 +12,76 @@
 	margin-right: 3px;
 }
 
-.uiIncomingCall .messageAuthor {
-	display: inline-block;
+/* Incoming call popover BEGIN */
+.incomingCall {
+	position: fixed;
+	bottom: 5px;
+	z-index: 10;
+	right: 5px;
+	width: 276px;
+	padding: 15px;
+	background: #999999;
+	border-radius: 5px;
+	color: #FFF;
+}
+
+.incomingCall .uiIconClose {
+	color: #FFF;
+	position: absolute;
+	right: 5px;
+	top: 5px;
+	cursor: pointer;
+}
+
+.incomingCall .callMessage {
+	font-weight: bold;
+	font-size: 14px;
+}
+
+.incomingCall .callMessage .avatar {
+	width: 50px;
+	overflow: hidden;
+	border-radius: 5px;
+	display: inline-table;
+	vertical-align: middle;
+	margin-right: 10px;
+}
+
+.incomingCall .callMessage p {
+	display: inline-table;
+	vertical-align: middle;
+	margin-bottom: 0;
+}
+
+.incomingCall .callActions {
+	margin-top: 20px;
+	text-align: center;
+}
+
+.incomingCall .callActions>.btn {
 	margin: 5px;
 }
 
-.uiIncomingCall .messageBody {
-	display: inline-block;
+.incomingCall .callActions>.btn>i {
 }
+/**/
+/*.incomingCall .messageAuthor {
+	display: inline-block;
+	margin: 5px;
+}*/
 
-.uiIncomingCall .messageText {
+/*.incomingCall .messageBody {
+	display: inline-block;
+}*/
+
+/*.incomingCall .messageText {
 	position: relative;
 	top: -5px;
 	display: inline-block;
 	margin: 5px;
 }
 
-.uiIncomingCall .messageAuthor a>img {
+.incomingCall .author a>img {
 	max-height: 64px;
 	max-width: 64px;
 	height: 64px;
@@ -39,16 +91,18 @@
 	-moz-border-radius: 6px;
 	border-radius: 6px;
 	display: block;
-}
+}*/
+/* Incoming call popover END */
 
 /* Settings form BEGIN */
 #webrtcSettingsPopup .uiPopup {
 	top: 50%;
 	left: 50%;
-	transform: translate(-50%,-50%);
+	transform: translate(-50%, -50%);
 	margin: auto;
 	width: 600px;
 }
+
 #webrtcSettingsPopup .popupContent {
 	max-height: 400px;
 	overflow: auto;
@@ -63,7 +117,7 @@
 }
 
 .iceServers {
-	padding: 0 30px; 
+	padding: 0 30px;
 }
 
 .iceServer {
@@ -77,22 +131,26 @@
 }
 
 .iceServer .urlGroup {
-    display: flex;
+	display: flex;
 }
 
 .iceServer .urlGroup .actions-container {
-    flex: 0 0 60px;
-    padding-top: 7px;
+	flex: 0 0 60px;
+	padding-top: 7px;
 }
-.iceServer .urlGroup .actions-container > * {
-    margin-left: 10px;
+
+.iceServer .urlGroup .actions-container>* {
+	margin-left: 10px;
 }
-.iceServer .urlGroup .actions-container > .uiIconTrash {
-    font-size: 21px;
+
+.iceServer .urlGroup .actions-container>.uiIconTrash {
+	font-size: 21px;
 }
-.iceServer .urlGroup > input {
-    flex-grow: 1;
+
+.iceServer .urlGroup>input {
+	flex-grow: 1;
 }
+
 .iceServer .control-label {
 	flex-shrink: 0;
 	margin-right: 20px;
@@ -102,26 +160,31 @@
 .iceServer .enabler .uiCheckbox {
 	margin-left: 0px;
 }
-.iceServer .enabler .uiCheckbox > span {
-    vertical-align: text-top;
+
+.iceServer .enabler .uiCheckbox>span {
+	vertical-align: text-top;
 }
 
 .iceServer .credentials {
 	margin-top: 5px;
 	display: table;
-    width: calc(100% - 60px);
+	width: calc(100% - 60px);
 }
+
 .iceServer .credentials .control-group {
 	display: table-row;
 }
-.iceServer .credentials .control-group > * {
+
+.iceServer .credentials .control-group>* {
 	display: table-cell;
 }
+
 .iceServer .credentials label {
 	padding-right: 10px;
 	width: 1px;
 	vertical-align: top;
 }
+
 .iceServer .credentials input {
 	width: 100%;
 }

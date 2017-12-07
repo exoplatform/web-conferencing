@@ -1011,7 +1011,7 @@
 								if ($dropdown.length > 0) {
 									if (addDropdown) {
 										var $toggle = $("<button class='btn dropdown-toggle' data-toggle='dropdown'>" +
-												"<i class='uiIconArrowDownMini uiIconLightGray'></i></span></button>");
+												"<i class='uiIconArrowDown uiIconLightGray'></i></span></button>");
 										$container.append($toggle);
 										$container.append($dropdown);
 									}
