@@ -70,10 +70,8 @@
 	</div>
 	<div class="popupContent">
 		<ul class="singleMessage popupMessage">
-            <li>
-                <span class="confirmationIcon contentMessage">${messages["webrtc.admin.serverRemoveText"]}</span>
-            </li>
-        </ul>
+			<li><span class="confirmationIcon contentMessage">${messages["webrtc.admin.serverRemoveText"]}</span></li>
+		</ul>
 		<div class="uiAction uiActionBorder">
 			<button class="btn removeButton" type="button">${messages["webrtc.admin.remove"]}</button>
 			<button class="btn cancelButton" type="button">${messages["webrtc.admin.cancel"]}</button>
