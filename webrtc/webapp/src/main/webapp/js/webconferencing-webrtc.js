@@ -497,7 +497,7 @@
 				// load HTML with settings
 				var $popup = $("#webrtcSettingsPopup");
 				if ($popup.length == 0) {
-					$popup = $("<div class='maskPopup' id='webrtcSettingsPopup' style='display: none;'><div>");
+					$popup = $("<div class='uiPopupWrapper' id='webrtcSettingsPopup' style='display: none;'><div>");
 					$(document.body).append($popup);
 				}
 				$popup.load("/portal/webrtc/settings", function(content, textStatus) {
@@ -508,6 +508,8 @@
 						// copy ICE servers from the working settings and use them for updates
 						// Deep copy of the settings.rtcConfiguration as a working copy for the form 
 						var rtcConfiguration = $.extend(true, {}, settings.rtcConfiguration);
+						//activate tooltip
+						$("#webrtcSettingsPopup [data-toggle='tooltip']").tooltip();
 						function addIceServer(ices, $sibling) {
 							var $ices = $serverTemplate.clone();
 							// Fill URLs
@@ -601,6 +603,8 @@
 							} else {
 								$iceServers.append($ices);
 							}
+							//activate tooltip for added servers
+							$("#webrtcSettingsPopup [data-toggle='tooltip']").tooltip();
 						}
 						$.each(rtcConfiguration.iceServers, function(si, ices) {
 							addIceServer(ices);

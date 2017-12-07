@@ -42,101 +42,91 @@
 }
 
 /* Settings form BEGIN */
-.uiPopup, .modal.uiPopup {
-	max-width: 100%
-}
-
-.maskPopup {
-	background: #0000005c;
-	text-align: center;
-	position: fixed;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	top: 0;
-	width: auto;
-	height: auto;
-}
-
-.NormalStyle.popupContainer {
-	position: relative;
-	background: #FFF;
-	top: 18%;
-	max-width: 95%;
+#webrtcSettingsPopup .uiPopup {
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%);
 	margin: auto;
-	width: 640px;
-	max-height: 70%;
+	width: 600px;
+}
+#webrtcSettingsPopup .popupContent {
+	max-height: 400px;
 	overflow: auto;
 }
 
 #webrtcSettingsPopup .title {
 	font-weight: bold;
-	text-align: left;
 }
 
-.control-group>* { 
-	display: inline-block;
-	vertical-align: text-top;
+#webrtcSettingsPopup .title .tooltip-inner {
+	max-width: 300px;
 }
 
-.iceServer * {
-	text-align: left;
+.iceServers {
+	padding: 0 30px; 
 }
 
 .iceServer {
+	display: flex;
 	margin-bottom: 20px;
 }
 
-.urlsGroup {
+.iceServer .urlsGroup {
 	margin-bottom: 5px;
+	flex: 1;
 }
 
-.enabler {
-	padding-right: 330px;
+.iceServer .urlGroup {
+    display: flex;
 }
 
-.enabler .uiCheckbox {
+.iceServer .urlGroup .actions-container {
+    flex: 0 0 60px;
+    padding-top: 7px;
+}
+.iceServer .urlGroup .actions-container > * {
+    margin-left: 10px;
+}
+.iceServer .urlGroup .actions-container > .uiIconTrash {
+    font-size: 21px;
+}
+.iceServer .urlGroup > input {
+    flex-grow: 1;
+}
+.iceServer .control-label {
+	flex-shrink: 0;
+	margin-right: 20px;
+	padding-top: 9px;
+}
+
+.iceServer .enabler .uiCheckbox {
 	margin-left: 0px;
 }
+.iceServer .enabler .uiCheckbox > span {
+    vertical-align: text-top;
+}
 
-.credentials {
+.iceServer .credentials {
 	margin-top: 5px;
+	display: table;
+    width: calc(100% - 60px);
+}
+.iceServer .credentials .control-group {
+	display: table-row;
+}
+.iceServer .credentials .control-group > * {
+	display: table-cell;
+}
+.iceServer .credentials label {
+	padding-right: 10px;
+	width: 1px;
+	vertical-align: top;
+}
+.iceServer .credentials input {
+	width: 100%;
 }
 
-.urlGroup input {
-	width: 420px;
-}
-
-.urlGroup input + .uiIconPlus {
-	padding-right: 21px;
-}
-
-.credentialsGroup {
-	margin-right: 14px;
-}
-
-.credentials label {
-	margin-right: 8px;
-	width: 75px;
-}
-
-.credentials input {
-	width: 335px;
-}
-
-.buttonsGroup {
-	padding-right: 20px;
-	padding-bottom: 5px;
+#webrtcSettingsPopup .uiAction {
 	text-align: right;
 }
-
-.buttonsGroup .btn {
-	width: 125px;
-}
-
-/* Confirmation dialog in Settings */
-.serverRemovalDialog {
-	top: 18%;
-}
-
 /* Settings form END */
