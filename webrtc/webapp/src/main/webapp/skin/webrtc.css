@@ -74,12 +74,12 @@
 	text-align: left;
 }
 
-.control-group>* { /* TODO use exact classes: .credentialsGroup>div:not(.settingGroup) */
+.control-group>* { 
 	display: inline-block;
 	vertical-align: text-top;
 }
 
-.iceServer * { /* TODO use exact classes: div:not(.settingGroup) */
+.iceServer * {
 	text-align: left;
 }
 
@@ -133,4 +133,10 @@
 .buttonsGroup .btn {
 	width: 125px;
 }
+
+/* Confirmation dialog in Settings */
+.serverRemovalDialog {
+	top: 18%;
+}
+
 /* Settings form END */

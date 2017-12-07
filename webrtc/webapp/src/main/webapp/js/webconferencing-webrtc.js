@@ -502,7 +502,8 @@
 				}
 				$popup.load("/portal/webrtc/settings", function(content, textStatus) {
 					if (textStatus == "success" || textStatus == "notmodified") {
-						var $iceServers = $popup.find(".iceServers");
+						var $settings = $popup.find(".settingsForm");
+						var $iceServers = $settings.find(".iceServers");
 						var $serverTemplate = $iceServers.find(".iceServer");
 						// copy ICE servers from the working settings and use them for updates
 						// Deep copy of the settings.rtcConfiguration as a working copy for the form 
@@ -540,14 +541,21 @@
 									ices.urls[ui] = $(this).val();
 								});
 							});
-							// Server removal (trash icon)
+							// Server removal (trash icon) - do with confirmation
 							$urlsGroup.find("i.uiIconTrash").click(function() {
-								// Remove this ICE server in DOM
-								$ices.remove(); 
-								// in RTC config
-								rtcConfiguration.iceServers = rtcConfiguration.iceServers.filter(function(nextIces) {
-									return ices !== nextIces;
+								var $dialog = $popup.find(".serverRemovalDialog");
+								$dialog.find(".removeButton").click(function() {
+									// Remove this ICE server in DOM
+									$ices.remove(); 
+									// in RTC config
+									rtcConfiguration.iceServers = rtcConfiguration.iceServers.filter(function(nextIces) {
+										return ices !== nextIces;
+									});
 								});
+								$dialog.find("a.uiIconClose, .cancelButton").click(function(){
+									$dialog.hide();
+								});
+								$dialog.show();
 							});
 							// Fill username/credential
 							var $credentialsGroup = $ices.find(".credentialsGroup");
@@ -598,7 +606,7 @@
 							addIceServer(ices);
 						});
 						// Save action
-						$popup.find(".saveButton").click(function() {
+						$settings.find(".saveButton").click(function() {
 							setTimeout(function() { // timeout to let change events populate config object
 								// Validation to do not have an ICE server w/o URL
 								var confOk = true;
@@ -632,7 +640,7 @@
 								}
 							}, 100);
 						});
-						$popup.find("a.uiIconClose, .cancelButton").click(function(){
+						$settings.find("a.uiIconClose, .cancelButton").click(function(){
 							$popup.hide();
 						});
 						$popup.show();

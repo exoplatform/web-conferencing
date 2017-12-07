@@ -56,14 +56,14 @@
 .spaceCall > [class^="uiIcon"], 
 .spaceCall > .callButtonIconVideo, 
 .spaceCall > .callTitle,
-.spaceCall ~ .dropdown-toggle > .uiIconMiniArrowDown:before {
+.spaceCall ~ .dropdown-toggle > .uiIconArrowDownMini:before {
 	color: #ffffff !important;
 }
 
 .spaceCall:hover > [class^="uiIcon"], 
 .spaceCall:hover > .callButtonIconVideo, 
 .spaceCall:hover > .callTitle,
-.spaceCall:hover ~ .dropdown-toggle > .uiIconMiniArrowDown:before {
+.spaceCall:hover ~ .dropdown-toggle > .uiIconArrowDownMini:before {
 	color: #ffffff !important;
 }
 
@@ -82,8 +82,8 @@
 }
 
 .callButton.chatCall [class*="Icon"], 
-.callButton.chatCall + .dropdown-toggle .uiIconMiniArrowDown:before, 
-.callButton.miniChatCall + .dropdown-toggle .uiIconMiniArrowDown:before,
+.callButton.chatCall + .dropdown-toggle .uiIconArrowDownMini:before, 
+.callButton.miniChatCall + .dropdown-toggle .uiIconArrowDownMini:before,
 .callButton.chatCall:active, 
 .callButton.chatCall:focus {
 	color: #fff

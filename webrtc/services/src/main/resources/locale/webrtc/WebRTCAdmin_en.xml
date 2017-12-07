@@ -12,6 +12,11 @@
       <credential>Credential</credential>
       <save>Save</save>
       <cancel>Cancel</cancel>
+      
+      <!-- Confirmation dialog -->
+      <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
+      <serverRemoveText>Confirm removal of the server definition in WebRTC settings</serverRemoveText>
+      <remove>Remove</remove>
     </admin>
   </webrtc>
 </bundle>

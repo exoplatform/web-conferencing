@@ -6,7 +6,7 @@
 	messages.toString();
 %>
 
-<div class="NormalStyle popupContainer uiPopup">
+<div class="NormalStyle popupContainer uiPopup settingsForm">
 	<div class="popupHeader ClearFix">
 		<a aria-hidden="true" class="uiIconClose pull-right">&nbsp;</a> <span class="PopupTitle popupTitle">${messages["webrtc.admin.title"]}</span>
 	</div>
@@ -57,4 +57,24 @@
 		</div>
 
 	</div>
+</div>
+
+<%-- Confirmation popup --%>
+<div class="UIPopupWindow uiPopup UIDragObject NormalStyle serverRemovalDialog"
+	style="width: 560px; position: relative; top: auto; left: auto; margin: 0 auto 20px; z-index: 1; max-width: 100%; display: none;">
+	<div class="popupHeader ClearFix">
+		<a class="uiIconClose pull-right" aria-hidden="true"></a> <span class="PopupTitle popupTitle">${messages["webrtc.admin.confirmServerRemoval"]}</span>
+	</div>
+	<div class="PopupContent popupContent">
+		<div class="form-horizontal resizable">
+			<div class="popupContent">
+				<span class="help-block">${messages["webrtc.admin.serverRemoveText"]}</span>
+			</div>
+		</div>
+		<div class="uiAction uiActionBorder">
+			<button class="btn removeButton" type="button">${messages["webrtc.admin.remove"]}</button>
+			<button class="btn cancelButton" type="button">${messages["webrtc.admin.cancel"]}</button>
+		</div>
+	</div>
+	<span class="uiIconResize pull-right uiIconLightGray"></span>
 </div>
