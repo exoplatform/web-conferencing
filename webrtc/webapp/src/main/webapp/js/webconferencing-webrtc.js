@@ -202,7 +202,7 @@
 								//var disabledClass = hasJoinedCall(targetId) ? "callDisabled" : "";
 								var $button = $("<a id='" + linkId + "' title='" + target.title + "'"
 											+ " class='webrtcCallAction'>"
-											+ "<i class='callButtonIconVideo uiIconLightGray'></i>"
+											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + message("call") + "</span></a>");
 								$button.click(function() {
 									// Open a window for a new call
