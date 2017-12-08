@@ -432,6 +432,9 @@
 					var lastUpdate = null; // XXX it's temp workaround
 					var lastUpdateReset;
 					if (window.location.pathname.startsWith("/portal/")) {
+						// Move incomingCall element to root of the document to do not be affected by parent CSS
+						$(document.body).append($(".incomingCall"));
+						// Listen to user updates
 						webConferencing.onUserUpdate(currentUserId, function(update, status) {
 							if (update.providerType == self.getType()) {
 								if (update.eventType == "call_state") {
