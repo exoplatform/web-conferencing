@@ -340,7 +340,7 @@
 					$call.hide();
 				});
 				$call.find(".declineButton").click(function () {
-					process.resolve("declined");
+					process.reject("declined");
 					$call.hide();
 				});
 				process.notify($call);
@@ -366,7 +366,7 @@
 					});					
 				}
 				
-				$popup.show();
+				$call.show();
 				return process.promise();
 			};
 			
