@@ -84,12 +84,6 @@
 	vertical-align: text-bottom;
 }
 
-.callButton.spaceCall {
-	/*-webkit-border-radius: 3px;*/
-	/*-moz-border-radius: 3px;*/
-	/*border-radius: 3px;*/
-}
-
 .mini-chat .uiActionWithLabel.miniChatCall {
 	min-height: 27px;
 }

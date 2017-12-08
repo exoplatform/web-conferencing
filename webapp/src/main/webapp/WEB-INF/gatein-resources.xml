@@ -24,28 +24,12 @@
   xmlns="http://www.gatein.org/xml/ns/gatein_resources_1_3">
 
   <!-- CSS for Web Conferencing support in Platform -->
-  <!-- portal-skin>
-    <skin-name>Default</skin-name>
-    <skin-module>webconferencingSkin</skin-module>
-    <css-path>/skin/webconferencing-default.css</css-path>
-    <css-priority>10</css-priority>
-    <overwrite>true</overwrite>
-  </portal-skin>
-  <portal-skin>
-    <skin-name>Enterprise</skin-name>
-    <skin-module>webconferencingSkin</skin-module>
-    <css-path>/skin/webconferencing-enterprise.css</css-path>
-    <css-priority>10</css-priority>
-    <overwrite>true</overwrite>
-  </portal-skin -->
-
   <portlet-skin>
     <application-name>webconferencing</application-name>
     <portlet-name>WebConferencingPortlet</portlet-name>
     <skin-name>Default</skin-name>
     <css-path>/skin/webconferencing-default.css</css-path>
     <overwrite>true</overwrite>
-    <!-- css-priority>10</css-priority -->
   </portlet-skin>
   <portlet-skin>
     <application-name>webconferencing</application-name>
@@ -53,7 +37,6 @@
     <skin-name>Enterprise</skin-name>
     <css-path>/skin/webconferencing-enterprise.css</css-path>
     <overwrite>true</overwrite>
-    <!-- css-priority>10</css-priority -->
   </portlet-skin>
   
   <portlet-skin>
@@ -62,7 +45,6 @@
     <skin-name>Default</skin-name>
     <css-path>/skin/webconferencing-admin-default.css</css-path>
     <overwrite>true</overwrite>
-    <!-- css-priority>10</css-priority -->
   </portlet-skin>
   <portlet-skin>
     <application-name>webconferencing</application-name>
@@ -70,23 +52,9 @@
     <skin-name>Enterprise</skin-name>
     <css-path>/skin/webconferencing-admin-enterprise.css</css-path>
     <overwrite>true</overwrite>
-    <!-- css-priority>10</css-priority -->
   </portlet-skin>
 
   <!-- Javascript for webconferencing support in Platform -->
-  <!-- module>
-    <name>webConferencingJquery</name>
-    <as>$</as>
-    <load-group>webConferencingGRP</load-group>
-    <script>
-      <adapter>
-        (function() {
-        <include>/js/jquery-3.2.1.js</include>
-          return jQuery.noConflict(true);
-        })();
-      </adapter>
-    </script>
-  </module -->
   <module>
     <name>webConferencingJqueryPnotify</name>
     <load-group>webConferencingGRP</load-group>
@@ -103,7 +71,7 @@
     <as>jqueryUI</as>
     <load-group>webConferencingGRP</load-group>
     <script>
-      <path>/js/jquery-ui.js</path>
+      <path>/js/jquery-ui.min.js</path>
     </script>
     <depends>
       <module>jquery</module>
