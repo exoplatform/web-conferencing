@@ -606,6 +606,7 @@
 									rtcConfiguration.iceServers = rtcConfiguration.iceServers.filter(function(nextIces) {
 										return ices !== nextIces;
 									});
+									$dialog.hide();
 								});
 								$dialog.find("a.uiIconClose, .cancelButton").click(function(){
 									$dialog.hide();
