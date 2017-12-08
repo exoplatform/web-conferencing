@@ -7,18 +7,14 @@
 	<a class="uiIconClose" aria-hidden="true">&nbsp;</a>
 	<div class="callMessage">
 		<div class="avatar">
-			<a target="_blank" href="" class="avatarMedium"> <img src="/eXoSkin/skin/images/system/UserAvtDefault.png" /></a>
+			<a target="_blank" href="" class="avatarMedium">
+			    <img src="/eXoSkin/skin/images/system/UserAvtDefault.png" />
+			</a>
 		</div>
-		<p>
 		<div class="messageText"></div>
-		</p>
 	</div>
 	<div class="callActions">
-		<button class="btn btn-primary answerButton" type="button">
-			<i class="uiIconVideo">&nbsp;</i>${messages["webrtc.answer"]}
-		</button>
-		<button class="btn declineButton" type="button">
-			<i class="icon-phone-hang-uphamburger">&nbsp;</i>${messages["webrtc.decline"]}
-		</button>
+		<button class="btn btn-primary answerButton" type="button">${messages["webrtc.answer"]}</button>
+		<button class="btn declineButton" type="button">${messages["webrtc.decline"]}</button>
 	</div>
 </div>
