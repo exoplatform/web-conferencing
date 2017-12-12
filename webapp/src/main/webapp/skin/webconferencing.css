@@ -129,6 +129,14 @@
   margin-right: 10px;
 }
 
+.callButtonContainer .tooltip {
+	position: fixed;
+}
+.callButtonContainer .tooltip-inner {
+	max-width: 130px;
+	text-align: center;
+}
+
 /***** Transparent styles (for space avatar and mini-chat, the transparentButton class will be triggered by Javascript) *******/
 .transparentButton, .miniChatCall, .miniChatCall ~ .dropdown-toggle {
 	background: transparent;
