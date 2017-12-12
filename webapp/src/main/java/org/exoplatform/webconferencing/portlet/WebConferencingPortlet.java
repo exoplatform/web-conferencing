@@ -31,6 +31,7 @@ import java.util.ResourceBundle;
 
 import javax.portlet.GenericPortlet;
 import javax.portlet.PortletException;
+import javax.portlet.PortletRequestDispatcher;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
@@ -66,7 +67,6 @@ public class WebConferencingPortlet extends GenericPortlet {
   @Override
   public void init() throws PortletException {
     super.init();
-
     ExoContainer container = ExoContainerContext.getCurrentContainer();
     this.webConferencing = container.getComponentInstanceOfType(WebConferencingService.class);
   }

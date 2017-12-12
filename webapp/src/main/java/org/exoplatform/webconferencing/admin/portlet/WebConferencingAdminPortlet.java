@@ -18,7 +18,6 @@
  */
 package org.exoplatform.webconferencing.admin.portlet;
 
-import static org.exoplatform.webconferencing.Utils.asJSON;
 import static org.exoplatform.webconferencing.Utils.getResourceMessages;
 
 import java.io.IOException;
@@ -94,10 +93,9 @@ public class WebConferencingAdminPortlet extends GenericPortlet {
         prDispatcher.include(request, response);
 
         // Javascript
-        String messagesJson = asJSON(messages);
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
         js.require("SHARED/webConferencingAdminPortlet", "webConferencingAdminPortlet")
-          .addScripts("webConferencingAdminPortlet.init({messages: " + messagesJson + "});");
+          .addScripts("webConferencingAdminPortlet.init();"); // messages: " + asJSON(messages) + " - i18n not yet required by the script
       } else {
         LOG.warn("Web Conferencing Admin portlet cannot be initialized: user info cannot be obtained for " + remoteUser);
       }

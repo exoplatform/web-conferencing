@@ -83,7 +83,7 @@ public class WebrtcProviderPortlet extends GenericPortlet {
                               null,
                               request.getServerName(),
                               request.getServerPort(),
-                              "/portal/webrtc/call",
+                              "/webrtc/call",
                               null,
                               null);
         Settings settings = provider.settings().callUri(callURI.toString()).locale(request.getLocale()).build();

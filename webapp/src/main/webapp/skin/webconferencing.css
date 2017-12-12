@@ -23,6 +23,14 @@
 .callButtonIconVideo:before {
 	content: "\e900";
 }
+
+/* Fix default font size for webfont's ios camera */
+.dropdown-menu > li > a > .uiIcon.callButtonIconVideo {
+	position: relative;
+	top: 2px;
+	font-size: 18px;
+}
+
 /******/
  
 .callButtonContainer {
@@ -185,6 +193,42 @@
     width: 100%;
 	}
 }
+
+/* Dialog BEGIN */
+#webconferencing-dialog .uiPopup {
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	margin: auto;
+	width: auto;
+	min-width: 400px;
+	max-width: 800px;
+}
+
+#webconferencing-dialog .popupContent {
+	max-height: 400px;
+	overflow: auto;
+}
+
+#webconferencing-dialog .popupIcon, #webconferencing-dialog .popupMessage {
+	display: inline-block;
+	padding-right: 5px;
+}
+
+#webconferencing-dialog .title {
+	font-weight: bold;
+}
+ 
+#webconferencing-dialog .uiAction {
+	margin: 30px 0 0;
+	text-align: center;
+}
+
+#webconferencing-dialog .uiAction button {
+	min-width: 80px;
+	max-width: 180px;
+}
+/* Dialog END */
 
 /******** Pnotify icons ********/
 .picon-32.picon-task-complete {

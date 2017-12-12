@@ -20,7 +20,7 @@
 package org.exoplatform.webconferencing.webrtc.server;
 
 import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.CALL_SERVLET;
-import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.WEBRTC_CALL_REDIRECT;
+import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.CALL_REDIRECT;
 import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.WEBRTC_SERVLET_CTX;
 
 import java.io.IOException;
@@ -76,14 +76,10 @@ public class WebrtcCallFilter extends AbstractFilter implements Filter {
     }
 
     if (httpReq.getRemoteUser() != null) {
-      String uri = httpReq.getRequestURI();
-      if (uri.endsWith("/webrtc/call/home")) {
-        // If user needs a Home page redirect him to the portal default page
-        httpReq.setAttribute(WEBRTC_CALL_REDIRECT, "/portal");
-      } else if (scheme.equals("http")) {
+      if (scheme.equals("http")) {
+        // Redirect to HTTPS: it seems doesn't work?
         LOG.warn(new StringBuilder("WebRTC call page request with not secure shceme ").append(httpReq.getRequestURL())
                                                                                       .append(". Redirecting to secure page."));
-        // Redirect to HTTPS: it seems doesn't work?
         String secure;
         try {
           URI secureURI = new URI(SCHEME_HTTPS,
@@ -102,7 +98,7 @@ public class WebrtcCallFilter extends AbstractFilter implements Filter {
                                                   .append(httpReq.getQueryString())
                                                   .toString();
         }
-        httpReq.setAttribute(WEBRTC_CALL_REDIRECT, secure);
+        httpReq.setAttribute(CALL_REDIRECT, secure);
       } else {
         ServletContext context = httpReq.getSession().getServletContext().getContext(WEBRTC_SERVLET_CTX);
         context.getRequestDispatcher(CALL_SERVLET).forward(httpReq, httpRes);

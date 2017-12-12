@@ -16,15 +16,9 @@
 	 * Admin class.
 	 */
 	function Admin() {
-
 		var self = this;
-		var messages = {}; 
-
 		this.init = function(context) {
 			// UI init and action handlers
-
-			messages = context.messages;
-			
 			$(function() {
 				log("Initializing Web Conferencing Admin ");
 				
@@ -77,32 +71,8 @@
 				}).fail(function(err) {
 					log("ERROR loading providers configuration: ", err);
 				});	
-				
-				/////
-				// TODO it's WebRTC provider related stuff, move to the connector code
-				/* OPEN HIDE POPUPs */
-				// selector was #webConfPopupClique
-				$(".callProvider > .actions > a.settings").click(function() {
-					//$(".maskPopup").removeClass("hide");
-				});
-
-				$("#webrtcPopup .uiIconClose.pull-right").click(function() {
-					$(".maskPopup").addClass("hide");
-				});
-
-				$("#check").click(function() {
-					if ($("#check").is(":checked")) {
-						$(".toggleInputs").removeClass("hideInputs");
-					} else {
-						$(".toggleInputs").addClass("hideInputs");
-					}
-				});
-				/* TOOLTIP */
-				$("[data-toggle='tooltip']").tooltip();
 			});
 		};
-
-		// TODO add more logic and UI here
 	}
 
 	return new Admin();

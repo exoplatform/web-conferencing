@@ -5,7 +5,7 @@ package org.exoplatform.webconferencing.webrtc.server;
 
 import static org.exoplatform.webconferencing.Utils.asJSON;
 import static org.exoplatform.webconferencing.Utils.getCurrentContext;
-import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.WEBRTC_CALL_REDIRECT;
+import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.CALL_REDIRECT;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -59,9 +59,8 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
     HttpServletRequest httpReq = (HttpServletRequest) req;
     HttpServletResponse httpRes = (HttpServletResponse) resp;
 
-    Object redirectUri = httpReq.getAttribute(WEBRTC_CALL_REDIRECT);
+    Object redirectUri = httpReq.getAttribute(CALL_REDIRECT);
     if (redirectUri != null) {
-      // Home page registered per app in Active Directory - redirect it to the portal default page
       String ruri = (String) redirectUri;
       if (ruri.length() > 0) {
         httpRes.sendRedirect(ruri);
@@ -105,7 +104,7 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
                                       null,
                                       httpReq.getServerName(),
                                       httpReq.getServerPort(),
-                                      "/portal/webrtc/call",
+                                      "/webrtc/call",
                                       null,
                                       null);
                 WebrtcSettings settings = provider.settings().callUri(callURI.toString()).locale(httpReq.getLocale()).build();
@@ -117,7 +116,7 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
                 cometdContext.getRequestDispatcher("/javascript/eXo/commons/commons-cometd3.js").include(httpReq, httpRes);
                 httpReq.getRequestDispatcher("/WEB-INF/pages/call_part2.jsp").include(httpReq, httpRes);
 
-                // to JSP page
+                // to JSP page (in a right way)
                 // httpReq.getRequestDispatcher(CALL_PAGE).include(httpReq, httpRes);
               } else {
                 LOG.warn("WebRTC servlet cannot be initialized: user info cannot be obtained for " + remoteUser);

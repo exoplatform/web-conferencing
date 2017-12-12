@@ -33,6 +33,7 @@
 			var message = function(key) {
 				return settings ? settings.messages["webrtc." + key] : "";
 			};
+			this.message = message;
 			
 			this.isSupportedPlatform = function() {
 				try {
@@ -199,13 +200,19 @@
 											+ " class='webrtcCallAction'>"
 											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + message("call") + "</span></a>");
-								// Check if this call isn't running and disable the button for it
+								// Check if this call isn't running and joined by this user and disable the button if so
 								webConferencing.getCall(callId).done(function(call) { // this will call server-side via Comet
-									log(">>> Call " + callId + " already running");
-									if (!$button.hasClass(CALL_DISABLED_CLASS)) {
-										$button.addClass(CALL_DISABLED_CLASS);
+									for (var pi = 0; pi < call.participants.length; pi++) {
+										var p = call.participants[pi];
+										if (p.id == context.currentUser.id && p.state == "joined") {
+											log(">>> Call " + callId + " already joined by " + context.currentUser.id);
+											if (!$button.hasClass(CALL_DISABLED_CLASS)) {
+												$button.addClass(CALL_DISABLED_CLASS);
+											}
+											$button.data("callid", callId);
+											break;
+										}
 									}
-									$button.data("callid", callId);
 								}).fail(function(err, status) {
 									// we don't show any error at this stage, but let an user to place a new call
 									if (err && (err.code == "NOT_FOUND_ERROR" || (typeof(status) == "number" && status == 404))) {
@@ -551,12 +558,12 @@
 				var process = $.Deferred();
 				
 				// load HTML with settings
-				var $popup = $("#webrtcSettingsPopup");
+				var $popup = $("#webrtc-settings-popup");
 				if ($popup.length == 0) {
-					$popup = $("<div class='uiPopupWrapper' id='webrtcSettingsPopup' style='display: none;'><div>");
+					$popup = $("<div class='uiPopupWrapper' id='webrtc-settings-popup' style='display: none;'><div>");
 					$(document.body).append($popup);
 				}
-				$popup.load("/portal/webrtc/settings", function(content, textStatus) {
+				$popup.load("/webrtc/settings", function(content, textStatus) {
 					if (textStatus == "success" || textStatus == "notmodified") {
 						var $settings = $popup.find(".settingsForm");
 						var $iceServers = $settings.find(".iceServers");
@@ -565,7 +572,7 @@
 						// Deep copy of the settings.rtcConfiguration as a working copy for the form 
 						var rtcConfiguration = $.extend(true, {}, settings.rtcConfiguration);
 						//activate tooltip
-						$("#webrtcSettingsPopup [data-toggle='tooltip']").tooltip();
+						$popup.find("[data-toggle='tooltip']").tooltip();
 						function addIceServer(ices, $sibling) {
 							var $ices = $serverTemplate.clone();
 							// Fill URLs
@@ -661,7 +668,7 @@
 								$iceServers.append($ices);
 							}
 							//activate tooltip for added servers
-							$("#webrtcSettingsPopup [data-toggle='tooltip']").tooltip();
+							$ices.find("[data-toggle='tooltip']").tooltip();
 						}
 						$.each(rtcConfiguration.iceServers, function(si, ices) {
 							addIceServer(ices);

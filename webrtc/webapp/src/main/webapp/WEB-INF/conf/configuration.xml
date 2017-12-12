@@ -255,7 +255,7 @@
           </object>
         </object-param>
         <!-- This filter sets URL paths rules for redirection to call servlet -->
-        <object-param>
+        <!-- object-param>
           <name>WebRTC Call page filter</name>
           <object type="org.exoplatform.web.filter.FilterDefinition">
             <field name="filter">
@@ -275,9 +275,9 @@
               </collection>
             </field>
           </object>
-        </object-param>
+        </object-param -->
         <!-- This filter sets URL paths rules for redirection to settings servlet -->
-        <object-param>
+        <!-- object-param>
           <name>WebRTC settings page filter</name>
           <object type="org.exoplatform.web.filter.FilterDefinition">
             <field name="filter">
@@ -291,7 +291,7 @@
               </collection>
             </field>
           </object>
-        </object-param>
+        </object-param -->
       </init-params>
     </component-plugin>
   </external-component-plugins>

@@ -63,7 +63,7 @@
 </div>
 
 <%-- Confirmation popup --%>
-<div class="uiPopup serverRemovalDialog">
+<div class="uiPopup serverRemovalDialog" style="display: none;">
 	<div class="popupHeader ClearFix">
 		<a class="uiIconClose pull-right" aria-hidden="true"></a>
 		<span class="PopupTitle popupTitle">${messages["webrtc.admin.confirmServerRemoval"]}</span>

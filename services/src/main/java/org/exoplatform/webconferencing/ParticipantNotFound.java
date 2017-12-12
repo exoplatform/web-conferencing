@@ -16,8 +16,39 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+package org.exoplatform.webconferencing;
+
 /**
- * Administrative API for Web Conferencing settings.
- *
+ * Call participant not found.<br>
+ * Created by The eXo Platform SAS
+ * 
+ * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
+ * @version $Id: ParticipantNotFound.java 00000 Jul 6, 2017 pnedonosko $
+ * 
  */
-package org.exoplatform.webconferencing.admin;
+public class ParticipantNotFound extends WebConferencingException {
+
+  /**
+   * 
+   */
+  private static final long serialVersionUID = -339427871016542888L;
+
+  /**
+   * Instantiates a new participant not found.
+   *
+   * @param message the message
+   */
+  public ParticipantNotFound(String message) {
+    super(message);
+  }
+
+  /**
+   * Instantiates a new participant not found.
+   *
+   * @param message the message
+   * @param cause the cause
+   */
+  public ParticipantNotFound(String message, Throwable cause) {
+    super(message, cause);
+  }
+}

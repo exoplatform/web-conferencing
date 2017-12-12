@@ -64,11 +64,11 @@
   </servlet-mapping>
   <servlet-mapping>
     <servlet-name>WebrtcCallServlet</servlet-name>
-    <url-pattern>/webrtccallservlet</url-pattern>
+    <url-pattern>/call/*</url-pattern>
   </servlet-mapping>
   <servlet-mapping>
     <servlet-name>WebrtcSettingsServlet</servlet-name>
-    <url-pattern>/webrtcsettingsservlet</url-pattern>
+    <url-pattern>/settings</url-pattern>
   </servlet-mapping>
   
 </web-app>

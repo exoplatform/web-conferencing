@@ -103,6 +103,12 @@
 
 	// ******** UI utils **********
 
+	var messages; // will be initialized by WebConferencing.init()
+
+	var message = function(key) {
+		return messages ? messages["webconferencing." + key] : "";
+	};
+	
 	/**
 	 * Open pop-up.
 	 */
@@ -129,7 +135,7 @@
 	/**
 	 * Show notice to user. Options support "icon" class, "hide", "closer" and "nonblock" features.
 	 */
-	var showNotice = function(type, title, text, options) {
+	var notice = function(type, title, text, options) {
 		var noticeOptions = {
 			title : title,
 			text : text,
@@ -158,8 +164,8 @@
 	/**
 	 * Show error notice to user. Error will stick until an user close it.
 	 */
-	var showError = function(title, text, onInit) {
-		return showNotice("error", title, text, {
+	var noticeError = function(title, text, onInit) {
+		return notice("error", title, text, {
 			icon : "picon-dialog-error",
 			hide : false,
 			delay : 0,
@@ -170,8 +176,8 @@
 	/**
 	 * Show info notice to user. Info will be shown for 8sec and hidden then.
 	 */
-	var showInfo = function(title, text, onInit) {
-		return showNotice("info", title, text, {
+	var noticeInfo = function(title, text, onInit) {
+		return notice("info", title, text, {
 			hide : true,
 			delay : 8000,
 			icon : "picon-dialog-information",
@@ -182,8 +188,8 @@
 	/**
 	 * Show warning notice to user. Info will be shown for 8sec and hidden then.
 	 */
-	var showWarn = function(title, text, onInit) {
-		return showNotice("exclamation", title, text, {
+	var noticeWarn = function(title, text, onInit) {
+		return notice("exclamation", title, text, {
 			hide : true,
 			delay : 30000,
 			icon : "picon-dialog-warning",
@@ -194,8 +200,8 @@
 	/**
 	 * Show warning notice bar to user. Info will be shown for 8sec and hidden then.
 	 */
-	var showWarnBar = function(title, text, onInit) {
-		return showNotice("exclamation", title, text, {
+	var noticeWarnBar = function(title, text, onInit) {
+		return notice("exclamation", title, text, {
 			hide : false,
 			delay : 30000,
 			icon : "picon-dialog-warning",
@@ -204,6 +210,96 @@
       cornerclass : "",
 			onInit : onInit
 		});
+	};
+	
+	var htmlRegx = /<[a-z][\s\S]*>/i;
+	var appendContent = function($target, content) {
+		if (typeof content === "object" || typeof content === "function") {
+			$target.append(content); // assuming supported by jQuery object or function 
+		} else if (typeof content === "string") {
+			if (htmlRegx.test(content)) {
+				$target.html(content);
+			} else {
+				$target.text(content);
+			}
+		} else if (content) {
+			$target.text(content);
+		} // else nothing can append
+		return $target.children();
+	};
+	
+	var dialog = function(title, messageText, type) {
+		var loader = $.Deferred();
+		var $dialog = $("#webconferencing-dialog");
+		if ($dialog.length == 0) {
+			$dialog = $("<div class='uiPopupWrapper' id='webconferencing-dialog' style='display: none;'><div>");
+			$(document.body).append($dialog);
+			$dialog.load("/webconferencing/ui/dialog.html", function(content, textStatus) {
+				if (textStatus == "success" || textStatus == "notmodified") {
+					loader.resolve($dialog);
+				} else {
+					loader.reject(content);
+				}
+			});
+		} else {
+			loader.resolve($dialog);
+		}
+		var process = $.Deferred();
+		loader.done(function($dialog) {
+			process.progress($dialog);
+			if (title) {
+				appendContent($dialog.find(".popupTitle"), title);
+			}
+			if (messageText) {
+				appendContent($dialog.find(".contentMessage"), messageText);
+			}
+			var $actions = $dialog.find(".popupActions");
+			var $okButton = $actions.find(".okButton");
+			var $cancelButton = $actions.find(".cancelButton");
+			var $icon = $dialog.find(".popupIcon");
+			if (typeof type === "string") {
+				// Clean previous classes
+				$icon.find("i").attr("class", "").addClass("uiIcon" + type.charAt(0).toUpperCase() + type.slice(1));
+				if (type.indexOf("Error") > 0 || type.indexOf("Warn") > 0 || type.indexOf("Info") > 0) {
+					$cancelButton.hide();
+				}
+			} else {
+				// otherwise don't show any icon
+				$icon.hide();
+			}
+			$okButton.text(message("ok"));
+			$okButton.click(function() {
+				process.resolve("ok");
+			});
+			$cancelButton.text(message("cancel"));
+			$cancelButton.click(function() {
+				process.resolve("cancel");
+			});
+			process.always(function() {
+				$dialog.hide();
+			});
+			//
+			$dialog.show();
+		}).fail(function(err) {
+			process.reject(err);
+		});
+		return process.promise();
+	};
+	
+	var showError = function(title, text) {
+		return dialog(title, text, "ColorError");
+	};
+	
+	var showWarn = function(title, text) {
+		return dialog(title, text, "ColorWarning");
+	};
+	
+	var showInfo = function(title, text) {
+		return dialog(title, text, "Information");
+	};
+	
+	var showConfirm = function(title, text) {
+		return dialog(title, text, "Question");
 	};
 
 	// ******** REST services ********
@@ -744,7 +840,6 @@
 		var providers = []; // loaded providers
 		var providersConfig; // will be assigned in init()
 		var providersInitializer = {}; // map
-		var messages = {}; // i18n
 		
 		var chat = new Chat();
 		this.getChat = function() {
@@ -1022,6 +1117,8 @@
 										// Mark first a default one (for nice CSS)
 										$container.find(".btn." + buttonClass).addClass(preferredClass);
 									}
+								} else {
+									$container.find(".btn." + buttonClass).addClass(preferredClass);
 								}
 								$container.show();
 								initializer.resolve($container);
@@ -1616,53 +1713,56 @@
 		 * Initialize context
 		 */
 		this.init = function(user, context) {
-			if (user) {
-				currentUser = user;
-				providersConfig = context.providersConfig;
-				prepareUser(currentUser);
-				log("User initialized in Web Conferencing: " + user.id + ". ");
-				if (context.spaceId) {
-					currentSpaceId = context.spaceId;
-				} else {
-					currentSpaceId = null;
-				}
-				if (context.roomTitle) {
-					currentRoomTitle = context.roomTitle;
-				} else {
-					currentRoomTitle = null; 
-				}
-				
-				// init CometD connectivity
-				if (context.cometdPath) {
-					cCometD.configure({
-						"url": prefixUrl  + context.cometdPath,
-						"exoId": user.id,
-						"exoToken": context.cometdToken,
-						"maxNetworkDelay" : 15000
-					});
-					cometd = cCometD;
-					cometdContext = {
-						"exoContainerName" : context.containerName
-					};
-					cometd.onListenerException = function(exception, subscriptionHandle, isListener, message) {
-				    // Uh-oh, something went wrong, disable this listener/subscriber
-				    // Object "this" points to the CometD object
-						log("< CometD listener exception: " + exception + " (" + subscriptionHandle + ") isListener:" + isListener + " message:" + message);
-				    if (isListener) {
-				        this.removeListener(subscriptionHandle);
-				    } else {
-				        this.unsubscribe(subscriptionHandle);
-				    }
+			if (context) {
+				messages = context.messages;
+				if (user) {
+					currentUser = user;
+					providersConfig = context.providersConfig;
+					prepareUser(currentUser);
+					log("User initialized in Web Conferencing: " + user.id + ". ");
+					if (context.spaceId) {
+						currentSpaceId = context.spaceId;
+					} else {
+						currentSpaceId = null;
 					}
-				} else {
-					log("WARN: CometD not found in context settings");
-				}
-				
-				// also init registered providers
-				for (var i = 0; i < providers.length; i++) {
-					var p = providers[i];
-					if (!p.isInitialized) {
-						initProvider(p);
+					if (context.roomTitle) {
+						currentRoomTitle = context.roomTitle;
+					} else {
+						currentRoomTitle = null; 
+					}
+					
+					// init CometD connectivity
+					if (context.cometdPath) {
+						cCometD.configure({
+							"url": prefixUrl  + context.cometdPath,
+							"exoId": user.id,
+							"exoToken": context.cometdToken,
+							"maxNetworkDelay" : 15000
+						});
+						cometd = cCometD;
+						cometdContext = {
+							"exoContainerName" : context.containerName
+						};
+						cometd.onListenerException = function(exception, subscriptionHandle, isListener, message) {
+					    // Uh-oh, something went wrong, disable this listener/subscriber
+					    // Object "this" points to the CometD object
+							log("< CometD listener exception: " + exception + " (" + subscriptionHandle + ") isListener:" + isListener + " message:" + message);
+					    if (isListener) {
+					        this.removeListener(subscriptionHandle);
+					    } else {
+					        this.unsubscribe(subscriptionHandle);
+					    }
+						}
+					} else {
+						log("WARN: CometD not found in context settings");
+					}
+					
+					// also init registered providers
+					for (var i = 0; i < providers.length; i++) {
+						var p = providers[i];
+						if (!p.isInitialized) {
+							initProvider(p);
+						}
 					}
 				}
 			}
@@ -1804,10 +1904,6 @@
 			}
 		};
 		
-		this.showWarn = showWarn;
-		this.showError = showError;
-		this.showInfo = showInfo;
-
 		this.getUserInfo = getUserInfoReq; 
 		this.getSpaceInfo = getSpaceInfoReq;
 		this.getRoomInfo = getRoomInfoReq;
@@ -2121,6 +2217,11 @@
 		
 		// common utilities
 		this.log = log;
+		this.message = message;
+		this.showWarn = showWarn;
+		this.showError = showError;
+		this.showInfo = showInfo;
+		this.showConfirm = showConfirm
 		this.getIEVersion = getIEVersion;
 		
 		/**
