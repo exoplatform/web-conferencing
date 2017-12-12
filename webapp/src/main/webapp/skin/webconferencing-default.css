@@ -8,6 +8,6 @@
 }
 
 /* Call button is more narrow in spaces */
-.callButton.spaceCall, .callButton.spaceCall + .dropdown-toggle {
+.callButton.spaceCall, .callButton.spaceCall ~ .dropdown-toggle {
 	padding-right: 3px;
 }

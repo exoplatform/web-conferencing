@@ -67,7 +67,7 @@
 	border-radius: 3px 0 0 3px;
 }
 
-.callButton.preferred + .dropdown-toggle {
+.callButton.preferred ~ .dropdown-toggle {
 	margin-left: -1px;
 	padding-left: 5px;
 	padding-right: 5px;
@@ -104,7 +104,7 @@
 	color:#ffffff;
 }
 
-.callButton.preferred.miniChatCall + .dropdown-toggle {
+.callButton.preferred.miniChatCall ~ .dropdown-toggle {
 	padding-left: 2px;
 }
 
@@ -124,7 +124,7 @@
 	display: none;
 }*/
 
-#socialTopLayout .callButtonContainer > .callButton + .dropdown-toggle {
+#socialTopLayout .callButtonContainer > .callButton ~ .dropdown-toggle {
 	margin-left: -1px !important;
 }
 
@@ -132,17 +132,21 @@
 	margin-top: -40px;
 }
 
-.chatCall {
-	line-height: 1;
-}
-
 .callButtonContainerWrapper {
 	margin-top: 15px;
   margin-right: 10px;
 }
 
+.callButtonContainer .tooltip {
+	position: fixed;
+}
+.callButtonContainer .tooltip-inner {
+	max-width: 130px;
+	text-align: center;
+}
+
 /***** Transparent styles (for space avatar and mini-chat, the transparentButton class will be triggered by Javascript) *******/
-.transparentButton, .miniChatCall, .miniChatCall + .dropdown-toggle {
+.transparentButton, .miniChatCall, .miniChatCall ~ .dropdown-toggle {
 	background: transparent;
 	border: solid 1px transparent;
 	box-shadow: none;

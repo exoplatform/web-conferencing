@@ -19,7 +19,7 @@
 	}
 }
 
-.transparentButton, .transparentButton + .dropdown-toggle {
+.transparentButton, .transparentButton ~ .dropdown-toggle {
 	background: transparent !important;
 	border: solid 1px transparent !important;
 	box-shadow: none !important;
@@ -30,7 +30,7 @@
 }
 
 /* Call button is more narrow in spaces */
-.callButton.spaceCall, .spaceCall + .dropdown-toggle, .spaceCall ~ .dropdown-menu {
+.callButton.spaceCall, .spaceCall ~ .dropdown-toggle, .spaceCall ~ .dropdown-menu {
 	font-size: 12px;
 	line-height: 24px;
 	padding-top: 2px;
@@ -48,7 +48,7 @@
 	padding-right: 2px;
 }
 
-.btn.spaceCall.preferred + .dropdown-toggle {
+.btn.spaceCall.preferred ~ .dropdown-toggle {
 	padding-left: 2px;
 	padding-right: 2px;
 }
@@ -67,7 +67,7 @@
 	color: #ffffff !important;
 }
 
-.callButton.chatCall, .callButton.chatCall + .dropdown-toggle { /* !important should be removed after removing skype css from Enterprise skin  */
+.callButton.chatCall, .callButton.chatCall ~ .dropdown-toggle { /* !important should be removed after removing skype css from Enterprise skin  */
 	padding-top: 4px !important; 
 	padding-bottom: 4px !important;
   background: none;
@@ -82,8 +82,8 @@
 }
 
 .callButton.chatCall [class*="Icon"], 
-.callButton.chatCall + .dropdown-toggle .uiIconArrowDown:before, 
-.callButton.miniChatCall + .dropdown-toggle .uiIconArrowDown:before,
+.callButton.chatCall ~ .dropdown-toggle .uiIconArrowDown:before, 
+.callButton.miniChatCall ~ .dropdown-toggle .uiIconArrowDown:before,
 .callButton.chatCall:active, 
 .callButton.chatCall:focus {
 	color: #fff

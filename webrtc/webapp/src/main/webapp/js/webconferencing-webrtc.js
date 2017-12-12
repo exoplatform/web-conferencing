@@ -196,8 +196,8 @@
 									callId = "p/" + partsAsc.join("@");
 								}
 								var link = settings.callUri + "/" + callId;
-								var $button = $("<a id='" + linkId + "' title='" + target.title + "'"
-											+ " class='webrtcCallAction'>"
+								var $button = $("<a id='" + linkId + "' title='Video call. Click to start a video call.'"
+											+ " class='webrtcCallAction' data-placement='top' data-toggle='tooltip'>"
 											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + message("call") + "</span></a>");
 								// Check if this call isn't running and joined by this user and disable the button if so
@@ -255,6 +255,9 @@
 										log("Call disabled to " + target.id);
 									}
 								});
+                                setTimeout(function(){
+									$button.filter(".webrtcCallAction.preferred").tooltip();
+								},200)
 								// Assign target ID to the button for later use on started event in init()
 								$button.data("targetid", target.id);
 								button.resolve($button);
