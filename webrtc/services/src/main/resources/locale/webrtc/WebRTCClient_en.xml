@@ -8,6 +8,7 @@
     <incomingCall>Incoming call</incomingCall>
     <answer>Answer</answer>
     <decline>Decline</decline>
+    <callButtonTip>Click to start a video call</callButtonTip>
     
     <errorAddCall>Error saving call</errorAddCall>
     <errorGettingCall>Error opening call</errorGettingCall>
@@ -28,7 +29,9 @@
     
     <admin>
       <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>An URL is mandatory for server.</serverUrlMandatory>
+      <serverUrlMandatory>An URL is mandatory for server</serverUrlMandatory>
+      <usernameMandatory>Username is mandatory</usernameMandatory>
+      <credentialMandatory>Credential is mandatory</credentialMandatory>
       <errorSavingSettings>Error saving settings</errorSavingSettings>
     </admin>
   </webrtc>

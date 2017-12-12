@@ -156,6 +156,10 @@
 .iceServer .credentials input {
 	width: 100%;
 }
+
+.iceServer input.wrongValue {
+	border-color: #FFB441; 
+}
  
 #webrtc-settings-popup .uiAction {
 	text-align: right;
@@ -167,4 +171,5 @@
 #webrtc-settings-popup .serverRemovalDialog .uiAction {
 	margin: 30px 0 0;
 }
+
 /* Settings form END */

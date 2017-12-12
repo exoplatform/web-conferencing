@@ -196,7 +196,7 @@
 									callId = "p/" + partsAsc.join("@");
 								}
 								var link = settings.callUri + "/" + callId;
-								var $button = $("<a id='" + linkId + "' title='Video call. Click to start a video call.'"
+								var $button = $("<a id='" + linkId + "' title='" + message("callButtonTip") + "'"
 											+ " class='webrtcCallAction' data-placement='top' data-toggle='tooltip'>"
 											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + message("call") + "</span></a>");
@@ -260,6 +260,10 @@
 								},200)
 								// Assign target ID to the button for later use on started event in init()
 								$button.data("targetid", target.id);
+								setTimeout(function() {
+									// Wait for promise done handlers outside and enable tooltip for added by them preferred (default) button
+									$button.filter(".webrtcCallAction.preferred").tooltip();
+								}, 200);
 								button.resolve($button);
 							}).fail(function(err) {
 								log("Error getting context details for " + self.getTitle() + ": " + err);
@@ -275,74 +279,6 @@
 					button.reject("WebRTC not supported in this browser: " + navigator.userAgent);
 				}
 				return button.promise();
-			};
-			
-			var acceptCallPopover_old = function(callerLink, callerAvatar, callerMessage, playRingtone) {
-				// TODO show an info popover in bottom right corner of the screen as specified in CALLEE_01
-				log(">> acceptCallPopover '" + callerMessage + "' caler:" + callerLink + " avatar:" + callerAvatar);
-				var process = $.Deferred();
-				var $call = $("div.uiIncomingCall");
-				if ($call.length > 0) {
-					try {
-						$call.dialog("destroy");
-					} catch(e) {
-						log(">>> acceptCallPopover: error destroing prev dialog ", e);
-					}
-					$call.remove();
-				}
-				$call = $("<div class='uiIncomingCall' title='" + message("incomingCall") + "'></div>");
-				//<span class='ui-icon messageIcon' style='float:left; margin:12px 12px 20px 0;'></span>
-				$call.append($("<div class='messageAuthor'><a target='_blank' href='" + callerLink + "' class='avatarMedium'>"
-					+ "<img src='" + callerAvatar + "'></a></div>"
-					+ "<div class='messageBody'><div class='messageText'>" + callerMessage + "</div></div>"));
-				// eXo UX guides way
-				//$call.append($("<ul class='singleMessage popupMessage'><li><span class='messageAuthor'>"
-				//		+ "<a class='avatarMedium'><img src='" + callerAvatar + "'></a></span>"
-				//		+ "<span class='messageText'>" + callerMessage + "</span></li></ul>"));
-				$(document.body).append($call);
-				var dialogSettings = {
-					resizable: false,
-					height: "auto",
-					width: 400,
-					modal: false,
-					buttons: {}
-				};
-				dialogSettings.buttons[message("answer")] = function() {
-			  	process.resolve("accepted");
-			  	$call.dialog("close");
-			  };
-			  dialogSettings.buttons[message("decline")] = function() {
-			  	process.reject("declined");
-			  	$call.dialog("close");
-				};
-				$call.dialog(dialogSettings);
-				$call.on("dialogclose", function( event, ui ) {
-					if (process.state() == "pending") {
-						process.reject("closed");
-					}
-				});
-				process.notify($call);
-				if (playRingtone) {
-					// Start ringing incoming sound only if requested (depends on user status)
-					var $ring = $("<audio loop autoplay style='display: none;'>" // controls 
-								+ "<source src='/webrtc/audio/line.mp3' type='audio/mpeg'>"  
-								+ "Your browser does not support the audio element.</audio>");
-					$(document.body).append($ring);
-					process.fail(function() {
-						var $cancel = $("<audio autoplay style='display: none;'>" // controls 
-									+ "<source src='/webrtc/audio/manner_cancel.mp3' type='audio/mpeg'>"  
-									+ "Your browser does not support the audio element.</audio>");
-						$(document.body).append($cancel);
-						setTimeout(function() {
-							$cancel.remove();
-						}, 3000);
-					});
-					process.always(function() {
-						// Stop incoming ringing on dialog completion
-						$ring.remove();
-					});					
-				}
-				return process.promise();
 			};
 			
 			var acceptCallPopover = function(callerLink, callerAvatar, callerMessage, playRingtone) {
@@ -471,7 +407,6 @@
 													var callerMessage = call.owner.title + " " + message("callingYou");
 													var callerRoom = callerId;
 													call.title = call.owner.title; // for callee the call title is a caller name
-													//
 													webConferencing.getUserStatus(currentUserId).done(function(user) {
 														var popover = acceptCallPopover(callerLink, callerAvatar, callerMessage, !user || user.status == "available" || user.status == "away");
 														popover.progress(function($call) {
@@ -576,6 +511,14 @@
 						var rtcConfiguration = $.extend(true, {}, settings.rtcConfiguration);
 						//activate tooltip
 						$popup.find("[data-toggle='tooltip']").tooltip();
+						function inputWrongMark() {
+							var $input = $(this);
+							if ($input.val()) {
+								$input.removeClass("wrongValue");
+							} else if (!$input.hasClass("wrongValue")) {
+								$input.addClass("wrongValue");
+							}								
+						}
 						function addIceServer(ices, $sibling) {
 							var $ices = $serverTemplate.clone();
 							// Fill URLs
@@ -605,6 +548,10 @@
 								}
 								var $url = $urlGroup.find("input[name='url']");
 								$url.val(url);
+								if (!url) {
+									$url.addClass("wrongValue");
+								}
+								$url.on("input", inputWrongMark);
 								$url.change(function() {
 									ices.urls[ui] = $(this).val();
 								});
@@ -630,21 +577,24 @@
 							var $credentialsGroup = $ices.find(".credentialsGroup");
 							var $enabler = $credentialsGroup.find(".enabler input");
 							var $credentials = $credentialsGroup.find(".credentials");
+							var $username = $credentials.find("input[name='username']");
+							var $credential = $credentials.find("input[name='credential']");
 							$enabler.click(function() {
-								var $username = $credentials.find("input[name='username']");
-								var $credential = $credentials.find("input[name='credential']");
 								if ($enabler.prop("checked") && !$credentials.is(":visible")) {
-									if (typeof ices.username == "string" && typeof ices.credential == "string") {
+									if (ices.username && ices.credential) {
 										$username.val(ices.username);
 										$credential.val(ices.credential);
 									} else {
-										$username.val("");
-										$credential.val("");
 										ices.username = "";
 										ices.credential = "";
+										$username.val("");
+										$credential.val("");
+										$username.add($credential).addClass("wrongValue");
 									}
 									if (!$credentials.data("initialized")) {
 										$credentials.data("initialized", true);
+										// Field marker for invalid value
+										$username.add($credential).on("input", inputWrongMark);
 										$username.change(function() {
 											ices.username = $(this).val();
 										});
@@ -678,25 +628,32 @@
 						});
 						// Save action
 						$settings.find(".saveButton").click(function() {
+							$iceServers.find("input[type='text']").change(); // force firing 'change' to get autofilled values also
 							setTimeout(function() { // timeout to let change events populate config object
 								// Validation to do not have an ICE server w/o URL
-								var confOk = true;
+								var confErrors = [];
 								for (var si=0; si<rtcConfiguration.iceServers.length; si++) {
 									var is = rtcConfiguration.iceServers[si];
 									for (var ui=0; ui<is.urls.length; ui++) {
 										if (!is.urls[ui]) {
 											// Empty URL
-											confOk = false;
+											confErrors.push(message("admin.serverUrlMandatory"));
 											break;
 										}
 									}
-									if (!confOk) {
+									if (typeof is.username == "string" && !is.username) {
+										confErrors.push(message("admin.usernameMandatory"));
+									}
+									if (typeof is.credential == "string" && !is.credential) {
+										confErrors.push(message("admin.credentialMandatory"));
+									}
+									if (confErrors.length != 0) {
 										break;
 									}
 								}
-								if (confOk) {
+								if (confErrors.length == 0) {
 									var rtcConfStr = JSON.stringify(rtcConfiguration);
-									log("Saving RTC configuration: " + rtcConfStr);
+									//log("Saving RTC configuration: " + rtcConfStr);
 									postSettings({
 										rtcConfiguration : rtcConfStr
 									}).done(function(savedRtcConfig) {
@@ -707,9 +664,9 @@
 										webConferencing.showError(message("admin.errorSavingSettings"), webConferencing.errorText(err));
 									});
 								} else {
-									webConferencing.showWarn(message("admin.wrongSettings"), message("admin.serverUrlMandatory"));
+									webConferencing.showWarn(message("admin.wrongSettings"), confErrors.join(". "));
 								}
-							}, 100);
+							}, 200);
 						});
 						$settings.find("a.uiIconClose, .cancelButton").click(function(){
 							$popup.hide();
