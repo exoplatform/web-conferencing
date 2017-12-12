@@ -552,7 +552,6 @@ public class WebConferencingService implements Startable {
     CallInfo call = readCallById(id);
     if (call != null) {
       if (CallState.STARTED.equals(call.getState())) {
-        // if (info.getOwner().isGroup()) {
         for (UserInfo part : call.getParticipants()) {
           if (UserInfo.TYPE_NAME.equals(part.getType())) {
             if (userId.equals(part.getId())) {
@@ -568,7 +567,6 @@ public class WebConferencingService implements Startable {
                                part.getId());
           }
         }
-        // }
       } else {
         startCall(id);
       }
@@ -589,7 +587,7 @@ public class WebConferencingService implements Startable {
     // TODO exception if user not a participant?
     CallInfo call = readCallById(id);
     if (call != null) {
-      if (CallState.STARTED.equals(call.getState())) {
+      if (CallState.STARTED.equals(call.getState()) || CallState.PAUSED.equals(call.getState())) {
         int leaved = 0;
         boolean userLeaved = false;
         for (UserInfo part : call.getParticipants()) {

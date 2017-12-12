@@ -30,12 +30,12 @@ public class WebrtcContext {
   public static final String WEBRTC_SERVLET_CTX   = "/webrtc".intern();
 
   /** The Constant SETTINGS_SERVLET. */
-  public static final String CALL_SERVLET         = "/webrtccallservlet".intern();
+  public static final String CALL_SERVLET         = "/call".intern();
 
   /** The Constant SETTINGS_SERVLET. */
-  public static final String SETTINGS_SERVLET     = "/webrtcsettingsservlet".intern();
-
-  /** The Constant WEBRTC_CALL_REDIRECT. */
-  public static final String WEBRTC_CALL_REDIRECT = "webrtccall_redirect";
+  public static final String SETTINGS_SERVLET     = "/settings".intern();
+  
+  /** The Constant CALL_REDIRECT. */
+  public static final String CALL_REDIRECT     = "call_redirect".intern();
 
 }

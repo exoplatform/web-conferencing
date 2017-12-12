@@ -63,7 +63,7 @@
 /* Incoming call popover END */
 
 /* Settings form BEGIN */
-#webrtcSettingsPopup .uiPopup {
+#webrtc-settings-popup .uiPopup {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
@@ -71,16 +71,16 @@
 	width: 600px;
 }
 
-#webrtcSettingsPopup .popupContent {
+#webrtc-settings-popup .popupContent {
 	max-height: 400px;
 	overflow: auto;
 }
 
-#webrtcSettingsPopup .title {
+#webrtc-settings-popup .title {
 	font-weight: bold;
 }
 
-#webrtcSettingsPopup .title .tooltip-inner {
+#webrtc-settings-popup .title .tooltip-inner {
 	max-width: 300px;
 }
 
@@ -157,15 +157,19 @@
 	width: 100%;
 }
 
-#webrtcSettingsPopup .uiAction {
+.iceServer input.wrongValue {
+	border-color: #FFB441; 
+}
+ 
+#webrtc-settings-popup .uiAction {
 	text-align: right;
 }
 
-#webrtcSettingsPopup .serverRemovalDialog {
+#webrtc-settings-popup .serverRemovalDialog {
 	width: 500px;
-	display: none;
 }
-#webrtcSettingsPopup .serverRemovalDialog .uiAction {
+#webrtc-settings-popup .serverRemovalDialog .uiAction {
 	margin: 30px 0 0;
 }
+
 /* Settings form END */

@@ -33,6 +33,7 @@
 			var message = function(key) {
 				return settings ? settings.messages["webrtc." + key] : "";
 			};
+			this.message = message;
 			
 			this.isSupportedPlatform = function() {
 				try {
@@ -199,13 +200,19 @@
 											+ " class='webrtcCallAction'>"
 											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + message("call") + "</span></a>");
-								// Check if this call isn't running and disable the button for it
+								// Check if this call isn't running and joined by this user and disable the button if so
 								webConferencing.getCall(callId).done(function(call) { // this will call server-side via Comet
-									log(">>> Call " + callId + " already running");
-									if (!$button.hasClass(CALL_DISABLED_CLASS)) {
-										$button.addClass(CALL_DISABLED_CLASS);
+									for (var pi = 0; pi < call.participants.length; pi++) {
+										var p = call.participants[pi];
+										if (p.id == context.currentUser.id && p.state == "joined") {
+											log(">>> Call " + callId + " already joined by " + context.currentUser.id);
+											if (!$button.hasClass(CALL_DISABLED_CLASS)) {
+												$button.addClass(CALL_DISABLED_CLASS);
+											}
+											$button.data("callid", callId);
+											break;
+										}
 									}
-									$button.data("callid", callId);
 								}).fail(function(err, status) {
 									// we don't show any error at this stage, but let an user to place a new call
 									if (err && (err.code == "NOT_FOUND_ERROR" || (typeof(status) == "number" && status == 404))) {
@@ -551,12 +558,12 @@
 				var process = $.Deferred();
 				
 				// load HTML with settings
-				var $popup = $("#webrtcSettingsPopup");
+				var $popup = $("#webrtc-settings-popup");
 				if ($popup.length == 0) {
-					$popup = $("<div class='uiPopupWrapper' id='webrtcSettingsPopup' style='display: none;'><div>");
+					$popup = $("<div class='uiPopupWrapper' id='webrtc-settings-popup' style='display: none;'><div>");
 					$(document.body).append($popup);
 				}
-				$popup.load("/portal/webrtc/settings", function(content, textStatus) {
+				$popup.load("/webrtc/settings", function(content, textStatus) {
 					if (textStatus == "success" || textStatus == "notmodified") {
 						var $settings = $popup.find(".settingsForm");
 						var $iceServers = $settings.find(".iceServers");
@@ -565,7 +572,15 @@
 						// Deep copy of the settings.rtcConfiguration as a working copy for the form 
 						var rtcConfiguration = $.extend(true, {}, settings.rtcConfiguration);
 						//activate tooltip
-						$("#webrtcSettingsPopup [data-toggle='tooltip']").tooltip();
+						$popup.find("[data-toggle='tooltip']").tooltip();
+						function inputWrongMark() {
+							var $input = $(this);
+							if ($input.val()) {
+								$input.removeClass("wrongValue");
+							} else if (!$input.hasClass("wrongValue")) {
+								$input.addClass("wrongValue");
+							}
+						}
 						function addIceServer(ices, $sibling) {
 							var $ices = $serverTemplate.clone();
 							// Fill URLs
@@ -595,6 +610,10 @@
 								}
 								var $url = $urlGroup.find("input[name='url']");
 								$url.val(url);
+								if (!url) {
+									$url.addClass("wrongValue");
+								}
+								$url.on("input", inputWrongMark);
 								$url.change(function() {
 									ices.urls[ui] = $(this).val();
 								});
@@ -624,17 +643,20 @@
 								var $username = $credentials.find("input[name='username']");
 								var $credential = $credentials.find("input[name='credential']");
 								if ($enabler.prop("checked") && !$credentials.is(":visible")) {
-									if (typeof ices.username == "string" && typeof ices.credential == "string") {
+									if (ices.username && ices.credential) {
 										$username.val(ices.username);
 										$credential.val(ices.credential);
 									} else {
-										$username.val("");
-										$credential.val("");
 										ices.username = "";
 										ices.credential = "";
+										$username.val("");
+										$credential.val("");
+										$username.add($credential).addClass("wrongValue");
 									}
 									if (!$credentials.data("initialized")) {
 										$credentials.data("initialized", true);
+										// Field marker for invalid value
+										$username.add($credential).on("input", inputWrongMark);
 										$username.change(function() {
 											ices.username = $(this).val();
 										});
@@ -661,7 +683,7 @@
 								$iceServers.append($ices);
 							}
 							//activate tooltip for added servers
-							$("#webrtcSettingsPopup [data-toggle='tooltip']").tooltip();
+							$ices.find("[data-toggle='tooltip']").tooltip();
 						}
 						$.each(rtcConfiguration.iceServers, function(si, ices) {
 							addIceServer(ices);
@@ -670,21 +692,27 @@
 						$settings.find(".saveButton").click(function() {
 							setTimeout(function() { // timeout to let change events populate config object
 								// Validation to do not have an ICE server w/o URL
-								var confOk = true;
+								var confErrors = [];
 								for (var si=0; si<rtcConfiguration.iceServers.length; si++) {
 									var is = rtcConfiguration.iceServers[si];
 									for (var ui=0; ui<is.urls.length; ui++) {
 										if (!is.urls[ui]) {
 											// Empty URL
-											confOk = false;
+											confErrors.push(message("admin.serverUrlMandatory"));
 											break;
 										}
 									}
-									if (!confOk) {
+									if (typeof is.username == "string" && !is.username) {
+										confErrors.push(message("admin.usernameMandatory"));
+									}
+									if (typeof is.credential == "string" && !is.credential) {
+										confErrors.push(message("admin.credentialMandatory"));
+									}
+									if (confErrors.length != 0) {
 										break;
 									}
 								}
-								if (confOk) {
+								if (confErrors.length == 0) {
 									var rtcConfStr = JSON.stringify(rtcConfiguration);
 									log("Saving RTC configuration: " + rtcConfStr);
 									postSettings({
@@ -697,7 +725,7 @@
 										webConferencing.showError(message("admin.errorSavingSettings"), webConferencing.errorText(err));
 									});
 								} else {
-									webConferencing.showWarn(message("admin.wrongSettings"), message("admin.serverUrlMandatory"));
+									webConferencing.showWarn(message("admin.wrongSettings"), confErrors.join(". "));
 								}
 							}, 100);
 						});

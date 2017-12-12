@@ -119,11 +119,14 @@ public class MyConnectorProvider extends CallProvider {
   public MyConnectorProvider(UserProfileSettingsService profileSettings, InitParams params) throws ConfigurationException {
     super(params);
 
-    String url = this.config.get(CONFIG_URL);
-    if (url == null || (url = url.trim()).length() == 0) {
-      throw new ConfigurationException(CONFIG_URL + " required and should be non empty.");
-    }
-    this.url = url;
+    // it's WAR name here, 
+    this.url = "/myconnector";
+    // if need set this from external you can introduce a configuration parameter
+    // String url = this.config.get(CONFIG_URL);
+    // if (url == null || (url = url.trim()).length() == 0) {
+    // throw new ConfigurationException(CONFIG_URL + " required and should be non empty.");
+    // }
+    // this.url = url;
 
     String clientId = this.config.get(CONFIG_CLIENTID);
     if (clientId == null || (clientId = clientId.trim()).length() == 0) {

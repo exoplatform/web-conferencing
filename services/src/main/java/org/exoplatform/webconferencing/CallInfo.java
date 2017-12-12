@@ -19,6 +19,7 @@
 package org.exoplatform.webconferencing;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -36,8 +37,14 @@ public class CallInfo {
   /** The title. */
   protected final String        title;
 
+  /** The attendees IDs. */
+  //protected final Set<String>   attendees      = new LinkedHashSet<>();
+
+  /** The participant IDs. For internal use. */
+  protected final Set<String>   participantIds = new LinkedHashSet<>();
+
   /** The participants. */
-  protected final Set<UserInfo> participants = new LinkedHashSet<>();
+  protected final Set<UserInfo> participants   = new LinkedHashSet<>();
 
   /** The owner. */
   protected final IdentityInfo  owner;
@@ -104,13 +111,48 @@ public class CallInfo {
   }
 
   /**
-   * Gets the participants.
+   * Gets the participants (users planned for the call).
    *
    * @return the participants
    */
   public Set<UserInfo> getParticipants() {
-    return participants;
+    return Collections.unmodifiableSet(participants);
   }
+
+  /**
+   * Checks if it is a participant (by user ID).
+   *
+   * @param partId the part id
+   * @return true, if is participant
+   */
+  public boolean isParticipant(String partId) {
+    return participantIds.contains(partId);
+  }
+
+  // TODO cleanup
+//  /**
+//   * Gets the attendees IDs (users already joined the call).
+//   *
+//   * @return the attendees IDs
+//   */
+//  public Set<String> getAttendees() {
+//    return Collections.unmodifiableSet(attendees);
+//  }
+//
+//  /**
+//   * Checks if a given participant ID is an attendee of started or paused call. Note that a stopped call has
+//   * no attendees.
+//   *
+//   * @param partId the part id
+//   * @return true, if is attendee of started or paused call, false otherwise
+//   */
+//  public boolean isAttendee(String partId) {
+//    if (CallState.STARTED.equals(state) || CallState.PAUSED.equals(state)) {
+//      return participantIds.contains(partId) && attendees.contains(partId);
+//    } else {
+//      return false;
+//    }
+//  }
 
   /**
    * Gets the owner.
@@ -163,7 +205,9 @@ public class CallInfo {
    * @param parts the parts
    */
   public void addParticipants(Collection<UserInfo> parts) {
-    this.participants.addAll(parts);
+    for (UserInfo part : parts) {
+      addParticipant(part);
+    }
   }
 
   /**
@@ -173,6 +217,7 @@ public class CallInfo {
    */
   public void addParticipant(UserInfo part) {
     this.participants.add(part);
+    this.participantIds.add(part.getId());
   }
 
   /**
@@ -191,6 +236,54 @@ public class CallInfo {
    */
   public void setState(String state) {
     this.state = state;
+    // TODO
+//    if (CallState.STOPPED.equals(state)) {
+//      this.attendees.clear();
+//    }
   }
+
+  // ******* Internals *******
+
+  // TODO cleanup
+  
+//  /**
+//   * Adds the attendee ID.
+//   *
+//   * @param partId the part id
+//   * @return true, if successful, false if participant already added
+//   * @throws ParticipantNotFound if given ID isn't in participants of this call
+//   * @throws InvalidCallStateException if call not started
+//   */
+//  boolean addAttendee(String partId) throws ParticipantNotFound, InvalidCallStateException {
+//    if (CallState.STARTED.equals(state) || CallState.PAUSED.equals(state)) {
+//      if (participantIds.contains(partId)) {
+//        return this.attendees.add(partId);
+//      } else {
+//        throw new ParticipantNotFound("Not a participant: " + partId);
+//      }
+//    } else {
+//      throw new InvalidCallStateException("Call not started");
+//    }
+//  }
+//
+//  /**
+//   * Removes the attendee by ID.
+//   *
+//   * @param partId the part id
+//   * @return true, if successful, false if participant not yet attended
+//   * @throws ParticipantNotFound if given ID isn't in participants of this call
+//   * @throws InvalidCallStateException if call not started
+//   */
+//  boolean removeAttendee(String partId) throws ParticipantNotFound, InvalidCallStateException {
+//    if (CallState.STARTED.equals(state) || CallState.PAUSED.equals(state)) {
+//      if (participantIds.contains(partId)) {
+//        return this.attendees.remove(partId);
+//      } else {
+//        throw new ParticipantNotFound("Not a participant: " + partId);
+//      }
+//    } else {
+//      throw new InvalidCallStateException("Call not started");
+//    }
+//  }
 
 }

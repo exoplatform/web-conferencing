@@ -37,8 +37,6 @@
           <name>provider-configuration</name>
           <property name="my-apiKey" value="${webconferencing.myconnector.apiKey:myApiKey}" />
           <property name="my-clientId" value="${webconferencing.myconnector.clientId:myClientId}" />
-          <!-- use /portal/intranet/myconnector by default, it will open a page on intranet site -->
-          <property name="my-serviceUrl" value="${webconferencing.myconnector.serviceUrl:/portal/myconnector}" />
           <property name="active" value="${webconferencing.myconnector.active:true}" />
         </properties-param>
       </init-params>
@@ -91,15 +89,15 @@
       </init-params>
     </component-plugin>
   </external-component-plugins>
-  
-  <external-component-plugins>
+
+  <!-- This filter sets URL paths rules for redirection to call servlet -->  
+  <!-- external-component-plugins>
     <target-component>org.exoplatform.web.filter.ExtensibleFilter</target-component>
     <component-plugin>
       <name>My Call add-in filters Plugin</name>
       <set-method>addFilterDefinitions</set-method>
       <type>org.exoplatform.web.filter.FilterDefinitionPlugin</type>
       <init-params>
-        <!-- This filter sets URL paths rules for redirection to call servlet -->
         <object-param>
           <name>My Call page filter</name>
           <object type="org.exoplatform.web.filter.FilterDefinition">
@@ -123,7 +121,7 @@
         </object-param>
       </init-params>
     </component-plugin>
-  </external-component-plugins>
+  </external-component-plugins -->
   
   <!-- i18n resources for My Connector -->
   <external-component-plugins>

@@ -15,10 +15,22 @@
     <errorIncomingCall>Incoming call error</errorIncomingCall>
     <errorReadUserStatus>Error read user status information from the server</errorReadUserStatus>
     <errorReadCall>Error read call information from the server</errorReadCall>
+    <errorSubscribeUser>Error subscribing user updates</errorSubscribeUser>
+    <errorSubscribeCall>Error subscribing call updates</errorSubscribeCall>
+    <errorStartingConnection>Error of starting connection</errorStartingConnection>
+    <notSupportedPlatform>Not supported platform</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
+    <connectionFailed>Connection failed</connectionFailed>
+    <audioVideoRequired>Audio and/or video required to place a call</audioVideoRequired>
+    <mediaDevicesError>Error getting user media devices (audio or video)</mediaDevicesError>
+    <noAudioFound>No audio input found</noAudioFound>
+    <butVideoFound>But video found</butVideoFound>
     
     <admin>
       <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>An URL is mandatory for server.</serverUrlMandatory>
+      <serverUrlMandatory>An URL is mandatory for server</serverUrlMandatory>
+      <usernameMandatory>Username is mandatory</usernameMandatory>
+      <credentialMandatory>Credential is mandatory</credentialMandatory>
       <errorSavingSettings>Error saving settings</errorSavingSettings>
     </admin>
   </webrtc>

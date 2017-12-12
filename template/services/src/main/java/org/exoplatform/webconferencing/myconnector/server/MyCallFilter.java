@@ -44,6 +44,7 @@ import org.gatein.common.logging.LoggerFactory;
  * @version $Id: MyCallFilter.java 00000 Mar 14, 2017 pnedonosko $
  * 
  */
+@Deprecated
 public class MyCallFilter extends AbstractFilter implements Filter {
 
   /** The Constant LOG. */

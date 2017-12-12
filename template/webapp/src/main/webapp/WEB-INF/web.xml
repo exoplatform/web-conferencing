@@ -59,7 +59,7 @@
   </servlet-mapping>
   <servlet-mapping>
     <servlet-name>MyCallServlet</servlet-name>
-    <url-pattern>/mycallservlet</url-pattern>
+    <url-pattern>/call</url-pattern>
   </servlet-mapping>
   
 </web-app>
