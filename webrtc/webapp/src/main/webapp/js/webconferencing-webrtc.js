@@ -196,8 +196,8 @@
 									callId = "p/" + partsAsc.join("@");
 								}
 								var link = settings.callUri + "/" + callId;
-								var $button = $("<a id='" + linkId + "' title='" + target.title + "'"
-											+ " class='webrtcCallAction'>"
+								var $button = $("<a id='" + linkId + "' title='" + message("callButtonTip") + "'"
+											+ " class='webrtcCallAction' data-placement='top' data-toggle='tooltip'>"
 											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + message("call") + "</span></a>");
 								// Check if this call isn't running and joined by this user and disable the button if so
@@ -257,6 +257,10 @@
 								});
 								// Assign target ID to the button for later use on started event in init()
 								$button.data("targetid", target.id);
+								setTimeout(function() {
+									// Wait for promise done handlers outside and enable tooltip for added by them preferred (default) button
+									$button.filter(".webrtcCallAction.preferred").tooltip();
+								}, 200);
 								button.resolve($button);
 							}).fail(function(err) {
 								log("Error getting context details for " + self.getTitle() + ": " + err);
@@ -272,74 +276,6 @@
 					button.reject("WebRTC not supported in this browser: " + navigator.userAgent);
 				}
 				return button.promise();
-			};
-			
-			var acceptCallPopover_old = function(callerLink, callerAvatar, callerMessage, playRingtone) {
-				// TODO show an info popover in bottom right corner of the screen as specified in CALLEE_01
-				log(">> acceptCallPopover '" + callerMessage + "' caler:" + callerLink + " avatar:" + callerAvatar);
-				var process = $.Deferred();
-				var $call = $("div.uiIncomingCall");
-				if ($call.length > 0) {
-					try {
-						$call.dialog("destroy");
-					} catch(e) {
-						log(">>> acceptCallPopover: error destroing prev dialog ", e);
-					}
-					$call.remove();
-				}
-				$call = $("<div class='uiIncomingCall' title='" + message("incomingCall") + "'></div>");
-				//<span class='ui-icon messageIcon' style='float:left; margin:12px 12px 20px 0;'></span>
-				$call.append($("<div class='messageAuthor'><a target='_blank' href='" + callerLink + "' class='avatarMedium'>"
-					+ "<img src='" + callerAvatar + "'></a></div>"
-					+ "<div class='messageBody'><div class='messageText'>" + callerMessage + "</div></div>"));
-				// eXo UX guides way
-				//$call.append($("<ul class='singleMessage popupMessage'><li><span class='messageAuthor'>"
-				//		+ "<a class='avatarMedium'><img src='" + callerAvatar + "'></a></span>"
-				//		+ "<span class='messageText'>" + callerMessage + "</span></li></ul>"));
-				$(document.body).append($call);
-				var dialogSettings = {
-					resizable: false,
-					height: "auto",
-					width: 400,
-					modal: false,
-					buttons: {}
-				};
-				dialogSettings.buttons[message("answer")] = function() {
-			  	process.resolve("accepted");
-			  	$call.dialog("close");
-			  };
-			  dialogSettings.buttons[message("decline")] = function() {
-			  	process.reject("declined");
-			  	$call.dialog("close");
-				};
-				$call.dialog(dialogSettings);
-				$call.on("dialogclose", function( event, ui ) {
-					if (process.state() == "pending") {
-						process.reject("closed");
-					}
-				});
-				process.notify($call);
-				if (playRingtone) {
-					// Start ringing incoming sound only if requested (depends on user status)
-					var $ring = $("<audio loop autoplay style='display: none;'>" // controls 
-								+ "<source src='/webrtc/audio/line.mp3' type='audio/mpeg'>"  
-								+ "Your browser does not support the audio element.</audio>");
-					$(document.body).append($ring);
-					process.fail(function() {
-						var $cancel = $("<audio autoplay style='display: none;'>" // controls 
-									+ "<source src='/webrtc/audio/manner_cancel.mp3' type='audio/mpeg'>"  
-									+ "Your browser does not support the audio element.</audio>");
-						$(document.body).append($cancel);
-						setTimeout(function() {
-							$cancel.remove();
-						}, 3000);
-					});
-					process.always(function() {
-						// Stop incoming ringing on dialog completion
-						$ring.remove();
-					});					
-				}
-				return process.promise();
 			};
 			
 			var acceptCallPopover = function(callerLink, callerAvatar, callerMessage, playRingtone) {
@@ -468,7 +404,6 @@
 													var callerMessage = call.owner.title + " " + message("callingYou");
 													var callerRoom = callerId;
 													call.title = call.owner.title; // for callee the call title is a caller name
-													//
 													webConferencing.getUserStatus(currentUserId).done(function(user) {
 														var popover = acceptCallPopover(callerLink, callerAvatar, callerMessage, !user || user.status == "available" || user.status == "away");
 														popover.progress(function($call) {
@@ -575,11 +510,13 @@
 						$popup.find("[data-toggle='tooltip']").tooltip();
 						function inputWrongMark() {
 							var $input = $(this);
-							if ($input.val()) {
-								$input.removeClass("wrongValue");
-							} else if (!$input.hasClass("wrongValue")) {
-								$input.addClass("wrongValue");
-							}
+							//setTimeout(function() {
+								if ($input.val()) {
+									$input.removeClass("wrongValue");
+								} else if (!$input.hasClass("wrongValue")) {
+									$input.addClass("wrongValue");
+								}								
+							//}, 50);
 						}
 						function addIceServer(ices, $sibling) {
 							var $ices = $serverTemplate.clone();
@@ -639,9 +576,9 @@
 							var $credentialsGroup = $ices.find(".credentialsGroup");
 							var $enabler = $credentialsGroup.find(".enabler input");
 							var $credentials = $credentialsGroup.find(".credentials");
+							var $username = $credentials.find("input[name='username']");
+							var $credential = $credentials.find("input[name='credential']");
 							$enabler.click(function() {
-								var $username = $credentials.find("input[name='username']");
-								var $credential = $credentials.find("input[name='credential']");
 								if ($enabler.prop("checked") && !$credentials.is(":visible")) {
 									if (ices.username && ices.credential) {
 										$username.val(ices.username);
@@ -690,6 +627,7 @@
 						});
 						// Save action
 						$settings.find(".saveButton").click(function() {
+							$iceServers.find("input[type='text']").change(); // force firing 'change' to get autofilled values also
 							setTimeout(function() { // timeout to let change events populate config object
 								// Validation to do not have an ICE server w/o URL
 								var confErrors = [];
@@ -714,7 +652,7 @@
 								}
 								if (confErrors.length == 0) {
 									var rtcConfStr = JSON.stringify(rtcConfiguration);
-									log("Saving RTC configuration: " + rtcConfStr);
+									//log("Saving RTC configuration: " + rtcConfStr);
 									postSettings({
 										rtcConfiguration : rtcConfStr
 									}).done(function(savedRtcConfig) {
@@ -727,7 +665,7 @@
 								} else {
 									webConferencing.showWarn(message("admin.wrongSettings"), confErrors.join(". "));
 								}
-							}, 100);
+							}, 200);
 						});
 						$settings.find("a.uiIconClose, .cancelButton").click(function(){
 							$popup.hide();

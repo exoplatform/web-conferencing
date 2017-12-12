@@ -8,6 +8,7 @@
     <incomingCall>Incoming call</incomingCall>
     <answer>Answer</answer>
     <decline>Decline</decline>
+    <callButtonTip>Click to start a video call</callButtonTip>
     
     <errorAddCall>Error saving call</errorAddCall>
     <errorGettingCall>Error opening call</errorGettingCall>
