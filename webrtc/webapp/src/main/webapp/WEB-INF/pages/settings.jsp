@@ -9,6 +9,10 @@
 	<div class="popupHeader ClearFix">
 		<a aria-hidden="true" class="uiIconClose pull-right">&nbsp;</a> <span class="PopupTitle popupTitle">${messages["webrtc.admin.title"]}</span>
 	</div>
+	
+	<div class="alert alert-error" id="" style="display: none;">
+    <i class="uiIconError"></i><span class="errorMessage"></span>
+	</div>
 
 	<div class="popupContent">
 		<p class="title">${messages["webrtc.admin.servers"]}&nbsp;&nbsp;<i class="uiIconInformation uiIconBlue" data-placement="top" data-toggle="tooltip"
@@ -18,8 +22,8 @@
 		<div class="iceServers">
 			<div class="control-group iceServer" style="display: none;">
 				<label class="control-label" for="url">${messages["webrtc.admin.url"]} :</label>
-				<div class="control-group urlsGroup">
-					<div class="urlGroup">
+				<div class="urlsGroup">
+					<div class="control-group urlGroup">
 						<input name="url" placeholder="${messages["webrtc.admin.serverUrl"]}" type="text" />
 						<div class="actions-container">
 							<i class="uiIconTrash uiIconLightGray" data-placement="top" data-toggle="tooltip" title="Remove server"></i>
@@ -31,7 +35,7 @@
 							<div class="control-group">
 								<span class="uiCheckbox">
 									<input type="checkbox" class="checkbox">
-									<span>${messages["webrtc.admin.credential"]}</span>
+									<span>${messages["webrtc.admin.credentials"]}</span>
 								</span>
 							</div>
 						</div>
@@ -45,7 +49,7 @@
 							<div class="control-group">
 								<label class="control-label" for="credential">${messages["webrtc.admin.credential"]}</label>
 								<div class="controls">
-									<input name="credential" type="text" placeholder="${messages["webrtc.admin.credential"]}...">
+									<input name="credential" type="password" placeholder="${messages["webrtc.admin.credential"]}...">
 								</div>
 							</div>
 						</div>

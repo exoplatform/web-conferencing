@@ -255,7 +255,7 @@
 										log("Call disabled to " + target.id);
 									}
 								});
-                                setTimeout(function(){
+                setTimeout(function(){
 									$button.filter(".webrtcCallAction.preferred").tooltip();
 								},200)
 								// Assign target ID to the button for later use on started event in init()
@@ -491,10 +491,7 @@
 			};
 			
 			this.showSettings = function(context) {
-				log("> showSettings");
-				
 				var process = $.Deferred();
-				
 				// load HTML with settings
 				var $popup = $("#webrtc-settings-popup");
 				if ($popup.length == 0) {
@@ -511,12 +508,23 @@
 						var rtcConfiguration = $.extend(true, {}, settings.rtcConfiguration);
 						//activate tooltip
 						$popup.find("[data-toggle='tooltip']").tooltip();
-						function inputWrongMark() {
-							var $input = $(this);
+						var $error = $settings.find(".alert-error");
+						function showConfError(messageKey) {
+							var messageText = message(messageKey);
+							//var title = message("admin.wrongSettings");
+							$error.find(".errorMessage").text(messageText);
+							$error.show();
+						}
+						function hideConfError() {
+							$error.hide();
+						}
+						function inputWrongMark($input) {
+							var $group = $input.closest(".control-group");
 							if ($input.val()) {
-								$input.removeClass("wrongValue");
-							} else if (!$input.hasClass("wrongValue")) {
-								$input.addClass("wrongValue");
+								$group.removeClass("error");
+								hideConfError();
+							} else if (!$input.hasClass("error")) {
+								$group.addClass("error");
 							}								
 						}
 						function addIceServer(ices, $sibling) {
@@ -548,12 +556,17 @@
 								}
 								var $url = $urlGroup.find("input[name='url']");
 								$url.val(url);
-								if (!url) {
-									$url.addClass("wrongValue");
-								}
-								$url.on("input", inputWrongMark);
+								$url.on("input", function() {
+									inputWrongMark($url);
+								});
 								$url.change(function() {
-									ices.urls[ui] = $(this).val();
+									inputWrongMark($url);
+									var val = $url.val();
+									if (val) {
+										ices.urls[ui] = val;
+									} else {
+										ices.urls[ui] = $url;
+									}
 								});
 							});
 							// Server removal (trash icon) - do with confirmation
@@ -581,25 +594,40 @@
 							var $credential = $credentials.find("input[name='credential']");
 							$enabler.click(function() {
 								if ($enabler.prop("checked") && !$credentials.is(":visible")) {
-									if (ices.username && ices.credential) {
+									if (ices.username) {
 										$username.val(ices.username);
+									} else {
+										ices.username = null;
+										$username.val("");
+									}
+									if (ices.credential) {
 										$credential.val(ices.credential);
 									} else {
-										ices.username = "";
-										ices.credential = "";
-										$username.val("");
+										ices.credential = null;
 										$credential.val("");
-										$username.add($credential).addClass("wrongValue");
 									}
 									if (!$credentials.data("initialized")) {
 										$credentials.data("initialized", true);
-										// Field marker for invalid value
-										$username.add($credential).on("input", inputWrongMark);
+										$username.add($credential).on("input", function() {
+											inputWrongMark($(this));
+										});
 										$username.change(function() {
-											ices.username = $(this).val();
+											inputWrongMark($username);
+											var val = $username.val();
+											if (val) {
+												ices.username = val;
+											} else {
+												ices.username = $username;
+											}
 										});
 										$credential.change(function() {
-											ices.credential = $(this).val();
+											inputWrongMark($credential);
+											var val = $credential.val();
+											if (val) {
+												ices.credential = val;
+											} else {
+												ices.credential = $credential;
+											}
 										});
 									}
 									$credentials.show();
@@ -611,7 +639,7 @@
 									ices.credential = null;
 								}
 							});
-							if (typeof ices.username == "string" && typeof ices.credential == "string") {
+							if (typeof ices.username == "string" || typeof ices.credential == "string") {
 								$enabler.click();
 							}
 							$ices.show();
@@ -627,33 +655,37 @@
 							addIceServer(ices);
 						});
 						// Save action
-						$settings.find(".saveButton").click(function() {
-							$iceServers.find("input[type='text']").change(); // force firing 'change' to get autofilled values also
-							setTimeout(function() { // timeout to let change events populate config object
-								// Validation to do not have an ICE server w/o URL
-								var confErrors = [];
-								for (var si=0; si<rtcConfiguration.iceServers.length; si++) {
-									var is = rtcConfiguration.iceServers[si];
-									for (var ui=0; ui<is.urls.length; ui++) {
-										if (!is.urls[ui]) {
-											// Empty URL
-											confErrors.push(message("admin.serverUrlMandatory"));
-											break;
-										}
-									}
-									if (typeof is.username == "string" && !is.username) {
-										confErrors.push(message("admin.usernameMandatory"));
-									}
-									if (typeof is.credential == "string" && !is.credential) {
-										confErrors.push(message("admin.credentialMandatory"));
-									}
-									if (confErrors.length != 0) {
-										break;
+						function checkConfError() {
+							for (var si=0; si<rtcConfiguration.iceServers.length; si++) {
+								var is = rtcConfiguration.iceServers[si];
+								for (var ui=0; ui<is.urls.length; ui++) {
+									var url = is.urls[ui];
+									if (typeof url === "object" && url instanceof $) {
+										showConfError("admin.serverUrlMandatory");
+										url.focus();
+										return false;
 									}
 								}
-								if (confErrors.length == 0) {
+								if (typeof is.username === "object" && is.username instanceof $) { // typeof is.username == "string" && !is.username
+									showConfError("admin.usernameMandatory");
+									is.username.focus();
+									return false;
+								}
+								if (typeof is.credential === "object" && is.credential instanceof $) { // typeof is.credential == "string" && !is.credential
+									showConfError("admin.credentialMandatory");
+									is.credential.focus();
+									return false;
+								}
+							}			
+							return true;
+						}
+						$settings.find(".saveButton").click(function() {
+							$iceServers.find("input[type='text'], input[type='password']").change(); // force firing 'change' to get autofilled values also
+							setTimeout(function() { // timeout to let change events populate config object
+								// Validation to do not have an ICE server w/o URL
+								if (checkConfError()) {
 									var rtcConfStr = JSON.stringify(rtcConfiguration);
-									//log("Saving RTC configuration: " + rtcConfStr);
+									//log("Saving RTC configuration: " + rtcConfStr); // TODO comment it
 									postSettings({
 										rtcConfiguration : rtcConfStr
 									}).done(function(savedRtcConfig) {
@@ -662,9 +694,7 @@
 									}).fail(function(err) {
 										log("ERROR saving settings", err);
 										webConferencing.showError(message("admin.errorSavingSettings"), webConferencing.errorText(err));
-									});
-								} else {
-									webConferencing.showWarn(message("admin.wrongSettings"), confErrors.join(". "));
+									});									
 								}
 							}, 200);
 						});

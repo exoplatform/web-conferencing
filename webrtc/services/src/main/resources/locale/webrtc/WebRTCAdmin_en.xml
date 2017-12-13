@@ -7,7 +7,7 @@
       <serversTip>STUN/TURN servers are required to ensure web conferencing calls  work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum accessibility.</serversTip>
       <url>URL</url>
       <serverUrl>Server URL...</serverUrl>
-      <credential>Credentials</credential>
+      <credentials>Credentials</credentials>
       <username>Username</username>
       <credential>Credential</credential>
       <save>Save</save>
