@@ -174,6 +174,20 @@
 				return process.promise();
 			};
 			
+			var setButtonCall = function($button, callId) {
+				if (!$button.hasClass(CALL_DISABLED_CLASS)) {
+					$button.addClass(CALL_DISABLED_CLASS);
+				}
+				$button.data("callid", callId);
+				$button.attr("title", message("callRunningTip"));
+			};
+			
+			var removeButtonCall = function($button) {
+				$button.removeClass(CALL_DISABLED_CLASS);
+				$button.removeData("callid"); // we don't touch targetid, it managed by callButton()
+				$button.attr("title", message("callStartTip"));
+			};
+			
 			this.callButton = function(context) {
 				var button = $.Deferred();
 				if (self.isSupportedPlatform()) {
@@ -196,7 +210,7 @@
 									callId = "p/" + partsAsc.join("@");
 								}
 								var link = settings.callUri + "/" + callId;
-								var $button = $("<a id='" + linkId + "' title='" + message("callButtonTip") + "'"
+								var $button = $("<a id='" + linkId + "' title='" + message("callStartTip") + "'"
 											+ " class='webrtcCallAction' data-placement='top' data-toggle='tooltip'>"
 											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + message("call") + "</span></a>");
@@ -206,10 +220,7 @@
 										var p = call.participants[pi];
 										if (p.id == context.currentUser.id && p.state == "joined") {
 											log(">>> Call " + callId + " already joined by " + context.currentUser.id);
-											if (!$button.hasClass(CALL_DISABLED_CLASS)) {
-												$button.addClass(CALL_DISABLED_CLASS);
-											}
-											$button.data("callid", callId);
+											setButtonCall($button, callId);
 											break;
 										}
 									}
@@ -241,8 +252,7 @@
 												callWindow.document.title = message("callTo") + " " + target.title;
 												callWindow.eXo.webConferencing.startCall(call).done(function(state) {
 													log("<<<< Call " + state + " " + callId);
-													$button.addClass(CALL_DISABLED_CLASS); // should be removed on stop/leaved event in init()
-													$button.data("callid", callId);
+													setButtonCall($button, callId); // should be removed on stop/leaved event in init()
 												}).fail(function(err) {
 													webConferencing.showError(message("errorStartingCall"), webConferencing.errorText(err));
 												});
@@ -355,11 +365,8 @@
 						$(".webrtcCallAction").each(function() {
 							var $button = $(this);
 							if ($button.data("targetid") == targetId) {
-								if (!$button.hasClass(CALL_DISABLED_CLASS)) {
-									//log(">> lockCallButton " + targetId);
-									$button.addClass(CALL_DISABLED_CLASS);
-									$button.data("callid", callId);
-								}
+								//log(">> lockCallButton " + targetId);
+								setButtonCall($button, callId);
 							}
 						});
 					};
@@ -368,8 +375,7 @@
 							var $button = $(this);
 							if ($button.data("callid") == callId) {
 								//log(">> unlockCallButton " + callId + " " + $button.data("targetid"));
-								$button.removeClass(CALL_DISABLED_CLASS);
-								$button.removeData("callid"); // we don't touch targetid, it managed by callButton()
+								removeButtonCall($button);
 							}
 						});
 					};

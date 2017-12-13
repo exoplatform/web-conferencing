@@ -907,6 +907,13 @@ public class WebConferencingService implements Startable {
     // XXX SpaceService done in crappy way and we need reference it after the container start only, otherwise
     // it will fail the whole server start due to not found JCR service
     this.spaceService = ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(SpaceService.class);
+    
+    // For a case when calls was active and server stopped, then calls wasn't marked as Stopped and need remove them.
+    try {
+      deleteAllUserCalls();
+    } catch (Throwable e) {
+      LOG.error("Error cleaning calls from previous server execution", e);
+    }
   }
 
   /**
@@ -1081,6 +1088,7 @@ public class WebConferencingService implements Startable {
    * @return the call info
    * @throws Exception the exception
    */
+  @Deprecated // TODO not used
   protected CallInfo readCallByOwnerId(String ownerId) throws Exception {
     String callId = readOwnerCallId(ownerId);
     if (callId != null) {
@@ -1130,6 +1138,20 @@ public class WebConferencingService implements Startable {
       String safeCallId = URLEncoder.encode(call.getId(), "UTF-8");
       settingService.remove(Context.GLOBAL, Scope.GLOBAL.id(CALL_ID_SCOPE_NAME), safeCallId);
       settingService.remove(Context.GLOBAL, Scope.GLOBAL.id(CALL_OWNER_SCOPE_NAME), call.getOwner().getId());
+    } finally {
+      Scope.GLOBAL.id(initialGlobalId);
+    }
+  }
+  
+  /**
+   * Delete all user calls. This will not touch any group call. For use on server start to cleanup the storage.
+   *
+   * @throws Exception the exception
+   */
+  protected void deleteAllUserCalls() throws Exception {
+    final String initialGlobalId = Scope.GLOBAL.getId();
+    try {
+      settingService.remove(Context.GLOBAL, Scope.GLOBAL.id(CALL_ID_SCOPE_NAME));
     } finally {
       Scope.GLOBAL.id(initialGlobalId);
     }
@@ -1190,6 +1212,7 @@ public class WebConferencingService implements Startable {
    * @param ownerId the owner id
    */
   protected void deleteOwnerCallId(String ownerId) {
+    // TODO run this on space or chat room removal
     final String initialGlobalId = Scope.GLOBAL.getId();
     try {
       settingService.remove(Context.GLOBAL, Scope.GLOBAL.id(CALL_OWNER_SCOPE_NAME), ownerId);

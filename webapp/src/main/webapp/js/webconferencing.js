@@ -1368,6 +1368,7 @@
 											$first.children(".callTitle").remove();
 											$first.children(".uiIconLightGray").add($container.find(".dropdown-toggle > .uiIconLightGray"))
 													.removeClass("uiIconLightGray").addClass("uiIconWhite");
+											$container.find(".dropdown-toggle").removeClass("btn").addClass("btn-mini");
 											$container.find(".dropdown-menu").addClass("pull-right");
 											$titleBar.prepend($wrapper);
 											log("<< initMiniChat DONE [" + context.roomTitle + "] for " + currentUser.id);
