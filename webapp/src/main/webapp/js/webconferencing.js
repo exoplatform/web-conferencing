@@ -1341,16 +1341,17 @@
 		var initMiniChat = function() {
 			var $miniChat = $(".mini-chat").first();
 			var $fullName = $miniChat.find(".fullname");
-			var $titleBar = $miniChat.find(".title-right");
 			if (typeof chatApplication === "undefined" && $fullName.length > 0 && chatNotification) {
-				var addMiniChatCallButton = function() {
-					log(">> initMiniChat for " + currentUser.id);
-					if ($miniChat.data("minichatcallinitialized")) {
-						log("<< initMiniChat CANCELED < Already initialized for " + currentUser.id);
-					} else {
+				if ($miniChat.data("minichatcallinitialized")) {
+					log("<< initMiniChat CANCELED < Already initialized [" + $fullName.text().trim() + "] for " + currentUser.id);
+				} else {
+					$miniChat.data("minichatcallinitialized", true);
+					var process = $.Deferred();
+					var addMiniChatCallButton = function() {
 						var roomTitle = $fullName.text().trim();
+						log(">> initMiniChat [" + roomTitle + "] for " + currentUser.id);
+						var $titleBar = $miniChat.find(".title-right");
 						if ($titleBar.length > 0 && roomTitle.length > 0) {
-							$miniChat.data("minichatcallinitialized", true);
 							var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
 							$wrapper.children().remove(); // clean the previous state, if have one
 							// Wait a bit for completing Chat workers
@@ -1369,42 +1370,38 @@
 													.removeClass("uiIconLightGray").addClass("uiIconWhite");
 											$container.find(".dropdown-menu").addClass("pull-right");
 											$titleBar.prepend($wrapper);
-											log("<< initMiniChat DONE " + context.roomTitle + " for " + currentUser.id);
-											setTimeout(function() {
-												// finally we need reset it to let be initialized for other users 
-												$miniChat.removeData("minichatcallinitialized");
-											}, 2500);
+											log("<< initMiniChat DONE [" + context.roomTitle + "] for " + currentUser.id);
 										});
 										initializer.fail(function(error) {
 											if (error) {
-												log("<< initMiniChat ERROR " + context.roomTitle + " for " + currentUser.id + ": " + error);
+												log("<< initMiniChat ERROR [" + context.roomTitle + "] for " + currentUser.id + ": " + error);
 												$miniChat.removeData("minichatcallinitialized");												
 											}
 										});
 									} else {
-										log("<< initMiniChat WARN no room found for " + roomTitle, err);
+										log("<< initMiniChat WARN no room found for [" + roomTitle + "]", err);
 									}
 								}).fail(function(err) {
 									log("<< initMiniChat ERROR getting room info from chatServer: ", err);
 								});
-							}, 1000);
+							}, 750);
 						} else {
 							log("<< initMiniChat CANCELED mini-chat not found or empty");
 						}
-					}
-				};
-				addMiniChatCallButton();
-				// run DOM listener to know when mini chat will be construct (by notif.js script)
-				var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
-				var observer = new MutationObserver(function(mutations) {
+					};
 					addMiniChatCallButton();
-				});
-				observer.observe($fullName.get(0), {
-					subtree : false,
-					childList : true,
-					attributes : false,
-					characterData : false
-				});
+					// run DOM listener to know when mini chat will be completed (by notif.js script)
+					var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+					var observer = new MutationObserver(function(mutations) {
+						addMiniChatCallButton();
+					});
+					observer.observe($fullName.get(0), {
+						subtree : false,
+						childList : true,
+						attributes : false,
+						characterData : false
+					});
+				};
 			}
 		};
 

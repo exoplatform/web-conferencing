@@ -26,14 +26,14 @@
 									target = document.getElementById("room-users");
 									targetId = "chat-application";
 								} else {
-									target = document.getElementById("RightBody");
+									target = document.getElementById("UIActivitiesLoader");
 									if (target) {
-										targetId = "RightBody";
+										targetId = "UIActivitiesLoader";
 									} else {
 										target = document.getElementById("UIPortalApplication");
 										if (target) {
 											targetId = "UIPortalApplication"; // XXX this may cause CPU loading on intranet home
-											console.log("[webconferencing_portlet] Portal's RightBody not found, will use the whole portal app for updates");
+											console.log("[webconferencing_portlet] WARN Portal's UIActivitiesLoader not found, will use the whole portal app for updates");
 										}
 									}
 								}
