@@ -509,20 +509,32 @@
 						//activate tooltip
 						$popup.find("[data-toggle='tooltip']").tooltip();
 						var $error = $settings.find(".alert-error");
-						function showConfError(messageKey) {
+						function showConfError(messageKey, $source) {
 							var messageText = message(messageKey);
 							//var title = message("admin.wrongSettings");
 							$error.find(".errorMessage").text(messageText);
 							$error.show();
+							if ($source) {
+								$error.data("error_source", $source);
+							}
 						}
-						function hideConfError() {
-							$error.hide();
+						function hideConfError($source) {
+							if ($source) {
+								var $thisSource = $error.data("error_source");
+								if ($thisSource && $thisSource.is($source)) {
+									$error.hide();
+									$error.removeData("error_source");
+								}
+							} else {
+								$error.hide();
+								$error.removeData("error_source");
+							}
 						}
 						function inputWrongMark($input) {
 							var $group = $input.closest(".control-group");
 							if ($input.val()) {
 								$group.removeClass("error");
-								hideConfError();
+								hideConfError($input);
 							} else if (!$input.hasClass("error")) {
 								$group.addClass("error");
 							}								
@@ -661,18 +673,18 @@
 								for (var ui=0; ui<is.urls.length; ui++) {
 									var url = is.urls[ui];
 									if (typeof url === "object" && url instanceof $) {
-										showConfError("admin.serverUrlMandatory");
+										showConfError("admin.serverUrlMandatory", url);
 										url.focus();
 										return false;
 									}
 								}
 								if (typeof is.username === "object" && is.username instanceof $) { // typeof is.username == "string" && !is.username
-									showConfError("admin.usernameMandatory");
+									showConfError("admin.usernameMandatory", is.username);
 									is.username.focus();
 									return false;
 								}
 								if (typeof is.credential === "object" && is.credential instanceof $) { // typeof is.credential == "string" && !is.credential
-									showConfError("admin.credentialMandatory");
+									showConfError("admin.credentialMandatory", is.credential);
 									is.credential.focus();
 									return false;
 								}

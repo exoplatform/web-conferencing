@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import org.exoplatform.commons.api.settings.SettingService;
@@ -36,6 +37,7 @@ import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ObjectParameter;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.resources.ResourceBundleService;
 import org.exoplatform.webconferencing.CallProvider;
 import org.exoplatform.webconferencing.CallProviderException;
 import org.exoplatform.webconferencing.UserInfo.IMInfo;
@@ -120,7 +122,7 @@ public class WebrtcProvider extends CallProvider {
 
     /** The call URI. */
     protected String callUri;
-    
+
     /** The locale. */
     protected Locale locale;
 
@@ -134,7 +136,7 @@ public class WebrtcProvider extends CallProvider {
       this.callUri = callUri;
       return this;
     }
-    
+
     /**
      * Locale for internationalized messages to load in the settings.
      *
@@ -372,6 +374,9 @@ public class WebrtcProvider extends CallProvider {
 
   /** The settings service. */
   protected final SettingService settingService;
+  
+  /** The resource bundle service. */
+  protected final ResourceBundleService resourceBundleService;
 
   /** The rtc configuration. */
   protected RTCConfiguration     rtcConfiguration;
@@ -381,12 +386,14 @@ public class WebrtcProvider extends CallProvider {
    *
    * @param params the params
    * @param settingService the setting service
+   * @param resourceBundleService the resource bundle service
    * @throws ConfigurationException the configuration exception
    */
-  public WebrtcProvider(InitParams params, SettingService settingService) throws ConfigurationException {
+  public WebrtcProvider(InitParams params, SettingService settingService, ResourceBundleService resourceBundleService) throws ConfigurationException {
     super(params);
-
+    
     this.settingService = settingService;
+    this.resourceBundleService = resourceBundleService;
 
     // try read RTC config from storage first
     RTCConfiguration rtcConfiguration;
@@ -482,6 +489,26 @@ public class WebrtcProvider extends CallProvider {
   @Override
   public String getTitle() {
     return WEBRTC_TITLE;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String getDescription() {
+    return this.getDescription(null);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String getDescription(Locale locale) {
+    if (locale == null) {
+      locale = Locale.getDefault();
+    }
+    ResourceBundle res = resourceBundleService.getResourceBundle("locale.webrtc.WebRTCAdmin", locale);
+    return res.getString("webrtc.admin.description");
   }
 
   /**

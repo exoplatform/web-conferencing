@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -97,6 +98,7 @@ public class RESTWebConferencingService implements ResourceContainer {
    * Gets the provider config.
    *
    * @param uriInfo the uri info
+   * @param request the request
    * @param type the type
    * @return the provider config
    */
@@ -104,12 +106,14 @@ public class RESTWebConferencingService implements ResourceContainer {
   @RolesAllowed("administrators")
   @Path("/provider/{type}/configuration")
   @Deprecated // TODO not used
-  public Response getProviderConfig(@Context UriInfo uriInfo, @PathParam("type") String type) {
+  public Response getProviderConfig(@Context UriInfo uriInfo,
+                                    @Context HttpServletRequest request,
+                                    @PathParam("type") String type) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
       try {
-        CallProviderConfiguration conf = webConferencing.getProviderConfiguration(type);
+        CallProviderConfiguration conf = webConferencing.getProviderConfiguration(type, request.getLocale());
         if (conf != null) {
           return Response.ok().cacheControl(cacheControl).entity(conf).build();
         } else {
@@ -137,6 +141,7 @@ public class RESTWebConferencingService implements ResourceContainer {
    * Post provider config.
    *
    * @param uriInfo the uri info
+   * @param request the request
    * @param type the type
    * @param active the active
    * @return the response
@@ -145,13 +150,14 @@ public class RESTWebConferencingService implements ResourceContainer {
   @RolesAllowed("administrators")
   @Path("/provider/{type}/configuration")
   public Response postProviderConfig(@Context UriInfo uriInfo,
+                                     @Context HttpServletRequest request,
                                      @PathParam("type") String type,
                                      @FormParam("active") String active) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
       try {
-        CallProviderConfiguration conf = webConferencing.getProviderConfiguration(type);
+        CallProviderConfiguration conf = webConferencing.getProviderConfiguration(type, request.getLocale());
         if (conf != null) {
           boolean activeVal = Boolean.valueOf(active);
           if (activeVal != conf.isActive()) {
@@ -184,17 +190,18 @@ public class RESTWebConferencingService implements ResourceContainer {
    * Gets the provider configs.
    *
    * @param uriInfo the uri info
+   * @param request the request
    * @return the provider configs
    */
   @GET
   @RolesAllowed("administrators")
   @Path("/providers/configuration")
-  public Response getProviderConfigs(@Context UriInfo uriInfo) {
+  public Response getProviderConfigs(@Context UriInfo uriInfo, @Context HttpServletRequest request) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
       try {
-        Set<CallProviderConfiguration> confs = webConferencing.getProviderConfigurations();
+        Set<CallProviderConfiguration> confs = webConferencing.getProviderConfigurations(request.getLocale());
         return Response.ok().cacheControl(cacheControl).entity(confs).build();
       } catch (Throwable e) {
         LOG.error("Error reading providers configuration by '" + currentUserName + "'", e);

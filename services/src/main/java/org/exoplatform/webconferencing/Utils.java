@@ -175,6 +175,21 @@ public class Utils {
     }
     return resMap;
   }
+  
+  /**
+   * Gets the resource message.
+   *
+   * @param bundleName the bundle name
+   * @param locale the locale
+   * @param messageKey the message key
+   * @return the resource message
+   */
+  public static String getResourceMessage(String bundleName, Locale locale, String messageKey) {
+    ExoContainer exo = ExoContainerContext.getCurrentContainer();
+    ResourceBundleService service = exo.getComponentInstanceOfType(ResourceBundleService.class);
+    ResourceBundle res = service.getResourceBundle(bundleName, locale);
+    return res.getString(messageKey);
+  }
 
   /**
    * As JSON.

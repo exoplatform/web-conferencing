@@ -18,6 +18,8 @@
  */
 package org.exoplatform.webconferencing.myconnector;
 
+import java.util.Locale;
+
 import org.exoplatform.container.configuration.ConfigurationException;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.social.core.profile.settings.IMType;
@@ -119,7 +121,7 @@ public class MyConnectorProvider extends CallProvider {
   public MyConnectorProvider(UserProfileSettingsService profileSettings, InitParams params) throws ConfigurationException {
     super(params);
 
-    // it's WAR name here, 
+    // it's WAR name here,
     this.url = "/myconnector";
     // if need set this from external you can introduce a configuration parameter
     // String url = this.config.get(CONFIG_URL);
@@ -224,6 +226,15 @@ public class MyConnectorProvider extends CallProvider {
   @Override
   public String getTitle() {
     return TITLE;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String getDescription(Locale locale) {
+    // TODO Implement i18n description of the provider
+    return super.getDescription(locale);
   }
 
   /**

@@ -18,6 +18,8 @@
  */
 package org.exoplatform.webconferencing;
 
+import java.util.Locale;
+
 /**
  * Provider configuration object for saving (in Admin UI) and
  * 
@@ -32,17 +34,18 @@ public class CallProviderConfiguration {
    * From provider.
    *
    * @param provider the provider
+   * @param locale the locale for provider description, can be <code>null</code>
    * @return the call provider configuration
    */
-  static CallProviderConfiguration fromProvider(CallProvider provider) {
+  static CallProviderConfiguration fromProvider(CallProvider provider, Locale locale) {
     CallProviderConfiguration conf = new CallProviderConfiguration();
     conf.setActive(true);
     conf.setTitle(provider.getTitle());
-    conf.setDescription(provider.getDescription());
+    conf.setDescription(provider.getDescription(locale));
     conf.setType(provider.getType());
     return conf;
   }
-  
+
   /** The type. */
   protected String  type;
 

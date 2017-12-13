@@ -20,6 +20,7 @@ package org.exoplatform.webconferencing;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -38,17 +39,17 @@ import org.exoplatform.webconferencing.UserInfo.IMInfo;
 public abstract class CallProvider extends BaseComponentPlugin {
 
   /** The Constant CONFIG_PROVIDER_ACTIVE. */
-  public static final String          CONFIG_PROVIDER_ACTIVE        = "active";
+  public static final String    CONFIG_PROVIDER_ACTIVE        = "active";
 
   /** The Constant CONFIG_PROVIDER_DESCRIPTION. */
-  public static final String          CONFIG_PROVIDER_DESCRIPTION   = "description";
+  public static final String    CONFIG_PROVIDER_DESCRIPTION   = "description";
 
   /** The Constant CONFIG_PROVIDER_CONFIGURATION. */
-  public static final String          CONFIG_PROVIDER_CONFIGURATION = "provider-configuration";
+  public static final String    CONFIG_PROVIDER_CONFIGURATION = "provider-configuration";
 
   /** The Constant EMAIL_REGEX. */
-  protected static final String       EMAIL_REGEX                   =
-                                                  "^(?=[A-Z0-9][A-Z0-9@._%+-]{5,253}+$)[A-Z0-9._%+-]{1,64}+@(?:(?=[A-Z0-9-]{1,63}+\\.)[A-Z0-9]++(?:-[A-Z0-9]++)*+\\.){1,8}+[A-Z]{2,63}+$";
+  protected static final String EMAIL_REGEX                   =
+                                            "^(?=[A-Z0-9][A-Z0-9@._%+-]{5,253}+$)[A-Z0-9._%+-]{1,64}+@(?:(?=[A-Z0-9-]{1,63}+\\.)[A-Z0-9]++(?:-[A-Z0-9]++)*+\\.){1,8}+[A-Z]{2,63}+$";
 
   /**
    * Call Provider runtime Settings (for serialization in JSON to remote clients).
@@ -56,8 +57,8 @@ public abstract class CallProvider extends BaseComponentPlugin {
   public abstract class Settings {
 
     /** The locale resources. */
-    private final Map<String, String>                  messages = new HashMap<String, String>();
-    
+    private final Map<String, String> messages = new HashMap<String, String>();
+
     /**
      * Checks if is active.
      *
@@ -93,7 +94,7 @@ public abstract class CallProvider extends BaseComponentPlugin {
     public String getTitle() {
       return CallProvider.this.getTitle();
     }
-    
+
     /**
      * Gets the version.
      *
@@ -121,10 +122,9 @@ public abstract class CallProvider extends BaseComponentPlugin {
       this.messages.putAll(messages);
     }
   }
-  
+
   /** The email test. */
-  protected final Pattern             emailTest                     =
-                                                Pattern.compile(EMAIL_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+  protected final Pattern             emailTest = Pattern.compile(EMAIL_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   /** The config. */
   protected final Map<String, String> config;
@@ -205,7 +205,7 @@ public abstract class CallProvider extends BaseComponentPlugin {
   final void setActive(boolean active) {
     this.active = active;
   }
-  
+
   /**
    * Checks if it is a supported type by this provider.
    *
@@ -225,14 +225,26 @@ public abstract class CallProvider extends BaseComponentPlugin {
   public abstract String getTitle();
 
   /**
-   * Technical details description for this provider. Will be used in administrative settings.
+   * Technical description for this provider. Will be used in administrative settings. Provider
+   * implementation can override it to offer own content. By default it will be taken from the plugin
+   * configuration. 
    *
-   * @return the details
+   * @return the description
    */
-  public String getDetails() {
-    return this.getDescription();
+  public String getDescription() {
+    return super.getDescription();
   }
   
+  /**
+   * Gets the technical description for this provider.
+   *
+   * @param locale the locale, can be <code>null</code> then default locale will be assumed.
+   * @return the description in given locale
+   */
+  public String getDescription(Locale locale) {
+    return this.getDescription();
+  }
+
   /**
    * Gets the version.
    *

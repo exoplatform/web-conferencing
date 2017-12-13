@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -485,11 +486,11 @@ public class WebConferencingService implements Startable {
           // other server side action) - then we notify to all participants.
           if (userId == null || !(remove && userId.equals(part.getId()))) {
             fireUserCallStateChanged(part.getId(),
-                              call.getId(),
-                              call.getProviderType(),
-                              CallState.STOPPED,
-                              call.getOwner().getId(),
-                              call.getOwner().getType());
+                                     call.getId(),
+                                     call.getProviderType(),
+                                     CallState.STOPPED,
+                                     call.getOwner().getId(),
+                                     call.getOwner().getType());
           }
           if (remove) {
             // remove from participant's group calls
@@ -524,11 +525,11 @@ public class WebConferencingService implements Startable {
             } else {
               // it's eXo user: fire user listener for started call, but not to the starter (current user)
               fireUserCallStateChanged(part.getId(),
-                                id,
-                                call.getProviderType(),
-                                CallState.STARTED,
-                                call.getOwner().getId(),
-                                call.getOwner().getType());
+                                       id,
+                                       call.getProviderType(),
+                                       CallState.STARTED,
+                                       call.getOwner().getId(),
+                                       call.getOwner().getType());
             }
           }
         }
@@ -690,11 +691,11 @@ public class WebConferencingService implements Startable {
    * @param ownerType the caller type
    */
   protected void fireUserCallStateChanged(String userId,
-                                   String callId,
-                                   String providerType,
-                                   String callState,
-                                   String ownerId,
-                                   String ownerType) {
+                                          String callId,
+                                          String providerType,
+                                          String callState,
+                                          String ownerId,
+                                          String ownerType) {
     // Synchronize on userListeners to have a consistent list of listeners to fire
     Set<UserCallListener> listeners = userListeners.get(userId);
     if (listeners != null) {
@@ -819,9 +820,11 @@ public class WebConferencingService implements Startable {
   /**
    * Gets the provider configurations.
    *
+   * @param locale the locale to apply to provider description, if <code>null</code> a default one will be
+   *          used
    * @return the provider configurations
    */
-  public Set<CallProviderConfiguration> getProviderConfigurations() {
+  public Set<CallProviderConfiguration> getProviderConfigurations(Locale locale) {
     Set<CallProvider> allProviders = new LinkedHashSet<>();
     // Collect all registered providers via configuration
     for (CallProvider registeredProvider : providers.values()) {
@@ -836,7 +839,7 @@ public class WebConferencingService implements Startable {
         CallProviderConfiguration conf = readProviderConfig(p.getType());
         if (conf != null) {
           conf.setTitle(p.getTitle());
-          conf.setDescription(p.getDescription());
+          conf.setDescription(p.getDescription(locale));
           allConfs.add(conf);
         } else {
           addDefault = true;
@@ -846,7 +849,7 @@ public class WebConferencingService implements Startable {
         addDefault = true; // this way we let read and re-save the erroneous config
       }
       if (addDefault) {
-        CallProviderConfiguration defaultConf = CallProviderConfiguration.fromProvider(p);
+        CallProviderConfiguration defaultConf = CallProviderConfiguration.fromProvider(p, locale);
         allConfs.add(defaultConf);
       }
     }
@@ -854,21 +857,32 @@ public class WebConferencingService implements Startable {
   }
 
   /**
+   * Gets the provider configurations.
+   *
+   * @return the provider configurations
+   */
+  public Set<CallProviderConfiguration> getProviderConfigurations() {
+    return this.getProviderConfigurations(Locale.getDefault());
+  }
+
+  /**
    * Gets the provider configuration.
    *
    * @param providerType the provider type
+   * @param locale the locale to apply to provider description, if <code>null</code> a default one will be
+   *          used
    * @return the provider configuration or <code>null</code> if provider not found
    * @throws Exception the exception
    */
-  public CallProviderConfiguration getProviderConfiguration(String providerType) throws Exception {
+  public CallProviderConfiguration getProviderConfiguration(String providerType, Locale locale) throws Exception {
     CallProvider p = getProvider(providerType);
     if (p != null) {
       CallProviderConfiguration conf = readProviderConfig(p.getType());
       if (conf == null) {
-        conf = CallProviderConfiguration.fromProvider(p);
+        conf = CallProviderConfiguration.fromProvider(p, locale);
       } else {
         conf.setTitle(p.getTitle());
-        conf.setDescription(p.getDescription());
+        conf.setDescription(p.getDescription(locale));
       }
       return conf;
     }
@@ -1402,11 +1416,11 @@ public class WebConferencingService implements Startable {
         // for a case if several user clients listening.
         if (initiatorId == null || !initiatorId.equals(part.getId()) || CallState.STOPPED.equals(state)) {
           fireUserCallStateChanged(part.getId(),
-                            call.getId(),
-                            call.getProviderType(),
-                            state,
-                            call.getOwner().getId(),
-                            call.getOwner().getType());
+                                   call.getId(),
+                                   call.getProviderType(),
+                                   state,
+                                   call.getOwner().getId(),
+                                   call.getOwner().getType());
         }
       }
     }
