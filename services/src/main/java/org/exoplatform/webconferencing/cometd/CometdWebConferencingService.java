@@ -47,7 +47,6 @@ import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerChannel.SubscriptionListener;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
-import org.cometd.bayeux.server.ServerSession.RemoveListener;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
@@ -151,7 +150,7 @@ public class CometdWebConferencingService implements Startable {
      * The Class ChannelContext.
      */
     class ChannelContext {
-      
+
       /** The clients. */
       final Set<String>      clients = ConcurrentHashMap.newKeySet();
 
@@ -249,42 +248,6 @@ public class CometdWebConferencingService implements Startable {
     }
 
     /**
-     * The listener interface for receiving sessionRemove events.
-     * The class that is interested in processing a sessionRemove
-     * event implements this interface, and the object created
-     * with that class is registered with a component using the
-     * component's <code>addSessionRemoveListener<code> method. When
-     * the sessionRemove event occurs, that object's appropriate
-     * method is invoked.
-     *
-     * @see SessionRemoveEvent
-     */
-    @Deprecated
-    class SessionRemoveListener implements RemoveListener {
-      
-      /**
-       * {@inheritDoc}
-       */
-      @Override
-      public void removed(ServerSession session, boolean timeout) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Session removed: " + session.getId() + " timedout:" + timeout + " channels: "
-              + channelsAsString(session.getSubscriptions()));
-        }
-        // cleanup session stuff, note that disconnected session already unsubscribed and has no channels
-        // for (ServerChannel channel : session.getSubscriptions()) {
-        // cleanupChannelClient(channel.getId(), session.getId());
-        // }
-        // TODO
-        // channelContext.values().remove(session.getId());
-        // UserCallListener listener = clientUserListeners.remove(session.getId());
-        // if (listener != null) {
-        // webConferencing.removeUserCallListener(listener);
-        // }
-      }
-    }
-
-    /**
      * The listener interface for receiving channelSubscription events.
      * The class that is interested in processing a channelSubscription
      * event implements this interface, and the object created
@@ -296,7 +259,7 @@ public class CometdWebConferencingService implements Startable {
      * @see ChannelSubscriptionEvent
      */
     class ChannelSubscriptionListener implements SubscriptionListener {
-      
+
       /**
        * {@inheritDoc}
        */
@@ -376,10 +339,10 @@ public class CometdWebConferencingService implements Startable {
 
                     @Override
                     public void onCallStateChanged(String callId,
-                                            String providerType,
-                                            String callState,
-                                            String ownerId,
-                                            String ownerType) {
+                                                   String providerType,
+                                                   String callState,
+                                                   String ownerId,
+                                                   String ownerType) {
                       StringBuilder data = new StringBuilder();
                       data.append('{');
                       data.append("\"eventType\": \"call_state\",");
@@ -466,7 +429,7 @@ public class CometdWebConferencingService implements Startable {
      * @see UserChannelEvent
      */
     class UserChannelListener implements ChannelListener {
-      
+
       /**
        * {@inheritDoc}
        */
@@ -546,17 +509,13 @@ public class CometdWebConferencingService implements Startable {
     private ServerSession                     serverSession;
 
     /** The channel context. */
-    private final Map<String, ChannelContext> channelContext        = new ConcurrentHashMap<>();
-
-    /** The session remove listener. */
-    @Deprecated
-    private final RemoveListener              sessionRemoveListener = new SessionRemoveListener();
+    private final Map<String, ChannelContext> channelContext       = new ConcurrentHashMap<>();
 
     /** The subscription listener. */
-    private final ChannelSubscriptionListener subscriptionListener  = new ChannelSubscriptionListener();
+    private final ChannelSubscriptionListener subscriptionListener = new ChannelSubscriptionListener();
 
     /** The channel listener. */
-    private final UserChannelListener         channelListener       = new UserChannelListener();
+    private final UserChannelListener         channelListener      = new UserChannelListener();
 
     /**
      * Post construct.
@@ -564,7 +523,6 @@ public class CometdWebConferencingService implements Startable {
     @PostConstruct
     public void postConstruct() {
       bayeux.addListener(channelListener);
-      serverSession.addListener(sessionRemoveListener);
     }
 
     /**
@@ -574,7 +532,6 @@ public class CometdWebConferencingService implements Startable {
     public void preDestroy() {
       // cleanup listeners
       bayeux.removeListener(channelListener);
-      serverSession.removeListener(sessionRemoveListener);
       for (ChannelContext context : channelContext.values()) {
         webConferencing.removeUserCallListener(context.getListener());
       }
