@@ -19,6 +19,7 @@
 				// http://webcomponents.org/polyfills/
 				updater = setTimeout(
 							function() {
+								var hasAdmin = document.getElementById("webconferencingAdmin");
 								var targetId;
 								var target;
 								var chat = document.getElementById("chat-application");
@@ -30,28 +31,36 @@
 									if (target) {
 										targetId = "UIActivitiesLoader";
 									} else {
-										target = document.getElementById("UIPortalApplication");
+										target = document.getElementById("RightBody");
 										if (target) {
-											targetId = "UIPortalApplication"; // XXX this may cause CPU loading on intranet home
-											console.log("[webconferencing_portlet] WARN Portal's UIActivitiesLoader not found, will use the whole portal app for updates");
+											targetId = "RightBody";
+										} else {
+											target = document.getElementById("UIPortalApplication");
+											if (target) {
+												targetId = "UIPortalApplication"; // XXX this may cause CPU loading on intranet home
+												console.log("[webconferencing_portlet] WARN Portal's UIActivitiesLoader not found, will use the whole portal app for updates");
+											}
 										}
 									}
 								}
 								webConferencing.update(targetId);
-								if (target) {
-									var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
-									var observer = new MutationObserver(function(mutations) {
-										// FYI this will be fired twice on each update
-										webConferencing.update(targetId);
-									});
-									observer.observe(target, {
-										subtree : true,
-										childList : true,
-										attributes : false,
-										characterData : false
-									});									
+								if (!hasAdmin) {
+									if (target) {
+										var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+										var observer = new MutationObserver(function(mutations) {
+											webConferencing.update(targetId);
+										});
+										observer.observe(target, {
+											subtree : true,
+											childList : true,
+											attributes : false,
+											characterData : false
+										});									
+									} else {
+										console.log("[webconferencing_portlet] target not found for updates");
+									}
 								} else {
-									console.log("[webconferencing_portlet] target not found for updates");
+									console.log("[webconferencing_portlet] running on Web Conferencing admin page");
 								}
 							}, 2500);
 			}

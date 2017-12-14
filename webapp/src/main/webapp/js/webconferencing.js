@@ -21,7 +21,8 @@
 				} if (e.name && e.message) {
 					console.log(prefix + msg + ". " + e.name + ": " + e.message + isoTime);
 				} else {
-					console.log(prefix + msg + ". Cause: " + (typeof e == "string" ? e : JSON.stringify(e)) + isoTime);
+					console.log(prefix + msg + ". Cause: " + (typeof e == "string" ? e : JSON.stringify(e) 
+								+ (e.toString && typeof e.toString == "function" ? "; " + e.toString() : "")) + isoTime);
 				}
 				if (typeof e.stack != "undefined") {
 					console.log(e.stack);
@@ -932,38 +933,50 @@
 			return context;
 		};
 
+		var providerConfig = function(type) {
+			for (var i=0; i<providersConfig.length; i++) {
+				var conf = providersConfig[i];
+				if (conf.type == type) {
+					return conf;
+				}
+			}
+			return null;
+		};
+		
 		var initProvider = function(provider) {
+			// Returned promise will be resolved with a provider instance and boolean flag indicating was the provider 
+			// successfully initialized or not. The promise will be rejected if provider not configured (should not happen).
 			var initializer = providersInitializer[provider.getType()]; // deferred may be added by getProvider()
 			if (!initializer) {
 				initializer = providersInitializer[provider.getType()] = $.Deferred();
 			}
-			if (provider.init && provider.hasOwnProperty("init")) {
-				provider.init(initContext()).done(function() {
-					provider.isInitialized = true;
-					log("Initialized call provider: " + provider.getType());
-					initializer.resolve(provider, true);
-				}).fail(function(err) {
-					log("ERROR initializing call provider '" + provider.getType() + "': " + err);
-					initializer.reject(err);
-				});
-			} else {
-				log("Marked call provider as Initialized: " + provider.getType());
-				provider.isInitialized = true;
-				initializer.resolve(provider, false);
-			}
-			initializer.done(function(provider) {
-				// if successful - set active flag
-				for (var i=0; i<providersConfig.length; i++) {
-					var conf = providersConfig[i];
-					if (conf.type == provider.getType()) {
-						provider.isActive = conf.active; 
-						break;
+			var conf = providerConfig(provider.getType());
+			if (conf) {
+				provider.isInitialized = false;
+				initializer.progress(provider); // here is a provider that has a configuration
+				if (conf.active) {
+					if (provider.init && provider.hasOwnProperty("init")) {
+						provider.init(initContext()).done(function() {
+							provider.isInitialized = true;
+							log("Initialized call provider: " + provider.getType());
+							initializer.resolve(provider, true);
+						}).fail(function(err) {
+							log("WARN failed to initialize call provider '" + provider.getType() + "': " + err);
+							initializer.resolve(provider, false);
+						});
+					} else {
+						log("Marked call provider as Initialized: " + provider.getType());
+						provider.isInitialized = true;
+						initializer.resolve(provider, true);
 					}
+				} else {
+					log("CANCELED initialization of not active call provider '" + provider.getType() + "'");
+					initializer.resolve(provider, false);
 				}
-				if (typeof provider.isActive == "undefined") {
-					provider.isActive = true; // active by default, TODO it is not required, active will be set by the server always
-				}
-			});
+			} else {
+				log("CANCELED initialization of not configured call provider '" + provider.getType() + "'");
+				initializer.reject(provider.getType() + " " + message("notConfigured"));
+			}
 			return initializer.promise();
 		};
 		
@@ -1088,7 +1101,7 @@
 						for (var i = 0; i < addProviders.length; i++) {
 							var p = addProviders[i];
 							log(">>> addCallButton > next provider > " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id + " providers: " + addProviders.length);
-							if (p.isActive) {
+							if (p.isInitialized) {
 								if ($container.data(providerFlag + p.getType())) {
 									log("<<< addCallButton DONE (already) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
 								} else {
@@ -1098,7 +1111,7 @@
 									addProviderButton(p, b);
 								}								
 							} else {
-								log("<<< addCallButton CANCELED (not active) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
+								log("<<< addCallButton CANCELED (not initialized) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
 							}
 						}
 						if (workers.length > 0) {
@@ -1817,13 +1830,7 @@
 					log("Added call provider: " + provider.getType() + " (" + provider.getTitle() + ")");
 					if (currentUser) {
 						if (!provider.isInitialized) {
-							initProvider(provider).fail(function() {
-								// Provider failed to init, remove it from the working list
-								var index = providers.indexOf(provider);
-								if (index >= 0) {
-							    array.splice(index, 1);
-								}
-							});
+							initProvider(provider);
 						} else {
 							log("Already initialized provider: " + provider.getType());
 						}
@@ -1838,6 +1845,10 @@
 			}
 		};
 		
+		/**
+		 * Return a provider registered by the type. This method doesn't check if provider was successfully configured and initialized.
+		 * TODO not used so far
+		 */
 		this.findProvider = function(type) {
 			for (var i = 0; i < providers.length; i++) {
 				var p = providers[i];
