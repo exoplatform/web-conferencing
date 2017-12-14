@@ -247,7 +247,9 @@ public class WebConferencingService implements Startable {
     if (user != null) {
       Identity userIdentity = socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME, id, true);
       if (userIdentity != null) {
-        Profile socialProfile = socialIdentityManager.getProfile(userIdentity);
+        // TODO cleanup
+        //Profile socialProfile = socialIdentityManager.getProfile(userIdentity);
+        Profile socialProfile = userIdentity.getProfile();
         @SuppressWarnings("unchecked")
         List<Map<String, String>> ims = (List<Map<String, String>>) socialProfile.getProperty(Profile.CONTACT_IMS);
         UserInfo info = new UserInfo(user.getUserName(), user.getFirstName(), user.getLastName());
