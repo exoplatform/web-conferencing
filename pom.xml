@@ -42,10 +42,10 @@
   </modules>
   
   <scm>
-    <connection>scm:git:git://github.com/exo-addons/web-conferencing.git</connection>
-    <developerConnection>scm:git:git@github.com:exo-addons/web-conferencing.git</developerConnection>
+    <connection>scm:git:git://github.com/exoplatform/web-conferencing.git</connection>
+    <developerConnection>scm:git:git@github.com:exoplatform/web-conferencing.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/exo-addons/web-conferencing</url>
+    <url>https://github.com/exoplatform/web-conferencing</url>
   </scm>
   
   <properties>

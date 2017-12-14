@@ -7,10 +7,10 @@ eXo Web Conferencing addon is plugging and virtually can manage any web conferen
 An easist way to get get started it's copy a template project from Web Conferencing addon sources and start implmenting specifis in this code. This template project already offers ready implementaions of classes required for a call provider based on embedable widgets (what may be offered by a Javascript SDK of particular video call solution).
 Below a main features that the project offers in code:
 * integration in all places where Web Conferencing Call Button possible: spaces, user popovers and profiles, chat rooms
-<img src="https://raw.github.com/exo-addons/web-conferencing/master/documentation/template/user_popover.png" width="412" alt="User popover">
+<img src="https://raw.github.com/exoplatform/web-conferencing/develop/documentation/template/user_popover.png" width="412" alt="User popover">
 
 * call page for a call, it will open in a new browser window where call widget can be added by a developer
-<img src="https://raw.github.com/exo-addons/web-conferencing/master/documentation/template/call_window.png" width="512" alt="Call page">
+<img src="https://raw.github.com/exoplatform/web-conferencing/develop/documentation/template/call_window.png" width="512" alt="Call page">
 
 * call notifications between participants to show an incoming call popover on the Platform pages
 * a tooling to organize any data exchange between clients (based on CometD/WebSocket), it may be useful for connectivity settings or business logic exchanging via subscriber/publisher channel
