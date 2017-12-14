@@ -104,8 +104,7 @@ public class RESTWebConferencingService implements ResourceContainer {
    */
   @GET
   @RolesAllowed("administrators")
-  @Path("/provider/{type}/configuration")
-  @Deprecated // TODO not used
+  @Path("/provider/{type}/configuration") // TODO not used
   public Response getProviderConfig(@Context UriInfo uriInfo,
                                     @Context HttpServletRequest request,
                                     @PathParam("type") String type) {
@@ -421,8 +420,7 @@ public class RESTWebConferencingService implements ResourceContainer {
    */
   @GET
   @RolesAllowed("users")
-  @Path("/users")
-  @Deprecated // TODO not used
+  @Path("/users") // TODO not used
   public Response getUsersInfo(@Context UriInfo uriInfo, @QueryParam("names") String names) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {

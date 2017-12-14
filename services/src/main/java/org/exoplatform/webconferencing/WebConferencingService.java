@@ -247,7 +247,9 @@ public class WebConferencingService implements Startable {
     if (user != null) {
       Identity userIdentity = socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME, id, true);
       if (userIdentity != null) {
-        Profile socialProfile = socialIdentityManager.getProfile(userIdentity);
+        // TODO cleanup
+        // Profile socialProfile = socialIdentityManager.getProfile(userIdentity);
+        Profile socialProfile = userIdentity.getProfile();
         @SuppressWarnings("unchecked")
         List<Map<String, String>> ims = (List<Map<String, String>>) socialProfile.getProperty(Profile.CONTACT_IMS);
         UserInfo info = new UserInfo(user.getUserName(), user.getFirstName(), user.getLastName());
@@ -257,6 +259,7 @@ public class WebConferencingService implements Startable {
             String imId = m.get("value");
             if (imId != null && imId.length() > 0) {
               CallProvider provider = getProvider(imType);
+              // Here we take in account that provider may change its supported types in runtime
               if (provider != null && provider.isActive() && provider.isSupportedType(imType)) {
                 try {
                   IMInfo im = provider.getIMInfo(imId);
@@ -765,7 +768,8 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Adds the plugin.
+   * Adds a provider plugin. This method is safe in runtime: if configured provider is not an instance of
+   * {@link CallProvider} then it will log a warning and let server continue the start. 
    *
    * @param plugin the plugin
    */
@@ -907,8 +911,9 @@ public class WebConferencingService implements Startable {
     // XXX SpaceService done in crappy way and we need reference it after the container start only, otherwise
     // it will fail the whole server start due to not found JCR service
     this.spaceService = ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(SpaceService.class);
-    
-    // For a case when calls was active and server stopped, then calls wasn't marked as Stopped and need remove them.
+
+    // For a case when calls was active and server stopped, then calls wasn't marked as Stopped and need
+    // remove them.
     try {
       deleteAllUserCalls();
     } catch (Throwable e) {
@@ -1088,7 +1093,7 @@ public class WebConferencingService implements Startable {
    * @return the call info
    * @throws Exception the exception
    */
-  @Deprecated // TODO not used
+  @Deprecated // TODO not used, but left here until rework to JPA
   protected CallInfo readCallByOwnerId(String ownerId) throws Exception {
     String callId = readOwnerCallId(ownerId);
     if (callId != null) {
@@ -1142,9 +1147,10 @@ public class WebConferencingService implements Startable {
       Scope.GLOBAL.id(initialGlobalId);
     }
   }
-  
+
   /**
-   * Delete all user calls. This will not touch any group call. For use on server start to cleanup the storage.
+   * Delete all user calls. This will not touch any group call. For use on server start to cleanup the
+   * storage.
    *
    * @throws Exception the exception
    */

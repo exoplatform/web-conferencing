@@ -4,5 +4,7 @@
   <webconferencing>
     <ok>Ok</ok>
     <cancel>Cancel</cancel>
+    
+    <notConfigured>not configured</notConfigured>
   </webconferencing>
 </bundle>

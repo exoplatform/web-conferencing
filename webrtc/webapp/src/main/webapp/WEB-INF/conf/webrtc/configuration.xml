@@ -24,7 +24,7 @@
   xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_3.xsd http://www.exoplatform.org/xml/ns/kernel_1_3.xsd"
   xmlns="http://www.exoplatform.org/xml/ns/kernel_1_3.xsd">
   
-  <!-- For Admin settings -->
+  <!-- Service for Admin settings -->
   <component>
     <type>org.exoplatform.webconferencing.webrtc.rest.RESTWebRTCService</type>
   </component>
@@ -45,6 +45,7 @@
         <object-param>
           <name>rtc-configuration</name>
           <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$RTCConfiguration">
+            <!-- Here we set default (out of the box) settings that can be changed in Admin UI -->
             <!-- field name="bundlePolicy">
               <string>balanced</string>
             </field>
@@ -254,44 +255,6 @@
             </field>
           </object>
         </object-param>
-        <!-- This filter sets URL paths rules for redirection to call servlet -->
-        <!-- object-param>
-          <name>WebRTC Call page filter</name>
-          <object type="org.exoplatform.web.filter.FilterDefinition">
-            <field name="filter">
-              <object type="org.exoplatform.webconferencing.webrtc.server.WebrtcCallFilter" />
-            </field>
-            <field name="patterns">
-              <collection type="java.util.ArrayList" item-type="java.lang.String">
-                <value>
-                  <string>/webrtc/call/.*</string>
-                </value>
-                <value>
-                  <string>/webrtc/call</string>
-                </value>
-                <value>
-                  <string>/webrtc/call\?.*</string>
-                </value>
-              </collection>
-            </field>
-          </object>
-        </object-param -->
-        <!-- This filter sets URL paths rules for redirection to settings servlet -->
-        <!-- object-param>
-          <name>WebRTC settings page filter</name>
-          <object type="org.exoplatform.web.filter.FilterDefinition">
-            <field name="filter">
-              <object type="org.exoplatform.webconferencing.webrtc.server.WebrtcSettingsFilter" />
-            </field>
-            <field name="patterns">
-              <collection type="java.util.ArrayList" item-type="java.lang.String">
-                <value>
-                  <string>/webrtc/settings</string>
-                </value>
-              </collection>
-            </field>
-          </object>
-        </object-param -->
       </init-params>
     </component-plugin>
   </external-component-plugins>

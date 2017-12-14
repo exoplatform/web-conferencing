@@ -124,8 +124,7 @@ public class RESTWebRTCService implements ResourceContainer {
    */
   @GET
   @RolesAllowed("administrators")
-  @Path("/settings")
-  @Deprecated // TODO not used
+  @Path("/settings") // TODO not used
   public Response getSettings(@Context UriInfo uriInfo) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {

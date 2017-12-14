@@ -491,7 +491,7 @@
 					}
 					process.resolve();
 				} else {
-					process.reject("WebRTC not supported in this browser: " + navigator.userAgent);
+					process.reject(message("yourBrowserNotSupportWebrtc") + ": " + navigator.userAgent);
 				}
 				return process.promise();
 			};

@@ -11,6 +11,8 @@
     <callStartTip>Click to start a video call</callStartTip>
     <callRunningTip>This call already running</callRunningTip>
     
+    <providerError>WebRTC provider error</providerError>
+    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
     <errorAddCall>Error saving call</errorAddCall>
     <errorGettingCall>Error opening call</errorGettingCall>
     <errorStartingCall>Error starting call</errorStartingCall>
@@ -22,6 +24,7 @@
     <errorStartingConnection>Error of starting connection</errorStartingConnection>
     <notSupportedPlatform>Not supported platform</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
+    <notInitialized>Not initialized or initialization error</notInitialized>
     <connectionFailed>Connection failed</connectionFailed>
     <audioVideoRequired>Audio and/or video required to place a call</audioVideoRequired>
     <mediaDevicesError>Error getting user media devices (audio or video)</mediaDevicesError>

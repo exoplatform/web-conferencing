@@ -24,6 +24,6 @@
   xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_3.xsd http://www.exoplatform.org/xml/ns/kernel_1_3.xsd"
   xmlns="http://www.exoplatform.org/xml/ns/kernel_1_3.xsd">
   
-  <!-- WebRTC config -->
-  <import>war:/conf/webrtc/configuration.xml</import>  
+  <!-- WebRTC configuration -->
+  <import>war:/conf/webrtc/configuration.xml</import>
 </configuration>
