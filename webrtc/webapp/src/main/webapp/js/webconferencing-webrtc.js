@@ -566,6 +566,7 @@
 										addIceServer(newIces, $ices); // add in DOM
 										// add in RTC config
 										rtcConfiguration.iceServers.push(newIces);
+										$settings.scrollTop(90);
 									});
 									if ($iceServers.find(".iceServer").length == 1) { // 1 is for template
 										// Remove trash on first server

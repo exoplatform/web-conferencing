@@ -33,9 +33,9 @@
     
     <admin>
       <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>An URL is mandatory for server</serverUrlMandatory>
-      <usernameMandatory>Username is mandatory</usernameMandatory>
-      <credentialMandatory>Credential is mandatory</credentialMandatory>
+      <serverUrlMandatory>URL cannot be empty for server</serverUrlMandatory>
+      <usernameMandatory>Username cannot be empty</usernameMandatory>
+      <credentialMandatory>Password cannot be empty</credentialMandatory>
       <errorSavingSettings>Error saving settings</errorSavingSettings>
     </admin>
   </webrtc>

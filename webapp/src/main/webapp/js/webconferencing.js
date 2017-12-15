@@ -1660,21 +1660,19 @@
 		
 		var initSpace = function() {
 			if (currentSpaceId) {
-				var $navigationPortlet = $("#UIBreadCrumbsNavigationPortlet");
-				if ($navigationPortlet.length == 0) {
-					setTimeout($.proxy(initSpace, this), 250);
-					return;
-				}
-				
-				var $breadcumbEntry = $navigationPortlet.find(".breadcumbEntry");
+				var $spaceMenuPortlet = $("#UISpaceMenuPortlet");
+				//if ($navigationPortlet.length == 0) {
+				//	setTimeout($.proxy(initSpace, this), 250);
+				//	return;
+				//}
+				var $spaceApps = $spaceMenuPortlet.find(".spaceMenuApps");
 				
 				var addSpaceCallButton = function() {
-					var initializer = addCallButton($breadcumbEntry, spaceContext(currentSpaceId));
+					var initializer = addCallButton($spaceApps, spaceContext(currentSpaceId));
 					initializer.done(function($container) {
 						var $button = $container.find(".callButton");
 						var $first = $button.first();
 						$first.addClass("spaceCall transparentButton");
-						var $dropdown = $first.siblings(".dropdown-toggle");
 						log("<< initSpace DONE " + currentSpaceId + " for " + currentUser.id);
 					});
 					initializer.fail(function(error) {
@@ -1690,9 +1688,8 @@
 					var waitAndAdd = function() {
 						waitAttempts++;
 						setTimeout(function() {
-							var $chatButton = $breadcumbEntry.children(".chat-button");
+							var $chatButton = $spaceApps.children(".chat-button");
 							if ($chatButton.length == 0 && waitAttempts < 40) { // wait max 2 sec
-								//log(">>> Chat button not found in space breadcumb");
 								waitAndAdd();
 							} else {
 								addSpaceCallButton();								

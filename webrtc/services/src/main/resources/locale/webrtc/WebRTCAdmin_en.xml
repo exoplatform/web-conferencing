@@ -16,7 +16,7 @@
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Confirm removal of the server definition in WebRTC settings</serverRemoveText>
+      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
       <remove>Remove</remove>
     </admin>
   </webrtc>
