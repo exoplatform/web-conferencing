@@ -74,6 +74,7 @@
 #webrtc-settings-popup .popupContent {
 	max-height: 400px;
 	overflow: auto;
+    padding-bottom: 0;
 }
 
 #webrtc-settings-popup .title {
@@ -159,6 +160,7 @@
 
 #webrtc-settings-popup .settingsForm .uiAction {
 	text-align: right;
+    margin-bottom: 15px;
 }
 
 #webrtc-settings-popup .serverRemovalDialog {
