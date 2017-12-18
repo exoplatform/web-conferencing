@@ -1661,10 +1661,6 @@
 		var initSpace = function() {
 			if (currentSpaceId) {
 				var $spaceMenuPortlet = $("#UISpaceMenuPortlet");
-				//if ($navigationPortlet.length == 0) {
-				//	setTimeout($.proxy(initSpace, this), 250);
-				//	return;
-				//}
 				var $spaceApps = $spaceMenuPortlet.find(".spaceMenuApps");
 				
 				var addSpaceCallButton = function() {

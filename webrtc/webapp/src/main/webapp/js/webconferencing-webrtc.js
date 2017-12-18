@@ -611,7 +611,7 @@
 							var $credentials = $credentialsGroup.find(".credentials");
 							var $username = $credentials.find("input[name='username']");
 							var $credential = $credentials.find("input[name='credential']");
-							$enabler.click(function() {
+							$enabler.change(function() {
 								if ($enabler.prop("checked") && !$credentials.is(":visible")) {
 									if (ices.username) {
 										$username.val(ices.username);
@@ -659,7 +659,8 @@
 								}
 							});
 							if (typeof ices.username == "string" || typeof ices.credential == "string") {
-								$enabler.click();
+								$enabler.prop("checked", true);
+								$enabler.change();
 							}
 							$ices.show();
 							if ($sibling) {
