@@ -58,6 +58,17 @@
 			</div>
 		</div>
 		
+		<p class="title">Error Diagnostics</p>
+
+		<div class="diagnostic-errors">
+			<div class="control-group">
+				<span class="uiCheckbox">
+					<input type="checkbox" class="checkbox">
+					<span>Enable client-side log collection</span>&nbsp;&nbsp;<i class="uiIconInformation uiIconBlue" data-container=".diagnostic-errors" data-placement="top" data-toggle="tooltip" title="Will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead."></i>
+                </span>
+			</div>
+		</div>
+		
 		<div class="uiAction">
 			<button class="btn saveButton" type="button">${messages["webrtc.admin.save"]}</button>
 			<button class="btn cancelButton" type="button">${messages["webrtc.admin.cancel"]}</button>

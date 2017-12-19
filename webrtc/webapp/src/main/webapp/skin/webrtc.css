@@ -85,7 +85,7 @@
 	max-width: 300px;
 }
 
-.iceServers {
+.iceServers, .diagnostic-errors {
 	padding: 0 30px;
 }
 
