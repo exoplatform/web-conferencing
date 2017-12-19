@@ -27,6 +27,11 @@
 			
 			var CALL_DISABLED_CLASS = "callDisabled";
 			
+			var isExoAndroid = /eXo\/.*Android/.test(navigator.userAgent);
+			if (isExoAndroid) {
+				log("Running on eXo app for Android (WebRTC calls not supported currently)");
+			}
+
 			var self = this;
 			var settings, currentKey, clientId;
 			
@@ -37,7 +42,7 @@
 			
 			this.isSupportedPlatform = function() {
 				try {
-					return navigator.mediaDevices && navigator.mediaDevices.getUserMedia && RTCPeerConnection;					
+					return !isExoAndroid && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && RTCPeerConnection;
 				} catch(e) {
 					log("Error detecting WebRTC features: " + (typeof e == "string" ? e : ""), e);
 					return false;
@@ -194,7 +199,7 @@
 					if (settings && context && context.currentUser) {
 						// XXX Currently we support only P2P calls
 						if (!context.isGroup) {
-							context.details().done(function(target) { // users, convName, convTitle
+							context.details().done(function(target) {
 								var rndText = Math.floor((Math.random() * 1000000) + 1);
 								var linkId = "WebrtcCall-" + clientId;
 								// We want have same ID independently on who started the call
@@ -277,7 +282,7 @@
 								button.resolve($button);
 							}).fail(function(err) {
 								log("Error getting context details for " + self.getTitle() + ": " + err);
-								webConferencing.showWarn(message("errorGettingCall"), webConferencing.errorText(err));
+								button.reject("Error getting context details for " + self.getTitle(), err);
 							});
 						} else {
 							button.reject("Group calls not supported by WebRTC provider");

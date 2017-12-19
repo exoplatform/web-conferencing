@@ -2180,8 +2180,11 @@
 		this.log = log;
 		this.message = message;
 		this.showWarn = showWarn;
+		this.noticeWarn = noticeWarn;
 		this.showError = showError;
+		this.noticeError = noticeError;
 		this.showInfo = showInfo;
+		this.noticeInfo = noticeInfo;
 		this.showConfirm = showConfirm
 		
 		/**
