@@ -44,20 +44,6 @@
 	  };
 	}
 	
-	// Returns the version of Windows Internet Explorer or a -1
-	// (indicating the use of another browser).
-	var getIEVersion = function() {
-		var rv = -1;
-		// Return value assumes failure.
-		if (navigator.appName == "Microsoft Internet Explorer") {
-			var ua = navigator.userAgent;
-			var re = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
-			if (re.exec(ua) != null)
-				rv = parseFloat(RegExp.$1);
-		}
-		return rv;
-	};
-	
 	var pageBaseUrl = function(theLocation) {
 		if (!theLocation) {
 			theLocation = window.location;
@@ -856,9 +842,10 @@
 			return $.extend(params, cCometD.eXoSecret, cometdContext);
 		};
 
-		var getContextName = function(context) {
-			return context.spaceId ? context.spaceId : (context.roomId ? context.roomId : context.userId);
+		var contextId = function(context) {
+			return context.userId ? context.userId : (context.spaceId ? context.spaceId : context.roomName);
 		};
+		this.contextId = contextId;
 		
 		var userPreferenceKey = function(name) {
 			return currentUser.id + "@exo.webconferencing." + name;
@@ -992,7 +979,7 @@
 				if (addProviders.length > 0) {
 					var buttonClass = "callButton";
 					var providerFlag = "hasProvider_";
-					var contextName = getContextName(context);
+					var contextName = contextId(context);
 					// 2) if already calling, then need wait for previous call completion and then re-call this method 
 					var prevInitializer = $target.data("callbuttoninit");
 					if (prevInitializer) {
@@ -1097,13 +1084,13 @@
 							workers.push(bworker.promise());
 						}
 						// we have an one button for each provider
-						log(">>> addCallButton > " + contextName + " for " + context.currentUser.id + " providers: " + addProviders.length);
+						//log(">>> addCallButton > " + contextName + " for " + context.currentUser.id + " providers: " + addProviders.length);
 						for (var i = 0; i < addProviders.length; i++) {
 							var p = addProviders[i];
-							log(">>> addCallButton > next provider > " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id + " providers: " + addProviders.length);
+							//log(">>> addCallButton > next provider > " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id + " providers: " + addProviders.length);
 							if (p.isInitialized) {
 								if ($container.data(providerFlag + p.getType())) {
-									log("<<< addCallButton DONE (already) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
+									//log("<<< addCallButton DONE (already) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
 								} else {
 									// even if adding will fail, we treat it as 'canceled' and mark the provider as added
 									$container.data(providerFlag + p.getType(), true);
@@ -1356,7 +1343,7 @@
 			var $fullName = $miniChat.find(".fullname");
 			if (typeof chatApplication === "undefined" && $fullName.length > 0 && chatNotification) {
 				if ($miniChat.data("minichatcallinitialized")) {
-					log("<< initMiniChat CANCELED < Already initialized [" + $fullName.text().trim() + "] for " + currentUser.id);
+					//log("<< initMiniChat CANCELED < Already initialized [" + $fullName.text().trim() + "] for " + currentUser.id);
 				} else {
 					$miniChat.data("minichatcallinitialized", true);
 					var process = $.Deferred();
@@ -1403,7 +1390,7 @@
 							log("<< initMiniChat CANCELED mini-chat not found or empty");
 						}
 					};
-					addMiniChatCallButton();
+					//addMiniChatCallButton(); // TODO need this, or observer's one will be enough?
 					// run DOM listener to know when mini chat will be completed (by notif.js script)
 					var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
 					var observer = new MutationObserver(function(mutations) {
@@ -1445,117 +1432,139 @@
 			return context;
 		};
 		
+		var tiptip = function() {
+			var process = $.Deferred();
+			function findTiptipWait() {
+				var $tiptip = $("#tiptip_content");
+				if ($tiptip.length == 0) {
+					// wait for popup script load
+					setTimeout(findTiptipWait, 250);
+				} else {
+					process.resolve($tiptip);
+				}
+			}
+			findTiptipWait();
+			return process.promise();
+		};
+		
+		var onTiptipUpdate = function(listener) {
+			tiptip().done(function($tiptip) {
+				var listeners = $tiptip.data("callbuttoninit");
+				if (listeners && listeners.length > 0) {
+					listeners.push(listener);
+				} else {
+					var listeners = [ listener ];
+					$tiptip.data("callbuttoninit", listeners);
+					// run DOM listener to know when popovr will be updated with actual (context) content
+					// we catch '#tiptip_content #tipName node addition
+					var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+					var findNodeById = function(id, list) {
+						for (var i=0; i<list.length; i++) {
+							var n = list[i];
+							if (n.id == id) {
+								return n;
+							}
+						}
+						return null;
+					}
+					var observer = new MutationObserver(function(mutations) {
+						//log(">>> onTiptipUpdate mutations " + mutations.length);
+						for(var i=0; i<mutations.length; i++) {
+							var m = mutations[i];
+							// TODO for development tracing: cleanup
+							/*if (m.target.nodeType == 1) {
+								function nodeListString(list) {
+									var s = "";
+									for (var n of list) {
+										s += n.localName + (n.id ? "#" + n.id : "");
+										for (var c of n.classList) {
+											s += "." + c;
+										}
+										s += " ";
+									}
+									return s;
+								} 
+								log(">>> initUserPopups mutation " + m.type + " of " + m.target.nodeName 
+											+ (m.type == "attributes" ? " " + m.attributeName : (m.type == "childList" ? " added:" + nodeListString(m.addedNodes) + " removed:" + nodeListString(m.removedNodes) : ""))
+											+ (m.target.id ? " id:" + m.target.id : "")
+											+ (m.target.classList.length > 0 ? " class:" + m.target.classList.value : ""));
+							} else {
+								log(">>> initUserPopups mutation " + m.type + " " + m.target.nodeName + "(" + m.target.nodeType + ")");
+							}*/
+							var tipName;
+							if (m.type == "childList" && (tipName = findNodeById("tipName", m.addedNodes))) {
+								var $tipName = $(tipName);
+								for (var i=0; i<listeners.length; i++) {
+									listeners[i]($tiptip, $tipName);
+								}
+								break;
+							}
+						}
+					});
+					observer.observe($tiptip.get(0), {
+						childList : true,
+						subtree : false,
+						attributes : false
+					});
+				}
+			});
+		};
+		
+		var addPopoverButton = function($target, context) {
+			var initializer = addCallButton($target, context);
+			initializer.done(function($container) {
+				$container.find(".callButton").first().addClass("popoverCall");
+				$container.siblings(".btn").each(function() {
+					var $s = $(this);
+					if (!$s.hasClass("callButtonSibling")) {
+						$s.addClass("callButtonSibling");										
+					}
+				});
+				// XXX workaround to avoid first-child happen on call button in the popover
+				$container.prepend($("<div class='btn' style='display: none;'></div>"));
+				log("<< addPopoverButton DONE " + contextId(context) + " for " + currentUser.id);
+			});
+			initializer.fail(function(err) {
+				if (err) {
+					log("<< addPopoverButton ERROR " + contextId(context) + " for " + currentUser.id + ": " + err);
+				}
+			});
+			return initializer;
+		};
+		
 		/**
 		 * Add call button to user's on-mouse popups and panels.
 		 */
-		var initUserPopups = function(compId) {
-			var $tiptip = $("#tiptip_content");
-			// wait for UIUserProfilePopup script load
-			if ($tiptip.length == 0 || $tiptip.hasClass("DisabledEvent")) {
-				setTimeout($.proxy(initUserPopups, this), 250, compId);
-				return;
-			}
-			
-			var addUserButton = function($userAction, userId) {
-				var initializer = addCallButton($userAction, userContext(userId));
-				initializer.done(function($container) {
-					$container.find(".callButton").first().addClass("popoverCall");
-					log("<< initUserPopups DONE " + userId + " for " + currentUser.id);
-				});
-				initializer.fail(function(error) {
-					if (error) {
-						log("<< initUserPopups ERROR " + userId + " for " + currentUser.id + ": " + error);
-					}
-				});
-				return initializer.promise();
-			};
-
-			var extractUserId = function($userLink) {
-				var userId = $userLink.attr("href");
-				return userId.substring(userId.lastIndexOf("/") + 1, userId.length);
-			};
-
+		var initUsers = function() {
 			// user popovers
-			var customizePopover = function() {
-				// wait for popover initialization
-				setTimeout(function() {
-					// Find user's first name for a tip
-					var $profileLink = $tiptip.find("#tipName td>a[href*='\\/profile\\/']");
-					if ($profileLink.length > 0) {
-						var userId = extractUserId($profileLink);
-						if (userId != currentUser.id) {
-							var $userAction = $tiptip.find(".uiAction");
-							var buttonUser = $userAction.data("callbuttonuser");
-							if (!buttonUser || buttonUser != userId) {
-								$userAction.data("callbuttonuser", userId);
-								// cleanup after previous user
-								$userAction.find(".callButtonContainer").empty();
-								addUserButton($userAction, userId).done(function($container) {
-									// XXX workaround to avoid first-child happen on call button in the popover
-									$container.siblings(".btn").each(function() {
-										var $s = $(this);
-										if (!$s.hasClass("callButtonSibling")) {
-											$s.addClass("callButtonSibling");										
-										}
-									});
-									$container.prepend($("<div class='btn' style='display: none;'></div>"));
-								});
-							}
+			onTiptipUpdate(function($tiptip, $tipName) {
+				var $profileLink = $tipName.find("#profileName>a[href*='\\/profile\\/']");
+				if ($profileLink.length > 0) {
+					// Find user ID for a tip
+					var userId = $profileLink.attr("href");
+					userId = userId.substring(userId.lastIndexOf("/") + 1, userId.length);
+					if (userId != currentUser.id) {
+						var $userAction = $tiptip.find(".uiAction");
+						var buttonUser = $userAction.data("callbuttonuser");
+						if (!buttonUser || buttonUser != userId) {
+							$userAction.data("callbuttonuser", userId);
+							// cleanup after previous user
+							$userAction.find(".callButtonContainer").empty();
+							addPopoverButton($userAction, userContext(userId));
 						}
-					} else {
-						log("<< initUserPopups WARN: popover profileName link not found");
 					}
-				}, 300);
-			};
-			// XXX wait for loading activity stream (TODO try rely on a promise)
-			setTimeout(function() {
-				// XXX hardcoded for peopleSuggest as no way found to add Lifecycle to its portlet (juzu)
-				// user popovers in Social (authors, commenters, likers, profile, network, connections etc)
-				$("#" + compId).find(".author>.ownerName, .author>.owner, .itemList .spaceBox, .activityAvatar, .commentItem>.commmentLeft, .commentItem>.commentLeft, .commentItem>.commentRight, .commentItem>.contentComment, .listLiked, .profileContainer, .avatarBox, .userProfileShare .pull-left, #onlineList").find("a[href*='\\/profile\\/']").each(function() {
-					var $a = $(this);
-					$a.mouseenter(function() {
-						customizePopover();
-					});
-				});				
-				
-				// user popovers in Forum
-				$("#" + compId).find("#UIForumContainer .postViewHeader").find("div[href*='\\/profile\\/']").each(function() {
-					var $div = $(this);
-					$div.mouseenter(function() {
-						customizePopover();
-					});
-				});
-				
-				// user popovers in chat
-				$("#" + compId).find(".room-user .avatarCircle").find("img[src*='\\/social/users\\/']").each(function() {
-					var $user = $(this).closest(".room-user");
-					//log("init chat popup " + $(this).attr("src"));
-					$user.mouseenter(function() {
-						customizePopover();
-					});
-				});
-			}, 1000);
+				}
+			});
 
 			// single user profile;
-			$("#" + compId).find("#socialTopLayout").each(function(i, elem) {
+			$("#socialTopLayout").each(function(i, elem) {
 				var $userStatus = $(elem).find("#UIStatusProfilePortlet .user-status");
 				var userId = $userStatus.data("userid");
 				if (userId != currentUser.id) {
 					var $userActions = $(elem).find("#UIRelationshipAction .user-actions");
-					addUserButton($userActions, userId).done(function($container) {
+					addCallButton($userActions, userContext(userId)).done(function($container) {
 						$container.addClass("pull-left");
-					});
-					// Copied from Chat app: Fix PLF-6493: Only let hover happens on
-					// connection buttons instead of all in .user-actions
-					var $btnConnections = $userActions.find(".show-default, .hide-default");
-					var $btnShowConnection = $userActions.find(".show-default");
-					var $btnHideConnection = $userActions.find(".hide-default");
-					$btnShowConnection.show();
-					$btnConnections.css("font-style", "italic");
-					$btnHideConnection.hide();
-					$btnConnections.removeClass("show-default hide-default");
-					$btnConnections.hover(function(e) {
-					  $btnConnections.toggle();
+						log("<< initUsers profile DONE " + userId + " for " + currentUser.id);
 					});
 				}
 			});
@@ -1590,72 +1599,26 @@
 		/**
 		 * Add call button to space's on-mouse popups and panels.
 		 */
-		var initSpacePopups = function(compId) {
-			var $tiptip = $("#tiptip_content");
-			// wait for popup script load
-			if ($tiptip.length == 0 || $tiptip.hasClass("DisabledEvent")) {
-				setTimeout($.proxy(initSpacePopups, this), 250, compId);
-				return;
-			}
-			
-			var addSpaceButton = function($spaceAction, spaceId) {
-				var initializer = addCallButton($spaceAction, spaceContext(spaceId));
-				initializer.done(function($container) {
-					$container.find(".callButton").first().addClass("popoverCall");
-					log("<< initSpacePopups DONE " + spaceId + " for " + currentUser.id);
-				});
-				initializer.fail(function(error) {
-					if (error) {
-						log("<< initSpacePopups ERROR " + spaceId + " for " + currentUser.id + ": " + error);
-					}
-				});
-				return initializer.promise();
-			};
-
-			var extractSpaceId = function($spaceLink) {
-				var spaceId = $spaceLink.attr("href");
-				return spaceId.substring(spaceId.lastIndexOf("/") + 1, spaceId.length);
-			};
-
+		var initSpacePopups = function() {
 			// space popovers
-			var customizePopover = function() {
-				// wait for popover initialization
-				setTimeout(function() {
-					// Find user's first name for a tip
-					var $profileLink = $tiptip.find("#tipName #profileName>a[href*='\\/g/:spaces:']");
-					if ($profileLink.length > 0) {
-						var spaceId = extractSpaceId($profileLink);
-						var $spaceAction = $tiptip.find(".uiAction");
-						var buttonSpace = $spaceAction.data("callbuttonspace");
-						if (!buttonSpace || buttonSpace != spaceId) {
-							$spaceAction.data("callbuttonspace", spaceId);
-							// cleanup after previous space
-							$spaceAction.find(".callButtonContainer").empty();
-							addSpaceButton($spaceAction, spaceId).done(function($container) {
-								// XXX workaround to avoid first-child happen on call button in the popover
-								$container.siblings(".btn").each(function() {
-									var $s = $(this);
-									if (!$s.hasClass("callButtonSibling")) {
-										$s.addClass("callButtonSibling");										
-									}
-								});
-								$container.prepend($("<div class='btn' style='display: none;'></div>"));
-							});
-						}
-					} else {
-						log("<< initSpacePopups WARN popover profileName link not found");
+			onTiptipUpdate(function($tiptip, $tipName) {
+				// Find user's first name for a tip
+				var $profileLink = $tipName.find("#profileName>a[href*='\\/g/:spaces:']");
+				if ($profileLink.length > 0) {
+					var spaceId = $profileLink.attr("href");
+					spaceId = spaceId.substring(spaceId.lastIndexOf("/") + 1, spaceId.length);
+					var $spaceAction = $tiptip.find(".uiAction");
+					var buttonSpace = $spaceAction.data("callbuttonspace");
+					if (!buttonSpace || buttonSpace != spaceId) {
+						$spaceAction.data("callbuttonspace", spaceId);
+						// cleanup after previous space
+						$spaceAction.find(".callButtonContainer").empty();
+						addPopoverButton($spaceAction, spaceContext(spaceId));
 					}
-				}, 300);
-			};
-			// XXX wait for loading activity stream (TODO try rely on a promise)
-			setTimeout(function() {
-				$("#" + compId).find(".author>.spaceName, .author>.owner").find("a.space-avatar[href*='\\/g/:spaces:']").each(function() {
-					var $a = $(this);
-					$a.mouseenter(function() {
-						customizePopover();
-					});
-				});
-			}, 1000);
+				} else {
+					log("<< initSpacePopups WARN popover profileName link not found");
+				}
+			});
 		};
 		
 		var initSpace = function() {
@@ -1699,14 +1662,10 @@
 			}
 		};
 		
-		this.update = function(compId) {
-			if (!compId) {
-				// by default we work with whole portal page
-				compId = "UIPortalApplication";
-			}
+		this.update = function() {
 			if (currentUser) { 
-				initUserPopups(compId);
-				initSpacePopups(compId);
+				initUsers();
+				initSpacePopups();
 				initSpace();
 				initChat();
 				initMiniChat();
@@ -1938,7 +1897,7 @@
 		 */
 		this.getCall = function(id) {
 			if (cometd) {
-				log(">> getCall:/webconferencing/calls:" + id + " - request published");
+				//log(">> getCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					command : "get",
@@ -1947,10 +1906,10 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						log("<< getCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
+						//log("<< getCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						log("<< getCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
+						//log("<< getCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -1965,7 +1924,7 @@
 		 */
 		this.updateCall = function(id, state) {
 			if (cometd) {
-				log(">> updateCall:/webconferencing/calls:" + id + " - request published");
+				//log(">> updateCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					command : "update",
@@ -1975,10 +1934,10 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						log("<< updateCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
+						//log("<< updateCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						log("<< updateCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
+						//log("<< updateCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -1993,7 +1952,7 @@
 		 */
 		this.deleteCall = function(id) {
 			if (cometd) {
-				log(">> deleteCall:/webconferencing/calls:" + id + " - request published");
+				//log(">> deleteCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					command : "delete",
@@ -2002,10 +1961,10 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						log("<< deleteCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
+						//log("<< deleteCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						log("<< deleteCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
+						//log("<< deleteCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -2020,7 +1979,7 @@
 		 */
 		this.addCall = function(id, callInfo) {
 			if (cometd) {
-				log(">> addCall:/webconferencing/calls:" + id + " - request published");
+				//log(">> addCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams($.extend(callInfo, {
 					command : "create",
@@ -2029,10 +1988,10 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						log("<< addCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
+						//log("<< addCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						log("<< addCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
+						//log("<< addCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -2044,7 +2003,7 @@
 		
 		this.getUserGroupCalls = function() {
 			if (cometd) {
-				log(">> getUserGroupCalls:/webconferencing/calls - request published");
+				//log(">> getUserGroupCalls:/webconferencing/calls - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					id : "me", // an user ID, 'me' means current user in eXo
@@ -2053,10 +2012,10 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						log("<< getUserGroupCalls:/webconferencing/calls - success: " + cometdInfo(response));
+						//log("<< getUserGroupCalls:/webconferencing/calls - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						log("<< getUserGroupCalls:/webconferencing/calls - failure: " + cometdError(response));
+						//log("<< getUserGroupCalls:/webconferencing/calls - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -2183,10 +2142,10 @@
 			if (cometd) {
 				cometd.publish("/eXo/Application/WebConferencing/call/" + callId, data, function(publishAck) {
 			    if (publishAck.successful) {
-			    	log("<< Call update reached the server: " + JSON.stringify(publishAck));
+			    	//log("<< Call update reached the server: " + JSON.stringify(publishAck));
 			    	process.resolve("successful", 200);
 			    } else {
-			    	log("<< Call update failed to reach the server: " + JSON.stringify(publishAck));
+			    	//log("<< Call update failed to reach the server: " + JSON.stringify(publishAck));
 			    	process.reject(publishAck.failure ? publishAck.failure.reason : publishAck.error, 500);
 			    }
 				});
@@ -2224,7 +2183,6 @@
 		this.showError = showError;
 		this.showInfo = showInfo;
 		this.showConfirm = showConfirm
-		this.getIEVersion = getIEVersion;
 		
 		/**
 		 * Add style to current document (to the end of head).
