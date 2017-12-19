@@ -1538,7 +1538,7 @@
 		var initUsers = function() {
 			// user popovers
 			onTiptipUpdate(function($tiptip, $tipName) {
-				var $profileLink = $tipName.find("#profileName>a[href*='\\/profile\\/']");
+				var $profileLink = $tipName.find("td>a[href*='\\/profile\\/']");
 				if ($profileLink.length > 0) {
 					// Find user ID for a tip
 					var userId = $profileLink.attr("href");
@@ -1603,7 +1603,7 @@
 			// space popovers
 			onTiptipUpdate(function($tiptip, $tipName) {
 				// Find user's first name for a tip
-				var $profileLink = $tipName.find("#profileName>a[href*='\\/g/:spaces:']");
+				var $profileLink = $tipName.find("td>a[href*='\\/g/:spaces:']");
 				if ($profileLink.length > 0) {
 					var spaceId = $profileLink.attr("href");
 					spaceId = spaceId.substring(spaceId.lastIndexOf("/") + 1, spaceId.length);
