@@ -52,6 +52,7 @@ public abstract class UserCallListener {
    *
    * @return true, if is listening
    */
+  @Deprecated // TODO what a usecase?
   public abstract boolean isListening();
 
   /**

@@ -48,6 +48,7 @@ import org.cometd.bayeux.server.ServerChannel.SubscriptionListener;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.eclipse.jetty.util.component.LifeCycle;
+import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
@@ -255,8 +256,6 @@ public class CometdWebConferencingService implements Startable {
      * component's <code>addChannelSubscriptionListener<code> method. When
      * the channelSubscription event occurs, that object's appropriate
      * method is invoked.
-     *
-     * @see ChannelSubscriptionEvent
      */
     class ChannelSubscriptionListener implements SubscriptionListener {
 
@@ -425,8 +424,6 @@ public class CometdWebConferencingService implements Startable {
      * component's <code>addUserChannelListener<code> method. When
      * the userChannel event occurs, that object's appropriate
      * method is invoked.
-     *
-     * @see UserChannelEvent
      */
     class UserChannelListener implements ChannelListener {
 
@@ -539,7 +536,7 @@ public class CometdWebConferencingService implements Startable {
     }
 
     /**
-     * Subscribe calls.
+     * Subscribe calls. All data exchanged between peers of a call will go there (e.g. RPC media and connectivity settings).
      *
      * @param message the message
      * @param callType the call type
@@ -548,15 +545,15 @@ public class CometdWebConferencingService implements Startable {
     @Subscription(CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS)
     public void subscribeCalls(Message message, @Param("callType") String callType, @Param("callInfo") String callInfo) {
       String callId = callId(callType, callInfo);
+      // TODO log this to a dedicated diagnostic log!
       if (LOG.isDebugEnabled()) {
         LOG.debug("Call published in " + message.getChannel() + " by " + message.get("sender") + " callId: " + callId + " data: "
             + message.getJSON());
       }
-      // TODO all data exchanged between peers of a call will go there, WebRTC stuff etc.
     }
 
     /**
-     * Subscribe user.
+     * Subscribe user. All user updates about his state and call will go here.
      *
      * @param message the message
      * @param userId the user id
@@ -568,11 +565,10 @@ public class CometdWebConferencingService implements Startable {
         LOG.debug("User published in " + channelId + " by " + message.getClientId() + " userId: " + userId + " data: "
             + message.getJSON());
       }
-      // here will come user publications about his state
     }
 
     /**
-     * Rc calls.
+     * Remote calls from clients to Web Conferencing services.
      *
      * @param caller the caller
      * @param data the data
@@ -581,7 +577,7 @@ public class CometdWebConferencingService implements Startable {
     public void rcCalls(final RemoteCall.Caller caller, final Object data) {
       final ServerSession session = caller.getServerSession();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Calls remote call by " + session.getId() + " data: " + data);
+        LOG.debug("Remote call by " + session.getId() + " data: " + data);
       }
 
       // TODO use thread pool (take in account CPUs number of cores etc)
@@ -612,7 +608,6 @@ public class CometdWebConferencingService implements Startable {
                                                             exoContainer.getComponentInstanceOfType(SessionProviderService.class);
                     WebConferencingService webConferencing =
                                                            exoContainer.getComponentInstanceOfType(WebConferencingService.class);
-                    // TODO should we check for NPE of the above services?
                     Identity userIdentity = identityRegistry.getIdentity(currentUserId);
                     if (userIdentity != null) {
                       ConversationState contextState = ConversationState.getCurrent();
@@ -873,24 +868,25 @@ public class CometdWebConferencingService implements Startable {
       }
     });
 
-    // TODO This listener not required for work?
-    exoBayeux.addListener(new BayeuxServer.SessionListener() {
-      @Override
-      public void sessionRemoved(ServerSession session, boolean timedout) {
-        // Nothing?
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("sessionRemoved: " + session.getId() + " timedout:" + timedout + " channels: "
-              + channelsAsString(session.getSubscriptions()));
+    if (PropertyManager.isDevelopping()) {
+      // This listener not required for work, just for info during development
+      exoBayeux.addListener(new BayeuxServer.SessionListener() {
+        @Override
+        public void sessionRemoved(ServerSession session, boolean timedout) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("sessionRemoved: " + session.getId() + " timedout:" + timedout + " channels: "
+                + channelsAsString(session.getSubscriptions()));
+          }
         }
-      }
 
-      @Override
-      public void sessionAdded(ServerSession session, ServerMessage message) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("sessionAdded: " + session.getId() + " channels: " + channelsAsString(session.getSubscriptions()));
+        @Override
+        public void sessionAdded(ServerSession session, ServerMessage message) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("sessionAdded: " + session.getId() + " channels: " + channelsAsString(session.getSubscriptions()));
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   /**
@@ -954,11 +950,11 @@ public class CometdWebConferencingService implements Startable {
   /**
    * Channels as string.
    *
-   * @param channles the channles
+   * @param channels the channels
    * @return the string
    */
-  protected String channelsAsString(Set<ServerChannel> channles) {
-    return channles.stream().map(c -> c.getId()).collect(Collectors.joining(", "));
+  protected String channelsAsString(Set<ServerChannel> channels) {
+    return channels.stream().map(c -> c.getId()).collect(Collectors.joining(", "));
   }
 
   /**
