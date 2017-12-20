@@ -71,17 +71,16 @@
 	width: 600px;
 }
 
-#webrtc-settings-popup .popupContent {
+#webrtc-settings-popup .settingsForm .popupContent {
 	max-height: 400px;
 	overflow: auto;
-    padding-bottom: 0;
 }
 
-#webrtc-settings-popup .title {
+#webrtc-settings-popup .settingsForm .title {
 	font-weight: bold;
 }
 
-#webrtc-settings-popup .title .tooltip-inner {
+#webrtc-settings-popup .settingsForm .title .tooltip-inner {
 	max-width: 300px;
 }
 
@@ -158,8 +157,7 @@
 	width: 100%;
 }
 
-#webrtc-settings-popup .settingsForm .uiAction {
-	text-align: right;
+#webrtc-settings-popup .uiAction {
     margin-bottom: 15px;
 }
 
