@@ -72,7 +72,7 @@
 }
 
 #webrtc-settings-popup .settingsForm .popupContent {
-	max-height: 400px;
+	max-height: calc(95vh - 250px);
 	overflow: auto;
 }
 
