@@ -15,13 +15,10 @@
 
 	if (webConferencing) {
 
-		/** For debug logging. */
-		var objId = Math.floor((Math.random() * 1000) + 1);
-		var logPrefix = "[myconnector_" + objId + "] ";
-		var log = function(msg, e) {
-			webConferencing.log(msg, e, logPrefix);
-		};
-		//log("> Loading at " + location.origin + location.pathname);
+		// Start with default logger, later in configure() we'll get it for the provider.
+		// We know it's myconnector here, but mark with asterisk as not yet configured.
+		var log = webConferencing.getLog().setPrefix("myconnector*");  
+		//log.trace("> Loading at " + location.origin + location.pathname);
 		
 		/** 
 		 * An object that implements Web Conferencing API contract for a call provider.
@@ -136,7 +133,7 @@
 									// When user clicked the button - create an actual call.
 										// Use Web Conferencing helper to open a new window
 										// Build a call page URL on your own and for your needs.
-										var callUrl = self.getUrl() + "/call?clientId=" + self.getClientId() 
+										var callUrl = self.getUrl() + "/call?apiClientId=" + self.getApiClientId() 
 													+ "&topic=" + encodeURIComponent(target.title);
 										// You can save this call in eXo to inform other parts and be able restore the call in case of page reload
 										// or on other Platform pages. Respectively, you'll need to delete the call - this could be done from a call
@@ -179,7 +176,7 @@
 										// Try get a call by the ID to know is it exists already - it why we need stable ID clearly defining the target
 										webConferencing.getCall(callId).done(function(call) {
 											// Call already running - join it
-											log(">> Joining " + callId);
+											log.info("Joining call: " + callId);
 											callProcess.resolve(call, false);
 										}).fail(function(err, status) {
 											if (err) {
@@ -197,16 +194,17 @@
 														participants : ims.join(";") // string build from array separated by ';'
 													};
 													webConferencing.addCall(callId, callInfo).done(function(call) {
-														log(">> Added " + callId);
+														log.info("Call created: " + callId);
 														// Assign call ID to the button for later use (see above)
 														//$button.data("callid", callId);
 														callProcess.resolve(call, true);
 													});
 												} else {
-													log(">>> Call info error: " + JSON.stringify(err) + " [" + status + "]");
+													log.error("Failed to get call info: " + callId, err);
 													webConferencing.showError("Joining call error", webConferencing.errorText(err));													
 												}
 											} else {
+												log.error("Failed to get call info: " + callId);
 												webConferencing.showError("Joining call error", "Error read call information from the server");
 											}
 										});
@@ -220,19 +218,21 @@
 											$(callWindow).on("load", function() {
 												if (callWindow.startCall) {
 													callWindow.startCall(call, isNew).done(function(state) {
-														log("<<< Call " + state + " " + callId);
+														log.info("Call " + state + ": " + callId);
 														$button.addClass("callDisabled"); // should be removed on stop/leaved event in init()
 														$button.data("callid", callId);
 													}).fail(function(err) {
+														log.error("Failed to start/join call: " + callId, err);
 														webConferencing.showError("Error " + (isNewCall ? "starting" : "joining") + " call", webConferencing.errorText(err));
 													});	
 												} else {
+													log.error("Failed to start/join call: " + callId + ". Call window not loaded");
 													webConferencing.showError("Error " + (isNewCall ? "starting" : "joining") + " call", "Call window failed to load");
 												}
 											});										
 										});
 									} else {
-										log("Call disabled for " + target.id);
+										log.debug("Call disabled for " + target.id);
 									}
 								});
 								// Assign target ID to the button for later use on started event in init()
@@ -241,19 +241,27 @@
 								button.resolve($button);
 							} else {
 								// If not users compatible with My Connector IM type found, we reject, thus don't show the button for this context
-								button.reject("No " + self.getTitle() + " users found");
+								var msg = "No " + self.getTitle() + " users found";
+								log.error(msg);
+								button.reject(msg);
 							}
 						}).fail(function(err) {
 							// On error, we don't show the button for this context
-							button.reject("Error getting context details for " + self.getTitle() + ": " + err);
+							var msg = "Error getting context details";
+							log.error(msg, err);
+							button.reject(msg, err);
 						});
 					} else {
 						// If current user has no My Connector IM - we don't show the button to him
-						button.reject("Not My Connector user");
+						var msg = "Not My Connector user";
+						log.error(msg);
+						button.reject(msg);
 					}
 				} else {
 					// If not initialized, we don't show the button for this context
-					button.reject("Not configured or empty context for " + self.getTitle());
+					var msg = "Not configured or empty context";
+					log.error(msg);
+					button.reject(msg);
 				}
 				// Return a promise of jQuery deferred
 				return button.promise();
@@ -263,7 +271,7 @@
 			 * Helper method to build an incoming call popup.
 			 */
 			var acceptCallPopover = function(callerLink, callerAvatar, callerMessage, playRingtone) {
-				log(">> acceptCallPopover '" + callerMessage + "' caler:" + callerLink + " avatar:" + callerAvatar);
+				log.trace(">> acceptCallPopover '" + callerMessage + "' caler:" + callerLink + " avatar:" + callerAvatar);
 				var process = $.Deferred();
 				var $call = $("div.uiIncomingCall");
 				// Remove previous dialogs (if you need handle several incoming at the same time - implement special logic for this)
@@ -272,7 +280,7 @@
 						// By destroying a dialog, it should reject its incoming call 
 						$call.dialog("destroy");
 					} catch(e) {
-						log(">>> acceptCallPopover: error destroing prev dialog ", e);
+						log.error("acceptCallPopover: error destroing previous dialog ", e);
 					}
 					$call.remove();
 				}
@@ -358,7 +366,7 @@
 							var $button = $(this);
 							if ($button.data("targetid") == targetId) {
 								if (!$button.hasClass("callDisabled")) {
-									//log(">> lockCallButton " + targetId);
+									//log.trace(">> lockCallButton " + targetId);
 									$button.addClass("callDisabled");
 									$button.data("callid", callId);
 								}
@@ -370,7 +378,7 @@
 						$buttons.each(function() {
 							var $button = $(this);
 							if ($button.data("callid") == callId) {
-								//log(">> unlockCallButton " + callId + " " + $button.data("targetid"));
+								//log.trace(">> unlockCallButton " + callId + " " + $button.data("targetid"));
 								$button.removeClass("callDisabled");
 								$button.removeData("callid"); // we don't touch targetid, it managed by callButton()
 							}
@@ -385,8 +393,9 @@
 								// A call state changed (can be 'started', 'stopped', 'paused' (not used for the moment)
 								// rely on logic implemented in callButton() here: group call ID starts with 'g/'
 								var isGroup = callId.startsWith("g/");
-								log(">>> User call state updated: " + JSON.stringify(update) + " [" + status + "]");
+								log.trace(">>> User call state updated: " + JSON.stringify(update) + " [" + status + "]");
 								if (update.callState == "started") {
+									log.info("Incoming call: " + callId);
 									// Get call details by ID
 									webConferencing.getCall(callId).done(function(call) {
 										var callerId = call.owner.id;
@@ -411,24 +420,27 @@
 											}); 
 											popover.done(function(msg) {
 												// User accepted the call... 
-												log(">>> User " + msg + " call " + callId);
+												log.info("User " + msg + " call: " + callId);
 												var longTitle = self.getTitle() + " " + self.getCallTitle();
-												var callUrl = self.getUrl() + "/call?clientId=" + self.getClientId() 
+												var callUrl = self.getUrl() + "/call?apiClientId=" + self.getApiClientId() 
 													+ "&topic=" + encodeURIComponent(call.title);
 												var callWindow = webConferencing.showCallPopup(callUrl, longTitle);
 												callWindow.document.title = call.title;
 												// Optionally, we may invoke a call window to initialize the call.
 												// First wait the call window loaded
 												$(callWindow).on("load", function() {
+													log.debug("Call page loaded: " + callId);
 													// And tell the window to start a call
 													if (callWindow.startCall) {
 														callWindow.startCall(call).done(function(state) {
-															log("<<< Call " + state + " " + callId);
+															log.info("Call " + state + ": " + callId);
 															lockCallButton(update.owner.id, callId);
 														}).fail(function(err) {
+															log.error("Failed to start/join call: " + callId, err);
 															webConferencing.showError("Error starting call", webConferencing.errorText(err));
 														});	
 													} else {
+														log.error("Call window failed to load: " + callId, err);
 														webConferencing.showError("Error starting call", "Call window failed to load");
 													}
 												});
@@ -438,22 +450,22 @@
 												if (!isGroup && $callPopup.callState != "stopped" && $callPopup.callState != "joined") {
 													// Delete the call if it is not group one, not already stopped and wasn't joined -
 													// a group call will be deleted automatically when last party leave it.
-													log("<<< User " + err + ($callPopup.callState ? " just " + $callPopup.callState : "") + " call " + callId + ", deleting it.");
+													log.trace("<<< User " + err + ($callPopup.callState ? " just " + $callPopup.callState : "") + " call " + callId + ", deleting it.");
 													webConferencing.deleteCall(callId).done(function() {
-														log("<< Deleted " + callId);
+														log.info("Call deleted: " + callId);
 													}).fail(function(err) {
 														if (err && (err.code == "NOT_FOUND_ERROR" || (typeof(status) == "number" && status == 404))) {
 															// already deleted
-															log("<< Call not found " + callId);
+															log.trace("<< Call not found " + callId);
 														} else {
-															log("ERROR deleting " + callId + ": " + JSON.stringify(err));
+															log.error("Failed to stop call: " + callId, err);
 															webConferencing.showError("Error stopping call", webConferencing.errorText(err));
 														}
 													});
 												}
 											});
 										}).fail(function(err, status) {
-											log(">>> User status error: " + JSON.stringify(err) + " [" + status + "]");
+											log.error("Failed to get user status: " + currentUserId, err);
 											if (err) {
 												webConferencing.showError("Incoming call error", webConferencing.errorText(err));
 											} else {
@@ -461,7 +473,7 @@
 											}
 										});
 									}).fail(function(err, status) {
-										log(">>> Call info error: " + JSON.stringify(err) + " [" + status + "]");
+										log.error("Failed to get call info: " + callId, err);
 										if (err) {
 											webConferencing.showError("Incoming call error", webConferencing.errorText(err));
 										} else {
@@ -469,30 +481,31 @@
 										}
 									});
 								} else if (update.callState == "stopped") {
+									log.info("Call stopped remotelly: " + callId);
 									// Hide call popover for this call, if any
 									closeCallPopup(callId, update.callState);
 									// Unclock the call button
 									unlockCallButton(callId);
 								}
 							} else if (update.eventType == "call_joined") {
+								log.debug("User call joined: " + update.callId);
 								// If user has incoming popup open for this call (in several user's windows/clients), then close it
-								log(">>> User call joined: " + JSON.stringify(update) + " [" + status + "]");
 								if (currentUserId == update.part.id) {
 									closeCallPopup(callId, "joined");
 								}
 							} else if (update.eventType == "call_leaved") {
+								log.debug("User call leaved: " + update.callId);
 								// When user leaves a call, we unlock his button, thus it will be possible to join the call again - 
 								// actual for group conversations.
 								if (currentUserId == update.part.id) {
 									unlockCallButton(callId);
 								}
 							} else {
-								log("<<< Unexpected user update: " + JSON.stringify(update) + " [" + status + "]");
+								log.debug("Unexpected user update: " + JSON.stringify(update));
 							}
 						} // it's other provider type - skip it
 					}, function(err) {
-						// Error handler
-						log(err);
+						log.error("Failed to listen on user updates", err);
 					});
 				}
 				process.resolve();
@@ -506,14 +519,16 @@
 			 */
 			this.configure = function(mySettings) {
 				settings = mySettings;
+				// Init log sooner
+				log = webConferencing.getLog(settings.type);
 			};
 			
 			/**
 			 * Used in the callButton() code. Also can be used by dependent modules (e.g. when need run a call page in a window).
 			 */
-			this.getClientId = function() {
+			this.getApiClientId = function() {
 				if (settings) {
-					return settings.clientId;
+					return settings.apiClientId;
 				}
 			};
 			
@@ -547,10 +562,10 @@
 		if (globalWebConferencing) {
 			globalWebConferencing.myconnector = provider;
 		} else {
-			log("eXo.webConferencing not defined");
+			log.warn("eXo.webConferencing not defined");
 		}
 
-		log("< Loaded at " + location.origin + location.pathname + " -- " + new Date().toLocaleString());
+		log.trace("< Loaded at " + location.origin + location.pathname);
 		
 		return provider;
 	} else {

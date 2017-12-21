@@ -30,9 +30,6 @@ package org.exoplatform.webconferencing;
  */
 public abstract class IdentityInfo {
 
-  /** The Constant ME. */
-  public static final String ME    = "me";
-
   /** The Constant EMPTY. */
   public static final String EMPTY = "".intern();
 

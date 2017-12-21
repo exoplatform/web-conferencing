@@ -6,34 +6,207 @@
 	
 	// ******** Utils ********
 
-	/** For debug logging. */
-	var objId = Math.floor((Math.random() * 1000) + 1);
-	var logPrefix = "[webconferencing_" + objId + "] ";
-	var log = function(msg, e, prefix) {
-		if (typeof console != "undefined" && typeof console.log != "undefined") {
+	var getRandomArbitrary = function(min, max) {
+	  return Math.floor((Math.random() * (max - min - 1) + min) + 1);
+	};
+
+	/**
+	 * Universal client ID for use in logging, services connectivity and related cases.
+	 */
+	var clientId = getRandomArbitrary(1000, 9999);
+	
+	/**
+	 * This module logger prefix.
+	 */
+	var logPrefix = "webconferencing";
+	
+	var errorText = function(err) {
+		return err && err.message ? err.message : err;
+	};
+	
+	var tryParseJson = function(message) {
+		var src = message.data ? message.data : (message.error ? message.error : message.failure); 
+		if (src) {
+			try {
+				return typeof src == "string" ? JSON.parse(src) : src;
+			} catch(e) {
+				log.debug("Error parsing '" + src + "' as JSON: " + e, e);
+				return src;
+			}				
+		} else {
+			return src;
+		}
+	};
+	
+	/**
+	 * Logging to browser console and optionally (if enabled) spool the log to remote server.
+	 * @param remoteEnabled if true the log will also spool remotely, otherwise only log to browser console. 
+	 */
+	function ClientLog(remoteEnabled) {
+		
+		var cometd = null;
+		var prefix = null;
+		var buff = [];
+		
+		var spoolBuff = function() {
+			if (cometd) {
+				var copy = buff.slice();
+				buff = [];
+				// spool in CometD batch
+				cometd.batch(function() {
+					for (var i=0; i<copy.length; i++) {
+						var params = copy[i];
+						var process = params.process;
+						delete params.process;
+						cometd.remoteCall("/webconferencing/logs", params, function(response) {
+							var result = tryParseJson(response);
+							if (response.successful) {
+								//log.trace("<< addCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
+								process.resolve(result, 200);
+							} else {
+								//log.trace("<< addCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
+								process.reject(result, 400);
+							}
+						});
+					}
+				});	
+			} else if (buff.length > 100) {
+				toLog("warn", "CometD not available. Log cannot be spooled remotely and will be cut to avoid memory leak.", null, true);
+				buff = buff.slice(70);
+			}
+		};
+		
+		var logRemote = function(level, message, time) {
+			var process = $.Deferred();
+			if (remoteEnabled) {
+				if (cometd) {
+					var data;
+					if (typeof message === "function") {
+						data = message();
+						if (typeof data === "string") {
+							data = {
+								message : msg
+							};
+						}
+					} else if (typeof message === "string") {
+						data = {
+							message : message
+						};
+					} else {
+						data = message;
+					}
+					var params = cometdParams({
+						data : data,
+						level : level,
+						prefix : prefix,
+						clientId : clientId, 
+						time : time,
+						process : process
+					});
+					buff.push(params);
+					if (buff.length > 10) {
+						spoolBuff();
+					}
+				} else {
+					process.reject("CometD required");
+				}					
+			} else {
+				process.resolve("disabled");
+			}
+			return process.promise();					
+		};
+		
+		var toLog = function(level, msg, err, localOnly) {
+			// Log to browser console and remotely when remote service become available.
 			if (!prefix) {
 				prefix = logPrefix;
 			}
-			var isoTime = " -- " + new Date().toISOString();
-			if (e) {
-				if (e instanceof Error) {
-					console.log(prefix + msg + ". " + (e.name && e.message ? e.name + ": " + e.message : e.toString()) + isoTime);
-				} if (e.name && e.message) {
-					console.log(prefix + msg + ". " + e.name + ": " + e.message + isoTime);
+			var msgLine;
+			if (err) {
+				if (err instanceof Error) {
+					msgLine = msg + ". " + (err.name && err.message ? err.name + ": " + err.message : err.toString());
+				} if (err.name && err.message) {
+					msgLine = msg + ". " + err.name + ": " + err.message;
+				} if (err.message) {
+					msgLine = msg + ". " + err.message;
 				} else {
-					console.log(prefix + msg + ". Cause: " + (typeof e == "string" ? e : JSON.stringify(e) 
-								+ (e.toString && typeof e.toString == "function" ? "; " + e.toString() : "")) + isoTime);
-				}
-				if (typeof e.stack != "undefined") {
-					console.log(e.stack);
+					msgLine = msg + ". Cause: " + (typeof err === "string" ? err : JSON.stringify(err) 
+								+ (err.toString && typeof err.toString === "function" ? "; " + err.toString() : ""));
 				}
 			} else {
-				console.log(prefix + msg + isoTime);
+				msgLine = msg;
 			}
-		}
-	};
-	//log("> Loading at " + location.origin + location.pathname);
-
+			var isoTime = new Date().toISOString();
+			if (typeof console !== "undefined" && typeof console.log === "function") {
+				var levelPad = (level.toUpperCase() + "     ").slice(0, 5);
+				var localPrefix = prefix + "_" + clientId
+				console.log("| " + local + " | " + localPrefix + " " + line + " -- " + isoTime);
+				if (typeof err.stack !== "undefined") {
+					console.log(err.stack);
+				}
+			}
+			if (!localOnly) {
+				logRemote(line);
+			}
+		};
+		
+		// We attempt to save all logs on page close
+		var closeMsg = "Please wait for a moment"; // this should not be shown to an user
+		var windowListener = function(e) {
+			e.returnValue = closeMsg; // Gecko, Trident, Chrome 34+
+			if (buff.length > 0) {
+				spoolBuff();
+			}
+			return closeMsg; // Gecko, WebKit, Chrome <34
+		};
+		window.addEventListener("beforeunload", windowListener);
+		window.addEventListener("unload", windowListener);
+		
+		this.setPrefix = function(thePrefix) {
+			prefix = thePrefix;
+			return this;
+		};
+		
+		this.setCometd = function(theCometd) {
+			cometd = theCometd;
+			if (buff.length > 0) {
+				spoolBuff();
+			}
+			return this;
+		};
+		
+		/**
+		 * Add info level message to user log.
+		 */
+		this.info = function(message, err) {
+			return toLog("info", message, err);
+		};
+		
+		/**
+		 * Add warn level message to user log.
+		 */
+		this.warn = function(message, err) {
+			return toLog("warn", message, err);
+		};
+		
+		/**
+		 * Add error level message to user log.
+		 */
+		this.info = function(message, err) {
+			return toLog("error", message, err);
+		};
+		
+		/**
+		 * Add trace level message to user log.
+		 */
+		this.trace = function(message, err) {
+			return toLog("trace", message, err, true); // traces go to browser console only
+		};
+	}
+	
+	var log = new ClientLog(); // core log not enabled for remote spooling currently
+	//log.trace("> Loading at " + location.origin + location.pathname);
+	
 	/** 
 	 * Polyfill ECMAScript 2015's String.startsWith().
 	 * */
@@ -70,7 +243,7 @@
 				str = decodeURIComponent(str);
 				return str;
 			} catch(e) {
-				log("WARN: error decoding string " + str + ". " + e, e);
+				log.warn("Error decoding string " + str + ". " + e, e);
 			}
 		}
 		return null;
@@ -82,7 +255,7 @@
 				str = encodeURIComponent(str);
 				return str;
 			} catch(e) {
-				log("WARN: error decoding string " + str + ". " + e, e);
+				log.warn("Error decoding string " + str + ". " + e, e);
 			}
 		}
 		return null;
@@ -817,6 +990,8 @@
 	 */
 	function WebConferencing() {
 
+		var self = this;
+		
 		// ******** Context ********
 		var currentUser, currentSpaceId, currentRoomTitle;
 
@@ -833,9 +1008,6 @@
 			return chat;
 		};
 
-		var errorText = function(err) {
-			return err && err.message ? err.message : err;
-		};
 		this.errorText = errorText;
 		
 		var cometdParams = function(params) {
@@ -861,11 +1033,11 @@
 					if (eXo && eXo.webConferencing && eXo.webConferencing.__preferences) {
 						return eXo.webConferencing.__preferences[key];
 					} else {
-						log("WARN cannot read user preference: local storage not supported.");
+						log.warn("Cannot read user preference: local storage not supported.");
 					}
 				}				
 			} else {
-				log("WARN current user not set for reading user preferences.");
+				log.warn("Current user not set for reading user preferences.");
 			}
 			return null;
 		};
@@ -880,11 +1052,11 @@
 					if (eXo && eXo.webConferencing && eXo.webConferencing.__preferences) {
 						eXo.webConferencing.__preferences[key] = providerType;
 					} else {
-						log("WARN cannot save user preference: local storage not supported.");
+						log.warn("Cannot save user preference: local storage not supported.");
 					}
 				}				
 			} else {
-				log("WARN current user not set for saving user preferences.");
+				log.warn("Current user not set for saving user preferences.");
 			}
 		};
 		
@@ -945,23 +1117,23 @@
 					if (provider.init && provider.hasOwnProperty("init")) {
 						provider.init(initContext()).done(function() {
 							provider.isInitialized = true;
-							log("Initialized call provider: " + provider.getType());
+							log.info("Initialized call provider: " + provider.getType());
 							initializer.resolve(provider, true);
 						}).fail(function(err) {
-							log("WARN failed to initialize call provider '" + provider.getType() + "': " + err);
+							log.warn("Failed to initialize call provider '" + provider.getType() + "': " + err);
 							initializer.resolve(provider, false);
 						});
 					} else {
-						log("Marked call provider as Initialized: " + provider.getType());
+						log.info("Marked call provider as Initialized: " + provider.getType());
 						provider.isInitialized = true;
 						initializer.resolve(provider, true);
 					}
 				} else {
-					log("CANCELED initialization of not active call provider '" + provider.getType() + "'");
+					log.info("CANCELED initialization of not active call provider '" + provider.getType() + "'");
 					initializer.resolve(provider, false);
 				}
 			} else {
-				log("CANCELED initialization of not configured call provider '" + provider.getType() + "'");
+				log.warn("CANCELED initialization of not configured call provider '" + provider.getType() + "'");
 				initializer.reject(provider.getType() + " " + message("notConfigured"));
 			}
 			return initializer.promise();
@@ -983,9 +1155,9 @@
 					// 2) if already calling, then need wait for previous call completion and then re-call this method 
 					var prevInitializer = $target.data("callbuttoninit");
 					if (prevInitializer) {
-						log(">>> addCallButton > init WAIT " + contextName + " providers: " + addProviders.length);
+						log.trace(">>> addCallButton > init WAIT " + contextName + " providers: " + addProviders.length);
 						prevInitializer.always(function() {
-							log(">>> addCallButton > init RESUMED " + contextName + " providers: " + addProviders.length);
+							log.trace(">>> addCallButton > init RESUMED " + contextName + " providers: " + addProviders.length);
 							addCallButton($target, context).done(function($container) {
 								initializer.resolve($container);
 							}).fail(function(err) {
@@ -994,10 +1166,10 @@
 						});
 					} else {
 						$target.data("callbuttoninit", initializer);
-						//log(">>> addCallButton > init " + contextName + " providers: " + addProviders.length);
+						//log.trace(">>> addCallButton > init " + contextName + " providers: " + addProviders.length);
 						initializer.always(function() {
 							$target.removeData("callbuttoninit");
-							//log("<<< addCallButton < init " + contextName + " providers: " + addProviders.length);
+							//log.trace("<<< addCallButton < init " + contextName + " providers: " + addProviders.length);
 						});
 						// Call button placed in a 'container' element for positioning on a page
 						// TODO may be we don't need it since we don't have a default button?
@@ -1035,13 +1207,13 @@
 							} // else, nothing to move at all
 						}
 						function addProviderButton(provider, button) {
-							//log(">>> addCallButton > adding > " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
+							//log.trace(">>> addCallButton > adding > " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
 							// need do this in a function to keep worker variable in the scope of given button when it will be done 
 							var bworker = $.Deferred();
 							button.done(function($button) {
 								if (hasButton) {
 									// add this button as an item to dropdown list
-									//log(">>> addCallButton > add in dropdown > " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
+									//log.trace(">>> addCallButton > add in dropdown > " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
 									if ($dropdown.length == 0) { // check actual dropdown content right here, not addDropdown
 										$dropdown = $("<ul class='dropdown-menu'></ul>");
 									}
@@ -1051,7 +1223,7 @@
 									$dropdown.append($li);
 								} else {
 									// add as a first (single) button
-									//log(">>> addCallButton > add first & default button > " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
+									//log.trace(">>> addCallButton > add first & default button > " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
 									if (!$button.hasClass("btn")) {
 										$button.addClass("btn"); // btn btn-primary actionIcon ?
 									}
@@ -1072,10 +1244,10 @@
 										//moveToDefaultButton($button);
 									});
 								}
-								log("<<< addCallButton DONE < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
+								log.trace("<<< addCallButton DONE < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
 							});
 							button.fail(function(msg) {
-								log("<<< addCallButton CANCELED < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id + ": " + msg);
+								log.trace("<<< addCallButton CANCELED < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id + ": " + msg);
 							});
 							button.always(function() {
 								// for the below $.when's always callback we need resolve all workers independently succeeded or failed 
@@ -1084,13 +1256,13 @@
 							workers.push(bworker.promise());
 						}
 						// we have an one button for each provider
-						//log(">>> addCallButton > " + contextName + " for " + context.currentUser.id + " providers: " + addProviders.length);
+						//log.trace(">>> addCallButton > " + contextName + " for " + context.currentUser.id + " providers: " + addProviders.length);
 						for (var i = 0; i < addProviders.length; i++) {
 							var p = addProviders[i];
-							//log(">>> addCallButton > next provider > " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id + " providers: " + addProviders.length);
+							//log.trace(">>> addCallButton > next provider > " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id + " providers: " + addProviders.length);
 							if (p.isInitialized) {
 								if ($container.data(providerFlag + p.getType())) {
-									//log("<<< addCallButton DONE (already) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
+									//log.trace("<<< addCallButton DONE (already) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
 								} else {
 									// even if adding will fail, we treat it as 'canceled' and mark the provider as added
 									$container.data(providerFlag + p.getType(), true);
@@ -1098,7 +1270,7 @@
 									addProviderButton(p, b);
 								}								
 							} else {
-								log("<<< addCallButton CANCELED (not initialized) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
+								log.trace("<<< addCallButton CANCELED (not initialized) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
 							}
 						}
 						if (workers.length > 0) {
@@ -1174,9 +1346,9 @@
 							  		data.resolve(space);
 							  	}).fail(function(e, status) {
 							  		if (typeof status == "number" && status == 404) {
-											log(">> chatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
+											log.trace(">> chatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
 										} else {
-											log(">> chatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + JSON.stringify(e));
+											log.trace(">> chatContext < ERROR get_space " + spaceId + " for " + currentUser.id, e);
 										}
 							  		data.reject(e);
 									});
@@ -1189,26 +1361,25 @@
 												unames.push(u.name);
 											}
 										}
-										//var room = getRoomInfo(roomId, roomName, roomTitle, unames); // TODO use for caching rooms
 										getRoomInfoReq(roomName + "/" + roomId, roomTitle, unames).done(function(info) {
 											data.resolve(info);												
 										}).fail(function(e, status) {
 											if (typeof status == "number" && status == 404) {
 												var msg = (e.message ? e.message + " " : "Not found ");
-												log(">> chatContext < ERROR get_room " + roomName + " (" + msg + ") for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + roomName + ": " + JSON.stringify(e));
+												log.trace(">> chatContext < ERROR get_room " + roomName + " (" + msg + ") for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + roomName + ": " + JSON.stringify(e));
 												data.reject(msg);
 											} else {
-												log(">> chatContext < ERROR get_room " + roomName + " for " + currentUser.id + ": " + JSON.stringify(e));
+												log.trace(">> chatContext < ERROR get_room " + roomName + " for " + currentUser.id + ": " + JSON.stringify(e));
 												data.reject(e);
 											}
 											// TODO notify the user?
 										});
 							  	}).fail(function(err) {
-							  		log("ERROR: " + err);
-										data.reject("Error reading Chat users", err);
+							  		log.trace("Error reading Chat room users " + roomId, err);
+										data.reject("Error reading Chat room users for " + roomId, err);
 							  	});
 						  	} else {
-						  		log(">> chatContext < ERROR unexpected chat type '" + chatType + "' and room '" + roomId + "' for " + currentUser.id);
+						  		log.trace(">> chatContext < ERROR unexpected chat type '" + chatType + "' and room '" + roomId + "' for " + currentUser.id);
 						  		data.reject("Unexpected chat type: " + chatType);
 						  	}
 							} else {
@@ -1218,10 +1389,10 @@
 								}).fail(function(e, status) {
 									if (typeof status == "number" && status == 404) {
 										var msg = (e.message ? e.message + " " : "Not found ");
-										log(">> chatContext < ERROR get_user " + msg + " for " + currentUser.id + ": " + JSON.stringify(e));
+										log.trace(">> chatContext < ERROR get_user " + msg + " for " + currentUser.id + ": " + JSON.stringify(e));
 										data.reject(msg);
 									} else {
-										log(">> chatContext < ERROR get_user : " + JSON.stringify(e));
+										log.trace(">> chatContext < ERROR get_user : " + JSON.stringify(e));
 										data.reject(e);
 									}
 								});
@@ -1253,7 +1424,7 @@
 				var $chat = $("#chat-application");
 				// chatApplication is global on chat app page
 				if (chat.isApplication() && $chat.length > 0) {
-					log(">> initChat for " + chatApplication.username);
+					log.trace(">> initChat for " + chatApplication.username);
 					var $roomDetail = $chat.find("#room-detail");
 					var addRoomButtton = function() {
 						$roomDetail.find(".callButtonContainerWrapper").hide(); // hide immediately
@@ -1286,30 +1457,32 @@
 										currentRoomTitle = null;
 										currentSpaceId = null;
 									}
-									if (context.roomTitle) {
+									if (context.roomId) {
 										var initializer = addCallButton($wrapper, context);
 										initializer.done(function($container) {
 											$container.find(".callButton").first().addClass("chatCall");
 											$container.find(".dropdown-menu").addClass("pull-right");
 											$wrapper.show();
-											log("<< initChat DONE " + context.roomTitle + " for " + currentUser.id);
+											log.trace("<< initChat DONE " + context.roomTitle + " for " + currentUser.id);
 										});
-										initializer.fail(function(error) {
+										initializer.fail(function(err) {
 											if (error) {
-												log("<< initChat ERROR " + context.roomTitle + " for " + currentUser.id + ": " + error);
+												log.trace("<< initChat ERROR " + context.roomTitle + " for " + currentUser.id + ": " + err);
+												log.error("Chat initialization failed in '" + context.roomTitle + "' for " + currentUser.id, err);
 												$roomDetail.removeData("roomcallinitialized");
 											}
 										});
 									} else {
-										log("<< initChat WARN no room found for " + roomTitle, err);
+										log.trace("<< initChat WARN no room found in context");
 										$roomDetail.removeData("roomcallinitialized");
 									}
 								}).fail(function(err) {
-									log("<< initChat ERROR getting room info from chatServer: ", err);
+									log.trace("<< initChat ERROR getting room info from chatServer: " + err);
+									log.error("Error getting room info from Chat server", err);
 									$roomDetail.removeData("roomcallinitialized");
 								}); 
 							} else {
-								log("ERROR: Chat team dropdown not found");
+								//log.trace("Chat team dropdown not found");
 								$roomDetail.removeData("roomcallinitialized");
 							}
 						}, 1500); // XXX whoIsOnline may run 500-750ms on eXo Tribe
@@ -1319,7 +1492,7 @@
 						$roomDetail.data("roomcallinitialized", true);
 						addRoomButtton();
 					} else {
-						log("WARN: Chat room already initialized");
+						log.trace("Chat room already initialized");
 					}
 					
 					// User popovers in right panel
@@ -1343,13 +1516,13 @@
 			var $fullName = $miniChat.find(".fullname");
 			if (typeof chatApplication === "undefined" && $fullName.length > 0 && chatNotification) {
 				if ($miniChat.data("minichatcallinitialized")) {
-					//log("<< initMiniChat CANCELED < Already initialized [" + $fullName.text().trim() + "] for " + currentUser.id);
+					//log.trace("<< initMiniChat CANCELED < Already initialized [" + $fullName.text().trim() + "] for " + currentUser.id);
 				} else {
 					$miniChat.data("minichatcallinitialized", true);
 					var process = $.Deferred();
 					var addMiniChatCallButton = function() {
 						var roomTitle = $fullName.text().trim();
-						log(">> initMiniChat [" + roomTitle + "] for " + currentUser.id);
+						log.trace(">> initMiniChat [" + roomTitle + "] for " + currentUser.id);
 						var $titleBar = $miniChat.find(".title-right");
 						if ($titleBar.length > 0 && roomTitle.length > 0) {
 							var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
@@ -1357,7 +1530,7 @@
 							// Wait a bit for completing Chat workers
 							setTimeout(function() {
 								getChatContext().done(function(context) {
-									if (context.roomTitle) {
+									if (context.roomId) {
 										if ($wrapper.length == 0) {
 											$wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");											
 										}
@@ -1371,23 +1544,25 @@
 											$container.find(".dropdown-toggle").removeClass("btn").addClass("btn-mini");
 											$container.find(".dropdown-menu").addClass("pull-right");
 											$titleBar.prepend($wrapper);
-											log("<< initMiniChat DONE [" + context.roomTitle + "] for " + currentUser.id);
+											log.trace("<< initMiniChat DONE [" + context.roomTitle + "] for " + currentUser.id);
 										});
-										initializer.fail(function(error) {
-											if (error) {
-												log("<< initMiniChat ERROR [" + context.roomTitle + "] for " + currentUser.id + ": " + error);
+										initializer.fail(function(err) {
+											if (err) {
+												log.trace("<< initMiniChat ERROR [" + context.roomTitle + "] for " + currentUser.id + ": " + err);
+												log.error("Mini-chat initialization failed in " + context.roomTitle + " for " + currentUser.id, err);
 												$miniChat.removeData("minichatcallinitialized");												
 											}
 										});
 									} else {
-										log("<< initMiniChat WARN no room found for [" + roomTitle + "]", err);
+										log.trace("<< initMiniChat WARN no room found in context");
 									}
 								}).fail(function(err) {
-									log("<< initMiniChat ERROR getting room info from chatServer: ", err);
+									log.trace("<< initMiniChat ERROR getting room info from chatServer: " + err);
+									log.error("Error getting room info from Chat server", err);
 								});
 							}, 750);
 						} else {
-							log("<< initMiniChat CANCELED mini-chat not found or empty");
+							log.trace("<< initMiniChat CANCELED mini-chat not found or empty");
 						}
 					};
 					//addMiniChatCallButton(); // TODO need this, or observer's one will be enough?
@@ -1421,9 +1596,9 @@
 					var user = getUserInfoReq(userId);
 					user.fail(function(e, status) {
 						if (typeof status == "number" && status == 404) {
-							log(">> userContext < ERROR get_user " + (e.message ? e.message + " " : "Not found ") + userId + " for " + currentUser.id + ": " + JSON.stringify(e));
+							log.trace(">> userContext < ERROR get_user " + (e.message ? e.message + " " : "Not found ") + userId + " for " + currentUser.id + ": " + JSON.stringify(e));
 						} else {
-							log(">> userContext < ERROR get_user : " + JSON.stringify(e));
+							log.trace(">> userContext < ERROR get_user : " + JSON.stringify(e));
 						}
 					});
 					return user;
@@ -1468,7 +1643,7 @@
 						return null;
 					}
 					var observer = new MutationObserver(function(mutations) {
-						//log(">>> onTiptipUpdate mutations " + mutations.length);
+						//log.trace(">>> onTiptipUpdate mutations " + mutations.length);
 						for(var i=0; i<mutations.length; i++) {
 							var m = mutations[i];
 							// TODO for development tracing: cleanup
@@ -1484,12 +1659,12 @@
 									}
 									return s;
 								} 
-								log(">>> initUserPopups mutation " + m.type + " of " + m.target.nodeName 
+								log.trace(">>> initUserPopups mutation " + m.type + " of " + m.target.nodeName 
 											+ (m.type == "attributes" ? " " + m.attributeName : (m.type == "childList" ? " added:" + nodeListString(m.addedNodes) + " removed:" + nodeListString(m.removedNodes) : ""))
 											+ (m.target.id ? " id:" + m.target.id : "")
 											+ (m.target.classList.length > 0 ? " class:" + m.target.classList.value : ""));
 							} else {
-								log(">>> initUserPopups mutation " + m.type + " " + m.target.nodeName + "(" + m.target.nodeType + ")");
+								log.trace(">>> initUserPopups mutation " + m.type + " " + m.target.nodeName + "(" + m.target.nodeType + ")");
 							}*/
 							var tipName;
 							if (m.type == "childList" && (tipName = findNodeById("tipName", m.addedNodes))) {
@@ -1522,11 +1697,11 @@
 				});
 				// XXX workaround to avoid first-child happen on call button in the popover
 				$container.prepend($("<div class='btn' style='display: none;'></div>"));
-				log("<< addPopoverButton DONE " + contextId(context) + " for " + currentUser.id);
+				log.trace("<< addPopoverButton DONE " + contextId(context) + " for " + currentUser.id);
 			});
 			initializer.fail(function(err) {
 				if (err) {
-					log("<< addPopoverButton ERROR " + contextId(context) + " for " + currentUser.id + ": " + err);
+					log.trace("<< addPopoverButton ERROR " + contextId(context) + " for " + currentUser.id + ": " + err);
 				}
 			});
 			return initializer;
@@ -1564,7 +1739,7 @@
 					var $userActions = $(elem).find("#UIRelationshipAction .user-actions");
 					addCallButton($userActions, userContext(userId)).done(function($container) {
 						$container.addClass("pull-left");
-						log("<< initUsers profile DONE " + userId + " for " + currentUser.id);
+						log.trace("<< initUsers profile DONE " + userId + " for " + currentUser.id);
 					});
 				}
 			});
@@ -1585,9 +1760,9 @@
 					var space = getSpaceInfoReq(spaceId); // TODO use getSpaceInfo() for caching spaces
 			  	space.fail(function(e, status) {
 						if (typeof status == "number" && status == 404) {
-							log(">> spaceContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
+							log.trace(">> spaceContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
 						} else {
-							log(">> spaceContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + JSON.stringify(e));
+							log.trace(">> spaceContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + JSON.stringify(e));
 						}
 					});
 					return space;
@@ -1616,7 +1791,7 @@
 						addPopoverButton($spaceAction, spaceContext(spaceId));
 					}
 				} else {
-					log("<< initSpacePopups WARN popover profileName link not found");
+					log.trace("<< initSpacePopups WARN popover profileName link not found");
 				}
 			});
 		};
@@ -1632,11 +1807,12 @@
 						var $button = $container.find(".callButton");
 						var $first = $button.first();
 						$first.addClass("spaceCall transparentButton");
-						log("<< initSpace DONE " + currentSpaceId + " for " + currentUser.id);
+						log.trace("<< initSpace DONE " + currentSpaceId + " for " + currentUser.id);
 					});
-					initializer.fail(function(error) {
-						if (error) {
-							log("<< initSpace ERROR " + currentSpaceId + " for " + currentUser.id + ": " + error);
+					initializer.fail(function(err) {
+						if (err) {
+							log.trace("<< initSpace ERROR " + currentSpaceId + " for " + currentUser.id + ": " + err);
+							log.error("Space initialization failed in " + currentSpaceId + " for " + currentUser.id, err);
 						}
 					});
 				};
@@ -1680,9 +1856,11 @@
 				messages = context.messages;
 				if (user) {
 					currentUser = user;
+					currentUser.clientId = clientId;
 					providersConfig = context.providersConfig;
 					prepareUser(currentUser);
-					log("User initialized in Web Conferencing: " + user.id + ". ");
+					log.info("User initialized in Web Conferencing: " + currentUser.id + ". Lang: " + (navigator.language || navigator.userLanguage || navigator.browserLanguage) 
+								+ ". Local date: " + new Date().toLocaleString() + ". Browser: " + navigator.userAgent);
 					if (context.spaceId) {
 						currentSpaceId = context.spaceId;
 					} else {
@@ -1698,18 +1876,19 @@
 					if (context.cometdPath) {
 						cCometD.configure({
 							"url": prefixUrl  + context.cometdPath,
-							"exoId": user.id,
+							"exoId": currentUser.id,
 							"exoToken": context.cometdToken,
 							"maxNetworkDelay" : 15000
 						});
 						cometd = cCometD;
 						cometdContext = {
-							"exoContainerName" : context.containerName
+							"exoContainerName" : context.containerName,
+							"exoClientId" : currentUser.clientId
 						};
 						cometd.onListenerException = function(exception, subscriptionHandle, isListener, message) {
 					    // Uh-oh, something went wrong, disable this listener/subscriber
 					    // Object "this" points to the CometD object
-							log("< CometD listener exception: " + exception + " (" + subscriptionHandle + ") isListener:" + isListener + " message:" + message);
+							log.error("CometD listener exception: " + exception + " (" + subscriptionHandle + ") isListener:" + isListener + " message:" + message);
 					    if (isListener) {
 					        this.removeListener(subscriptionHandle);
 					    } else {
@@ -1717,7 +1896,7 @@
 					    }
 						}
 					} else {
-						log("WARN: CometD not found in context settings");
+						log.warn("CometD not found in context settings");
 					}
 					
 					// also init registered providers
@@ -1779,21 +1958,21 @@
 				if (provider.callButton && provider.hasOwnProperty("callButton")) {
 					// we'll also care about providers added after Web Conferencing initialization, see this.init()
 					providers.push(provider);
-					log("Added call provider: " + provider.getType() + " (" + provider.getTitle() + ")");
+					log.trace("Added call provider: " + provider.getType() + " (" + provider.getTitle() + ")");
 					if (currentUser) {
 						if (!provider.isInitialized) {
 							initProvider(provider);
 						} else {
-							log("Already initialized provider: " + provider.getType());
+							log.trace("Already initialized provider: " + provider.getType());
 						}
 					} else {
-						log("Current user not set, later will try initialized provider: " + provider.getType());
+						log.trace("Current user not set, later will try initialized provider: " + provider.getType());
 					}
 				} else {
-					log("Not compartible provider object (method callButton() required): " + provider.getTitle());
+					log.warn("Not compartible provider object (method callButton() required): " + provider.getTitle());
 				}
 			} else {
-				log("Not a provider object: " + JSON.stringify(provider));
+				log.warn("Not a provider object: " + JSON.stringify(provider));
 			}
 		};
 		
@@ -1869,20 +2048,6 @@
 		this.getSpaceInfo = getSpaceInfoReq;
 		this.getRoomInfo = getRoomInfoReq;
 		
-		var tryParseJson = function(message) {
-			var src = message.data ? message.data : (message.error ? message.error : message.failure); 
-			if (src) {
-				try {
-					return typeof src == "string" ? JSON.parse(src) : src;
-				} catch(e) {
-					log("> Error parsing '" + src + "' as JSON: " + e, e);
-					return src;
-				}				
-			} else {
-				return src;
-			}
-		};
-		
 		var cometdError = function(response) {
 			return "[" + response.id + "] " + response.channel + " " 
 					+ JSON.stringify(response.error ? response.error : (response.failure ? response.failure : response.data));
@@ -1897,7 +2062,7 @@
 		 */
 		this.getCall = function(id) {
 			if (cometd) {
-				//log(">> getCall:/webconferencing/calls:" + id + " - request published");
+				//log.trace(">> getCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					command : "get",
@@ -1906,10 +2071,10 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						//log("<< getCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
+						//log.trace("<< getCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						//log("<< getCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
+						//log.trace("<< getCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -1924,7 +2089,7 @@
 		 */
 		this.updateCall = function(id, state) {
 			if (cometd) {
-				//log(">> updateCall:/webconferencing/calls:" + id + " - request published");
+				//log.trace(">> updateCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					command : "update",
@@ -1934,10 +2099,10 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						//log("<< updateCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
+						//log.trace("<< updateCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						//log("<< updateCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
+						//log.trace("<< updateCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -1952,7 +2117,7 @@
 		 */
 		this.deleteCall = function(id) {
 			if (cometd) {
-				//log(">> deleteCall:/webconferencing/calls:" + id + " - request published");
+				//log.trace(">> deleteCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					command : "delete",
@@ -1961,10 +2126,10 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						//log("<< deleteCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
+						//log.trace("<< deleteCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						//log("<< deleteCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
+						//log.trace("<< deleteCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -1979,7 +2144,7 @@
 		 */
 		this.addCall = function(id, callInfo) {
 			if (cometd) {
-				//log(">> addCall:/webconferencing/calls:" + id + " - request published");
+				//log.trace(">> addCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams($.extend(callInfo, {
 					command : "create",
@@ -1988,10 +2153,10 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						//log("<< addCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
+						//log.trace("<< addCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						//log("<< addCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
+						//log.trace("<< addCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -2000,22 +2165,22 @@
 				return postCallInfo(id, callInfo);
 			}
 		};
-		
+				
 		this.getUserGroupCalls = function() {
 			if (cometd) {
-				//log(">> getUserGroupCalls:/webconferencing/calls - request published");
+				//log.trace(">> getUserGroupCalls:/webconferencing/calls - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
-					id : "me", // an user ID, 'me' means current user in eXo
+					id : currentUser.id,
 					command : "get_calls_state"
 				});
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						//log("<< getUserGroupCalls:/webconferencing/calls - success: " + cometdInfo(response));
+						//log.trace("<< getUserGroupCalls:/webconferencing/calls - success: " + cometdInfo(response));
 					  process.resolve(result, 200);
 					} else {
-						//log("<< getUserGroupCalls:/webconferencing/calls - failure: " + cometdError(response));
+						//log.trace("<< getUserGroupCalls:/webconferencing/calls - failure: " + cometdError(response));
 						process.reject(result, 400);
 					}
 				});
@@ -2023,7 +2188,7 @@
 			} else {
 				return getUserCallsState();
 			}
-		}
+		};
 		
 		this.updateUserCall = function(id, state) {
 			if (cometd) {
@@ -2032,7 +2197,7 @@
 			} else {
 				return putUserCallState(id, state);
 			}
-		}
+		};
 		
 		this.onUserUpdate = function(userId, onUpdate, onError) {
 			if (cometd) {
@@ -2053,10 +2218,10 @@
 					// Subscription status callback
 					if (subscribeReply.successful) {
 		        // The server successfully subscribed this client to the channel.
-						log("<< User updates subscribed successfully: " + JSON.stringify(subscribeReply));
+						log.trace("User updates subscribed successfully: " + JSON.stringify(subscribeReply));
 					} else {
 						var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
-						log("<< User updates subscription failed: " + err);
+						log.debug("User updates subscription failed for " + userId, err);
 						if (typeof onError == "function") {
 							onError("User updates subscription failed (" + err + ")", 0);								
 						}
@@ -2115,10 +2280,10 @@
 					// Subscription status callback
 					if (subscribeReply.successful) {
 		        // The server successfully subscribed this client to the channel.
-						log("<< Call updates subscribed successfully: " + JSON.stringify(subscribeReply));
+						log.trace("Call updates subscribed successfully: " + JSON.stringify(subscribeReply));
 					} else {
 						var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
-						log("<< Call updates subscription failed: " + err);
+						log.trace("Call updates subscription failed for " + callId, err);
 						if (typeof onError == "function") {
 							onError("Call updates subscription failed (" + err + ")", 0);								
 						}
@@ -2130,7 +2295,10 @@
 					}
 				};
 			} else {
-				log("ERROR: Call updates require CometD");
+				log.trace("Call updates require CometD. Was call: " + callId);
+				if (typeof onError == "function") {
+					onError("Call updates require CometD", 0);								
+				}
 				return {
 					off : function() {}
 				}
@@ -2140,17 +2308,17 @@
 		this.toCallUpdate = function(callId, data) {
 			var process = $.Deferred();
 			if (cometd) {
-				cometd.publish("/eXo/Application/WebConferencing/call/" + callId, data, function(publishAck) {
+				cometd.publish("/eXo/Application/WebConferencing/call/" + callId, cometdParams(data), function(publishAck) {
 			    if (publishAck.successful) {
-			    	//log("<< Call update reached the server: " + JSON.stringify(publishAck));
+			    	//log.trace("<< Call update reached the server: " + JSON.stringify(publishAck));
 			    	process.resolve("successful", 200);
 			    } else {
-			    	//log("<< Call update failed to reach the server: " + JSON.stringify(publishAck));
+			    	//log.trace("<< Call update failed to reach the server: " + JSON.stringify(publishAck));
 			    	process.reject(publishAck.failure ? publishAck.failure.reason : publishAck.error, 500);
 			    }
 				});
 			} else {
-				log("ERROR: Call updates require CometD");
+				log.trace("Call updates require CometD. Was call: " + callId);
 				process.reject("CometD required", 400);
 			}
 			return process.promise();
@@ -2166,7 +2334,7 @@
 				process.done(function(configs) {
 					providersConfig = configs;
 				}).fail(function(err) {
-					log("ERROR loading providers configuration: ", err);
+					log.error("Loading providers configuration failed", err);
 				});
 			}
 			return process.promise();
@@ -2177,7 +2345,20 @@
 		this.getUserStatus = getUserStatus;
 		
 		// common utilities
-		this.log = log;
+		this.getLog = function(providerType) {
+			for (var i=0; i<providersConfig.length; i++) {
+				var conf = providersConfig[i];
+				if (conf.type == providerType) {
+					if (conf.logEnabled) {
+						var newLog = new ClientLog(true);
+						newLog.setPrefix("[" + providerType + "]");
+						return newLog; 
+					}
+				}
+			}
+			var newLog = new ClientLog(false); // remote not enabled
+			return newLog; 
+		};
 		this.message = message;
 		this.showWarn = showWarn;
 		this.noticeWarn = noticeWarn;
@@ -2217,7 +2398,7 @@
 	if (typeof eXo.webConferencing === "undefined" || !eXo.webConferencing) {
 		eXo.webConferencing = webConferencing;
 	} else {
-		log("eXo.webConferencing already defined");
+		log.trace("eXo.webConferencing already defined");
 	}
 	
 	$(function() {
@@ -2237,11 +2418,11 @@
 			//webConferencing.loadStyle("/webconferencing/skin/webconferencing.css"); // this CSS will be loaded as portlet skin
 			// FYI eXo.env.client.skin contains skin name, it can be consulted to load a specific CSS
 		} catch(e) {
-			log("Error configuring Web Conferencing notifications.", e);
+			log.error("Error configuring Web Conferencing notifications.", e);
 		}
 	});
 
-	log("< Loaded at " + location.origin + location.pathname + " -- " + new Date().toLocaleString());
+	log.trace("< Loaded at " + location.origin + location.pathname + " -- " + new Date().toLocaleString());
 	
 	return webConferencing;
 })($, cCometD);

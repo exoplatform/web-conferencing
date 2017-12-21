@@ -5,12 +5,9 @@
 	"use strict";
 
 	/** For debug logging. */
-	var objId = Math.floor((Math.random() * 1000) + 1);
-	var logPrefix = "[webconferencing_admin_" + objId + "] ";
-	var log = function(msg, e) {
-		webConferencing.log(msg, e, logPrefix);
-	};
-	// log("> Loading at " + location.origin + location.pathname);
+	// Use default logger with own prefix.
+	var log = webConferencing.getLog().setPrefix("webconferencing.admin");
+	// log.trace("> Loading at " + location.origin + location.pathname);
 
 	/**
 	 * Admin class.
@@ -20,7 +17,7 @@
 		this.init = function(context) {
 			// UI init and action handlers
 			$(function() {
-				log("Initializing Web Conferencing Admin ");
+				log.info("Initializing Web Conferencing Admin");
 				
 				var $admin = $("#webconferencingAdmin");
 				var $tbody = $admin.find(".content table tbody");
@@ -45,7 +42,7 @@
 									checkbox.checked = conf.active; 
 								}
 							}).fail(function(err) {
-								log("ERROR updating provider configuration");
+								log.error("Failed to update provider configuration", err);
 							});
 						});
 						
@@ -61,7 +58,7 @@
 								$settings.show();
 							}							
 						}).fail(function(err) {
-							log("WARN Provider not available " + conf.type + ": " + err);
+							log.warn("Provider not available " + conf.type, err);
 						});
 						
 						// Add provider to the table
@@ -69,7 +66,7 @@
 						$provider.show();
 					});	
 				}).fail(function(err) {
-					log("ERROR loading providers configuration: ", err);
+					log.error("Failed to load providers configuration", err);
 				});	
 			});
 		};

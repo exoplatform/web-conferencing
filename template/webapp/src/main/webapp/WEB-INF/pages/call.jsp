@@ -82,14 +82,8 @@
 			loading.done(function(webConferencing) {
 				// When Web Conferencing module loaded we use it.
 				
-				/** For debug logging. */
-				var objId = Math.floor((Math.random() * 1000) + 1);
-				var logPrefix = "[mycall_" + objId + "] ";
-				var log = function(msg, e) {
-					webConferencing.log(msg, e, logPrefix);
-				};
-				
 				var myconnector = webConferencing.myconnector;
+				var log = webConferencing.getLog().setPrefix(myconnector.getType() + ".call");
 			
 				var currentUserId = webConferencing.getUser().id;
 				// here we rely on our logic from myconnector module script: group call ID starts with 'g/'
@@ -119,18 +113,18 @@
 						// If it's 1:1 call we can freely delete it, but for group calls we leave them - 
 						// call will be deted by the server and it send such message to all subscribed clients (see below).
 						if (isGroup) {
-							webConferencing.updateUserCall(callId, "leaved").fail(function(err, status) {
-								log("<< ERROR leaving call: " + callId + ". " + JSON.stringify(err) + " [" + status + "]");
+							webConferencing.updateUserCall(callId, "leaved").fail(function(err) {
+								log.error("Failed to leave call: " + callId, err);
 							});							
 						} else {
 							webConferencing.deleteCall(callId).done(function() {
-								log("<< Deleted " + callId);
+								log.info("Deleted call: " + callId);
 							}).fail(function(err) {
 								if (err && (err.code == "NOT_FOUND_ERROR" || (typeof(status) == "number" && status == 404))) {
 									// already deleted
-									log("<< Call not found " + callId);
+									log.debug("Call not found: " + callId);
 								} else {
-									log("ERROR deleting call " + callId + ": " + JSON.stringify(err));
+									log.error(Failed to delete call: " + callId, err);
 								}
 							});							
 						}
@@ -155,7 +149,7 @@
 					if (update.eventType == "call_state") {
 						var callId = update.callId;
 						if (update.callState == "stopped" && update.callId == callId) {
-							log(">>> Call stopped remotelly: " + JSON.stringify(update) + " [" + status + "]");
+							log.info("Call stopped remotelly: " + update.callId);
 							$(".status").text("Call stopped.");
 							stopCall();
 							closeWindow();
@@ -163,19 +157,19 @@
 					} else if (update.eventType == "call_joined") {
 						if (currentUserId != update.part.id) {
 							// Stop ringtone if some user joined the call
-							log(">>> Call joined remotelly: " + JSON.stringify(update) + " [" + status + "]");
+							log.info("Call joined: " + update.callId);
 							stopRingtone();
 						}
 						$(".status").text("Call started.");
 					} else if (update.eventType == "call_leaved") {
 						if (currentUserId != update.part.id) {
-							log(">>> Call leaved remotelly: " + JSON.stringify(update) + " [" + status + "]");
+							log.info("Call leaved: " + update.callId);
 							// TODO action on user leaving, but take in accoun that group call will be stopped on the server side
 							// when last user leave it - don't need stop it explicitly.
 						}
 					}
 				}, function(err) {
-					log("ERROR User calls subscription failure: " + err, err);
+					log.error("User calls subscription failure", err);
 				});
 				
 			  if (isNewCall) {
@@ -186,8 +180,8 @@
 					$(document.body).append($ring);
 				} else {
 					// For incoming call mark a call as joined - do this if only have added the call before
-					webConferencing.updateUserCall(callId, "joined").fail(function(err, status) {
-						log("<< Error joining call: " + callId + ". " + JSON.stringify(err) + " [" + status + "]");
+					webConferencing.updateUserCall(callId, "joined").fail(function(err) {
+						log.error("Failed to join call: " + callId, err);
 					});
 				}
 			  
@@ -197,7 +191,7 @@
 			  webConferencing.onCallUpdate(callId, function(message) {
 					if (message.provider == myconnector.getType()) {
 						if (message.sender != currentUserId) {
-							log(">>> Received call update for " + callId + ": " + JSON.stringify(message));
+							log.debug("Received call update for " + callId + ": " + JSON.stringify(message));
 							if (message.yourData) {
 								// TODO work with your data
 							}
@@ -218,7 +212,7 @@
 	    			"myCallKey" : currentUserId + "@" + clientId
 	    		}
 				}).done(function() {
-	      	log("<< Sent call update");
+	      	log.debug("<< Sent call update");
 	      });
 			  
 				start.resolve(isNewCall ? "started" : "joined");

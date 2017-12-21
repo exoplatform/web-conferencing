@@ -57,12 +57,12 @@ public class MyConnectorProvider extends CallProvider {
   public class MySettings extends Settings {
 
     /**
-     * Gets the client id.
+     * Gets the API client id.
      *
-     * @return the client id
+     * @return the API client id
      */
-    public String getClientId() {
-      return MyConnectorProvider.this.getClientId();
+    public String getApiClientId() {
+      return MyConnectorProvider.this.getApiClientId();
     }
 
     /**
@@ -103,7 +103,7 @@ public class MyConnectorProvider extends CallProvider {
   }
 
   /** The client id (it's a sample, can be used for OAUth2 authentication). */
-  protected final String clientId;
+  protected final String apiClientId;
 
   /** The api key. (it's a sample) */
   protected final String apiKey;
@@ -130,11 +130,11 @@ public class MyConnectorProvider extends CallProvider {
     // }
     // this.url = url;
 
-    String clientId = this.config.get(CONFIG_CLIENTID);
-    if (clientId == null || (clientId = clientId.trim()).length() == 0) {
+    String apiClientId = this.config.get(CONFIG_CLIENTID);
+    if (apiClientId == null || (apiClientId = apiClientId.trim()).length() == 0) {
       throw new ConfigurationException(CONFIG_CLIENTID + " required and should be non empty.");
     }
-    this.clientId = clientId;
+    this.apiClientId = apiClientId;
 
     String apiKey = this.config.get(CONFIG_APIKEY);
     if (apiKey == null || (apiKey = apiKey.trim()).length() == 0) {
@@ -178,12 +178,12 @@ public class MyConnectorProvider extends CallProvider {
   }
 
   /**
-   * Gets the client id.
+   * Gets the API client id.
    *
-   * @return the client id
+   * @return the API client id
    */
-  public String getClientId() {
-    return clientId;
+  public String getApiClientId() {
+    return apiClientId;
   }
 
   /**

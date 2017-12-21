@@ -14,13 +14,10 @@
 
 	if (webConferencing) {
 
-		/** For debug logging. */
-		var objId = Math.floor((Math.random() * 1000) + 1);
-		var logPrefix = "[webrtc_" + objId + "] ";
-		var log = function(msg, e) {
-			webConferencing.log(msg, e, logPrefix);
-		};
-		//log("> Loading at " + location.origin + location.pathname);
+		// Start with default logger, later in configure() we'll get it for the provider.
+		// We know it's webrtc here, but mark with asterisk as not yet configured.
+		var log = webConferencing.getLog().setPrefix("webrtc*");
+		//log.trace("> Loading at " + location.origin + location.pathname);
 		
 		function WebrtcProvider() {
 			var NON_WHITESPACE_PATTERN = /\s+/;
@@ -29,11 +26,11 @@
 			
 			var isExoAndroid = /eXo\/.*Android/.test(navigator.userAgent);
 			if (isExoAndroid) {
-				log("Running on eXo app for Android (WebRTC calls not supported currently)");
+				log.debug("Running on eXo app for Android (WebRTC calls not supported currently)");
 			}
 
 			var self = this;
-			var settings, currentKey, clientId;
+			var settings, userLog;
 			
 			var message = function(key) {
 				return settings ? settings.messages["webrtc." + key] : "";
@@ -44,7 +41,7 @@
 				try {
 					return !isExoAndroid && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && RTCPeerConnection;
 				} catch(e) {
-					log("Error detecting WebRTC features: " + (typeof e == "string" ? e : ""), e);
+					log.warn("Error detecting WebRTC features: " + (typeof e == "string" ? e : ""), e);
 					return false;
 				}
 			};
@@ -75,23 +72,14 @@
 
 			this.configure = function(theSettings) {
 				settings = theSettings;
+				
+				// Init log sooner
+				log = webConferencing.getLog(settings.type);
+				log.setPrefix("[" + settings.type + "]");
 			};
 
 			this.isConfigured = function() {
 				return settings != null;
-			};
-			
-			this.getClientId = function() {
-				return clientId;
-			};
-			
-			var getRandomArbitrary = function(min, max) {
-			  return Math.random() * (max - min) + min;
-			};
-			
-			this.createId = function(prefix) {
-				var rnd = Math.floor(getRandomArbitrary(10000, 99998) + 1);
-				return prefix + "-" + rnd;
 			};
 			
 			/**
@@ -117,16 +105,12 @@
 			};
 
 			var joinedCall = function(callId) {
-				return webConferencing.updateUserCall(callId, "joined").fail(function(err, status) {
-					log("<< Error joining call: " + callId + ". " + JSON.stringify(err) + " [" + status + "]");
-				});
+				return webConferencing.updateUserCall(callId, "joined");
 			};
 			this.joinedCall = joinedCall;
 			
 			var leavedCall = function(callId) {
-				return webConferencing.updateUserCall(callId, "leaved").fail(function(err, status) {
-					log("<< Error leaving call: " + callId + ". " + JSON.stringify(err) + " [" + status + "]");
-				});
+				return webConferencing.updateUserCall(callId, "leaved");
 			};
 			this.leavedCall = leavedCall;
 			
@@ -134,15 +118,15 @@
 				// For P2P we delete closed call
 				var process = $.Deferred();
 				webConferencing.deleteCall(callId).done(function() {
-					log("<< Deleted " + callId);
+					log.debug("Call deleted: " + callId);
 					process.resolve();
 				}).fail(function(err) {
 					if (err && (err.code == "NOT_FOUND_ERROR" || (typeof(status) == "number" && status == 404))) {
 						// already deleted
-						log("<< Call not found " + callId);
+						log.trace("Call not found: " + callId);
 						process.resolve();
 					} else {
-						log("ERROR deleting " + callId + ": " + JSON.stringify(err));
+						log.error("Failed to delete a call: " + callId, err);
 						process.reject(err);
 					}
 				});
@@ -153,7 +137,7 @@
 			var onCallWindowReady = function(theWindow) {
 				var process = $.Deferred();
 				if (typeof theWindow == "undefined" && theWindow == null) {
-					process.reject("Call window required");
+					process.reject(message("callWindowNotOpen"));
 				} else {
 					var resolve = function() {
 						if (process.state() == "pending") {
@@ -195,13 +179,15 @@
 			
 			this.callButton = function(context) {
 				var button = $.Deferred();
+				var rejectAndLog = function(message, err) {
+					log.error(message, err);
+					button.reject(message, err);
+				};
 				if (self.isSupportedPlatform()) {
 					if (settings && context && context.currentUser) {
 						// XXX Currently we support only P2P calls
 						if (!context.isGroup) {
 							context.details().done(function(target) {
-								var rndText = Math.floor((Math.random() * 1000000) + 1);
-								var linkId = "WebrtcCall-" + clientId;
 								// We want have same ID independently on who started the call
 								var callId;
 								if (target.group) {
@@ -215,7 +201,7 @@
 									callId = "p/" + partsAsc.join("@");
 								}
 								var link = settings.callUri + "/" + callId;
-								var $button = $("<a id='" + linkId + "' title='" + message("callStartTip") + "'"
+								var $button = $("<a title='" + message("callStartTip") + "'"
 											+ " class='webrtcCallAction' data-placement='top' data-toggle='tooltip'>"
 											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + message("call") + "</span></a>");
@@ -224,7 +210,7 @@
 									for (var pi = 0; pi < call.participants.length; pi++) {
 										var p = call.participants[pi];
 										if (p.id == context.currentUser.id && p.state == "joined") {
-											log(">>> Call " + callId + " already joined by " + context.currentUser.id);
+											log.trace(">>> Call " + callId + " already joined by " + context.currentUser.id);
 											setButtonCall($button, callId);
 											break;
 										}
@@ -234,7 +220,7 @@
 									if (err && (err.code == "NOT_FOUND_ERROR" || (typeof(status) == "number" && status == 404))) {
 										// call not found
 									} else {
-										log(">>> Call info error: " + JSON.stringify(err) + " [" + status + "]");
+										log.warn("Failed to get call info: " + callId, err); // warn because we continue and let start a call
 									}
 								});
 								$button.click(function() {
@@ -250,24 +236,28 @@
 											participants : [context.currentUser.id, target.id].join(";") // eXo user ids separated by ';' !
 										};
 										webConferencing.addCall(callId, callInfo).done(function(call) {
-											log(">> Added " + callId);
+											log.info("Call created: " + callId + " target: " + target.title);
 											// Tell the window to start the call  
 											onCallWindowReady(callWindow).done(function() {
-												log(">>> Call page loaded for " + callId);
+												log.debug("Call page open: " + callId + " target: " + target.title);
 												callWindow.document.title = message("callTo") + " " + target.title;
 												callWindow.eXo.webConferencing.startCall(call).done(function(state) {
-													log("<<<< Call " + state + " " + callId);
+													log.info("Call " + state + ": " + callId + " target: " + target.title);
 													setButtonCall($button, callId); // should be removed on stop/leaved event in init()
 												}).fail(function(err) {
+													log.error("Call start failed: " + callId, err);
 													webConferencing.showError(message("errorStartingCall"), webConferencing.errorText(err));
 												});
+											}).fail(function(err) {
+												log.error("Call page failed: " + callId, err);
+												webConferencing.showError(message("errorOpeningCall"), webConferencing.errorText(err));
 											});
 										}).fail(function(err) {
-											log("ERROR adding " + callId + ": " + JSON.stringify(err));
+											log.error("Call creation failed: " + callId, err);
 											webConferencing.showError(message("errorAddCall"), webConferencing.errorText(err));
 										});
 									} else {
-										log("Call disabled to " + target.id);
+										log.debug("Call disabled to " + target.id);
 									}
 								});
                 setTimeout(function(){
@@ -281,23 +271,22 @@
 								}, 200);
 								button.resolve($button);
 							}).fail(function(err) {
-								log("Error getting context details for " + self.getTitle() + ": " + err);
-								button.reject("Error getting context details for " + self.getTitle(), err);
+								rejectAndLog("Error getting context details", err);
 							});
 						} else {
-							button.reject("Group calls not supported by WebRTC provider");
+							rejectAndLog("Group calls not supported");
 						}
 					} else {
-						button.reject("Not configured or empty context for " + self.getTitle());
+						rejectAndLog("Not configured or empty context");
 					}
 				} else {
-					button.reject("WebRTC not supported in this browser: " + navigator.userAgent);
+					rejectAndLog("WebRTC calls not supported in this browser: " + navigator.userAgent);
 				}
 				return button.promise();
 			};
 			
 			var acceptCallPopover = function(callerLink, callerAvatar, callerMessage, playRingtone) {
-				log(">> acceptCallPopover '" + callerMessage + "' caler:" + callerLink + " avatar:" + callerAvatar);
+				log.trace(">> acceptCallPopover '" + callerMessage + "' caler:" + callerLink + " avatar:" + callerAvatar);
 				var process = $.Deferred();
 				var $call = $(".incomingCall");
 				$call = $.extend($call, {
@@ -351,9 +340,9 @@
 			
 			this.init = function(context) {
 				var process = $.Deferred();
+				
 				if (self.isSupportedPlatform()) {
 					var currentUserId = webConferencing.getUser().id;
-					clientId = self.createId(currentUserId);
 					var $callPopup;
 					var closeCallPopup = function(callId, state) {
 						if ($callPopup && $callPopup.callId && $callPopup.callId == callId) {
@@ -370,7 +359,7 @@
 						$(".webrtcCallAction").each(function() {
 							var $button = $(this);
 							if ($button.data("targetid") == targetId) {
-								//log(">> lockCallButton " + targetId);
+								//log.trace(">> lockCallButton " + targetId);
 								setButtonCall($button, callId);
 							}
 						});
@@ -379,7 +368,7 @@
 						$(".webrtcCallAction").each(function() {
 							var $button = $(this);
 							if ($button.data("callid") == callId) {
-								//log(">> unlockCallButton " + callId + " " + $button.data("targetid"));
+								//log.trace(">> unlockCallButton " + callId + " " + $button.data("targetid"));
 								removeButtonCall($button);
 							}
 						});
@@ -399,9 +388,9 @@
 										var lastCallId = lastUpdate ? lastUpdate.callId : null;
 										var lastCallState = lastUpdate ? lastUpdate.callState : null;
 										if (callId == lastCallId && update.callState == lastCallState) {
-											log("<<< XXX User call state updated skipped as duplicated: " + JSON.stringify(update) + " [" + status + "]");
+											log.trace("<<< XXX User call state updated skipped as duplicated: " + JSON.stringify(update) + " [" + status + "]");
 										} else {
-											log(">>> User call state updated: " + JSON.stringify(update) + " [" + status + "]");
+											log.trace(">>> User call state updated: " + JSON.stringify(update) + " [" + status + "]");
 											if (lastUpdateReset) {
 												clearTimeout(lastUpdateReset);
 											}
@@ -410,8 +399,9 @@
 												lastUpdate = null; // XXX avoid double action on duplicated update - temp solution
 											}, 500);
 											if (update.callState == "started") {
+												log.info("Incoming call: " + callId);
 												webConferencing.getCall(callId).done(function(call) {
-													log(">>> Got registered " + callId);
+													log.trace(">>> Got registered " + callId);
 													var callerId = call.owner.id;
 													var callerLink = call.ownerLink;
 													var callerAvatar = call.avatarLink;
@@ -426,29 +416,31 @@
 															$callPopup.callState = update.callState;
 														}); 
 														popover.done(function(msg) {
-															log(">>> User " + msg + " call " + callId);
+															log.info("User " + msg + " call: " + callId);
 															var link = settings.callUri + "/" + callId;
 															var callWindow = webConferencing.showCallPopup(link, self.getTitle() + " " + message("call"));
 															// Tell the window to start a call  
 															onCallWindowReady(callWindow).done(function() {
-																log(">>>> Call page loaded " + callId);
+																log.debug("Call page loaded: " + callId);
 																callWindow.document.title = message("callWith") + " " + call.owner.title;
 																callWindow.eXo.webConferencing.startCall(call).done(function(state) {
-																	log("<<<< Call " + state + " " + callId);
+																	log.info("Call " + state + ": " + callId);
 																	lockCallButton(update.owner.id, callId);
 																}).fail(function(err) {
+																	log.error("Failed to start/join call: " + callId, err);
 																	webConferencing.showError(message("errorStartingCall"), webConferencing.errorText(err));
 																});
 															});
 														});
-														popover.fail(function(err) {
+														popover.fail(function(msg) {
+															log.info("User " + msg + " call: " + callId);
 															if ($callPopup.callState != "stopped" && $callPopup.callState != "joined") {
-																log("<<< User " + err + ($callPopup.callState ? " just " + $callPopup.callState : "") + " call " + callId + ", deleting it.");
+																log.trace("<<< User " + err + ($callPopup.callState ? " just " + $callPopup.callState : "") + " call " + callId + ", deleting it.");
 																deleteCall(callId);
 															}
 														});
 													}).fail(function(err, status) {
-														log(">>> User status error: " + JSON.stringify(err) + " [" + status + "]");
+														log.error("Failed to get user status: " + currentUserId, err);
 														if (err) {
 															webConferencing.showError(message("errorIncomingCall"), webConferencing.errorText(err));
 														} else {
@@ -456,7 +448,7 @@
 														}
 													});
 												}).fail(function(err, status) {
-													log(">>> Call info error: " + JSON.stringify(err) + " [" + status + "]");
+													log.error("Failed to get call info: " + callId, err);
 													if (err) {
 														webConferencing.showError(message("errorIncomingCall"), webConferencing.errorText(err));
 													} else {
@@ -464,6 +456,7 @@
 													}
 												});
 											} else if (update.callState == "stopped") {
+												log.info("Call stopped remotelly: " + callId);
 												// Hide accept popover for this call, if any
 												closeCallPopup(callId, update.callState);
 												// Unclock the call button
@@ -473,29 +466,29 @@
 											// "call_leaved" to unlock a call button of group call
 										}
 									} else {
-										log(">>> Group calls not supported: " + JSON.stringify(update) + " [" + status + "]");
+										log.error("Group calls not supported");
 									}
 								} else if (update.eventType == "call_joined") {
 									// If user has incoming popup open for this call (several user's windows/clients), then close it
-									log(">>> User call joined: " + JSON.stringify(update) + " [" + status + "]");
+									log.debug("User call joined: " + update.callId);
 									if (currentUserId == update.part.id) {
 										closeCallPopup(update.callId, "joined");
 									}
 								} else if (update.eventType == "call_leaved") {
 									// TODO not used
 								} else if (update.eventType == "retry") {
-									log("<<< Retry for user updates [" + status + "]");
+									log.trace("<<< Retry for user updates [" + status + "]");
 								} else {
-									log("<<< Unexpected user update: " + JSON.stringify(update) + " [" + status + "]");
+									log.warn("Unexpected user update: " + JSON.stringify(update));
 								}
 							} // it's other provider type
 						}, function(err) {
-							// Error handler
-							log(err);
+							log.error("Failed to listen on user updates", err);
 						});
 					}
 					process.resolve();
 				} else {
+					log.error("WebRTC not supported in this browser: " + navigator.userAgent);
 					process.reject(message("yourBrowserNotSupportWebrtc") + ": " + navigator.userAgent);
 				}
 				return process.promise();
@@ -710,14 +703,14 @@
 								// Validation to do not have an ICE server w/o URL
 								if (checkConfError()) {
 									var rtcConfStr = JSON.stringify(rtcConfiguration);
-									//log("Saving RTC configuration: " + rtcConfStr); // TODO comment it
+									//log.trace("Saving RTC configuration: " + rtcConfStr); // TODO comment it
 									postSettings({
 										rtcConfiguration : rtcConfStr
 									}).done(function(savedRtcConfig) {
 										$popup.hide();
 										settings.rtcConfiguration = savedRtcConfig;
 									}).fail(function(err) {
-										log("ERROR saving settings", err);
+										log.error("Failed to save admin settings", err);
 										webConferencing.showError(message("admin.errorSavingSettings"), webConferencing.errorText(err));
 									});									
 								}
@@ -728,7 +721,7 @@
 						});
 						$popup.show();
 					} else {
-						log("ERROR loading settings page: " + content);
+						log.error("Filed to load settings page: " + content);
 					}
 				});
 				
@@ -742,7 +735,7 @@
 		if (globalWebConferencing) {
 			globalWebConferencing.webrtc = provider;
 		} else {
-			log("eXo.webConferencing not defined");
+			log.warn("eXo.webConferencing not defined");
 		}
 		
 		$(function() {
@@ -750,11 +743,11 @@
 				// XXX workaround to load CSS until gatein-resources.xml's portlet-skin will be able to load after the Enterprise skin
 				webConferencing.loadStyle("/webrtc/skin/webrtc.css");
 			} catch(e) {
-				log("Error loading WebRTC Call styles.", e);
+				log.error("Error loading styles.", e);
 			}
 		});
 
-		log("< Loaded at " + location.origin + location.pathname);
+		log.trace("< Loaded at " + location.origin + location.pathname);
 		
 		return provider;
 	} else {
