@@ -2,12 +2,3 @@
 /* 
  * Web Conferencing Default skin (aka Platform 4.0) 
  */
-
-.callButtonContainer, .spaceCall {
-	font-size: 12px;
-}
-
-/* Call button is more narrow in spaces */
-.callButton.spaceCall, .callButton.spaceCall ~ .dropdown-toggle {
-	padding-right: 3px;
-}

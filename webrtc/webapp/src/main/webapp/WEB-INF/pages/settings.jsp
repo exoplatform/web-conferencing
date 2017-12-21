@@ -68,13 +68,13 @@
                 </span>
 			</div>
 		</div>
-		
-		<div class="uiAction">
-			<button class="btn saveButton" type="button">${messages["webrtc.admin.save"]}</button>
-			<button class="btn cancelButton" type="button">${messages["webrtc.admin.cancel"]}</button>
-		</div>
-
 	</div>
+	
+	<div class="uiAction">
+        <button class="btn saveButton" type="button">${messages["webrtc.admin.save"]}</button>
+        <button class="btn cancelButton" type="button">${messages["webrtc.admin.cancel"]}</button>
+    </div>
+
 </div>
 
 <%-- Confirmation popup --%>

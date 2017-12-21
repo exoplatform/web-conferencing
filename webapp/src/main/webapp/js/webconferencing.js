@@ -1689,12 +1689,6 @@
 			var initializer = addCallButton($target, context);
 			initializer.done(function($container) {
 				$container.find(".callButton").first().addClass("popoverCall");
-				$container.siblings(".btn").each(function() {
-					var $s = $(this);
-					if (!$s.hasClass("callButtonSibling")) {
-						$s.addClass("callButtonSibling");										
-					}
-				});
 				// XXX workaround to avoid first-child happen on call button in the popover
 				$container.prepend($("<div class='btn' style='display: none;'></div>"));
 				log.trace("<< addPopoverButton DONE " + contextId(context) + " for " + currentUser.id);
@@ -1800,13 +1794,14 @@
 			if (currentSpaceId) {
 				var $spaceMenuPortlet = $("#UISpaceMenuPortlet");
 				var $spaceApps = $spaceMenuPortlet.find(".spaceMenuApps");
+                $spaceApps = $("<li></li>").appendTo($spaceApps);
 				
 				var addSpaceCallButton = function() {
 					var initializer = addCallButton($spaceApps, spaceContext(currentSpaceId));
 					initializer.done(function($container) {
 						var $button = $container.find(".callButton");
 						var $first = $button.first();
-						$first.addClass("spaceCall transparentButton");
+						$first.addClass("spaceCall");
 						log.trace("<< initSpace DONE " + currentSpaceId + " for " + currentUser.id);
 					});
 					initializer.fail(function(err) {

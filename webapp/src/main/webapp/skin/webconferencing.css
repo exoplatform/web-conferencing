@@ -60,30 +60,20 @@
 .callButton.preferred {
 	margin-right: 0px;
 	padding-right: 15px;
-  padding-left: 15px;
-	/*border-right-color: transparent;*/
-	-webkit-border-radius: 3px 0 0 3px;
-	-moz-border-radius: 3px 0 0 3px;
+    padding-left: 15px;
 	border-radius: 3px 0 0 3px;
 }
 
 .callButton.preferred ~ .dropdown-toggle {
 	margin-left: -1px;
-	padding-left: 5px;
-	padding-right: 5px;
+	padding-left: 5px!important;
+	padding-right: 5px!important;
 	border-left-color: transparent;
-	-webkit-border-radius: 0 3px 3px 0;
-	-moz-border-radius: 0 3px 3px 0;
 	border-radius: 0 3px 3px 0;
-	/*background-color: #ffff;*/
 }
 
 .callButton .callTitle {
 	margin-left: 5px;
-}
-
-.spaceCall {
-	font-size: 12px;
 }
 
 .callButtonContainer > .dropdown-toggle > .uiIconArrowDown {
@@ -108,21 +98,16 @@
 	padding-left: 2px;
 }
 
-#tiptip_content .connectAction > .callButtonSibling, #tiptip_content .connectAction > .callButtonContainer {
-	margin-top: 1ch !important;
-}
-
-.popoverCall {
-	/*text-align: initial !important;*/
-}
-
 #tiptip_content .connectAction .callButton {
 	text-align: left;
 }
 
-/*#tiptip_holder .callButtonContainer > .callButton > .callTitle { TODO Should be added later
+#tiptip_holder .callButtonContainer > .callButton > .callTitle {
 	display: none;
-}*/
+}
+#tiptip_holder .connectAction .callButtonContainer .dropdown-toggle {
+	width: auto;
+}
 
 #socialTopLayout .callButtonContainer > .callButton ~ .dropdown-toggle {
 	margin-left: -1px !important;
