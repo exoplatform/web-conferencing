@@ -19,24 +19,28 @@
 	}
 }
 
+.preferred.popoverCall ~ .dropdown-toggle {
+	margin-left: -2px;
+}
+
 .transparentButton, .transparentButton ~ .dropdown-toggle {
 	background: transparent !important;
 	border: solid 1px transparent !important;
 	box-shadow: none !important;
 }
 
-.callButton.chatCall, .callButton.chatCall ~ .dropdown-toggle { /* !important should be removed after removing skype css from Enterprise skin  */
-	padding-top: 4px !important; 
-	padding-bottom: 4px !important;
-  background: none;
-  border: 1px solid #fff !important;
-  color: #fff;
-  border-radius: 0;
+.callButton.chatCall, .callButton.chatCall ~ .dropdown-toggle {
+	padding-top: 4px; 
+	padding-bottom: 4px;
+    background: none;
+    border: 1px solid #fff !important;
+    color: #fff;
+    border-radius: 0;
 }
 
-.callButton.chatCall { /* !important should be removed after removing skype css from Enterprise skin  */
-	padding-left: 15px !important;
-	padding-right: 15px !important;
+.callButton.chatCall {
+	padding-left: 15px;
+	padding-right: 15px;
 }
 
 .callButton.chatCall [class*="Icon"], 

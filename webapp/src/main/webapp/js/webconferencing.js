@@ -1514,12 +1514,6 @@
 			var initializer = addCallButton($target, context);
 			initializer.done(function($container) {
 				$container.find(".callButton").first().addClass("popoverCall");
-				$container.siblings(".btn").each(function() {
-					var $s = $(this);
-					if (!$s.hasClass("callButtonSibling")) {
-						$s.addClass("callButtonSibling");										
-					}
-				});
 				// XXX workaround to avoid first-child happen on call button in the popover
 				$container.prepend($("<div class='btn' style='display: none;'></div>"));
 				log("<< addPopoverButton DONE " + contextId(context) + " for " + currentUser.id);
