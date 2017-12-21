@@ -7,7 +7,7 @@ if (eXo.webConferencing) {
 		
 		/** For debug logging. */
 		// Use default logger with dedicated prefix.
-		var log = webConferencing.getLog().setPrefix("webrtc.call");
+		var log = webConferencing.getLog().setPrefix("[webrtc.call]");
 		// log.trace("> Loading at " + location.origin + location.pathname);
 		
 		var isEdge = /Edge/.test(navigator.userAgent);

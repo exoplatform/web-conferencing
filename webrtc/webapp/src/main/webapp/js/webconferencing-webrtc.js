@@ -16,7 +16,7 @@
 
 		// Start with default logger, later in configure() we'll get it for the provider.
 		// We know it's webrtc here, but mark with asterisk as not yet configured.
-		var log = webConferencing.getLog().setPrefix("webrtc*");
+		var log = webConferencing.getLog().setPrefix("[webrtc*]");
 		//log.trace("> Loading at " + location.origin + location.pathname);
 		
 		function WebrtcProvider() {
@@ -75,7 +75,6 @@
 				
 				// Init log sooner
 				log = webConferencing.getLog(settings.type);
-				log.setPrefix("[" + settings.type + "]");
 			};
 
 			this.isConfigured = function() {

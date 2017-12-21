@@ -6,7 +6,7 @@
 
 	/** For debug logging. */
 	// Use default logger with own prefix.
-	var log = webConferencing.getLog().setPrefix("webconferencing.admin");
+	var log = webConferencing.getLog().setPrefix("[webconferencing.admin]");
 	// log.trace("> Loading at " + location.origin + location.pathname);
 
 	/**

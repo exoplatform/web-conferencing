@@ -17,7 +17,7 @@
 
 		// Start with default logger, later in configure() we'll get it for the provider.
 		// We know it's myconnector here, but mark with asterisk as not yet configured.
-		var log = webConferencing.getLog().setPrefix("myconnector*");  
+		var log = webConferencing.getLog().setPrefix("[myconnector*]");  
 		//log.trace("> Loading at " + location.origin + location.pathname);
 		
 		/** 
