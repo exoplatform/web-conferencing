@@ -1625,13 +1625,14 @@
 			if (currentSpaceId) {
 				var $spaceMenuPortlet = $("#UISpaceMenuPortlet");
 				var $spaceApps = $spaceMenuPortlet.find(".spaceMenuApps");
+                $spaceApps = $("<li></li>").appendTo($spaceApps);
 				
 				var addSpaceCallButton = function() {
 					var initializer = addCallButton($spaceApps, spaceContext(currentSpaceId));
 					initializer.done(function($container) {
 						var $button = $container.find(".callButton");
 						var $first = $button.first();
-						$first.addClass("spaceCall transparentButton");
+						$first.addClass("spaceCall");
 						log("<< initSpace DONE " + currentSpaceId + " for " + currentUser.id);
 					});
 					initializer.fail(function(error) {
