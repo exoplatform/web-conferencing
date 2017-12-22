@@ -69,7 +69,7 @@ public class CallLog {
   }
 
   /**
-   * Validate a message by cutting it if it is longer of {@value MESSAGE_CRITICAL_LENGTH} bytes.
+   * Validate a message by cutting it if it is longer of {@value #MESSAGE_CRITICAL_LENGTH} bytes.
    *
    * @param msg the msg
    * @return the string

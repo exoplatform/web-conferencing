@@ -39,6 +39,12 @@ public abstract class IdentityInfo {
   /** The id. */
   protected final String     id;
 
+  /** The avatar link. */
+  protected String           avatarLink;
+
+  /** The profile link. */
+  protected String           profileLink;
+
   /**
    * Instantiates a new identity info.
    *
@@ -66,6 +72,42 @@ public abstract class IdentityInfo {
    */
   public String getTitle() {
     return title;
+  }
+
+  /**
+   * Gets the avatar link.
+   *
+   * @return the avatar link
+   */
+  public String getAvatarLink() {
+    return avatarLink;
+  }
+
+  /**
+   * Gets the profile link.
+   *
+   * @return the profile link
+   */
+  public String getProfileLink() {
+    return profileLink;
+  }
+
+  /**
+   * Sets the avatar link.
+   *
+   * @param avatarLink the new avatar link
+   */
+  protected void setAvatarLink(String avatarLink) {
+    this.avatarLink = avatarLink;
+  }
+
+  /**
+   * Sets the profile link.
+   *
+   * @param profileLink the new profile link
+   */
+  protected void setProfileLink(String profileLink) {
+    this.profileLink = profileLink;
   }
 
   /**

@@ -96,12 +96,6 @@ public class UserInfo extends IdentityInfo {
   /** The IM accounts. */
   private final Map<String, List<IMInfo>> imAccounts = new HashMap<String, List<IMInfo>>();
 
-  /** The avatar uri. */
-  private String                          avatarUri;
-
-  /** The profile uri. */
-  private String                          profileUri;
-
   /** The state. */
   private String                          state;
 
@@ -203,42 +197,6 @@ public class UserInfo extends IdentityInfo {
    */
   public Collection<IMInfo> getImAccount(String type) {
     return Collections.unmodifiableCollection(imAccounts.get(type));
-  }
-
-  /**
-   * Gets the avatar uri.
-   *
-   * @return the avatar uri
-   */
-  public String getAvatarUri() {
-    return avatarUri;
-  }
-
-  /**
-   * Sets the avatar uri.
-   *
-   * @param avatarUri the new avatar uri
-   */
-  public void setAvatarUri(String avatarUri) {
-    this.avatarUri = avatarUri;
-  }
-
-  /**
-   * Gets the profile uri.
-   *
-   * @return the profile uri
-   */
-  public String getProfileUri() {
-    return profileUri;
-  }
-
-  /**
-   * Sets the profile uri.
-   *
-   * @param profileUri the new profile uri
-   */
-  public void setProfileUri(String profileUri) {
-    this.profileUri = profileUri;
   }
 
   /**

@@ -544,9 +544,9 @@ public class RESTWebConferencingService implements ResourceContainer {
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
       if (roomId != null && roomId.length() > 0) {
-        if (roomName != null && roomName.length() > 0) {
-          if (roomTitle == null || roomTitle.length() == 0) {
-            roomTitle = roomName.replace('_', ' ');
+        if (roomTitle != null && roomTitle.length() > 0) {
+          if (roomName == null || roomName.length() == 0) {
+            roomName = roomTitle.toUpperCase().toLowerCase().replace(' ', '_');
           }
           if (roomMembers != null && roomMembers.length() > 0) {
             try {

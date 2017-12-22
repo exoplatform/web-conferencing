@@ -37,6 +37,31 @@
     <type>org.exoplatform.webconferencing.cometd.CometdWebConferencingService</type>
   </component>
   
+  <!-- Calls storage (JPA) -->
+  <component>
+    <type>org.exoplatform.commons.persistence.impl.EntityManagerService</type>
+  </component>
+  <component>
+    <type>org.exoplatform.webconferencing.dao.CallDAO</type>
+  </component>
+  
+  <!-- Calls storage layour (Liquebase initializer) -->
+  <external-component-plugins>
+    <target-component>org.exoplatform.commons.api.persistence.DataInitializer</target-component>
+    <component-plugin>
+      <name>WebConferencingChangeLogsPlugin</name>
+      <set-method>addChangeLogsPlugin</set-method>
+      <type>org.exoplatform.commons.persistence.impl.ChangeLogsPlugin</type>
+      <init-params>
+        <values-param>
+          <name>changelogs</name>
+          <description>Change logs of Web Conferencing</description>
+          <value>db/changelog/webconferencing.db.changelog-1.0.0.xml</value>
+        </values-param>
+      </init-params>
+    </component-plugin>
+  </external-component-plugins>
+  
   <external-component-plugins>
     <target-component>org.exoplatform.commons.addons.AddOnService</target-component>
     <component-plugin>

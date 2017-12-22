@@ -20,8 +20,13 @@ package org.exoplatform.webconferencing;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import javax.persistence.Transient;
+
+import org.exoplatform.webconferencing.domain.CallEntity;
 
 /**
  * Created by The eXo Platform SAS.
@@ -46,20 +51,17 @@ public class CallInfo {
   /** The owner. */
   protected final IdentityInfo  owner;
 
-  /** The owner type. */
-  protected final String        ownerType;
-
-  /** The owner link. */
-  protected final String        ownerLink;
-
-  /** The avatar link. */
-  protected final String        avatarLink;
-
   /** The provider type. */
   protected final String        providerType;
 
   /** The state. */
   protected String              state;
+
+  /** The last date. */
+  protected Date                lastDate;
+  
+  /** The entity. */
+  protected transient CallEntity                entity; // transient to avoid serialization to JSON
 
   /**
    * Instantiates a new call info.
@@ -67,25 +69,13 @@ public class CallInfo {
    * @param id the id
    * @param title the title
    * @param owner the owner
-   * @param ownerType the owner type
-   * @param ownerLink the owner link
-   * @param avatarLink the avatar link
    * @param providerType the provider type
    */
-  public CallInfo(String id,
-                  String title,
-                  IdentityInfo owner,
-                  String ownerType,
-                  String ownerLink,
-                  String avatarLink,
-                  String providerType) {
+  public CallInfo(String id, String title, IdentityInfo owner, String providerType) {
     super();
     this.id = id;
     this.title = title;
     this.owner = owner;
-    this.ownerType = ownerType;
-    this.ownerLink = ownerLink;
-    this.avatarLink = avatarLink;
     this.providerType = providerType;
   }
 
@@ -136,33 +126,6 @@ public class CallInfo {
   }
 
   /**
-   * Gets the owner type.
-   *
-   * @return the owner type
-   */
-  public String getOwnerType() {
-    return ownerType;
-  }
-
-  /**
-   * Gets the owner link.
-   *
-   * @return the owner link
-   */
-  public String getOwnerLink() {
-    return ownerLink;
-  }
-
-  /**
-   * Gets the avatar link.
-   *
-   * @return the avatar link
-   */
-  public String getAvatarLink() {
-    return avatarLink;
-  }
-
-  /**
    * Gets the provider type.
    *
    * @return the provider type
@@ -209,5 +172,52 @@ public class CallInfo {
   public void setState(String state) {
     this.state = state;
   }
+
+  /**
+   * Gets the last date.
+   *
+   * @return the lastDate
+   */
+  public Date getLastDate() {
+    return lastDate;
+  }
+
+  /**
+   * Sets the last date.
+   *
+   * @param lastDate the lastDate to set
+   */
+  public void setLastDate(Date lastDate) {
+    this.lastDate = lastDate;
+  }
+
+  /**
+   * @return the entity
+   */
+  @Transient // to avoid serialization to JSON
+  protected CallEntity getEntity() {
+    return entity;
+  }
+
+  /**
+   * Sets the entity.
+   *
+   * @param entity the entity to set
+   */
+  @Transient // to avoid serialization to JSON
+  protected void setEntity(CallEntity entity) {
+    this.entity = entity;
+  }
+
+  /**
+   * Gets the participant ids.
+   *
+   * @return the participantIds
+   */
+  protected Set<String> getParticipantIds() {
+    return participantIds;
+  }
+  
+  
 
 }

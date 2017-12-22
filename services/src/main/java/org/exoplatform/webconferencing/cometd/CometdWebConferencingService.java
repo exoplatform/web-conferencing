@@ -1083,7 +1083,7 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * Checks if is valid argument: a string not null, not empty, not longer of {@value COMMAND_MAX_LENGTH}
+   * Checks if is valid argument: a string not null, not empty, not longer of {@value #COMMAND_MAX_LENGTH}
    * bytes.
    *
    * @param arg the argument
