@@ -76,7 +76,7 @@
 			}
 		};
 		
-		var logRemote = function(level, message, time) {
+		var logRemote = function(level, message, date) {
 			var process = $.Deferred();
 			if (remoteEnabled) {
 				if (cometd) {
@@ -99,9 +99,8 @@
 						data : data,
 						level : level,
 						prefix : prefix,
-						clientId : clientId, 
-						time : time,
-						process : process
+						date : date,
+						process : process // this will not be send to the server (see spoolBuff())
 					});
 					buff.push(params);
 					if (buff.length > 10) {
@@ -136,17 +135,17 @@
 			} else {
 				msgLine = msg;
 			}
-			var isoTime = new Date().toISOString();
+			var isoDate = new Date().toISOString();
 			if (typeof console !== "undefined" && typeof console.log === "function") {
 				var levelPad = (level.toUpperCase() + "     ").slice(0, 5);
 				var localPrefix = prefix + "_" + clientId
-				console.log("| " + local + " | " + localPrefix + " " + line + " -- " + isoTime);
+				console.log("| " + levelPad + " | " + localPrefix + " " + msgLine + " -- " + isoDate);
 				if (typeof err.stack !== "undefined") {
 					console.log(err.stack);
 				}
 			}
 			if (!localOnly) {
-				logRemote(line);
+				logRemote(level, msgLine, isoDate);
 			}
 		};
 		

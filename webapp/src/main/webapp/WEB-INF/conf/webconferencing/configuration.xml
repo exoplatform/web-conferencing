@@ -31,6 +31,9 @@
     <type>org.exoplatform.webconferencing.rest.RESTWebConferencingService</type>
   </component>
   <component>
+    <type>org.exoplatform.webconferencing.support.CallLogService</type>
+  </component>
+  <component>
     <type>org.exoplatform.webconferencing.cometd.CometdWebConferencingService</type>
   </component>
   

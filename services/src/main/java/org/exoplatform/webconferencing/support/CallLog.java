@@ -34,7 +34,70 @@ import org.exoplatform.services.log.Log;
 public class CallLog {
 
   /** The Constant LOG. */
-  private static final Log LOG = ExoLogger.getLogger(CallLog.class);
+  private static final Log   LOG                           = ExoLogger.getLogger(CallLog.class);
+
+  public static final String TRACE_LEVEL                   = "trace".intern();
+
+  public static final String DEBUG_LEVEL                   = "debug".intern();
+
+  public static final String INFO_LEVEL                    = "info".intern();
+
+  public static final String WARN_LEVEL                    = "warn".intern();
+
+  public static final String ERROR_LEVEL                   = "error".intern();
+
+  /** The Constant MESSAGE_NO_DATA. */
+  public static final String MESSAGE_NO_DATA               = "<no data>";
+
+  /** Log message max length. */
+  public static final int    MESSAGE_MAX_LENGTH            = 1024 * 2;
+
+  /** Log message critical length. Values longer of this will be cut by the logger. */
+  public static final int    MESSAGE_CRITICAL_LENGTH       = 1024 * 10;
+
+  /** The Constant MESSAGE_CRITICAL_LENGTH_FINAL. */
+  protected static final int MESSAGE_CRITICAL_LENGTH_FINAL = MESSAGE_CRITICAL_LENGTH + 256;
+
+  /**
+   * Checks if is message valid. If not valid, a log warn also will be reported about the length.
+   *
+   * @param msg the msg
+   * @return true, if is valid
+   */
+  public static boolean isSafe(String msg) {
+    return msg == null || msg.length() <= MESSAGE_MAX_LENGTH;
+  }
+
+  /**
+   * Validate a message by cutting it if it is longer of {@value MESSAGE_CRITICAL_LENGTH} bytes.
+   *
+   * @param msg the msg
+   * @return the string
+   */
+  public static String validate(String msg) {
+    if (msg == null || msg.length() == 0) {
+      return MESSAGE_NO_DATA; // we accept empty data
+    }
+    if (isSafe(msg)) {
+      if (msg != null && msg.length() > MESSAGE_CRITICAL_LENGTH) {
+        LOG.warn(new StringBuilder("Cut loo long message: '").append(msg.substring(0, 64))
+                                                             .append("...'. It's recommended to use log messages not longer of ")
+                                                             .append(MESSAGE_MAX_LENGTH)
+                                                             .append(" chars. All messages longer of ")
+                                                             .append(MESSAGE_CRITICAL_LENGTH)
+                                                             .append(" will be cut.")
+                                                             .toString());
+        return msg.substring(0, MESSAGE_CRITICAL_LENGTH);
+      }
+    } else {
+      LOG.warn(new StringBuilder("Message: '").append(msg.substring(0, 64))
+                                              .append("...' exceeds recommeded length of ")
+                                              .append(MESSAGE_MAX_LENGTH)
+                                              .append(" chars. Avoid using longer messages due to possible performance impact.")
+                                              .toString());
+    }
+    return msg;
+  }
 
   /**
    * Instantiates a new call log (for internal use).
@@ -42,38 +105,66 @@ public class CallLog {
   CallLog() {
   }
 
+  protected String validateFinal(String msg) {
+    if (msg != null && msg.length() > MESSAGE_CRITICAL_LENGTH_FINAL) {
+      return new StringBuilder(msg.substring(0, MESSAGE_CRITICAL_LENGTH_FINAL)).append("...").toString();
+    }
+    return msg;
+  }
+
+  /**
+   * Info.
+   *
+   * @param msg the msg
+   */
   public void info(String msg) {
     if (LOG.isInfoEnabled()) {
-      LOG.info(msg);
+      LOG.info(validateFinal(msg));
     }
   }
 
+  /**
+   * Warn.
+   *
+   * @param msg the msg
+   */
   public void warn(String msg) {
     if (LOG.isWarnEnabled()) {
-      LOG.warn(msg);
+      LOG.warn(validateFinal(msg));
     }
   }
 
+  /**
+   * Error.
+   *
+   * @param msg the msg
+   */
   public void error(String msg) {
     if (LOG.isErrorEnabled()) {
-      LOG.error(msg);
+      LOG.error(validateFinal(msg));
     }
   }
 
+  /**
+   * Debug.
+   *
+   * @param msg the msg
+   */
+  public void debug(String msg) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(validateFinal(msg));
+    }
+  }
+
+  /**
+   * Trace.
+   *
+   * @param msg the msg
+   */
   public void trace(String msg) {
     if (LOG.isTraceEnabled()) {
-      LOG.trace(msg);
+      LOG.trace(validate(msg));
     }
   }
-
-  /*protected String line(String msg) {
-    StringBuilder line = new StringBuilder();
-    line.append('[');
-    line.append(providerId);
-    line.append(']');
-    line.append(' ');
-    line.append(msg);
-    return line.toString();
-  }*/
 
 }
