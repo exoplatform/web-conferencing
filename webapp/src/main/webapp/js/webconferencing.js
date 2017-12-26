@@ -1619,14 +1619,14 @@
 			if (currentSpaceId) {
 				var $spaceMenuPortlet = $("#UISpaceMenuPortlet");
 				var $spaceApps = $spaceMenuPortlet.find(".spaceMenuApps");
-                var $callMenuApps = $spaceApps.find(".callButtonsMenu");
+        var $callButtons = $spaceApps.find(".spaceMenuCallButtons");
 				
-				if ($callMenuApps.length == 0) {
-					$callMenuApps = $("<li></li>").appendTo($spaceApps).addClass("callButtonsMenu");
+				if ($callButtons.length == 0) {
+					$callButtons = $("<li></li>").appendTo($spaceApps).addClass("spaceMenuCallButtons");
 				}
 				
 				var addSpaceCallButton = function() {
-					var initializer = addCallButton($callMenuApps, spaceContext(currentSpaceId));
+					var initializer = addCallButton($callButtons, spaceContext(currentSpaceId));
 					initializer.done(function($container) {
 						var $button = $container.find(".callButton");
 						var $first = $button.first();
