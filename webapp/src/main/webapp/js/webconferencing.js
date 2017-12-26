@@ -1793,10 +1793,14 @@
 			if (currentSpaceId) {
 				var $spaceMenuPortlet = $("#UISpaceMenuPortlet");
 				var $spaceApps = $spaceMenuPortlet.find(".spaceMenuApps");
-                $spaceApps = $("<li></li>").appendTo($spaceApps);
+        var $callButtons = $spaceApps.find(".spaceMenuCallButtons");
+				
+				if ($callButtons.length == 0) {
+					$callButtons = $("<li></li>").appendTo($spaceApps).addClass("spaceMenuCallButtons");
+				}
 				
 				var addSpaceCallButton = function() {
-					var initializer = addCallButton($spaceApps, spaceContext(currentSpaceId));
+					var initializer = addCallButton($callButtons, spaceContext(currentSpaceId));
 					initializer.done(function($container) {
 						var $button = $container.find(".callButton");
 						var $first = $button.first();
