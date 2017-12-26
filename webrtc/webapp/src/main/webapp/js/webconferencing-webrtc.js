@@ -15,8 +15,8 @@
 	if (webConferencing) {
 
 		// Start with default logger, later in configure() we'll get it for the provider.
-		// We know it's webrtc here, but mark with asterisk as not yet configured.
-		var log = webConferencing.getLog().setPrefix("[webrtc*]");
+		// We know it's webrtc here.
+		var log = webConferencing.getLog("webrtc");
 		//log.trace("> Loading at " + location.origin + location.pathname);
 		
 		function WebrtcProvider() {
@@ -72,9 +72,6 @@
 
 			this.configure = function(theSettings) {
 				settings = theSettings;
-				
-				// Init log sooner
-				log = webConferencing.getLog(settings.type);
 			};
 
 			this.isConfigured = function() {
@@ -178,10 +175,6 @@
 			
 			this.callButton = function(context) {
 				var button = $.Deferred();
-				var rejectAndLog = function(message, err) {
-					log.error(message, err);
-					button.reject(message, err);
-				};
 				if (self.isSupportedPlatform()) {
 					if (settings && context && context.currentUser) {
 						// XXX Currently we support only P2P calls
@@ -270,16 +263,24 @@
 								}, 200);
 								button.resolve($button);
 							}).fail(function(err) {
-								rejectAndLog("Error getting context details", err);
+								var msg = "Error getting context details";
+								log.error(msg, err);
+								button.reject(msg, err);
 							});
 						} else {
-							rejectAndLog("Group calls not supported");
+							var msg = "Group calls not supported";
+							log.debug(msg);
+							button.reject(msg);
 						}
 					} else {
-						rejectAndLog("Not configured or empty context");
+						var msg = "Not configured or empty context";
+						log.error(msg);
+						button.reject(msg);
 					}
 				} else {
-					rejectAndLog("WebRTC calls not supported in this browser: " + navigator.userAgent);
+					var msg = "WebRTC calls not supported in this browser: " + navigator.userAgent;
+					log.warn(msg);
+					button.reject(msg);
 				}
 				return button.promise();
 			};

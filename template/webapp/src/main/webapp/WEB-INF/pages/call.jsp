@@ -83,7 +83,7 @@
 				// When Web Conferencing module loaded we use it.
 				
 				var myconnector = webConferencing.myconnector;
-				var log = webConferencing.getLog().setPrefix(myconnector.getType() + ".call");
+				var log = webConferencing.getLog(myconnector.getType()).prefix("call");
 			
 				var currentUserId = webConferencing.getUser().id;
 				// here we rely on our logic from myconnector module script: group call ID starts with 'g/'

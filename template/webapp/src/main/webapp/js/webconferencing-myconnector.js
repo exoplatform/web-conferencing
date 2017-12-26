@@ -16,8 +16,8 @@
 	if (webConferencing) {
 
 		// Start with default logger, later in configure() we'll get it for the provider.
-		// We know it's myconnector here, but mark with asterisk as not yet configured.
-		var log = webConferencing.getLog().setPrefix("[myconnector*]");  
+		// We know it's myconnector here.
+		var log = webConferencing.getLog("myconnector");  
 		//log.trace("> Loading at " + location.origin + location.pathname);
 		
 		/** 
@@ -241,8 +241,8 @@
 								button.resolve($button);
 							} else {
 								// If not users compatible with My Connector IM type found, we reject, thus don't show the button for this context
-								var msg = "No " + self.getTitle() + " users found";
-								log.error(msg);
+								var msg = "No " + self.getTitle() + " users found for " + target.id;
+								log.warn(msg);
 								button.reject(msg);
 							}
 						}).fail(function(err) {
@@ -253,8 +253,8 @@
 						});
 					} else {
 						// If current user has no My Connector IM - we don't show the button to him
-						var msg = "Not My Connector user";
-						log.error(msg);
+						var msg = "Not My Connector user " + context.currentUser.id;
+						log.debug(msg);
 						button.reject(msg);
 					}
 				} else {
@@ -519,8 +519,6 @@
 			 */
 			this.configure = function(mySettings) {
 				settings = mySettings;
-				// Init log sooner
-				log = webConferencing.getLog(settings.type);
 			};
 			
 			/**

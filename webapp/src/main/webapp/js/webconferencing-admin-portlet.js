@@ -5,8 +5,8 @@
 	"use strict";
 
 	/** For debug logging. */
-	// Use default logger with own prefix.
-	var log = webConferencing.getLog().setPrefix("[webconferencing.admin]");
+	// Use default logger with own prefix. It's log w/o remote spooling.
+	var log = webConferencing.getLog().prefix("webconferencing.admin");
 	// log.trace("> Loading at " + location.origin + location.pathname);
 
 	/**

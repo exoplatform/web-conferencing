@@ -13,12 +13,7 @@
 	/**
 	 * Universal client ID for use in logging, services connectivity and related cases.
 	 */
-	var clientId = getRandomArbitrary(1000, 9999);
-	
-	/**
-	 * This module logger prefix.
-	 */
-	var logPrefix = "webconferencing";
+	var clientId = "" + getRandomArbitrary(1000, 9999);
 	
 	var errorText = function(err) {
 		return err && err.message ? err.message : err;
@@ -38,34 +33,46 @@
 		}
 	};
 	
+	var cometdError = function(response) {
+		return "[" + response.id + "] " + response.channel + " " 
+				+ JSON.stringify(response.error ? response.error : (response.failure ? response.failure : response.data));
+	};
+	
+	var cometdInfo = function(response) {
+		return "[" + response.id + "] " + response.channel;
+	};
+	
 	/**
 	 * Logging to browser console and optionally (if enabled) spool the log to remote server.
-	 * @param remoteEnabled if true the log will also spool remotely, otherwise only log to browser console. 
 	 */
-	function ClientLog(remoteEnabled) {
+	function Logger() {
 		
-		var cometd = null;
+		var providerType = null;
 		var prefix = null;
+		var cometd = null;
 		var buff = [];
+		
+		// Private methods
+		var setPrefix = function(newVal) {
+			prefix = newVal ? newVal : null;
+		};
 		
 		var spoolBuff = function() {
 			if (cometd) {
-				var copy = buff.slice();
+				var bucket = buff; 
 				buff = [];
+				//var bucket = buff.slice(); TODO cleanup
 				// spool in CometD batch
 				cometd.batch(function() {
-					for (var i=0; i<copy.length; i++) {
-						var params = copy[i];
-						var process = params.process;
-						delete params.process;
+					for (var i=0; i<bucket.length; i++) {
+						var params = bucket[i];
 						cometd.remoteCall("/webconferencing/logs", params, function(response) {
 							var result = tryParseJson(response);
 							if (response.successful) {
 								//log.trace("<< addCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
-								process.resolve(result, 200);
 							} else {
 								//log.trace("<< addCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
-								process.reject(result, 400);
+								toLog("error", "Failed to send log message to remote spooler.", cometdError(response), true);
 							}
 						});
 					}
@@ -76,50 +83,46 @@
 			}
 		};
 		
-		var logRemote = function(level, message, date) {
-			var process = $.Deferred();
-			if (remoteEnabled) {
-				if (cometd) {
-					var data;
-					if (typeof message === "function") {
-						data = message();
-						if (typeof data === "string") {
-							data = {
-								message : msg
-							};
-						}
-					} else if (typeof message === "string") {
-						data = {
-							message : message
-						};
-					} else {
-						data = message;
-					}
-					var params = cometdParams({
-						data : data,
-						level : level,
-						prefix : prefix,
-						date : date,
-						process : process // this will not be send to the server (see spoolBuff())
-					});
-					buff.push(params);
-					if (buff.length > 10) {
-						spoolBuff();
-					}
-				} else {
-					process.reject("CometD required");
-				}					
-			} else {
-				process.resolve("disabled");
+		var windowListener = function(e) {
+			//toLog("trace", "On unload " + e.type, null, true);
+			if (buff.length > 0) {
+				spoolBuff();
 			}
-			return process.promise();					
+		};
+		
+		var logRemote = function(level, message, date) {
+			if (cometd) {
+				var data;
+				if (typeof message === "function") {
+					data = message();
+					if (typeof data === "string") {
+						data = {
+							message : msg
+						};
+					}
+				} else if (typeof message === "string") {
+					data = {
+						message : message
+					};
+				} else {
+					data = message;
+				}
+				var params = cometdParams({
+					data : data,
+					level : level,
+					prefix : prefix,
+					provider : providerType,
+					date : date
+				});
+				buff.push(params);
+				if (buff.length > 10) {
+					spoolBuff();
+				}
+			} // else, remote spooler not set			
 		};
 		
 		var toLog = function(level, msg, err, localOnly) {
 			// Log to browser console and remotely when remote service become available.
-			if (!prefix) {
-				prefix = logPrefix;
-			}
 			var msgLine;
 			if (err) {
 				if (err instanceof Error) {
@@ -135,75 +138,127 @@
 			} else {
 				msgLine = msg;
 			}
-			var isoDate = new Date().toISOString();
+			var msgDate = new Date().toISOString();
 			if (typeof console !== "undefined" && typeof console.log === "function") {
 				var levelPad = (level.toUpperCase() + "     ").slice(0, 5);
-				var localPrefix = prefix + "_" + clientId
-				console.log("| " + levelPad + " | " + localPrefix + " " + msgLine + " -- " + isoDate);
-				if (typeof err.stack !== "undefined") {
+				var localPrefix = "[";
+				if (providerType) {
+					localPrefix += providerType; 
+				}
+				if (prefix) {
+					if (localPrefix.length > 1) {
+						localPrefix += ".";
+					}
+					localPrefix += prefix; 
+				}
+				if (localPrefix.length == 1) {
+					localPrefix += "???";
+				}
+				localPrefix += "_" + clientId + "]";
+				console.log("| " + levelPad + " | " + localPrefix + " " + msgLine + " -- " + msgDate);
+				if (err && err.stack) {
 					console.log(err.stack);
 				}
 			}
 			if (!localOnly) {
-				logRemote(level, msgLine, isoDate);
+				logRemote(level, msgLine, msgDate);
 			}
 		};
 		
-		// We attempt to save all logs on page close
-		var closeMsg = "Please wait for a moment"; // this should not be shown to an user
-		var windowListener = function(e) {
-			e.returnValue = closeMsg; // Gecko, Trident, Chrome 34+
-			if (buff.length > 0) {
-				spoolBuff();
-			}
-			return closeMsg; // Gecko, WebKit, Chrome <34
-		};
-		window.addEventListener("beforeunload", windowListener);
-		window.addEventListener("unload", windowListener);
+		// It's a logger that will be returned to user code (public methods).
+		function Client() {
+			/**
+			 * Sets text to use as a prefix (e.g. provider prefix).
+			 */
+			this.prefix = function(thePrefix) {
+				setPrefix(thePrefix);
+				return this;
+			};
+			
+			/**
+			 * Add info level message to user log.
+			 */
+			this.info = function(message, err) {
+				toLog("info", message, err);
+				return this;
+			};
+			
+			/**
+			 * Add warn level message to user log.
+			 */
+			this.warn = function(message, err) {
+				toLog("warn", message, err);
+				return this;
+			};
+			
+			/**
+			 * Add error level message to user log.
+			 */
+			this.error = function(message, err) {
+				toLog("error", message, err);
+				return this;
+			};
+			
+			/**
+			 * Add debug level message to user log.
+			 */
+			this.debug = function(message, err) {
+				toLog("debug", message, err);
+				return this;
+			};
+			
+			/**
+			 * Add trace level message to user log.
+			 */
+			this.trace = function(message, err) {
+				toLog("trace", message, err, true); // traces go to browser console only
+				return this;
+			};
+		}
 		
-		this.setPrefix = function(thePrefix) {
-			prefix = thePrefix;
+		var log;
+		this.get = function() {
+			if (!log) {
+				log = new Client();
+			}
+			return log;
+		};
+		
+		this.remoteSpooler = function(theCometd) {
+			if (theCometd && typeof theCometd === "object") { // we also test is it an object (cometd assumed)
+				if (!cometd) {
+					// We attempt to save all logs on page close
+					$(window).bind("beforeunload", windowListener);
+					$(window).bind("unload", windowListener);					
+				} // else it's already
+				cometd = theCometd;
+				if (buff.length > 0) {
+					spoolBuff();
+				}
+			} else {
+				if (cometd) {
+					$(window).unbind("beforeunload", windowListener);
+					$(window).unbind("unload", windowListener);
+				}
+				cometd = null;
+			}
 			return this;
 		};
 		
-		this.setCometd = function(theCometd) {
-			cometd = theCometd;
-			if (buff.length > 0) {
-				spoolBuff();
-			}
+		this.prefix = function(thePrefix) {
+			// FYI such method also exists on Client (as setSpoller()), but it doesn't returns a 'this' object for chaining
+			setPrefix(thePrefix);
 			return this;
 		};
 		
-		/**
-		 * Add info level message to user log.
-		 */
-		this.info = function(message, err) {
-			return toLog("info", message, err);
-		};
-		
-		/**
-		 * Add warn level message to user log.
-		 */
-		this.warn = function(message, err) {
-			return toLog("warn", message, err);
-		};
-		
-		/**
-		 * Add error level message to user log.
-		 */
-		this.info = function(message, err) {
-			return toLog("error", message, err);
-		};
-		
-		/**
-		 * Add trace level message to user log.
-		 */
-		this.trace = function(message, err) {
-			return toLog("trace", message, err, true); // traces go to browser console only
+		this.provider = function(theProvider) {
+			// provider type will be used as a prefix or precede a user prefix if an one set.
+			providerType = theProvider ? theProvider : null;
+			return this;
 		};
 	}
 	
-	var log = new ClientLog(); // core log not enabled for remote spooling currently
+	var log = new Logger().prefix("webconferencing").get(); // core log not enabled for remote spooling currently
 	//log.trace("> Loading at " + location.origin + location.pathname);
 	
 	/** 
@@ -992,6 +1047,7 @@
 		var self = this;
 		
 		// ******** Context ********
+		var contextInitializer = $.Deferred();
 		var currentUser, currentSpaceId, currentRoomTitle;
 
 		// CometD transport bus
@@ -1000,7 +1056,7 @@
 		// Providers
 		var providers = []; // loaded providers
 		var providersConfig; // will be assigned in init()
-		var providersInitializer = {}; // map
+		var providersInitializer = {}; // map managed by getProvider() and initProvider()
 		
 		var chat = new Chat();
 		this.getChat = function() {
@@ -1896,6 +1952,8 @@
 					} else {
 						log.warn("CometD not found in context settings");
 					}
+				
+					contextInitializer.resolve();
 					
 					// also init registered providers
 					for (var i = 0; i < providers.length; i++) {
@@ -2045,15 +2103,6 @@
 		this.getUserInfo = getUserInfoReq; 
 		this.getSpaceInfo = getSpaceInfoReq;
 		this.getRoomInfo = getRoomInfoReq;
-		
-		var cometdError = function(response) {
-			return "[" + response.id + "] " + response.channel + " " 
-					+ JSON.stringify(response.error ? response.error : (response.failure ? response.failure : response.data));
-		};
-		
-		var cometdInfo = function(response) {
-			return "[" + response.id + "] " + response.channel;
-		};
 		
 		/**
 		 * Get registered call from server side database.
@@ -2344,19 +2393,36 @@
 		
 		// common utilities
 		this.getLog = function(providerType) {
-			for (var i=0; i<providersConfig.length; i++) {
-				var conf = providersConfig[i];
-				if (conf.type == providerType) {
-					if (conf.logEnabled) {
-						var newLog = new ClientLog(true);
-						newLog.setPrefix("[" + providerType + "]");
-						return newLog; 
+			if (providerType) {
+				if (providersConfig) {
+					var conf = providerConfig(providerType);
+					if (conf) {
+						if (!conf.log) {
+							conf.log = new Logger().provider(providerType).remoteSpooler(conf.logEnabled && cometd).get();
+						}
+						return conf.log;
+					} else {
+						log.warn("Asked log for not registerd provider: " + providerType);
 					}
-				}
+				} else {
+					// If no provider config yet, we create log but with asterisk suffix and not remote
+					var logger = new Logger().provider(providerType + "*");
+					contextInitializer.done(function() {
+						var conf = providerConfig(providerType);
+						if (conf) {
+							// When provider configured (via init()), we set real type and, if required, a remote spooler
+							logger.provider(providerType).remoteSpooler(conf.logEnabled && cometd);
+							conf.log = logger.get();
+						} else {
+							log.warn("Using log for not registerd provider: " + providerType);
+						}
+					});
+					return logger.get();
+				}				
 			}
-			var newLog = new ClientLog(false); // remote not enabled
-			return newLog; 
+			return new Logger().get(); // default logger: without prefix and remote not enabled  
 		};
+		
 		this.message = message;
 		this.showWarn = showWarn;
 		this.noticeWarn = noticeWarn;
