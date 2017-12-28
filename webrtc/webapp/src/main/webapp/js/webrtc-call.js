@@ -488,7 +488,7 @@ if (eXo.webConferencing) {
 															});														
 														});
 													} else {
-														log.warn("Skipped wrong candidate for " + callId);
+														log.debug("All candidates received for " + callId);
 													}
 												} else if (message.offer) {
 													log.debug("Received offer for " + callId);
