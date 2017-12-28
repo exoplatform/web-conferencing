@@ -164,10 +164,86 @@ public class CometdWebConferencingService implements Startable {
   @Service("webconferencing")
   public class CallService {
 
+    @Deprecated // TODO not used
+    final class ContainerCommandException extends Exception {
+
+      /**
+       * 
+       */
+      private static final long serialVersionUID = -9163305227537881822L;
+
+      /**
+       * Instantiates a new container command exception.
+       *
+       * @param message the message
+       */
+      public ContainerCommandException(String message) {
+        super(message);
+      }
+    }
+
+    abstract class ContainerCommand implements Runnable {
+
+      final String containerName;
+
+      /**
+       * Instantiates a new container command.
+       *
+       * @param containerName the container name
+       */
+      ContainerCommand(String containerName) {
+        this.containerName = containerName;
+      }
+
+      /**
+       * Execute actual work of the commend (in extending class).
+       *
+       * @param exoContainer the exo container
+       */
+      abstract void execute(ExoContainer exoContainer);
+
+      /**
+       * Callback to execute on container error.
+       *
+       * @param error the error
+       */
+      abstract void onContainerError(String error);
+
+      /**
+       * {@inheritDoc}
+       */
+      @Override
+      public void run() {
+        if (isValidArg(containerName)) {
+          // Do the work under eXo container context (for proper work of eXo apps and JPA storage)
+          ExoContainer exoContainer = ExoContainerContext.getContainerByName(containerName);
+          if (exoContainer != null) {
+            ExoContainer contextContainer = ExoContainerContext.getCurrentContainerIfPresent();
+            try {
+              // Container context
+              ExoContainerContext.setCurrentContainer(exoContainer);
+              RequestLifeCycle.begin(exoContainer);
+              // do the work here
+              execute(exoContainer);
+            } finally {
+              // Restore context
+              RequestLifeCycle.end();
+              ExoContainerContext.setCurrentContainer(contextContainer);
+            }
+          } else {
+            // LOG.warn("Container not found " + containerName + " for remote call " + contextName);
+            onContainerError("Container not found");
+          }
+        } else {
+          onContainerError("Container required");
+        }
+      }
+    }
+
     /**
-     * The Class ChannelContext.
+     * The Class UserChannelContext.
      */
-    class ChannelContext {
+    class UserChannelContext {
 
       /** The clients. */
       final Set<String>      clients = ConcurrentHashMap.newKeySet();
@@ -180,7 +256,7 @@ public class CometdWebConferencingService implements Startable {
        *
        * @param listener the listener
        */
-      ChannelContext(UserCallListener listener) {
+      UserChannelContext(UserCallListener listener) {
         super();
         this.listener = listener;
       }
@@ -266,6 +342,32 @@ public class CometdWebConferencingService implements Startable {
     }
 
     /**
+     * The Class CallChannelContext.
+     */
+    class CallChannelContext {
+
+      final String containerName;
+
+      /**
+       * Instantiates a new user channel context.
+       *
+       * @param containerName the container name
+       */
+      CallChannelContext(String containerName) {
+        this.containerName = containerName;
+      }
+
+      /**
+       * Gets the container name.
+       *
+       * @return the containerName
+       */
+      String getContainerName() {
+        return containerName;
+      }
+    }
+
+    /**
      * The listener interface for receiving channelSubscription events.
      * The class that is interested in processing a channelSubscription
      * event implements this interface, and the object created
@@ -286,8 +388,10 @@ public class CometdWebConferencingService implements Startable {
         String channelId = channel.getId();
         String currentUserId = currentUserId(message);
         String exoClientId = (String) message.get("exoClientId");
+        String exoContainerName = (String) message.get("exoContainerName");
         if (LOG.isDebugEnabled()) {
-          LOG.debug(">> Subscribed: " + currentUserId + ", client:" + clientId + " (" + exoClientId + "), channel:" + channelId);
+          LOG.debug(">> Subscribed: " + currentUserId + ", client:" + clientId + " (" + exoContainerName + "@" + exoClientId
+              + "), channel:" + channelId);
         }
         if (channelId.startsWith(USER_SUBSCRIPTION_CHANNEL_NAME)) {
           try {
@@ -300,7 +404,7 @@ public class CometdWebConferencingService implements Startable {
                 // Sep 8 2017: We need a single user listener per his channel, if add more then we'll have
                 // multiple events for a single update
 
-                ChannelContext context = channelContext.computeIfAbsent(channelId, k -> {
+                UserChannelContext context = userChannelContext.computeIfAbsent(channelId, k -> {
                   UserCallListener listener = new UserCallListener(userId) {
                     @Override
                     public void onPartLeaved(String callId,
@@ -391,7 +495,7 @@ public class CometdWebConferencingService implements Startable {
                   if (LOG.isDebugEnabled()) {
                     LOG.debug("<<< Created user call context for " + userId + ", client:" + clientId + ", channel:" + channelId);
                   }
-                  return new ChannelContext(listener);
+                  return new UserChannelContext(listener);
                 });
                 context.addClient(clientId);
               } else {
@@ -416,6 +520,10 @@ public class CometdWebConferencingService implements Startable {
               LOG.debug(">> Ignore user channel w/o user ID at the end: " + channelId, e);
             }
           }
+        } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)) {
+          callChannelContext.computeIfAbsent(channelId, k -> {
+            return new CallChannelContext(exoContainerName);
+          });
         }
       }
 
@@ -435,15 +543,9 @@ public class CometdWebConferencingService implements Startable {
     }
 
     /**
-     * The listener interface for receiving userChannel events.
-     * The class that is interested in processing a userChannel
-     * event implements this interface, and the object created
-     * with that class is registered with a component using the
-     * component's <code>addUserChannelListener<code> method. When
-     * the userChannel event occurs, that object's appropriate
-     * method is invoked.
+     * The listener interface for receiving client channel events.
      */
-    class UserChannelListener implements ChannelListener {
+    class ClientChannelListener implements ChannelListener {
 
       /**
        * {@inheritDoc}
@@ -463,7 +565,7 @@ public class CometdWebConferencingService implements Startable {
         if (LOG.isDebugEnabled()) {
           LOG.debug("> Channel added: " + channelId);
         }
-        if (channelId.startsWith(USER_SUBSCRIPTION_CHANNEL_NAME)) {
+        if (channelId.startsWith(USER_SUBSCRIPTION_CHANNEL_NAME) || channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)) {
           channel.addListener(subscriptionListener);
           if (LOG.isDebugEnabled()) {
             LOG.debug(">> Added subscription listener for channel: " + channelId);
@@ -481,7 +583,7 @@ public class CometdWebConferencingService implements Startable {
         }
         if (channelId.startsWith(USER_SUBSCRIPTION_CHANNEL_NAME)) {
           // Channel already doesn't exist here, ensure all its client listeners were unregistered
-          ChannelContext context = channelContext.remove(channelId);
+          UserChannelContext context = userChannelContext.remove(channelId);
           if (context != null) {
             webConferencing.removeUserCallListener(context.getListener());
             if (LOG.isDebugEnabled()) {
@@ -498,14 +600,36 @@ public class CometdWebConferencingService implements Startable {
           // This call communications ended, in normal way or by network failure - we assume the call ended,
           // ensure its parties, including those who received incoming notification but not yet
           // accepted/rejected it, will be notified that the call stopped/removed.
-          try {
-            CallInfo call = webConferencing.getCall(callId);
-            if (call != null) {
-              // TODO may be need leave all them and let that logic to stop the call?
-              webConferencing.stopCall(callId, !call.getOwner().isGroup());
-            }
-          } catch (Exception e) {
-            LOG.error("Error reading call " + callId, e);
+          CallChannelContext context = callChannelContext.remove(channelId);
+          if (context != null) {
+            new Thread(new ContainerCommand(context.getContainerName()) {
+              /**
+               * {@inheritDoc}
+               */
+              @Override
+              void execute(ExoContainer exoContainer) {
+                try {
+
+                  CallInfo call = webConferencing.getCall(callId);
+                  if (call != null) {
+                    // TODO may be need leave all them and let that logic to stop the call?
+                    webConferencing.stopCall(callId, !call.getOwner().isGroup());
+                  }
+                } catch (Exception e) {
+                  LOG.error("Error reading call " + callId, e);
+                }
+              }
+
+              /**
+               * {@inheritDoc}
+               */
+              @Override
+              void onContainerError(String error) {
+                LOG.error("Container error: " + error + " (" + containerName + ") for channel removal " + channelId);
+              }
+            }).start();
+          } else {
+            LOG.warn("Call context not found for " + callId);
           }
         }
       }
@@ -513,24 +637,27 @@ public class CometdWebConferencingService implements Startable {
 
     /** The bayeux. */
     @Inject
-    private BayeuxServer                      bayeux;
+    private BayeuxServer                          bayeux;
 
     /** The local session. */
     @Session
-    private LocalSession                      localSession;
+    private LocalSession                          localSession;
 
     /** The server session. */
     @Session
-    private ServerSession                     serverSession;
+    private ServerSession                         serverSession;
 
-    /** The channel context. */
-    private final Map<String, ChannelContext> channelContext       = new ConcurrentHashMap<>();
+    /** User channel context. */
+    private final Map<String, UserChannelContext> userChannelContext   = new ConcurrentHashMap<>();
+
+    /** Call channel context. */
+    private final Map<String, CallChannelContext> callChannelContext   = new ConcurrentHashMap<>();
 
     /** The subscription listener. */
-    private final ChannelSubscriptionListener subscriptionListener = new ChannelSubscriptionListener();
+    private final ChannelSubscriptionListener     subscriptionListener = new ChannelSubscriptionListener();
 
     /** The channel listener. */
-    private final UserChannelListener         channelListener      = new UserChannelListener();
+    private final ClientChannelListener           channelListener      = new ClientChannelListener();
 
     /**
      * Post construct.
@@ -547,10 +674,10 @@ public class CometdWebConferencingService implements Startable {
     public void preDestroy() {
       // cleanup listeners
       bayeux.removeListener(channelListener);
-      for (ChannelContext context : channelContext.values()) {
+      for (UserChannelContext context : userChannelContext.values()) {
         webConferencing.removeUserCallListener(context.getListener());
       }
-      channelContext.clear();
+      userChannelContext.clear();
     }
 
     /**
@@ -563,10 +690,9 @@ public class CometdWebConferencingService implements Startable {
      */
     @Subscription(CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS)
     public void subscribeCalls(Message message, @Param("callType") String callType, @Param("callInfo") String callInfo) {
-      String callId = callId(callType, callInfo);
-      // TODO log this to a dedicated diagnostic log!
-
       if (LOG.isDebugEnabled()) {
+        String callId = callId(callType, callInfo);
+        // TODO log this to a dedicated diagnostic log!
         LOG.debug("Call published in " + message.getChannel() + " by " + message.get("sender") + " callId: " + callId + " data: "
             + message.getJSON());
       }
@@ -600,196 +726,176 @@ public class CometdWebConferencingService implements Startable {
         LOG.debug("Remote call by " + session.getId() + " data: " + data);
       }
 
+      @SuppressWarnings("unchecked")
+      Map<String, Object> arguments = (Map<String, Object>) data;
+      String containerName = (String) arguments.get("exoContainerName");
+
       // TODO use thread pool (take in account CPUs number of cores etc)
-      new Thread(new Runnable() {
-        @SuppressWarnings("deprecation")
+      new Thread(new ContainerCommand(containerName) {
+        /**
+         * {@inheritDoc}
+         */
         @Override
-        public void run() {
+        void execute(ExoContainer exoContainer) {
           try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> arguments = (Map<String, Object>) data;
+            // String exoClientId = (String) arguments.get("exoClientId"); // TODO need it here, for logger
+            // may be?
             String currentUserId = (String) arguments.get("exoId");
-            if (currentUserId != null) {
-              // String exoClientId = (String) arguments.get("exoClientId");
-              String containerName = (String) arguments.get("exoContainerName");
-              if (containerName != null) {
-                // Do all the job under actual (requester) user: set this user as current identity in eXo
-                // XXX We rely on EXoContinuationBayeux.EXoSecurityPolicy for user security here (exoId above)
-                // We also set user's eXo container in the context (for proper work of eXo apps, like Social
-                // identity)
-                ExoContainer exoContainer = ExoContainerContext.getContainerByName(containerName);
-                if (exoContainer != null) {
-                  ExoContainer contextContainer = ExoContainerContext.getCurrentContainerIfPresent();
-                  try {
-                    // User context (1)
-                    ExoContainerContext.setCurrentContainer(exoContainer);
-                    RequestLifeCycle.begin(exoContainer);
-                    // Use services acquired from context container
-                    IdentityRegistry identityRegistry = exoContainer.getComponentInstanceOfType(IdentityRegistry.class);
-                    SessionProviderService sessionProviders =
-                                                            exoContainer.getComponentInstanceOfType(SessionProviderService.class);
-                    WebConferencingService webConferencing =
-                                                           exoContainer.getComponentInstanceOfType(WebConferencingService.class);
-                    Identity userIdentity = identityRegistry.getIdentity(currentUserId);
-                    if (userIdentity != null) {
-                      ConversationState contextState = ConversationState.getCurrent();
-                      SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
-                      try {
-                        // User context (2)
-                        ConversationState convState = new ConversationState(userIdentity);
-                        convState.setAttribute(ConversationState.SUBJECT, userIdentity.getSubject());
-                        ConversationState.setCurrent(convState);
-                        SessionProvider userProvider = new SessionProvider(convState);
-                        sessionProviders.setSessionProvider(null, userProvider);
-                        // Process the request
-                        String id = (String) arguments.get("id");
-                        if (id != null) {
-                          String command = (String) arguments.get("command");
-                          if (command != null) {
-                            if (COMMAND_GET.equals(command)) {
-                              try {
-                                CallInfo call = webConferencing.getCall(id);
-                                if (call != null) {
-                                  caller.result(asJSON(call));
-                                } else {
-                                  caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
-                                }
-                              } catch (Throwable e) {
-                                LOG.error("Error reading call info '" + id + "' by '" + currentUserId + "'", e);
-                                caller.failure(ErrorInfo.serverError("Error reading call record").asJSON());
-                              }
-                            } else if (COMMAND_UPDATE.equals(command)) {
-                              String state = (String) arguments.get("state");
-                              if (state != null) {
-                                try {
-                                  boolean stateRecognized = true;
-                                  CallInfo call;
-                                  if (CallState.STARTED.equals(state)) {
-                                    call = webConferencing.startCall(id);
-                                  } else if (CallState.STOPPED.equals(state)) {
-                                    call = webConferencing.stopCall(id, false);
-                                  } else if (UserState.JOINED.equals(state)) {
-                                    call = webConferencing.joinCall(id, currentUserId);
-                                  } else if (UserState.LEAVED.equals(state)) {
-                                    call = webConferencing.leaveCall(id, currentUserId);
-                                  } else {
-                                    call = null;
-                                    stateRecognized = false;
-                                  }
-                                  if (stateRecognized) {
-                                    if (call != null) {
-                                      caller.result(asJSON(call));
-                                    } else {
-                                      caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
-                                    }
-                                  } else {
-                                    caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized")
-                                                            .asJSON());
-                                  }
-                                } catch (Throwable e) {
-                                  LOG.error("Error updating call '" + id + "' by '" + currentUserId + "'", e);
-                                  caller.failure(ErrorInfo.serverError("Error updating call record").asJSON());
-                                }
+            if (isValidArg(currentUserId)) {
+              // Do all the job under actual (requester) user: set this user as current identity in eXo
+              // XXX We rely on EXoContinuationBayeux.EXoSecurityPolicy for user security here (exoId above)
+              // Use services acquired from context container
+              IdentityRegistry identityRegistry = exoContainer.getComponentInstanceOfType(IdentityRegistry.class);
+              SessionProviderService sessionProviders = exoContainer.getComponentInstanceOfType(SessionProviderService.class);
+              WebConferencingService webConferencing = exoContainer.getComponentInstanceOfType(WebConferencingService.class);
+              Identity userIdentity = identityRegistry.getIdentity(currentUserId);
+              if (userIdentity != null) {
+                ConversationState contextState = ConversationState.getCurrent();
+                SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
+                try {
+                  // User context (2)
+                  ConversationState convState = new ConversationState(userIdentity);
+                  convState.setAttribute(ConversationState.SUBJECT, userIdentity.getSubject());
+                  ConversationState.setCurrent(convState);
+                  SessionProvider userProvider = new SessionProvider(convState);
+                  sessionProviders.setSessionProvider(null, userProvider);
+                  // Process the request
+                  String id = (String) arguments.get("id");
+                  if (id != null) {
+                    String command = (String) arguments.get("command");
+                    if (command != null) {
+                      if (COMMAND_GET.equals(command)) {
+                        try {
+                          CallInfo call = webConferencing.getCall(id);
+                          if (call != null) {
+                            caller.result(asJSON(call));
+                          } else {
+                            caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
+                          }
+                        } catch (Throwable e) {
+                          LOG.error("Error reading call info '" + id + "' by '" + currentUserId + "'", e);
+                          caller.failure(ErrorInfo.serverError("Error reading call record").asJSON());
+                        }
+                      } else if (COMMAND_UPDATE.equals(command)) {
+                        String state = (String) arguments.get("state");
+                        if (state != null) {
+                          try {
+                            boolean stateRecognized = true;
+                            CallInfo call;
+                            if (CallState.STARTED.equals(state)) {
+                              call = webConferencing.startCall(id);
+                            } else if (CallState.STOPPED.equals(state)) {
+                              call = webConferencing.stopCall(id, false);
+                            } else if (UserState.JOINED.equals(state)) {
+                              call = webConferencing.joinCall(id, currentUserId);
+                            } else if (UserState.LEAVED.equals(state)) {
+                              call = webConferencing.leaveCall(id, currentUserId);
+                            } else {
+                              call = null;
+                              stateRecognized = false;
+                            }
+                            if (stateRecognized) {
+                              if (call != null) {
+                                caller.result(asJSON(call));
                               } else {
-                                caller.failure(ErrorInfo.clientError("Wrong request parameters: state").asJSON());
-                              }
-                            } else if (COMMAND_CREATE.equals(command)) {
-                              String ownerId = (String) arguments.get("owner");
-                              if (ownerId != null) {
-                                String ownerType = (String) arguments.get("ownerType");
-                                if (ownerType != null) {
-                                  String providerType = (String) arguments.get("provider");
-                                  if (providerType != null) {
-                                    String title = (String) arguments.get("title"); // topic
-                                    if (title != null) {
-                                      String pstr = (String) arguments.get("participants");
-                                      if (pstr != null) {
-                                        List<String> participants = Arrays.asList(pstr.split(";"));
-                                        try {
-                                          CallInfo call = webConferencing.addCall(id,
-                                                                                  ownerId,
-                                                                                  ownerType,
-                                                                                  title,
-                                                                                  providerType,
-                                                                                  participants);
-                                          caller.result(asJSON(call));
-                                        } catch (CallInfoException e) {
-                                          // aka BAD_REQUEST
-                                          caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
-                                        } catch (Throwable e) {
-                                          LOG.error("Error creating call for '" + id + "' by '" + currentUserId + "'", e);
-                                          caller.failure(ErrorInfo.serverError("Error creating call record").asJSON());
-                                        }
-                                      } else {
-                                        caller.failure(ErrorInfo.clientError("Wrong request parameters: participants").asJSON());
-                                      }
-                                    } else {
-                                      caller.failure(ErrorInfo.clientError("Wrong request parameters: title").asJSON());
-                                    }
-                                  } else {
-                                    caller.failure(ErrorInfo.clientError("Wrong request parameters: provider").asJSON());
-                                  }
-                                } else {
-                                  caller.failure(ErrorInfo.clientError("Wrong request parameters: ownerType").asJSON());
-                                }
-                              } else {
-                                caller.failure(ErrorInfo.clientError("Wrong request parameters: owner").asJSON());
-                              }
-                            } else if (COMMAND_DELETE.equals(command)) {
-                              try {
-                                CallInfo call = webConferencing.stopCall(id, true);
-                                if (call != null) {
-                                  caller.result(asJSON(call));
-                                } else {
-                                  caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
-                                }
-                              } catch (Throwable e) {
-                                LOG.error("Error deleting call '" + id + "' by '" + currentUserId + "'", e);
-                                caller.failure(ErrorInfo.serverError("Error deleting call record").asJSON());
-                              }
-                            } else if (COMMAND_GET_CALLS_STATE.equals(command)) {
-                              if (id.equals(currentUserId)) { // id it's user name for this command
-                                try {
-                                  CallState[] calls = webConferencing.getUserCalls(id);
-                                  caller.result(asJSON(calls));
-                                } catch (Throwable e) {
-                                  LOG.error("Error reading users calls for '" + id + "'", e);
-                                  caller.failure(ErrorInfo.serverError("Error reading users calls").asJSON());
-                                }
-                              } else {
-                                // Don't let read other user calls
-                                caller.failure(ErrorInfo.clientError("Wrong request parameters: id (does not match)").asJSON());
+                                caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
                               }
                             } else {
-                              LOG.warn("Unknown call command " + command + " for '" + id + "' from '" + currentUserId + "'");
-                              caller.failure(ErrorInfo.clientError("Unknown command").asJSON());
+                              caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized").asJSON());
                             }
-                          } else {
-                            caller.failure(ErrorInfo.clientError("Wrong request parameters: command").asJSON());
+                          } catch (Throwable e) {
+                            LOG.error("Error updating call '" + id + "' by '" + currentUserId + "'", e);
+                            caller.failure(ErrorInfo.serverError("Error updating call record").asJSON());
                           }
                         } else {
-                          caller.failure(ErrorInfo.clientError("Wrong request parameters: id").asJSON());
+                          caller.failure(ErrorInfo.clientError("Wrong request parameters: state").asJSON());
                         }
-                      } finally {
-                        // Restore context (2)
-                        ConversationState.setCurrent(contextState);
-                        sessionProviders.setSessionProvider(null, contextProvider);
+                      } else if (COMMAND_CREATE.equals(command)) {
+                        String ownerId = (String) arguments.get("owner");
+                        if (ownerId != null) {
+                          String ownerType = (String) arguments.get("ownerType");
+                          if (ownerType != null) {
+                            String providerType = (String) arguments.get("provider");
+                            if (providerType != null) {
+                              String title = (String) arguments.get("title"); // topic
+                              if (title != null) {
+                                String pstr = (String) arguments.get("participants");
+                                if (pstr != null) {
+                                  List<String> participants = Arrays.asList(pstr.split(";"));
+                                  try {
+                                    CallInfo call =
+                                                  webConferencing.addCall(id,
+                                                                          ownerId,
+                                                                          ownerType,
+                                                                          title,
+                                                                          providerType,
+                                                                          participants);
+                                    caller.result(asJSON(call));
+                                  } catch (CallInfoException e) {
+                                    // aka BAD_REQUEST
+                                    caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
+                                  } catch (Throwable e) {
+                                    LOG.error("Error creating call for '" + id + "' by '" + currentUserId + "'", e);
+                                    caller.failure(ErrorInfo.serverError("Error creating call record").asJSON());
+                                  }
+                                } else {
+                                  caller.failure(ErrorInfo.clientError("Wrong request parameters: participants").asJSON());
+                                }
+                              } else {
+                                caller.failure(ErrorInfo.clientError("Wrong request parameters: title").asJSON());
+                              }
+                            } else {
+                              caller.failure(ErrorInfo.clientError("Wrong request parameters: provider").asJSON());
+                            }
+                          } else {
+                            caller.failure(ErrorInfo.clientError("Wrong request parameters: ownerType").asJSON());
+                          }
+                        } else {
+                          caller.failure(ErrorInfo.clientError("Wrong request parameters: owner").asJSON());
+                        }
+                      } else if (COMMAND_DELETE.equals(command)) {
+                        try {
+                          CallInfo call = webConferencing.stopCall(id, true);
+                          if (call != null) {
+                            caller.result(asJSON(call));
+                          } else {
+                            caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
+                          }
+                        } catch (Throwable e) {
+                          LOG.error("Error deleting call '" + id + "' by '" + currentUserId + "'", e);
+                          caller.failure(ErrorInfo.serverError("Error deleting call record").asJSON());
+                        }
+                      } else if (COMMAND_GET_CALLS_STATE.equals(command)) {
+                        if (id.equals(currentUserId)) { // id it's user name for this command
+                          try {
+                            CallState[] calls = webConferencing.getUserCalls(id);
+                            caller.result(asJSON(calls));
+                          } catch (Throwable e) {
+                            LOG.error("Error reading users calls for '" + id + "'", e);
+                            caller.failure(ErrorInfo.serverError("Error reading users calls").asJSON());
+                          }
+                        } else {
+                          // Don't let read other user calls
+                          caller.failure(ErrorInfo.clientError("Wrong request parameters: id (does not match)").asJSON());
+                        }
+                      } else {
+                        LOG.warn("Unknown call command " + command + " for '" + id + "' from '" + currentUserId + "'");
+                        caller.failure(ErrorInfo.clientError("Unknown command").asJSON());
                       }
                     } else {
-                      LOG.warn("User identity not found " + currentUserId + " for remote call of " + CALLS_CHANNEL_NAME);
-                      caller.failure(ErrorInfo.clientError("User identity not found").asJSON());
+                      caller.failure(ErrorInfo.clientError("Wrong request parameters: command").asJSON());
                     }
-                  } finally {
-                    // Restore context (1)
-                    RequestLifeCycle.end();
-                    ExoContainerContext.setCurrentContainer(contextContainer);
+                  } else {
+                    caller.failure(ErrorInfo.clientError("Wrong request parameters: id").asJSON());
                   }
-                } else {
-                  LOG.warn("Container not found " + containerName + " for remote call of " + CALLS_CHANNEL_NAME);
-                  caller.failure(ErrorInfo.clientError("Container not found").asJSON());
+                } finally {
+                  // Restore context (2)
+                  ConversationState.setCurrent(contextState);
+                  sessionProviders.setSessionProvider(null, contextProvider);
                 }
               } else {
-                caller.failure(ErrorInfo.clientError("Container required").asJSON());
+                LOG.warn("User identity not found " + currentUserId + " for remote call of " + CALLS_CHANNEL_NAME);
+                caller.failure(ErrorInfo.clientError("User identity not found").asJSON());
               }
             } else {
               caller.failure(ErrorInfo.clientError("Unauthorized user").asJSON());
@@ -798,6 +904,15 @@ public class CometdWebConferencingService implements Startable {
             LOG.error("Error processing call request from client " + session.getId() + " with data: " + data, e);
             caller.failure(ErrorInfo.serverError("Error processing call request: " + e.getMessage()).asJSON());
           }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        void onContainerError(String error) {
+          LOG.warn("Container error: " + error + " (" + containerName + ") for remote call of " + CALLS_CHANNEL_NAME);
+          caller.failure(ErrorInfo.clientError(error).asJSON());
         }
       }).start();
     }
@@ -832,75 +947,75 @@ public class CometdWebConferencingService implements Startable {
             // time - string, date in ISO format and UTC
             String currentUserId = (String) arguments.get("exoId");
             if (isValidArg(currentUserId)) {
-              String containerName = (String) arguments.get("exoContainerName");
-              if (isValidArg(containerName)) {
-                String clientId = (String) arguments.get("exoClientId");
-                if (isValidArg(clientId)) {
-                  String level = (String) arguments.get("level");
-                  if (isValidArg(level)) {
-                    String time = (String) arguments.get("time");
-                    if (isValidArg(time)) {
-                      String provider = (String) arguments.get("provider"); // can be null or non empty
-                      if (isValidTerm(provider)) {
-                        String prefix = (String) arguments.get("prefix"); // can be null or non empty
-                        if (isValidTerm(prefix)) {
-                          CallLog callLog = callLogs.getLog();
-                          String data = validate((String) arguments.get("data"));
+              // String containerName = (String) arguments.get("exoContainerName");
+              // if (isValidArg(containerName)) {
+              String clientId = (String) arguments.get("exoClientId");
+              if (isValidArg(clientId)) {
+                String level = (String) arguments.get("level");
+                if (isValidArg(level)) {
+                  String time = (String) arguments.get("time");
+                  if (isValidArg(time)) {
+                    String provider = (String) arguments.get("provider"); // can be null or non empty
+                    if (isValidTerm(provider)) {
+                      String prefix = (String) arguments.get("prefix"); // can be null or non empty
+                      if (isValidTerm(prefix)) {
+                        CallLog callLog = callLogs.getLog();
+                        String data = validate((String) arguments.get("data"));
 
-                          StringBuilder message = new StringBuilder();
-                          if (provider != null) {
-                            message.append(provider);
-                          }
-                          if (prefix != null) {
-                            if (message.length() > 0) {
-                              message.append('.');
-                            }
-                            message.append(prefix);
-                          }
+                        StringBuilder message = new StringBuilder();
+                        if (provider != null) {
+                          message.append(provider);
+                        }
+                        if (prefix != null) {
                           if (message.length() > 0) {
-                            message.append(' ');
+                            message.append('.');
                           }
-                          message.append(currentUserId);
-                          message.append('-');
-                          message.append(clientId);
+                          message.append(prefix);
+                        }
+                        if (message.length() > 0) {
                           message.append(' ');
-                          message.append(data);
-                          message.append(" -- ");
-                          message.append(time);
+                        }
+                        message.append(currentUserId);
+                        message.append('-');
+                        message.append(clientId);
+                        message.append(' ');
+                        message.append(data);
+                        message.append(" -- ");
+                        message.append(time);
 
-                          if (ERROR_LEVEL.equals(level)) {
-                            callLog.error(message.toString());
-                          } else if (WARN_LEVEL.equals(level)) {
-                            callLog.warn(message.toString());
-                          } else if (INFO_LEVEL.equals(level)) {
-                            callLog.info(message.toString());
-                          } else if (DEBUG_LEVEL.equals(level)) {
-                            callLog.debug(message.toString());
-                          } else if (TRACE_LEVEL.equals(level)) {
-                            callLog.trace(message.toString());
-                          } else {
-                            callLog.warn("Received not expected ");
-                            caller.failure(ErrorInfo.clientError("Not expected request parameters: level").asJSON());
-                          }
+                        if (ERROR_LEVEL.equals(level)) {
+                          callLog.error(message.toString());
+                        } else if (WARN_LEVEL.equals(level)) {
+                          callLog.warn(message.toString());
+                        } else if (INFO_LEVEL.equals(level)) {
+                          callLog.info(message.toString());
+                        } else if (DEBUG_LEVEL.equals(level)) {
+                          callLog.debug(message.toString());
+                        } else if (TRACE_LEVEL.equals(level)) {
+                          callLog.trace(message.toString());
                         } else {
-                          caller.failure(ErrorInfo.clientError("Wrong request parameters: prefix").asJSON());
+                          callLog.warn("Received not expected ");
+                          caller.failure(ErrorInfo.clientError("Not expected request parameters: level").asJSON());
                         }
                       } else {
-                        caller.failure(ErrorInfo.clientError("Wrong request parameters: provider").asJSON());
+                        caller.failure(ErrorInfo.clientError("Wrong request parameters: prefix").asJSON());
                       }
                     } else {
-                      caller.failure(ErrorInfo.clientError("Wrong request parameters: time").asJSON());
+                      caller.failure(ErrorInfo.clientError("Wrong request parameters: provider").asJSON());
                     }
                   } else {
-                    caller.failure(ErrorInfo.clientError("Wrong request parameters: level").asJSON());
+                    caller.failure(ErrorInfo.clientError("Wrong request parameters: time").asJSON());
                   }
                 } else {
-                  caller.failure(ErrorInfo.clientError("Wrong request parameters: clientId").asJSON());
+                  caller.failure(ErrorInfo.clientError("Wrong request parameters: level").asJSON());
                 }
-                //
               } else {
-                caller.failure(ErrorInfo.clientError("Container required").asJSON());
+                caller.failure(ErrorInfo.clientError("Wrong request parameters: clientId").asJSON());
               }
+              //
+              // } else {
+              // caller.failure(ErrorInfo.clientError("Container required").asJSON());
+              // }
             } else {
               caller.failure(ErrorInfo.clientError("Unauthorized user").asJSON());
             }
@@ -921,7 +1036,7 @@ public class CometdWebConferencingService implements Startable {
     void cleanupChannelClient(String channelId, String clientId) {
       if (channelId.startsWith(USER_SUBSCRIPTION_CHANNEL_NAME)) {
         // cleanup session stuff, note that disconnected session already unsubscribed and has not channels
-        ChannelContext context = channelContext.get(channelId);
+        UserChannelContext context = userChannelContext.get(channelId);
         if (context != null) {
           context.removeClient(clientId);
         } else {
@@ -1110,7 +1225,8 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * Checks if is valid term: <code>null</code>, or not empty and not longer of {@value #TERM_MAX_LENGTH} bytes.
+   * Checks if is valid term: <code>null</code>, or not empty and not longer of {@value #TERM_MAX_LENGTH}
+   * bytes.
    *
    * @param term the term
    * @return true, if is valid term

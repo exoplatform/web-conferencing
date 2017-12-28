@@ -231,6 +231,8 @@ public class WebConferencingService implements Startable {
    * @param driveService the drive service
    * @param listenerService the listener service
    * @param settingService the setting service
+   * @param callStorage the call storage
+   * @param participantsStorage the participants storage
    */
   public WebConferencingService(RepositoryService jcrService,
                                 SessionProviderService sessionProviders,
@@ -1151,7 +1153,7 @@ public class WebConferencingService implements Startable {
   @ExoTransactional
   protected CallInfo readCallById(String id) throws Exception {
     CallEntity savedCall = callStorage.find(id);
-    return readCallEntity(savedCall);
+    return readCallEntity(savedCall, true);
   }
 
   /**
@@ -1213,8 +1215,10 @@ public class WebConferencingService implements Startable {
       call.setEntity(entity);
     }
     // Save call participants:
-    // TODO For update we need a marker of actually changed parts (whole collection - yes or no) for better performance,
-    // in some cases it's non need to update parts at all: e.g. stop of a call (but what about part state then?)
+    // TODO For update we need a marker of actually changed parts (whole collection - yes or no) for better
+    // performance,
+    // in some cases it's non need to update parts at all: e.g. stop of a call (but what about part state
+    // then?)
     // if (partsUdpated) ...
     for (UserInfo p : call.getParticipants()) {
       // persist each part in the storage
@@ -1284,6 +1288,7 @@ public class WebConferencingService implements Startable {
    * Delete all user calls. This will not touch any group call. For use on server start to cleanup the
    * storage.
    *
+   * @return the int
    * @throws Exception the exception
    */
   @ExoTransactional
@@ -1395,7 +1400,7 @@ public class WebConferencingService implements Startable {
     List<CallEntity> savedCalls = callStorage.findUserGroupCalls(userId);
     List<CallInfo> calls = new ArrayList<>();
     for (CallEntity c : savedCalls) {
-      calls.add(readCallEntity(c));
+      calls.add(readCallEntity(c, false));
     }
     return Collections.unmodifiableCollection(calls);
   }
@@ -1609,7 +1614,15 @@ public class WebConferencingService implements Startable {
     }
   }
 
-  protected CallInfo readCallEntity(CallEntity savedCall) throws Exception {
+  /**
+   * Read call entity.
+   *
+   * @param savedCall the saved call
+   * @param withParticipants the with participants
+   * @return the call info
+   * @throws Exception the exception
+   */
+  protected CallInfo readCallEntity(CallEntity savedCall, boolean withParticipants) throws Exception {
     if (savedCall != null) {
       IdentityInfo owner;
       String ownerId = savedCall.getOwnerId();
@@ -1633,9 +1646,25 @@ public class WebConferencingService implements Startable {
         throw new CallInfoException("Unexpected call owner: " + ownerId);
       }
 
-      CallInfo call = new CallInfo(savedCall.getId(), savedCall.getTitle(), owner, savedCall.getProviderType());
+      String callId = savedCall.getId();
+
+      //
+      CallInfo call = new CallInfo(callId, savedCall.getTitle(), owner, savedCall.getProviderType());
       call.setState(savedCall.getState());
       call.setLastDate(savedCall.getCallDate());
+
+      if (withParticipants) {
+        // TODO read parts
+        // TODO read only if changed in DB (we could rely on call time or other incremental-on-update flag)
+        for (ParticipantEntity p : participantsStorage.findCallParts(callId)) {
+          UserInfo user = readParticipantEntity(p);
+          if (user != null) {
+            call.addParticipant(user);
+          } else {
+            LOG.warn("Non user participant skipped for call " + callId + ": " + p.getId() + " (" + p.getType() + ")");
+          }
+        }
+      }
 
       call.setEntity(savedCall);
       return call;
@@ -1644,12 +1673,42 @@ public class WebConferencingService implements Startable {
     }
   }
 
+  /**
+   * Read participant entity.
+   *
+   * @param savedPart the saved part
+   * @return the user info
+   * @throws Exception the exception
+   */
+  protected UserInfo readParticipantEntity(ParticipantEntity savedPart) throws Exception {
+    if (UserInfo.TYPE_NAME.equals(savedPart.getType())) {
+      UserInfo user = getUserInfo(savedPart.getId());
+      user.setState(savedPart.getState());
+      return user;
+    }
+    return null;
+  }
+
+  /**
+   * Creates the call entity.
+   *
+   * @param call the call
+   * @return the call entity
+   * @throws Exception the exception
+   */
   protected CallEntity createCallEntity(CallInfo call) throws Exception {
     CallEntity entity = new CallEntity();
     updateCallEntity(call, entity);
     return entity;
   }
 
+  /**
+   * Update call entity.
+   *
+   * @param call the call
+   * @param entity the entity
+   * @throws Exception the exception
+   */
   protected void updateCallEntity(CallInfo call, CallEntity entity) throws Exception {
     if (call != null) {
       final String callId = call.getId();
@@ -1688,6 +1747,13 @@ public class WebConferencingService implements Startable {
     }
   }
 
+  /**
+   * Creates the participant entity.
+   *
+   * @param callId the call id
+   * @param user the user
+   * @return the participant entity
+   */
   protected ParticipantEntity createParticipantEntity(String callId, UserInfo user) {
     ParticipantEntity part = new ParticipantEntity();
     part.setId(user.getId());
@@ -1696,4 +1762,5 @@ public class WebConferencingService implements Startable {
     part.setState(user.getState());
     return part;
   }
+
 }

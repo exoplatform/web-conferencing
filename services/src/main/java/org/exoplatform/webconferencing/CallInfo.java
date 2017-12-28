@@ -43,7 +43,8 @@ public class CallInfo {
   protected final String        title;
 
   /** The participant IDs. For internal use. */
-  protected final Set<String>   participantIds = new LinkedHashSet<>();
+  @Deprecated
+  private final Set<String>   participantIds = new LinkedHashSet<>();
 
   /** The participants. */
   protected final Set<UserInfo> participants   = new LinkedHashSet<>();
@@ -112,7 +113,8 @@ public class CallInfo {
    * @param partId the part id
    * @return true, if is participant
    */
-  public boolean isParticipant(String partId) {
+  @Deprecated
+  private boolean isParticipant(String partId) {
     return participantIds.contains(partId);
   }
 
@@ -151,8 +153,13 @@ public class CallInfo {
    * @param part the part
    */
   public void addParticipant(UserInfo part) {
-    this.participants.add(part);
-    this.participantIds.add(part.getId());
+    if (!this.participants.add(part)) {
+      // a new part added
+      if (entity != null) {
+        // keep the entity synced here? but we already do in service's saveCall()
+      }
+    } // else, it was already existing part
+    //this.participantIds.add(part.getId());
   }
 
   /**
@@ -208,16 +215,25 @@ public class CallInfo {
   protected void setEntity(CallEntity entity) {
     this.entity = entity;
   }
+  
+  /**
+   * Checks for entity.
+   *
+   * @return true, if successful
+   */
+  @Transient // to avoid serialization to JSON
+  protected boolean hasEntity() {
+    return entity != null;
+  }
 
   /**
    * Gets the participant ids.
    *
    * @return the participantIds
    */
-  protected Set<String> getParticipantIds() {
+  @Deprecated
+  private Set<String> getParticipantIds() {
     return participantIds;
   }
-  
-  
 
 }
