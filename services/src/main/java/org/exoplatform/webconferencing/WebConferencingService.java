@@ -31,7 +31,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.api.settings.SettingService;
@@ -59,6 +58,7 @@ import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.webconferencing.UserInfo.IMInfo;
 import org.exoplatform.webconferencing.dao.CallDAO;
+import org.exoplatform.webconferencing.dao.ParticipantDAO;
 import org.exoplatform.webconferencing.domain.CallEntity;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.json.JSONArray;
@@ -205,8 +205,11 @@ public class WebConferencingService implements Startable {
   /** The settings service. */
   protected final SettingService                     settingService;
 
-  /** The call storage. */
+  /** The calls storage. */
   protected final CallDAO                            callStorage;
+
+  /** The participants storage. */
+  protected final ParticipantDAO                     participantsStorage;
 
   /** The providers. */
   protected final Map<String, CallProvider>          providers           = new ConcurrentHashMap<>();
@@ -237,7 +240,8 @@ public class WebConferencingService implements Startable {
                                 ManageDriveService driveService,
                                 ListenerService listenerService,
                                 SettingService settingService,
-                                CallDAO callStorage) {
+                                CallDAO callStorage,
+                                ParticipantDAO participantsStorage) {
     this.jcrService = jcrService;
     this.sessionProviders = sessionProviders;
     this.hierarchyCreator = hierarchyCreator;
@@ -247,6 +251,7 @@ public class WebConferencingService implements Startable {
     this.listenerService = listenerService;
     this.settingService = settingService;
     this.callStorage = callStorage;
+    this.participantsStorage = participantsStorage;
   }
 
   /**
@@ -509,10 +514,10 @@ public class WebConferencingService implements Startable {
                                      call.getOwner().getType());
           }
           // TODO this should be done by DB itself (cascade delete in FK)
-          //if (remove) {
-            // remove from participant's group calls
-           //removeUserGroupCallId(part.getId(), callId);
-          //}
+          // if (remove) {
+          // remove from participant's group calls
+          // removeUserGroupCallId(part.getId(), callId);
+          // }
         }
       }
     } else {
@@ -924,7 +929,6 @@ public class WebConferencingService implements Startable {
    * {@inheritDoc}
    */
   @Override
-  @ExoTransactional
   public void start() {
     // XXX SpaceService done in crappy way and we need reference it after the container start only, otherwise
     // it will fail the whole server start due to not found JCR service
@@ -932,8 +936,12 @@ public class WebConferencingService implements Startable {
 
     // For a case when calls was active and server stopped, then calls wasn't marked as Stopped and need
     // remove them.
+    LOG.info("Web Conferencing service started.");
     try {
-      deleteAllUserCalls();
+      int cleaned = deleteAllUserCalls();
+      if (cleaned > 0) {
+        LOG.info("Cleaned " + cleaned + " expired user calls.");
+      }
     } catch (Throwable e) {
       LOG.error("Error cleaning calls from previous server execution", e);
     }
@@ -1140,6 +1148,7 @@ public class WebConferencingService implements Startable {
    * @return the call info
    * @throws Exception the exception
    */
+  @ExoTransactional
   protected CallInfo readCallById(String id) throws Exception {
     CallEntity savedCall = callStorage.find(id);
     return readCallEntity(savedCall);
@@ -1189,16 +1198,27 @@ public class WebConferencingService implements Startable {
    * @param call the call
    * @throws Exception the exception
    */
+  @ExoTransactional
   protected void saveCall(CallInfo call) throws Exception {
+    String callId = call.getId();
     CallEntity entity = call.getEntity();
     // entity = callStorage.find(call.getId()); // this was done in get* method
     if (entity != null) {
       updateCallEntity(call, entity);
       callStorage.update(entity);
+      participantsStorage.deleteCallParts(callId); // below we'll add all them fresh
     } else {
       entity = createCallEntity(call);
       callStorage.create(entity);
       call.setEntity(entity);
+    }
+    // Save call participants:
+    // TODO For update we need a marker of actually changed parts (whole collection - yes or no) for better performance,
+    // in some cases it's non need to update parts at all: e.g. stop of a call (but what about part state then?)
+    // if (partsUdpated) ...
+    for (UserInfo p : call.getParticipants()) {
+      // persist each part in the storage
+      participantsStorage.create(createParticipantEntity(callId, p));
     }
   }
 
@@ -1220,7 +1240,7 @@ public class WebConferencingService implements Startable {
       return false;
     }
   }
-  
+
   /**
    * Delete call.
    *
@@ -1228,6 +1248,7 @@ public class WebConferencingService implements Startable {
    * @return true, if successful
    * @throws Exception the exception
    */
+  @ExoTransactional
   protected boolean deleteCall(CallInfo call) throws Exception {
     CallEntity entity = call.getEntity();
     if (entity == null) {
@@ -1258,15 +1279,16 @@ public class WebConferencingService implements Startable {
       Scope.GLOBAL.id(initialGlobalId);
     }
   }
-  
+
   /**
    * Delete all user calls. This will not touch any group call. For use on server start to cleanup the
    * storage.
    *
    * @throws Exception the exception
    */
-  protected void deleteAllUserCalls() throws Exception {
-    LOG.info("Cleaned " + callStorage.deleteAllUsersCalls() + " expired user calls."); 
+  @ExoTransactional
+  protected int deleteAllUserCalls() throws Exception {
+    return callStorage.deleteAllUsersCalls();
   }
 
   /**
@@ -1351,6 +1373,7 @@ public class WebConferencingService implements Startable {
    * @param ownerId the owner id
    * @return the string or <code>null</code> if no call found
    */
+  @ExoTransactional
   protected String readOwnerCallId(String ownerId) {
     // TODO it's not efficient read the whole entity when we need only an ID (or null)
     CallEntity savedCall = callStorage.findGroupCallByOwnerId(ownerId);
@@ -1367,6 +1390,7 @@ public class WebConferencingService implements Startable {
    * @return the collection
    * @throws Exception the exception
    */
+  @ExoTransactional
   protected Collection<CallInfo> readUserGroupCalls(String userId) throws Exception {
     List<CallEntity> savedCalls = callStorage.findUserGroupCalls(userId);
     List<CallInfo> calls = new ArrayList<>();
@@ -1654,10 +1678,10 @@ public class WebConferencingService implements Startable {
         entity.setIsUser(1);
       }
 
-      entity.setParticipants(call.getParticipants()
-                                 .stream()
-                                 .map(u -> createParticipantEntity(callId, u))
-                                 .collect(Collectors.toList()));
+      // entity.setParticipants(call.getParticipants()
+      // .stream()
+      // .map(u -> createParticipantEntity(callId, u))
+      // .collect(Collectors.toList()));
 
     } else {
       throw new NullPointerException("Call info is null");
@@ -1669,6 +1693,7 @@ public class WebConferencingService implements Startable {
     part.setId(user.getId());
     part.setCallId(callId);
     part.setType(user.getType());
+    part.setState(user.getState());
     return part;
   }
 }

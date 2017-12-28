@@ -57,6 +57,7 @@ import org.eclipse.jetty.util.component.LifeCycle;
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
 import org.exoplatform.services.log.ExoLogger;
@@ -609,7 +610,7 @@ public class CometdWebConferencingService implements Startable {
             Map<String, Object> arguments = (Map<String, Object>) data;
             String currentUserId = (String) arguments.get("exoId");
             if (currentUserId != null) {
-              String exoClientId = (String) arguments.get("exoClientId");
+              // String exoClientId = (String) arguments.get("exoClientId");
               String containerName = (String) arguments.get("exoContainerName");
               if (containerName != null) {
                 // Do all the job under actual (requester) user: set this user as current identity in eXo
@@ -622,6 +623,7 @@ public class CometdWebConferencingService implements Startable {
                   try {
                     // User context (1)
                     ExoContainerContext.setCurrentContainer(exoContainer);
+                    RequestLifeCycle.begin(exoContainer);
                     // Use services acquired from context container
                     IdentityRegistry identityRegistry = exoContainer.getComponentInstanceOfType(IdentityRegistry.class);
                     SessionProviderService sessionProviders =
@@ -779,6 +781,7 @@ public class CometdWebConferencingService implements Startable {
                     }
                   } finally {
                     // Restore context (1)
+                    RequestLifeCycle.end();
                     ExoContainerContext.setCurrentContainer(contextContainer);
                   }
                 } else {
@@ -837,40 +840,53 @@ public class CometdWebConferencingService implements Startable {
                   if (isValidArg(level)) {
                     String time = (String) arguments.get("time");
                     if (isValidArg(time)) {
-                      String prefix = (String) arguments.get("prefix"); // can be null or empty
-                      if (isValidTerm(prefix)) {
-                        CallLog callLog = callLogs.getLog();
-                        String data = validate((String) arguments.get("data"));
+                      String provider = (String) arguments.get("provider"); // can be null or non empty
+                      if (isValidTerm(provider)) {
+                        String prefix = (String) arguments.get("prefix"); // can be null or non empty
+                        if (isValidTerm(prefix)) {
+                          CallLog callLog = callLogs.getLog();
+                          String data = validate((String) arguments.get("data"));
 
-                        StringBuilder message = new StringBuilder();
-                        if (prefix != null) {
-                          message.append(prefix);
+                          StringBuilder message = new StringBuilder();
+                          if (provider != null) {
+                            message.append(provider);
+                          }
+                          if (prefix != null) {
+                            if (message.length() > 0) {
+                              message.append('.');
+                            }
+                            message.append(prefix);
+                          }
+                          if (message.length() > 0) {
+                            message.append(' ');
+                          }
+                          message.append(currentUserId);
+                          message.append('-');
+                          message.append(clientId);
                           message.append(' ');
-                        }
-                        message.append(currentUserId);
-                        message.append('-');
-                        message.append(clientId);
-                        message.append(' ');
-                        message.append(data);
-                        message.append(" -- ");
-                        message.append(time);
+                          message.append(data);
+                          message.append(" -- ");
+                          message.append(time);
 
-                        if (ERROR_LEVEL.equals(level)) {
-                          callLog.error(message.toString());
-                        } else if (WARN_LEVEL.equals(level)) {
-                          callLog.warn(message.toString());
-                        } else if (INFO_LEVEL.equals(level)) {
-                          callLog.info(message.toString());
-                        } else if (DEBUG_LEVEL.equals(level)) {
-                          callLog.debug(message.toString());
-                        } else if (TRACE_LEVEL.equals(level)) {
-                          callLog.trace(message.toString());
+                          if (ERROR_LEVEL.equals(level)) {
+                            callLog.error(message.toString());
+                          } else if (WARN_LEVEL.equals(level)) {
+                            callLog.warn(message.toString());
+                          } else if (INFO_LEVEL.equals(level)) {
+                            callLog.info(message.toString());
+                          } else if (DEBUG_LEVEL.equals(level)) {
+                            callLog.debug(message.toString());
+                          } else if (TRACE_LEVEL.equals(level)) {
+                            callLog.trace(message.toString());
+                          } else {
+                            callLog.warn("Received not expected ");
+                            caller.failure(ErrorInfo.clientError("Not expected request parameters: level").asJSON());
+                          }
                         } else {
-                          callLog.warn("Received not expected ");
-                          caller.failure(ErrorInfo.clientError("Not expected request parameters: level").asJSON());
+                          caller.failure(ErrorInfo.clientError("Wrong request parameters: prefix").asJSON());
                         }
                       } else {
-                        caller.failure(ErrorInfo.clientError("Wrong request parameters: prefix").asJSON());
+                        caller.failure(ErrorInfo.clientError("Wrong request parameters: provider").asJSON());
                       }
                     } else {
                       caller.failure(ErrorInfo.clientError("Wrong request parameters: time").asJSON());
@@ -1094,13 +1110,13 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * Checks if is valid term: <code>null</code>, empty or not longer of {@value #TERM_MAX_LENGTH} bytes.
+   * Checks if is valid term: <code>null</code>, or not empty and not longer of {@value #TERM_MAX_LENGTH} bytes.
    *
    * @param term the term
    * @return true, if is valid term
    */
   protected boolean isValidTerm(String term) {
-    return term == null || term.length() <= TERM_MAX_LENGTH;
+    return term == null || (term.length() > 0 && term.length() <= TERM_MAX_LENGTH);
   }
 
 }

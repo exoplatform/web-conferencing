@@ -21,16 +21,17 @@ package org.exoplatform.webconferencing.domain;
 import java.io.Serializable;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: ParticipantEntity.java 00000 Dec 22, 2017 pnedonosko $
- * 
  */
 public class ParticipantId implements Serializable {
 
+  /** The id. */
   protected String id;
 
+  /** The call id. */
   protected String callId;
 
   /**
@@ -71,10 +72,20 @@ public class ParticipantId implements Serializable {
     return (7 + id.hashCode()) * 31 + callId.hashCode();
   }
 
+  /**
+   * Gets the id.
+   *
+   * @return the id
+   */
   public String getId() {
     return id;
   }
 
+  /**
+   * Gets the call id.
+   *
+   * @return the call id
+   */
   public String getCallId() {
     return callId;
   }

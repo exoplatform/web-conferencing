@@ -45,6 +45,9 @@ public abstract class IdentityInfo {
   /** The profile link. */
   protected String           profileLink;
 
+  /// ** The entity. */
+  // protected transient ParticipantEntity entity; // transient to avoid serialization to JSON
+
   /**
    * Instantiates a new identity info.
    *
@@ -109,6 +112,27 @@ public abstract class IdentityInfo {
   protected void setProfileLink(String profileLink) {
     this.profileLink = profileLink;
   }
+
+  // TODO
+  // /**
+  // * Gets the entity.
+  // *
+  // * @return the entity
+  // */
+  // @Transient // to avoid serialization to JSON
+  // protected ParticipantEntity getEntity() {
+  // return entity;
+  // }
+  //
+  // /**
+  // * Sets the entity.
+  // *
+  // * @param entity the entity to set
+  // */
+  // @Transient // to avoid serialization to JSON
+  // protected void setEntity(ParticipantEntity entity) {
+  // this.entity = entity;
+  // }
 
   /**
    * Checks if it is a group.

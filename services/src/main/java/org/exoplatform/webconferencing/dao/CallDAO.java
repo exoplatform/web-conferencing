@@ -26,25 +26,23 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceException;
 import javax.persistence.TypedQuery;
 
-import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.persistence.impl.GenericDAOJPAImpl;
 import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.domain.CallEntity;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: CallDAO.java 00000 Dec 22, 2017 pnedonosko $
- * 
  */
 public class CallDAO extends GenericDAOJPAImpl<CallEntity, String> {
 
   /** The Constant USER_CALL_DAYS_LIVETIME. */
   public static final int USER_CALL_DAYS_LIVETIME = 14;
-  
+
   /**
-   * 
+   * Instantiates a new call DAO.
    */
   public CallDAO() {
   }
@@ -99,9 +97,9 @@ public class CallDAO extends GenericDAOJPAImpl<CallEntity, String> {
     expired.set(Calendar.MILLISECOND, 0);
     expired.add(Calendar.DAY_OF_MONTH, -USER_CALL_DAYS_LIVETIME);
     return getEntityManager().createNamedQuery("WebConfCall.deleteOwnerOlderCalls")
-                      .setParameter("ownerType", UserInfo.TYPE_NAME)
-                      .setParameter("expiredDate", expired.getTime())
-                      .executeUpdate();
+                             .setParameter("ownerType", UserInfo.TYPE_NAME)
+                             .setParameter("expiredDate", expired.getTime())
+                             .executeUpdate();
   }
 
 }
