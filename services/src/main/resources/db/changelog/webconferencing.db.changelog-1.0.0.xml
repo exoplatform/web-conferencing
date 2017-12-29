@@ -7,9 +7,24 @@
   <property name="now" value="now()" dbms="mysql,hsqldb,postgresql" />
   <property name="now" value="sysdate" dbms="oracle" />
   <property name="now" value="CURRENT_TIMESTAMP" dbms="mssql" />
-
-  <changeSet author="web-conferencing" id="1.0.0">
-    <!-- Definition of WBC_CALLS table -->
+  
+  <changeSet author="web-conferencing" id="1.0.0-fix1">
+      <preConditions onFail="WARN">
+          <tableExists tableName="WBC_PARTICIPANTS" />
+      </preConditions>
+      <comment>Delete WBC_PARTICIPANTS.</comment>
+      <dropTable tableName="WBC_PARTICIPANTS"/>
+  </changeSet>
+  <changeSet author="web-conferencing" id="1.0.0-fix2">
+      <preConditions onFail="WARN">
+          <tableExists tableName="WBC_CALLS" />
+      </preConditions>
+      <comment>Delete WBC_CALLS.</comment>
+      <dropTable tableName="WBC_CALLS"/>
+  </changeSet>
+  
+  <!-- Definition of WBC_CALLS table -->
+  <changeSet author="web-conferencing" id="1.0.0-1">
     <createTable tableName="WBC_CALLS">
       <column name="ID" type="NVARCHAR(255)">
         <constraints nullable="false" primaryKey="true" primaryKeyName="PK_WBC_CALLID" />
@@ -42,8 +57,18 @@
         <constraints nullable="false" />
       </column>
     </createTable>
+    <modifySql dbms="mysql">
+      <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci" />
+    </modifySql>
+  </changeSet>
+  
+  <!-- Definition of WBC_CALLS constraint -->
+  <changeSet author="web-conferencing" id="1.0.0-2">
     <addUniqueConstraint tableName="WBC_CALLS" columnNames="OWNER_ID, IS_GROUP" constraintName="CT_WBC_GROUP_CALL" />
-    <!-- Definition of WBC_PARTICIPANTS table -->
+  </changeSet>
+  
+  <!-- Definition of WBC_PARTICIPANTS table -->
+  <changeSet author="web-conferencing" id="1.0.0-3">
     <createTable tableName="WBC_PARTICIPANTS">
       <column name="ID" type="NVARCHAR(255)">
         <constraints nullable="false" />
@@ -58,13 +83,18 @@
         <constraints nullable="true" />
       </column>
     </createTable>
+    <modifySql dbms="mysql">
+      <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci" />
+    </modifySql>
+  </changeSet>
+
+  <!-- Definition of WBC_PARTICIPANTS constraints -->
+  <changeSet author="web-conferencing" id="1.0.0-4a">
     <addPrimaryKey tableName="WBC_PARTICIPANTS" columnNames="ID, CALL_ID" constraintName="PK_WBC_CALLPART" />
     <!-- When call deleted in WBC_CALLS - all parts should be deleted. When call ID updated in WBC_CALLS, all its references in WBC_PARTICIPANTS 
       should be updated accordingly. -->
     <addForeignKeyConstraint baseTableName="WBC_PARTICIPANTS" baseColumnNames="CALL_ID"
       referencedTableName="WBC_CALLS" referencedColumnNames="ID" constraintName="FK_WBC_PARTCALL" onDelete="CASCADE" onUpdate="CASCADE" />
-    <modifySql dbms="mysql">
-      <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci" />
-    </modifySql>
   </changeSet>
+  
 </databaseChangeLog>
