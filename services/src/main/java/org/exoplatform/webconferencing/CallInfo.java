@@ -169,5 +169,4 @@ public class CallInfo {
   public void setLastDate(Date lastDate) {
     this.lastDate = lastDate;
   }
-
 }

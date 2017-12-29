@@ -64,6 +64,7 @@ import org.exoplatform.webconferencing.dao.ParticipantDAO;
 import org.exoplatform.webconferencing.domain.CallEntity;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -316,7 +317,6 @@ public class WebConferencingService implements Startable {
    * @return the space info
    * @throws Exception the exception
    */
-  // @ExoTransactional // TODO it's read-only op, no need tx
   public SpaceInfo getSpaceInfo(String spacePrettyName) throws Exception {
     return spaceInfo(spacePrettyName, readOwnerCallId(spacePrettyName));
   }
@@ -354,7 +354,6 @@ public class WebConferencingService implements Startable {
    * @return the room info
    * @throws Exception the exception
    */
-  // @ExoTransactional // TODO it's read-only op, no need tx
   public RoomInfo getRoomInfo(String id, String name, String title, String[] members) throws Exception {
     return roomInfo(id, name, title, members, readOwnerCallId(id));
   };
@@ -446,6 +445,7 @@ public class WebConferencingService implements Startable {
         } else {
           throw new CallInfoException("Wrong call owner type: " + ownerType);
         }
+        
         Set<UserInfo> participants = new LinkedHashSet<>();
         for (String pid : parts) {
           if (isValidId(pid)) {
@@ -475,15 +475,18 @@ public class WebConferencingService implements Startable {
         String userId = currentUserId();
         if (isSpace || isRoom) {
           // it's group call
+          // saveOwnerCallId(ownerId, id); // TODO don't need this
           for (UserInfo part : participants) {
             if (UserInfo.TYPE_NAME.equals(part.getType())) {
               if (prevId != null) {
                 // XXX For a case when some client failed to delete an existing (but outdated etc.) call but
                 // already starting a new one
                 // It's SfB usecase when browser client failed to delete outdated call (browser/plugin crashed
-                // in IE11) and then starts a new one
+                // in
+                // IE11) and then starts a new one
                 // removeUserGroupCallId(part.getId(), prevId); // TODO change state to leaved?!!
               }
+              // saveUserGroupCallId(part.getId(), id); // TODO don't need this
               if (!userId.equals(part.getId())) {
                 // fire group's user listener for incoming, except of the caller
                 fireUserCallStateChanged(part.getId(), id, providerType, CallState.STARTED, ownerId, ownerType);
@@ -494,7 +497,6 @@ public class WebConferencingService implements Startable {
           // It's P2P call
           notifyUserCallStateChanged(call, userId, CallState.STARTED);
         }
-
         return call;
       } else {
         throw new WrongIdException("Wrong owner ID value");
@@ -590,7 +592,6 @@ public class WebConferencingService implements Startable {
    * @return the call info or <code>null</code> if call not found
    * @throws Exception the exception
    */
-  // @ExoTransactional // TODO it's read-only op, no need tx
   public CallInfo startCall(String id) throws Exception {
     CallInfo call = readCallById(id);
     if (call != null) {
@@ -755,7 +756,6 @@ public class WebConferencingService implements Startable {
    * @return the user call states
    * @throws Exception the exception
    */
-  // @ExoTransactional // TODO it's read-only op, no need tx
   public CallState[] getUserCalls(String userId) throws Exception {
     CallState[] states =
                        readUserGroupCalls(userId).stream()
@@ -1472,7 +1472,7 @@ public class WebConferencingService implements Startable {
     CallEntity entity = callStorage.find(call.getId());
     if (entity != null) {
       updateCallEntity(call, entity);
-      entity = callStorage.update(entity);
+      callStorage.update(entity);
     } else {
       LOG.error("Call not found: " + call.getId());
       throw new InvalidCallStateException("Call not found");
