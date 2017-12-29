@@ -1932,12 +1932,15 @@
 							"url": prefixUrl  + context.cometdPath,
 							"exoId": currentUser.id,
 							"exoToken": context.cometdToken,
-							"maxNetworkDelay" : 15000
+							"maxNetworkDelay" : 15000,
+							// TODO see below cometdContext
+							"exoContainerName" : context.containerName,
+							"exoClientId" : currentUser.clientId
 						});
 						cometd = cCometD;
 						cometdContext = {
-							"exoContainerName" : context.containerName,
-							"exoClientId" : currentUser.clientId
+									"exoContainerName" : context.containerName,
+									"exoClientId" : currentUser.clientId
 						};
 						cometd.onListenerException = function(exception, subscriptionHandle, isListener, message) {
 					    // Uh-oh, something went wrong, disable this listener/subscriber

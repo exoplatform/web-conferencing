@@ -18,7 +18,9 @@
  */
 package org.exoplatform.webconferencing.dao;
 
-import java.util.Calendar;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -89,16 +91,10 @@ public class CallDAO extends GenericDAOJPAImpl<CallEntity, String> {
    * @return the int number of actually removed calls
    */
   public int deleteAllUsersCalls() {
-    Calendar expired = Calendar.getInstance();
-    // Remove all user calls older of 2 weeks
-    expired.set(Calendar.HOUR_OF_DAY, 0);
-    expired.set(Calendar.MINUTE, 0);
-    expired.set(Calendar.SECOND, 0);
-    expired.set(Calendar.MILLISECOND, 0);
-    expired.add(Calendar.DAY_OF_MONTH, -USER_CALL_DAYS_LIVETIME);
+    LocalDateTime expired = LocalDate.now().atStartOfDay().minusDays(USER_CALL_DAYS_LIVETIME);
     return getEntityManager().createNamedQuery("WebConfCall.deleteOwnerOlderCalls")
                              .setParameter("ownerType", UserInfo.TYPE_NAME)
-                             .setParameter("expiredDate", expired.getTime())
+                             .setParameter("expiredDate", Timestamp.valueOf(expired))
                              .executeUpdate();
   }
 

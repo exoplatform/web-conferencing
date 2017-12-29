@@ -42,10 +42,9 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
     @NamedQuery(name = "WebConfCall.findGroupCallByOwnerId",
                 query = "SELECT c FROM WebConfCall c WHERE c.isGroup = 1 AND c.ownerId = :ownerId"),
     @NamedQuery(name = "WebConfCall.findUserGroupCalls",
-                query = "SELECT c FROM WebConfCall c, WebConfParticipant p WHERE c.id = p.callId AND p.id = :userId ORDER BY c.callDate"),
+                query = "SELECT c FROM WebConfCall c, WebConfParticipant p WHERE c.id = p.callId AND p.id = :userId ORDER BY c.lastDate"),
     @NamedQuery(name = "WebConfCall.deleteOwnerOlderCalls",
-                query = "DELETE FROM WebConfCall WHERE ownerType = :ownerType AND callDate <= :expiredDate") 
-})
+                query = "DELETE FROM WebConfCall WHERE ownerType = :ownerType AND lastDate <= :expiredDate") })
 public class CallEntity {
 
   /** The id. */
@@ -78,9 +77,9 @@ public class CallEntity {
   protected String  settings;
 
   /** The call date. */
-  @Column(name = "CALL_DATE")
+  @Column(name = "LAST_DATE")
   // @Temporal(TemporalType.DATE)
-  protected Date    callDate;
+  protected Date    lastDate;
 
   /** The is group. */
   @Column(name = "IS_GROUP")
@@ -89,11 +88,6 @@ public class CallEntity {
   /** The is user. */
   @Column(name = "IS_USER")
   protected Integer isUser;
-
-  /// ** The participants. */
-  // @OneToMany
-  // @JoinColumn(name = "CALL_ID")
-  // protected Collection<ParticipantEntity> participants;
 
   /**
    * Instantiates a new call entity.
@@ -192,21 +186,21 @@ public class CallEntity {
   }
 
   /**
-   * Gets the call date.
+   * Gets the call last use date.
    *
-   * @return the call date
+   * @return the call last date
    */
-  public Date getCallDate() {
-    return callDate;
+  public Date getLastDate() {
+    return lastDate;
   }
 
   /**
-   * Sets the call date.
+   * Sets the call last use date.
    *
-   * @param callDate the new call date
+   * @param lastDate the call last date
    */
-  public void setCallDate(Date callDate) {
-    this.callDate = callDate;
+  public void setLastDate(Date lastDate) {
+    this.lastDate = lastDate;
   }
 
   /**
@@ -280,24 +274,4 @@ public class CallEntity {
   public void setIsUser(Integer isUser) {
     this.isUser = isUser;
   }
-
-  // TODO
-  // /**
-  // * Gets the participants.
-  // *
-  // * @return the participants
-  // */
-  // public Collection<ParticipantEntity> getParticipants() {
-  // return participants;
-  // }
-  //
-  // /**
-  // * Sets the participants.
-  // *
-  // * @param participants the new participants
-  // */
-  // public void setParticipants(Collection<ParticipantEntity> participants) {
-  // this.participants = participants;
-  // }
-
 }
