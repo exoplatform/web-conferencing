@@ -8,7 +8,7 @@
   <property name="now" value="sysdate" dbms="oracle" />
   <property name="now" value="CURRENT_TIMESTAMP" dbms="mssql" />
   
-  <changeSet author="web-conferencing" id="1.0.0-fix1">
+  <!-- changeSet author="web-conferencing" id="1.0.0-fix1">
       <preConditions onFail="WARN">
           <tableExists tableName="WBC_PARTICIPANTS" />
       </preConditions>
@@ -21,7 +21,7 @@
       </preConditions>
       <comment>Delete WBC_CALLS.</comment>
       <dropTable tableName="WBC_CALLS"/>
-  </changeSet>
+  </changeSet -->
   
   <!-- Definition of WBC_CALLS table -->
   <changeSet author="web-conferencing" id="1.0.0-1">
