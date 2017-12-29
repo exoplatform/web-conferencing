@@ -435,7 +435,7 @@
 														popover.fail(function(msg) {
 															log.info("User " + msg + " call: " + callId);
 															if ($callPopup.callState != "stopped" && $callPopup.callState != "joined") {
-																log.trace("<<< User " + err + ($callPopup.callState ? " just " + $callPopup.callState : "") + " call " + callId + ", deleting it.");
+																log.trace("<<< User " + msg + ($callPopup.callState ? " just " + $callPopup.callState : "") + " call " + callId + ", deleting it.");
 																deleteCall(callId);
 															}
 														});

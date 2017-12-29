@@ -64,7 +64,6 @@ import org.exoplatform.webconferencing.dao.ParticipantDAO;
 import org.exoplatform.webconferencing.domain.CallEntity;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -319,6 +318,18 @@ public class WebConferencingService implements Startable {
    */
   // @ExoTransactional // TODO it's read-only op, no need tx
   public SpaceInfo getSpaceInfo(String spacePrettyName) throws Exception {
+    return spaceInfo(spacePrettyName, readOwnerCallId(spacePrettyName));
+  }
+
+  /**
+   * Space info.
+   *
+   * @param spacePrettyName the space pretty name
+   * @param callId the call id
+   * @return the space info
+   * @throws Exception the exception
+   */
+  protected SpaceInfo spaceInfo(String spacePrettyName, String callId) throws Exception {
     Space socialSpace = spaceService.getSpaceByPrettyName(spacePrettyName);
     SpaceInfo space = new SpaceInfo(socialSpace);
     for (String sm : socialSpace.getMembers()) {
@@ -329,7 +340,7 @@ public class WebConferencingService implements Startable {
     }
     space.setProfileLink(socialSpace.getUrl());
     space.setAvatarLink(socialSpace.getAvatarUrl());
-    space.setCallId(readOwnerCallId(spacePrettyName));
+    space.setCallId(callId);
     return space;
   }
 
@@ -345,7 +356,36 @@ public class WebConferencingService implements Startable {
    */
   // @ExoTransactional // TODO it's read-only op, no need tx
   public RoomInfo getRoomInfo(String id, String name, String title, String[] members) throws Exception {
-    RoomInfo room = roomInfo(id, name, title, members, readOwnerCallId(id));
+    return roomInfo(id, name, title, members, readOwnerCallId(id));
+  };
+
+  /**
+   * Room info.
+   *
+   * @param id the id
+   * @param name the name
+   * @param title the title
+   * @param members the members
+   * @param callId the call id
+   * @return the room info
+   * @throws Exception the exception
+   */
+  protected RoomInfo roomInfo(String id, String name, String title, String[] members, String callId) throws Exception {
+    RoomInfo room = new RoomInfo(id, name, title);
+    for (String userName : members) {
+      UserInfo user = getUserInfo(userName);
+      if (user != null) {
+        room.addMember(user);
+      } else {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skipped not found user: " + userName);
+        }
+        throw new IdentityNotFound("User " + userName + " not found or not accessible");
+      }
+    }
+    room.setProfileLink(IdentityInfo.EMPTY);
+    room.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
+    room.setCallId(callId);
     return room;
   };
 
@@ -1226,36 +1266,6 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Room info.
-   *
-   * @param id the id
-   * @param name the name
-   * @param title the title
-   * @param members the members
-   * @param callId the call id
-   * @return the room info
-   * @throws Exception the exception
-   */
-  protected RoomInfo roomInfo(String id, String name, String title, String[] members, String callId) throws Exception {
-    RoomInfo room = new RoomInfo(id, name, title);
-    for (String userName : members) {
-      UserInfo user = getUserInfo(userName);
-      if (user != null) {
-        room.addMember(user);
-      } else {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Skipped not found user: " + userName);
-        }
-        throw new IdentityNotFound("User " + userName + " not found or not accessible");
-      }
-    }
-    room.setProfileLink(IdentityInfo.EMPTY);
-    room.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
-    room.setCallId(callId);
-    return room;
-  };
-
-  /**
    * Current user id.
    *
    * @return the string
@@ -1318,7 +1328,7 @@ public class WebConferencingService implements Startable {
           throw new CallInfoException("Saved call doesn't contain room settings");
         }
       } else if (OWNER_TYPE_SPACE.equals(savedCall.getOwnerType())) {
-        owner = getSpaceInfo(ownerId);
+        owner = spaceInfo(ownerId, savedCall.getId());
       } else if (UserInfo.TYPE_NAME.equals(savedCall.getOwnerType())) {
         owner = getUserInfo(ownerId);
       } else {
@@ -1334,8 +1344,6 @@ public class WebConferencingService implements Startable {
       call.setLastDate(savedCall.getLastDate());
 
       if (withParticipants) {
-        // TODO read parts
-        // TODO read only if changed in DB (we could rely on call time or other incremental-on-update flag)
         for (ParticipantEntity p : participantsStorage.findCallParts(callId)) {
           UserInfo user = readParticipantEntity(p);
           if (user != null) {
@@ -1345,8 +1353,6 @@ public class WebConferencingService implements Startable {
           }
         }
       }
-
-      call.setEntity(savedCall);
       return call;
     } else {
       return null;
@@ -1448,14 +1454,7 @@ public class WebConferencingService implements Startable {
    */
   @ExoTransactional
   protected void createCall(CallInfo call) throws Exception {
-    CallEntity entity = callStorage.create(createCallEntity(call));
-    call.setEntity(entity);
-    // Save all call participants
-    // TODO For update we need a marker of actually changed parts (whole collection - yes or no) for better
-    // performance,
-    // in some cases it's non need to update parts at all: e.g. stop of a call (but what about part state
-    // then?)
-    // if (partsUdpated) ...
+    callStorage.create(createCallEntity(call));
     String callId = call.getId();
     for (UserInfo p : call.getParticipants()) {
       participantsStorage.create(createParticipantEntity(callId, p));
@@ -1470,16 +1469,14 @@ public class WebConferencingService implements Startable {
    * @throws Exception the exception
    */
   private void saveCall(CallInfo call) throws Exception {
-    CallEntity entity = call.getEntity();
-    if (entity == null) {
-      String callId = call.getId();
-      LOG.warn("Saving call without persistent entity: " + callId);
-      entity = callStorage.find(callId);
+    CallEntity entity = callStorage.find(call.getId());
+    if (entity != null) {
+      updateCallEntity(call, entity);
+      entity = callStorage.update(entity);
+    } else {
+      LOG.error("Call not found: " + call.getId());
+      throw new InvalidCallStateException("Call not found");
     }
-    // Update call
-    updateCallEntity(call, entity);
-    entity = callStorage.update(entity);
-    call.setEntity(entity);
   }
 
   /**
@@ -1542,15 +1539,9 @@ public class WebConferencingService implements Startable {
    */
   @ExoTransactional
   protected boolean deleteCall(CallInfo call) throws Exception {
-    CallEntity entity = call.getEntity();
-    if (entity == null) {
-      // This should not be case, thus log it
-      LOG.warn("Deleting call without persistent entity: " + call.getId());
-      entity = callStorage.find(call.getId());
-    }
+    CallEntity entity = callStorage.find(call.getId());
     if (entity != null) {
       callStorage.delete(entity);
-      call.setEntity(null);
       return true;
     } else {
       return false;
