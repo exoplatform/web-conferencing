@@ -227,14 +227,14 @@ public abstract class CallProvider extends BaseComponentPlugin {
   /**
    * Technical description for this provider. Will be used in administrative settings. Provider
    * implementation can override it to offer own content. By default it will be taken from the plugin
-   * configuration. 
+   * configuration.
    *
    * @return the description
    */
   public String getDescription() {
     return super.getDescription();
   }
-  
+
   /**
    * Gets the technical description for this provider.
    *
@@ -243,6 +243,15 @@ public abstract class CallProvider extends BaseComponentPlugin {
    */
   public String getDescription(Locale locale) {
     return this.getDescription();
+  }
+
+  /**
+   * Checks if is remote log enabled for the provider.
+   *
+   * @return true, if is log enabled
+   */
+  public boolean isLogEnabled() {
+    return false;
   }
 
   /**

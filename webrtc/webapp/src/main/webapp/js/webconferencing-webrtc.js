@@ -672,6 +672,18 @@
 						$.each(rtcConfiguration.iceServers, function(si, ices) {
 							addIceServer(ices);
 						});
+						// Error diagnostic checkbox
+						var $diagnosticEnabler = $settings.find(".diagnostic-errors input[type='checkbox']");
+						if (rtcConfiguration.logEnabled) {
+							$diagnosticEnabler.prop("checked", true);
+						}
+						$diagnosticEnabler.change(function() {
+							if ($diagnosticEnabler.prop("checked")) {
+								rtcConfiguration.logEnabled = true;
+							} else {
+								rtcConfiguration.logEnabled = false;	
+							}
+						});
 						// Save action
 						function checkConfError() {
 							for (var si=0; si<rtcConfiguration.iceServers.length; si++) {

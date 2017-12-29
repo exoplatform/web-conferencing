@@ -64,7 +64,6 @@ import org.exoplatform.webconferencing.dao.ParticipantDAO;
 import org.exoplatform.webconferencing.domain.CallEntity;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -949,6 +948,7 @@ public class WebConferencingService implements Startable {
         if (conf != null) {
           conf.setTitle(p.getTitle());
           conf.setDescription(p.getDescription(locale));
+          conf.setLogEnabled(p.isLogEnabled());
           allConfs.add(conf);
         } else {
           addDefault = true;
@@ -992,6 +992,7 @@ public class WebConferencingService implements Startable {
       } else {
         conf.setTitle(p.getTitle());
         conf.setDescription(p.getDescription(locale));
+        conf.setLogEnabled(p.isLogEnabled());
       }
       return conf;
     }

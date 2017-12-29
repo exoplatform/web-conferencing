@@ -43,6 +43,7 @@ public class CallProviderConfiguration {
     conf.setTitle(provider.getTitle());
     conf.setDescription(provider.getDescription(locale));
     conf.setType(provider.getType());
+    conf.setLogEnabled(provider.isLogEnabled());
     return conf;
   }
 
@@ -57,6 +58,27 @@ public class CallProviderConfiguration {
 
   /** The active. */
   protected boolean active;
+
+  /** The log enabled. */
+  protected boolean logEnabled;
+
+  /**
+   * Checks if is log enabled.
+   *
+   * @return the logEnabled
+   */
+  public boolean isLogEnabled() {
+    return logEnabled;
+  }
+
+  /**
+   * Sets the log enabled.
+   *
+   * @param logEnabled the logEnabled to set
+   */
+  public void setLogEnabled(boolean logEnabled) {
+    this.logEnabled = logEnabled;
+  }
 
   /**
    * Checks if is active.

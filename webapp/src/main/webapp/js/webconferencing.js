@@ -13,7 +13,7 @@
 	/**
 	 * Universal client ID for use in logging, services connectivity and related cases.
 	 */
-	var clientId = "" + getRandomArbitrary(1000, 9999);
+	var clientId = "" + getRandomArbitrary(100000, 999998);
 	
 	var errorText = function(err) {
 		return err && err.message ? err.message : err;
@@ -42,6 +42,13 @@
 		return "[" + response.id + "] " + response.channel;
 	};
 	
+	// CometD transport bus
+	var cometd, cometdContext;
+	
+	var cometdParams = function(params) {
+		return $.extend(params, cCometD.eXoSecret, cometdContext);
+	};
+	
 	/**
 	 * Logging to browser console and optionally (if enabled) spool the log to remote server.
 	 */
@@ -49,7 +56,7 @@
 		
 		var providerType = null;
 		var prefix = null;
-		var cometd = null;
+		var remoteLog = null;
 		var buff = [];
 		
 		// Private methods
@@ -58,10 +65,9 @@
 		};
 		
 		var spoolBuff = function() {
-			if (cometd) {
+			if (remoteLog) {
 				var bucket = buff; 
 				buff = [];
-				//var bucket = buff.slice(); TODO cleanup
 				// spool in CometD batch
 				cometd.batch(function() {
 					for (var i=0; i<bucket.length; i++) {
@@ -78,7 +84,7 @@
 					}
 				});	
 			} else if (buff.length > 100) {
-				toLog("warn", "CometD not available. Log cannot be spooled remotely and will be cut to avoid memory leak.", null, true);
+				toLog("warn", "Remote logger not available. Log cannot be spooled remotely and will be cut to avoid memory leak.", null, true);
 				buff = buff.slice(70);
 			}
 		};
@@ -91,7 +97,7 @@
 		};
 		
 		var logRemote = function(level, message, date) {
-			if (cometd) {
+			if (remoteLog) {
 				var data;
 				if (typeof message === "function") {
 					data = message();
@@ -112,7 +118,7 @@
 					level : level,
 					prefix : prefix,
 					provider : providerType,
-					date : date
+					timestamp : date
 				});
 				buff.push(params);
 				if (buff.length > 10) {
@@ -226,21 +232,21 @@
 		
 		this.remoteSpooler = function(theCometd) {
 			if (theCometd && typeof theCometd === "object") { // we also test is it an object (cometd assumed)
-				if (!cometd) {
+				if (!remoteLog) {
 					// We attempt to save all logs on page close
 					$(window).bind("beforeunload", windowListener);
 					$(window).bind("unload", windowListener);					
 				} // else it's already
-				cometd = theCometd;
+				remoteLog = theCometd;
 				if (buff.length > 0) {
 					spoolBuff();
 				}
 			} else {
-				if (cometd) {
+				if (remoteLog) {
 					$(window).unbind("beforeunload", windowListener);
 					$(window).unbind("unload", windowListener);
 				}
-				cometd = null;
+				remoteLog = null;
 			}
 			return this;
 		};
@@ -1050,9 +1056,6 @@
 		var contextInitializer = $.Deferred();
 		var currentUser, currentSpaceId, currentRoomTitle;
 
-		// CometD transport bus
-		var cometd, cometdContext;
-		
 		// Providers
 		var providers = []; // loaded providers
 		var providersConfig; // will be assigned in init()
@@ -1065,10 +1068,6 @@
 
 		this.errorText = errorText;
 		
-		var cometdParams = function(params) {
-			return $.extend(params, cCometD.eXoSecret, cometdContext);
-		};
-
 		var contextId = function(context) {
 			return context.userId ? context.userId : (context.spaceId ? context.spaceId : context.roomName);
 		};
@@ -1932,10 +1931,7 @@
 							"url": prefixUrl  + context.cometdPath,
 							"exoId": currentUser.id,
 							"exoToken": context.cometdToken,
-							"maxNetworkDelay" : 15000,
-							// TODO see below cometdContext
-							"exoContainerName" : context.containerName,
-							"exoClientId" : currentUser.clientId
+							"maxNetworkDelay" : 15000
 						});
 						cometd = cCometD;
 						cometdContext = {
@@ -2264,7 +2260,7 @@
 							onUpdate(result, 200);
 						}							
 					}
-				}, function(subscribeReply) {
+				}, cometdContext, function(subscribeReply) {
 					// Subscription status callback
 					if (subscribeReply.successful) {
 		        // The server successfully subscribed this client to the channel.
@@ -2326,7 +2322,7 @@
 							onUpdate(result, 200);
 						}							
 					}
-				}, function(subscribeReply) {
+				}, cometdContext, function(subscribeReply) {
 					// Subscription status callback
 					if (subscribeReply.successful) {
 		        // The server successfully subscribed this client to the channel.

@@ -92,7 +92,7 @@ public class CallLog {
                                                              .append(MESSAGE_CRITICAL_LENGTH)
                                                              .append(" will be cut.")
                                                              .toString());
-        return msg.substring(0, MESSAGE_CRITICAL_LENGTH);
+        return new StringBuilder(msg.substring(0, MESSAGE_CRITICAL_LENGTH)).append("...").toString();
       }
     } else {
       LOG.warn(new StringBuilder("Message: '").append(msg.substring(0, 64))

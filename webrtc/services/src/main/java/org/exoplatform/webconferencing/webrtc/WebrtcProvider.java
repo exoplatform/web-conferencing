@@ -179,6 +179,9 @@ public class WebrtcProvider extends CallProvider {
     /** The ice servers. */
     protected Set<ICEServer> iceServers = new LinkedHashSet<>();
 
+    /** The enable log. */
+    protected boolean        logEnabled;
+
     /**
      * Gets the bundle policy.
      *
@@ -186,6 +189,24 @@ public class WebrtcProvider extends CallProvider {
      */
     public String getBundlePolicy() {
       return bundlePolicy;
+    }
+
+    /**
+     * Gets the enabled log.
+     *
+     * @return the logEnabled
+     */
+    public boolean isLogEnabled() {
+      return logEnabled;
+    }
+
+    /**
+     * Sets enabled log.
+     *
+     * @param logEnabled the logEnabled to set
+     */
+    public void setLogEnabled(boolean enableLog) {
+      this.logEnabled = enableLog;
     }
 
     /**
@@ -373,13 +394,13 @@ public class WebrtcProvider extends CallProvider {
   }
 
   /** The settings service. */
-  protected final SettingService settingService;
-  
+  protected final SettingService        settingService;
+
   /** The resource bundle service. */
   protected final ResourceBundleService resourceBundleService;
 
   /** The rtc configuration. */
-  protected RTCConfiguration     rtcConfiguration;
+  protected RTCConfiguration            rtcConfiguration;
 
   /**
    * Instantiates a new WebRTC provider.
@@ -389,9 +410,10 @@ public class WebrtcProvider extends CallProvider {
    * @param resourceBundleService the resource bundle service
    * @throws ConfigurationException the configuration exception
    */
-  public WebrtcProvider(InitParams params, SettingService settingService, ResourceBundleService resourceBundleService) throws ConfigurationException {
+  public WebrtcProvider(InitParams params, SettingService settingService, ResourceBundleService resourceBundleService)
+      throws ConfigurationException {
     super(params);
-    
+
     this.settingService = settingService;
     this.resourceBundleService = resourceBundleService;
 
@@ -512,6 +534,14 @@ public class WebrtcProvider extends CallProvider {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean isLogEnabled() {
+    return rtcConfiguration.isLogEnabled();
+  }
+
+  /**
    * Json to RTC config.
    *
    * @param json the json
@@ -573,6 +603,9 @@ public class WebrtcProvider extends CallProvider {
       rtcConf.setIceCandidatePoolSize(iceCandidatePoolSize);
     }
 
+    boolean logEnabled = json.optBoolean("logEnabled", false);
+    rtcConf.setLogEnabled(logEnabled);
+
     return rtcConf;
   }
 
@@ -614,7 +647,9 @@ public class WebrtcProvider extends CallProvider {
     if (rtcConf.getIceCandidatePoolSize() > 0) {
       json.put("iceCandidatePoolSize", rtcConf.getIceCandidatePoolSize());
     }
-
+    
+    json.put("logEnabled", rtcConf.isLogEnabled());
+    
     return json;
   }
 
