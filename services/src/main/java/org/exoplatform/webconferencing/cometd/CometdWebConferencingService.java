@@ -163,8 +163,12 @@ public class CometdWebConferencingService implements Startable {
   @Service("webconferencing")
   public class CallService {
 
+    /**
+     * The Class ContainerCommand.
+     */
     abstract class ContainerCommand implements Runnable {
 
+      /** The container name. */
       final String containerName;
 
       /**
@@ -327,6 +331,7 @@ public class CometdWebConferencingService implements Startable {
      */
     class CallChannelContext {
 
+      /** The container name. */
       final String containerName;
 
       /**
@@ -356,6 +361,8 @@ public class CometdWebConferencingService implements Startable {
      * component's <code>addChannelSubscriptionListener<code> method. When
      * the channelSubscription event occurs, that object's appropriate
      * method is invoked.
+     *
+     * @see ChannelSubscriptionEvent
      */
     class ChannelSubscriptionListener implements SubscriptionListener {
 
@@ -534,6 +541,8 @@ public class CometdWebConferencingService implements Startable {
 
     /**
      * The listener interface for receiving client channel events.
+     *
+     * @see ClientChannelEvent
      */
     class ClientChannelListener implements ChannelListener {
 

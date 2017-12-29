@@ -1521,6 +1521,13 @@ public class WebConferencingService implements Startable {
     saveParticipant(callId, participant);
   }
 
+  /**
+   * Update call and participant.
+   *
+   * @param call the call
+   * @param participant the participant
+   * @throws Exception the exception
+   */
   @ExoTransactional
   protected void updateCallAndParticipant(CallInfo call, UserInfo participant) throws Exception {
     // Update call

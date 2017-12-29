@@ -23,7 +23,7 @@ import org.exoplatform.services.log.Log;
 
 /**
  * Diagnostic logging support for user calls. This class gathers all logs related to the call, from
- * preparation of UI to processing a conversation.<br/>
+ * preparation of UI to processing a conversation.<br>
  * 
  * Created by The eXo Platform SAS
  * 
@@ -36,14 +36,19 @@ public class CallLog {
   /** The Constant LOG. */
   private static final Log   LOG                           = ExoLogger.getLogger(CallLog.class);
 
+  /** The Constant TRACE_LEVEL. */
   public static final String TRACE_LEVEL                   = "trace".intern();
 
+  /** The Constant DEBUG_LEVEL. */
   public static final String DEBUG_LEVEL                   = "debug".intern();
 
+  /** The Constant INFO_LEVEL. */
   public static final String INFO_LEVEL                    = "info".intern();
 
+  /** The Constant WARN_LEVEL. */
   public static final String WARN_LEVEL                    = "warn".intern();
 
+  /** The Constant ERROR_LEVEL. */
   public static final String ERROR_LEVEL                   = "error".intern();
 
   /** The Constant MESSAGE_NO_DATA. */
@@ -105,6 +110,12 @@ public class CallLog {
   CallLog() {
   }
 
+  /**
+   * Validate final.
+   *
+   * @param msg the msg
+   * @return the string
+   */
   protected String validateFinal(String msg) {
     if (msg != null && msg.length() > MESSAGE_CRITICAL_LENGTH_FINAL) {
       return new StringBuilder(msg.substring(0, MESSAGE_CRITICAL_LENGTH_FINAL)).append("...").toString();

@@ -19,17 +19,14 @@
 package org.exoplatform.webconferencing;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: WrongIdException.java 00000 Dec 28, 2017 pnedonosko $
- * 
  */
 public class WrongIdException extends CallInfoException {
 
-  /**
-   * 
-   */
+  /** The Constant serialVersionUID. */
   private static final long serialVersionUID = 4382448461295970208L;
 
   /**

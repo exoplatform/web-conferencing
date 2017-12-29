@@ -28,9 +28,7 @@ package org.exoplatform.webconferencing;
  */
 public class ParticipantNotFound extends WebConferencingException {
 
-  /**
-   * 
-   */
+  /** The Constant serialVersionUID. */
   private static final long serialVersionUID = -339427871016542888L;
 
   /**
