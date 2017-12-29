@@ -19,6 +19,8 @@
  */
 package org.exoplatform.webconferencing;
 
+import static org.exoplatform.webconferencing.IdentityInfo.isValidId;
+
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,6 +63,7 @@ import org.exoplatform.webconferencing.dao.CallDAO;
 import org.exoplatform.webconferencing.dao.ParticipantDAO;
 import org.exoplatform.webconferencing.domain.CallEntity;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
+import org.exoplatform.webconferencing.domain.ParticipantId;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -314,6 +317,7 @@ public class WebConferencingService implements Startable {
    * @return the space info
    * @throws Exception the exception
    */
+  // @ExoTransactional // TODO it's read-only op, no need tx
   public SpaceInfo getSpaceInfo(String spacePrettyName) throws Exception {
     Space socialSpace = spaceService.getSpaceByPrettyName(spacePrettyName);
     SpaceInfo space = new SpaceInfo(socialSpace);
@@ -339,6 +343,7 @@ public class WebConferencingService implements Startable {
    * @return the room info
    * @throws Exception the exception
    */
+  // @ExoTransactional // TODO it's read-only op, no need tx
   public RoomInfo getRoomInfo(String id, String name, String title, String[] members) throws Exception {
     RoomInfo room = roomInfo(id, name, title, members, readOwnerCallId(id));
     return room;
@@ -362,89 +367,101 @@ public class WebConferencingService implements Startable {
                           String title,
                           String providerType,
                           Collection<String> parts) throws Exception {
-    final boolean isUser = UserInfo.TYPE_NAME.equals(ownerType);
-    final boolean isSpace = OWNER_TYPE_SPACE.equals(ownerType);
-    final boolean isRoom = OWNER_TYPE_CHATROOM.equals(ownerType);
-    final IdentityInfo owner;
-    if (isUser) {
-      UserInfo userInfo = getUserInfo(ownerId);
-      if (userInfo == null) {
-        // if owner user not found, it's possibly an external user, thus treat it as a chat room
-        owner = new RoomInfo(ownerId, ownerId, title);
-        owner.setAvatarLink(LinkProvider.PROFILE_DEFAULT_AVATAR_URL);
-      } else {
-        owner = userInfo;
-        owner.setProfileLink(userInfo.getProfileLink());
-        String avatar = userInfo.getAvatarLink();
-        avatar = avatar != null ? avatar : LinkProvider.PROFILE_DEFAULT_AVATAR_URL;
-        owner.setAvatarLink(avatar);
-      }
-    } else if (isSpace) {
-      Space space = spaceService.getSpaceByPrettyName(ownerId);
-      if (space != null) {
-        owner = new SpaceInfo(space);
-        owner.setProfileLink(space.getUrl());
-        String avatar = space.getAvatarUrl();
-        avatar = avatar != null ? avatar : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
-        owner.setAvatarLink(avatar);
-      } else {
-        LOG.warn("Cannot find call's owner space " + ownerId);
-        owner = new RoomInfo(ownerId, ownerId, title);
-        owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
-      }
-    } else if (isRoom) {
-      owner = new RoomInfo(ownerId, ownerId, title);
-      owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
-    } else {
-      throw new CallInfoException("Wrong call owner type: " + ownerType);
-    }
-    Set<UserInfo> participants = new LinkedHashSet<>();
-    for (String pid : parts) {
-      UserInfo part = getUserInfo(pid);
-      if (part != null) {
-        // it's eXo user
-        participants.add(part);
-      } else {
-        // external participant
-        participants.add(new ParticipantInfo(providerType, pid));
-      }
-    }
-
-    String prevId = readOwnerCallId(ownerId);
-
-    // Save the call
-    CallInfo call = new CallInfo(id, title, owner, providerType);
-    call.addParticipants(participants);
-    call.setState(CallState.STARTED);
-    call.setLastDate(Calendar.getInstance().getTime());
-    saveCall(call);
-
-    String userId = currentUserId();
-    if (isSpace || isRoom) {
-      // it's group call
-      // saveOwnerCallId(ownerId, id); // TODO don't need this
-      for (UserInfo part : participants) {
-        if (UserInfo.TYPE_NAME.equals(part.getType())) {
-          if (prevId != null) {
-            // XXX For a case when some client failed to delete an existing (but outdated etc.) call but
-            // already starting a new one
-            // It's SfB usecase when browser client failed to delete outdated call (browser/plugin crashed in
-            // IE11) and then starts a new one
-            // removeUserGroupCallId(part.getId(), prevId); // TODO change state to leaved?!!
+    // Ensure call and owner IDs length is OK
+    if (isValidId(id)) {
+      if (isValidId(ownerId)) {
+        final boolean isUser = UserInfo.TYPE_NAME.equals(ownerType);
+        final boolean isSpace = OWNER_TYPE_SPACE.equals(ownerType);
+        final boolean isRoom = OWNER_TYPE_CHATROOM.equals(ownerType);
+        final IdentityInfo owner;
+        if (isUser) {
+          UserInfo userInfo = getUserInfo(ownerId);
+          if (userInfo == null) {
+            // if owner user not found, it's possibly an external user, thus treat it as a chat room
+            owner = new RoomInfo(ownerId, ownerId, title);
+            owner.setAvatarLink(LinkProvider.PROFILE_DEFAULT_AVATAR_URL);
+          } else {
+            owner = userInfo;
+            owner.setProfileLink(userInfo.getProfileLink());
+            String avatar = userInfo.getAvatarLink();
+            avatar = avatar != null ? avatar : LinkProvider.PROFILE_DEFAULT_AVATAR_URL;
+            owner.setAvatarLink(avatar);
           }
-          // saveUserGroupCallId(part.getId(), id); // TODO don't need this
-          if (!userId.equals(part.getId())) {
-            // fire group's user listener for incoming, except of the caller
-            fireUserCallStateChanged(part.getId(), id, providerType, CallState.STARTED, ownerId, ownerType);
+        } else if (isSpace) {
+          Space space = spaceService.getSpaceByPrettyName(ownerId);
+          if (space != null) {
+            owner = new SpaceInfo(space);
+            owner.setProfileLink(space.getUrl());
+            String avatar = space.getAvatarUrl();
+            avatar = avatar != null ? avatar : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
+            owner.setAvatarLink(avatar);
+          } else {
+            LOG.warn("Cannot find call's owner space: " + ownerId);
+            owner = new RoomInfo(ownerId, ownerId, title);
+            owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
+          }
+        } else if (isRoom) {
+          owner = new RoomInfo(ownerId, ownerId, title);
+          owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
+        } else {
+          throw new CallInfoException("Wrong call owner type: " + ownerType);
+        }
+        Set<UserInfo> participants = new LinkedHashSet<>();
+        for (String pid : parts) {
+          if (isValidId(pid)) {
+            UserInfo part = getUserInfo(pid);
+            if (part != null) {
+              // it's eXo user
+              participants.add(part);
+            } else {
+              // external participant
+              participants.add(new ParticipantInfo(providerType, pid));
+            }
+          } else {
+            LOG.error("Cannot add call participant with too long ID: " + pid);
+            throw new WrongIdException("Wrong participant ID (" + pid + ")");
           }
         }
-      }
-    } else if (isUser) {
-      // It's P2P call
-      notifyUserCallStateChanged(call, userId, CallState.STARTED);
-    }
 
-    return call;
+        String prevId = readOwnerCallId(ownerId);
+
+        // Save the call
+        CallInfo call = new CallInfo(id, title, owner, providerType);
+        call.addParticipants(participants);
+        call.setState(CallState.STARTED);
+        call.setLastDate(Calendar.getInstance().getTime());
+        createCall(call);
+
+        String userId = currentUserId();
+        if (isSpace || isRoom) {
+          // it's group call
+          for (UserInfo part : participants) {
+            if (UserInfo.TYPE_NAME.equals(part.getType())) {
+              if (prevId != null) {
+                // XXX For a case when some client failed to delete an existing (but outdated etc.) call but
+                // already starting a new one
+                // It's SfB usecase when browser client failed to delete outdated call (browser/plugin crashed
+                // in IE11) and then starts a new one
+                // removeUserGroupCallId(part.getId(), prevId); // TODO change state to leaved?!!
+              }
+              if (!userId.equals(part.getId())) {
+                // fire group's user listener for incoming, except of the caller
+                fireUserCallStateChanged(part.getId(), id, providerType, CallState.STARTED, ownerId, ownerType);
+              }
+            }
+          }
+        } else if (isUser) {
+          // It's P2P call
+          notifyUserCallStateChanged(call, userId, CallState.STARTED);
+        }
+
+        return call;
+      } else {
+        throw new WrongIdException("Wrong owner ID value");
+      }
+    } else {
+      throw new WrongIdException("Wrong call ID value");
+    }
   }
 
   /**
@@ -454,6 +471,7 @@ public class WebConferencingService implements Startable {
    * @return the call info or <code>null</code> if call not found
    * @throws Exception the exception
    */
+  // @ExoTransactional // TODO it's read-only op, no need tx
   public CallInfo getCall(String id) throws Exception {
     return readCallById(id);
   }
@@ -492,12 +510,14 @@ public class WebConferencingService implements Startable {
    * @throws Exception the exception
    */
   protected CallInfo stopCall(CallInfo call, String userId, boolean remove) throws Exception {
+    // Delete or update in single tx
     if (remove) {
       deleteCall(call);
     } else {
       call.setState(CallState.STOPPED);
-      saveCall(call);
+      updateCall(call);
     }
+    // Then notify users
     if (call.getOwner().isGroup()) {
       String callId = call.getId();
       for (UserInfo part : call.getParticipants()) {
@@ -515,11 +535,6 @@ public class WebConferencingService implements Startable {
                                      call.getOwner().getId(),
                                      call.getOwner().getType());
           }
-          // TODO this should be done by DB itself (cascade delete in FK)
-          // if (remove) {
-          // remove from participant's group calls
-          // removeUserGroupCallId(part.getId(), callId);
-          // }
         }
       }
     } else {
@@ -529,12 +544,13 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Removes the call info from active and fires STOPPED event.
+   * Starts existing call and fires STARTED event. It's actual for group calls.
    *
    * @param id the id
    * @return the call info or <code>null</code> if call not found
    * @throws Exception the exception
    */
+  // @ExoTransactional // TODO it's read-only op, no need tx
   public CallInfo startCall(String id) throws Exception {
     CallInfo call = readCallById(id);
     if (call != null) {
@@ -551,26 +567,43 @@ public class WebConferencingService implements Startable {
    */
   protected void startCall(CallInfo call) throws Exception {
     // TODO exception if user not a participant?
+
+    String callId = call.getId();
+    UserInfo joined = null;
+
+    // We save call in a single tx, thus logic split on gathering the changes and saving them at the end
     call.setState(CallState.STARTED);
+
     if (call.getOwner().isGroup()) {
+      // Find an user who joins (current user who starts a group call will join it first)
       String userId = currentUserId();
       for (UserInfo part : call.getParticipants()) {
-        if (UserInfo.TYPE_NAME.equals(part.getType())) {
-          if (userId.equals(part.getId())) {
-            part.setState(UserState.JOINED);
-          } else {
-            // it's eXo user: fire user listener for started call, but not to the starter (current user)
-            fireUserCallStateChanged(part.getId(),
-                                     call.getId(),
-                                     call.getProviderType(),
-                                     CallState.STARTED,
-                                     call.getOwner().getId(),
-                                     call.getOwner().getType());
-          }
+        if (UserInfo.TYPE_NAME.equals(part.getType()) && userId.equals(part.getId())) {
+          part.setState(UserState.JOINED);
+          joined = part;
+          break;
         }
       }
+      if (joined != null) {
+        // First save the group call with joined participant (in single tx)
+        updateCallAndParticipant(call, joined);
+      } else {
+        // This should not be a case, but we preserve the logic - may be admin could start it?
+        LOG.warn("Call started by not a participant: " + userId + ", call: " + callId);
+        updateCall(call);
+      }
+      // Then fire this call started to all parts, including the user itself
+      for (UserInfo part : call.getParticipants()) {
+        fireUserCallStateChanged(part.getId(),
+                                 callId,
+                                 call.getProviderType(),
+                                 CallState.STARTED,
+                                 call.getOwner().getId(),
+                                 call.getOwner().getType());
+      }
+    } else {
+      updateCall(call);
     }
-    saveCall(call);
   }
 
   /**
@@ -587,19 +620,20 @@ public class WebConferencingService implements Startable {
     CallInfo call = readCallById(id);
     if (call != null) {
       if (CallState.STARTED.equals(call.getState())) {
-        boolean joined = false;
+        UserInfo joined = null;
         // save Joined first
         for (UserInfo part : call.getParticipants()) {
           if (UserInfo.TYPE_NAME.equals(part.getType()) && userId.equals(part.getId())) {
             part.setState(UserState.JOINED);
-            saveCall(call);
-            joined = true;
+            joined = part;
             break;
           }
         }
         // then save if someone joined (it should but we preserve the logic)
-        if (joined) {
-          // Fire user joined to all parts, including the user itself
+        if (joined != null) {
+          // First save the call with joined participant (in single tx)
+          updateParticipant(id, joined);
+          // Then fire this user joined to all parts, including the user itself
           for (UserInfo part : call.getParticipants()) {
             fireUserCallJoined(id,
                                call.getProviderType(),
@@ -630,20 +664,29 @@ public class WebConferencingService implements Startable {
     CallInfo call = readCallById(id);
     if (call != null) {
       if (CallState.STARTED.equals(call.getState()) || CallState.PAUSED.equals(call.getState())) {
-        int leaved = 0;
-        boolean userLeaved = false;
+        UserInfo leaved = null;
+        int leavedNum = 0;
+        // save Joined first
         for (UserInfo part : call.getParticipants()) {
           if (UserInfo.TYPE_NAME.equals(part.getType())) {
             if (userId.equals(part.getId())) {
               part.setState(UserState.LEAVED);
-              userLeaved = true;
-              leaved++;
+              leaved = part;
+              leavedNum++;
             } else {
               // if null - user hasn't joined
               if (part.getState() == null || part.getState().equals(UserState.LEAVED)) {
-                leaved++;
+                leavedNum++;
               }
             }
+          }
+        }
+        // then save if someone joined (it should but we preserve the logic)
+        if (leaved != null) {
+          // First save the call with the participant (in single tx)
+          updateParticipant(id, leaved);
+          // Fire user joined to all parts, including the user itself
+          for (UserInfo part : call.getParticipants()) {
             // Fire user leaved to all parts, including the user itself
             fireUserCallLeaved(id,
                                call.getProviderType(),
@@ -652,12 +695,9 @@ public class WebConferencingService implements Startable {
                                userId,
                                part.getId());
           }
-        }
-        if (leaved == call.getParticipants().size()) {
-          stopCall(call, userId, false);
-        } else {
-          if (userLeaved) {
-            saveCall(call);
+          // Check if don't need stop the call if all parts leaved already
+          if (leavedNum == call.getParticipants().size()) {
+            stopCall(call, userId, false); // Stop in another tx
           }
         }
       } else {
@@ -675,6 +715,7 @@ public class WebConferencingService implements Startable {
    * @return the user call states
    * @throws Exception the exception
    */
+  // @ExoTransactional // TODO it's read-only op, no need tx
   public CallState[] getUserCalls(String userId) throws Exception {
     CallState[] states =
                        readUserGroupCalls(userId).stream()
@@ -984,121 +1025,6 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Call to JSON.
-   *
-   * @param call the call
-   * @return the JSON object
-   * @throws JSONException the JSON exception
-   */
-  @Deprecated
-  protected JSONObject callToJson(CallInfo call) throws JSONException {
-    // We follow a minimal data required to restore the persisted call
-
-    JSONObject json = new JSONObject();
-    json.put("id", call.getId());
-    json.put("title", call.getTitle());
-    // json.put("ownerType", call.getOwnerType());
-    // json.put("avatarLink", call.getOwner().getAvatarLink()); // call avatar
-    // json.put("ownerLink", call.getOwner().getProfileLink()); // it's call link
-    json.put("providerType", call.getProviderType());
-    if (call.getState() != null) {
-      json.put("state", call.getState());
-    }
-
-    // Owner
-    JSONObject jsonOwner = new JSONObject();
-    jsonOwner.put("id", call.getOwner().getId());
-    String ownerType = call.getOwner().getType();
-    jsonOwner.put("type", ownerType);
-    if (OWNER_TYPE_CHATROOM.equals(ownerType)) {
-      RoomInfo room = (RoomInfo) call.getOwner();
-      jsonOwner.put("name", room.getName());
-      jsonOwner.put("title", room.getTitle());
-      // XXX room/space members not interesting in this context
-    }
-    json.put("owner", jsonOwner);
-
-    // Participants
-    JSONArray jsonParts = new JSONArray();
-    for (UserInfo p : call.getParticipants()) {
-      JSONObject jsonPart = new JSONObject();
-      jsonPart.put("id", p.getId());
-      jsonPart.put("type", p.getType());
-      String state = p.getState();
-      if (state != null) {
-        jsonPart.put("state", state);
-      }
-      jsonParts.put(jsonPart);
-    }
-    json.put("participants", jsonParts);
-
-    return json;
-  }
-
-  /**
-   * Json to call.
-   *
-   * @param json the json
-   * @return the call info
-   * @throws Exception the exception
-   */
-  @Deprecated
-  protected CallInfo jsonToCall(JSONObject json) throws Exception {
-    String id = json.getString("id");
-    String title = json.getString("title");
-    // String avatarLink = json.getString("avatarLink");
-    String ownerType = json.getString("ownerType");
-    // String ownerLink = json.getString("ownerLink");
-    String providerType = json.getString("providerType");
-    String state = json.optString("state", null);
-
-    // Owner
-    JSONObject jsonOwner = json.getJSONObject("owner");
-    String ownerId = jsonOwner.getString("id");
-    IdentityInfo owner;
-    if (OWNER_TYPE_CHATROOM.equals(ownerType)) {
-      // XXX room/space members not interesting in this context
-      owner = roomInfo(ownerId, jsonOwner.getString("name"), jsonOwner.getString("title"), new String[0], id);
-    } else if (OWNER_TYPE_SPACE.equals(ownerType)) {
-      owner = getSpaceInfo(ownerId);
-    } else if (UserInfo.TYPE_NAME.equals(ownerType)) {
-      owner = getUserInfo(ownerId);
-    } else {
-      LOG.error("Unexpected call owner, type: " + ownerType + ", id: " + ownerId);
-      throw new CallInfoException("Unexpected call owner: " + ownerId);
-    }
-
-    CallInfo call = new CallInfo(id, title, owner, providerType);
-    if (state != null) {
-      call.setState(state);
-    }
-    // Participants
-    JSONArray jsonParts = json.getJSONArray("participants");
-    for (int i = 0; i < jsonParts.length(); i++) {
-      JSONObject jsonPart = jsonParts.getJSONObject(i);
-      String partId = jsonPart.getString("id");
-      String partType = jsonPart.getString("type");
-      if (UserInfo.TYPE_NAME.equals(partType)) {
-        UserInfo user = getUserInfo(partId);
-        if (user != null) {
-          String partState = jsonPart.optString("state", null);
-          if (partState != null) {
-            user.setState(partState);
-          }
-          call.addParticipant(user);
-        } else {
-          LOG.warn("Cannot add call participant as eXo user: " + partId);
-          call.addParticipant(new ParticipantInfo(providerType, partId));
-        }
-      } else {
-        call.addParticipant(new ParticipantInfo(providerType, partId));
-      }
-    }
-
-    return call;
-  }
-
-  /**
    * Read JSON from the string.
    *
    * @param str the str
@@ -1121,255 +1047,9 @@ public class WebConferencingService implements Startable {
    * @return the call info
    * @throws Exception the exception
    */
-  @Deprecated
-  protected CallInfo readCallById_old(String id) throws Exception {
-    final String initialGlobalId = Scope.GLOBAL.getId();
-    try {
-      String safeCallId = URLEncoder.encode(id, "UTF-8");
-      SettingValue<?> val = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(CALL_ID_SCOPE_NAME), safeCallId);
-      if (val != null) {
-        String str = String.valueOf(val.getValue());
-        if (str.startsWith("{")) {
-          // Assuming it's JSON
-          CallInfo call = jsonToCall(new JSONObject(str));
-          return call;
-        } else {
-          LOG.warn("Cannot parse saved CallInfo: " + str);
-        }
-      }
-      return null;
-    } finally {
-      Scope.GLOBAL.id(initialGlobalId);
-    }
-  }
-
-  /**
-   * Read call by id.
-   *
-   * @param id the id
-   * @return the call info
-   * @throws Exception the exception
-   */
-  @ExoTransactional
   protected CallInfo readCallById(String id) throws Exception {
     CallEntity savedCall = callStorage.find(id);
     return readCallEntity(savedCall, true);
-  }
-
-  /**
-   * Delete call.
-   *
-   * @param call the call
-   * @throws Exception the exception
-   */
-  @Deprecated
-  protected void deleteCall_old(CallInfo call) throws Exception {
-    final String initialGlobalId = Scope.GLOBAL.getId();
-    try {
-      String safeCallId = URLEncoder.encode(call.getId(), "UTF-8");
-      settingService.remove(Context.GLOBAL, Scope.GLOBAL.id(CALL_ID_SCOPE_NAME), safeCallId);
-      settingService.remove(Context.GLOBAL, Scope.GLOBAL.id(CALL_OWNER_SCOPE_NAME), call.getOwner().getId());
-    } finally {
-      Scope.GLOBAL.id(initialGlobalId);
-    }
-  }
-
-  /**
-   * Save call.
-   *
-   * @param call the call
-   * @throws Exception the exception
-   */
-  @Deprecated
-  protected void saveCall_old(CallInfo call) throws Exception {
-    saveOwnerCallId(call.getOwner().getId(), call.getId()); // TODO this also done in addCall(), get rid
-                                                            // double invocation
-    final String initialGlobalId = Scope.GLOBAL.getId();
-    try {
-      JSONObject json = callToJson(call);
-      String safeCallId = URLEncoder.encode(call.getId(), "UTF-8");
-      settingService.set(Context.GLOBAL, Scope.GLOBAL.id(CALL_ID_SCOPE_NAME), safeCallId, SettingValue.create(json.toString()));
-    } finally {
-      Scope.GLOBAL.id(initialGlobalId);
-    }
-  }
-
-  /**
-   * Creates the or update the call.
-   *
-   * @param call the call
-   * @throws Exception the exception
-   */
-  @ExoTransactional
-  protected void saveCall(CallInfo call) throws Exception {
-    String callId = call.getId();
-    CallEntity entity = call.getEntity();
-    // entity = callStorage.find(call.getId()); // this was done in get* method
-    if (entity != null) {
-      updateCallEntity(call, entity);
-      callStorage.update(entity);
-      participantsStorage.deleteCallParts(callId); // below we'll add all them fresh
-    } else {
-      entity = createCallEntity(call);
-      callStorage.create(entity);
-      call.setEntity(entity);
-    }
-    // Save call participants:
-    // TODO For update we need a marker of actually changed parts (whole collection - yes or no) for better
-    // performance,
-    // in some cases it's non need to update parts at all: e.g. stop of a call (but what about part state
-    // then?)
-    // if (partsUdpated) ...
-    for (UserInfo p : call.getParticipants()) {
-      // persist each part in the storage
-      participantsStorage.create(createParticipantEntity(callId, p));
-    }
-  }
-
-  /**
-   * Delete call by ID.
-   *
-   * @param callId the call id
-   * @return true, if successful, false if no such call found in the storage
-   * @throws Exception the exception
-   */
-  @Deprecated // TODO not used
-  protected boolean deleteCall(String callId) throws Exception {
-    // TODO it's not efficient to get-then-delete, just run SQL DELETE instead
-    CallEntity savedCall = callStorage.find(callId);
-    if (savedCall != null) {
-      callStorage.delete(savedCall);
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  /**
-   * Delete call.
-   *
-   * @param call the call
-   * @return true, if successful
-   * @throws Exception the exception
-   */
-  @ExoTransactional
-  protected boolean deleteCall(CallInfo call) throws Exception {
-    CallEntity entity = call.getEntity();
-    if (entity == null) {
-      // This should not be case, thus log it
-      LOG.warn("Deleting a call without persistent entity: " + call.getId());
-      entity = callStorage.find(call.getId());
-    }
-    if (entity != null) {
-      callStorage.delete(entity);
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  /**
-   * Delete all user calls. This will not touch any group call. For use on server start to cleanup the
-   * storage.
-   *
-   * @throws Exception the exception
-   */
-  @Deprecated
-  protected void deleteAllUserCalls_old() throws Exception {
-    final String initialGlobalId = Scope.GLOBAL.getId();
-    try {
-      settingService.remove(Context.GLOBAL, Scope.GLOBAL.id(CALL_ID_SCOPE_NAME));
-    } finally {
-      Scope.GLOBAL.id(initialGlobalId);
-    }
-  }
-
-  /**
-   * Delete all user calls. This will not touch any group call. For use on server start to cleanup the
-   * storage.
-   *
-   * @return the int
-   * @throws Exception the exception
-   */
-  @ExoTransactional
-  protected int deleteAllUserCalls() throws Exception {
-    return callStorage.deleteAllUsersCalls();
-  }
-
-  /**
-   * Save owner call id.
-   *
-   * @param ownerId the owner id
-   * @param callId the call id
-   */
-  @Deprecated
-  protected void saveOwnerCallId(String ownerId, String callId) {
-    final String initialGlobalId = Scope.GLOBAL.getId();
-    try {
-      settingService.set(Context.GLOBAL, Scope.GLOBAL.id(CALL_OWNER_SCOPE_NAME), ownerId, SettingValue.create(callId));
-    } finally {
-      Scope.GLOBAL.id(initialGlobalId);
-    }
-  }
-
-  /**
-   * Read owner call id.
-   *
-   * @param ownerId the owner id
-   * @return the string
-   */
-  @Deprecated
-  protected String readOwnerCallId_old(String ownerId) {
-    final String initialGlobalId = Scope.GLOBAL.getId();
-    try {
-      SettingValue<?> val = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(CALL_OWNER_SCOPE_NAME), ownerId);
-      if (val != null) {
-        return String.valueOf(val.getValue());
-      }
-      return null;
-    } finally {
-      Scope.GLOBAL.id(initialGlobalId);
-    }
-  }
-
-  /**
-   * Delete owner call id.
-   *
-   * @param ownerId the owner id
-   */
-  @Deprecated // TODO not used
-  protected void deleteOwnerCallId(String ownerId) {
-    // TODO run this on space or chat room removal
-    final String initialGlobalId = Scope.GLOBAL.getId();
-    try {
-      settingService.remove(Context.GLOBAL, Scope.GLOBAL.id(CALL_OWNER_SCOPE_NAME), ownerId);
-    } finally {
-      Scope.GLOBAL.id(initialGlobalId);
-    }
-  }
-
-  /**
-   * Read user group call ids.
-   *
-   * @param userId the user id
-   * @return the string[]
-   */
-  @Deprecated
-  protected String[] readUserGroupCallIds_old(String userId) {
-    final String initialScopeId = Scope.GLOBAL.getId();
-    final String initialContextId = Context.USER.getId();
-    final Context userContext = userId != null ? Context.USER.id(userId) : Context.USER;
-    final Scope userScope = Scope.GLOBAL.id(USER_CALLS_SCOPE_NAME);
-    try {
-      SettingValue<?> val = settingService.get(userContext, userScope, GROUP_CALL_TYPE);
-      if (val != null) {
-        return String.valueOf(val.getValue()).split("\n");
-      }
-      return null;
-    } finally {
-      Scope.GLOBAL.id(initialScopeId);
-      Context.USER.id(initialContextId);
-    }
   }
 
   /**
@@ -1378,7 +1058,6 @@ public class WebConferencingService implements Startable {
    * @param ownerId the owner id
    * @return the string or <code>null</code> if no call found
    */
-  @ExoTransactional
   protected String readOwnerCallId(String ownerId) {
     // TODO it's not efficient read the whole entity when we need only an ID (or null)
     CallEntity savedCall = callStorage.findGroupCallByOwnerId(ownerId);
@@ -1395,7 +1074,6 @@ public class WebConferencingService implements Startable {
    * @return the collection
    * @throws Exception the exception
    */
-  @ExoTransactional
   protected Collection<CallInfo> readUserGroupCalls(String userId) throws Exception {
     List<CallEntity> savedCalls = callStorage.findUserGroupCalls(userId);
     List<CallInfo> calls = new ArrayList<>();
@@ -1614,6 +1292,8 @@ public class WebConferencingService implements Startable {
     }
   }
 
+  // ******* Call storage ******
+
   /**
    * Read call entity.
    *
@@ -1651,7 +1331,7 @@ public class WebConferencingService implements Startable {
       //
       CallInfo call = new CallInfo(callId, savedCall.getTitle(), owner, savedCall.getProviderType());
       call.setState(savedCall.getState());
-      call.setLastDate(savedCall.getCallDate());
+      call.setLastDate(savedCall.getLastDate());
 
       if (withParticipants) {
         // TODO read parts
@@ -1719,7 +1399,7 @@ public class WebConferencingService implements Startable {
       entity.setOwnerId(owner.getId());
       entity.setOwnerType(owner.getType());
       entity.setState(call.getState());
-      entity.setCallDate(call.getLastDate());
+      entity.setLastDate(call.getLastDate());
 
       if (OWNER_TYPE_CHATROOM.equals(owner.getType())) {
         RoomInfo room = RoomInfo.class.cast(owner);
@@ -1736,12 +1416,6 @@ public class WebConferencingService implements Startable {
         entity.setIsGroup(0);
         entity.setIsUser(1);
       }
-
-      // entity.setParticipants(call.getParticipants()
-      // .stream()
-      // .map(u -> createParticipantEntity(callId, u))
-      // .collect(Collectors.toList()));
-
     } else {
       throw new NullPointerException("Call info is null");
     }
@@ -1762,5 +1436,139 @@ public class WebConferencingService implements Startable {
     part.setState(user.getState());
     return part;
   }
+
+  // >>>>>>> Call storage: ExoTransactional managed
+
+  /**
+   * Creates the call in a single transaction of the storage.
+   *
+   * @param call the call
+   * @throws Exception the exception
+   * @see ExoTransactional
+   */
+  @ExoTransactional
+  protected void createCall(CallInfo call) throws Exception {
+    CallEntity entity = callStorage.create(createCallEntity(call));
+    call.setEntity(entity);
+    // Save all call participants
+    // TODO For update we need a marker of actually changed parts (whole collection - yes or no) for better
+    // performance,
+    // in some cases it's non need to update parts at all: e.g. stop of a call (but what about part state
+    // then?)
+    // if (partsUdpated) ...
+    String callId = call.getId();
+    for (UserInfo p : call.getParticipants()) {
+      participantsStorage.create(createParticipantEntity(callId, p));
+    }
+  }
+
+  /**
+   * Save call. For use in {@link #updateCall(CallInfo)} and
+   * {@link #updateCallAndParticipant(CallInfo, UserInfo)}.
+   *
+   * @param call the call
+   * @throws Exception the exception
+   */
+  private void saveCall(CallInfo call) throws Exception {
+    CallEntity entity = call.getEntity();
+    if (entity == null) {
+      String callId = call.getId();
+      LOG.warn("Saving call without persistent entity: " + callId);
+      entity = callStorage.find(callId);
+    }
+    // Update call
+    updateCallEntity(call, entity);
+    entity = callStorage.update(entity);
+    call.setEntity(entity);
+  }
+
+  /**
+   * Update existing call (mark it started, stopped etc).
+   *
+   * @param call the call
+   * @throws Exception the exception
+   */
+  @ExoTransactional
+  protected void updateCall(CallInfo call) throws Exception {
+    saveCall(call);
+  }
+
+  /**
+   * Save participant, for use in {@link #updateParticipant(String, UserInfo)} and
+   * {@link #updateCallAndParticipant(CallInfo, UserInfo)}.
+   *
+   * @param callId the call id
+   * @param participant the participant
+   * @throws Exception the exception
+   */
+  private void saveParticipant(String callId, UserInfo participant) throws Exception {
+    // Update participant
+    ParticipantEntity part = participantsStorage.find(new ParticipantId(participant.getId(), callId));
+    if (part != null) {
+      part.setState(participant.getState());
+      participantsStorage.update(part);
+    } else {
+      throw new CallInfoException("Call participant has no saved entity " + participant.getId() + " for " + callId);
+    }
+  }
+
+  /**
+   * Update call participant (for joined or leaved state).
+   *
+   * @param callId the call id
+   * @param participant the participant
+   * @throws Exception the exception
+   */
+  @ExoTransactional
+  protected void updateParticipant(String callId, UserInfo participant) throws Exception {
+    saveParticipant(callId, participant);
+  }
+
+  @ExoTransactional
+  protected void updateCallAndParticipant(CallInfo call, UserInfo participant) throws Exception {
+    // Update call
+    saveCall(call);
+
+    // Update participant
+    saveParticipant(call.getId(), participant);
+  }
+
+  /**
+   * Delete call.
+   *
+   * @param call the call
+   * @return true, if successful
+   * @throws Exception the exception
+   */
+  @ExoTransactional
+  protected boolean deleteCall(CallInfo call) throws Exception {
+    CallEntity entity = call.getEntity();
+    if (entity == null) {
+      // This should not be case, thus log it
+      LOG.warn("Deleting call without persistent entity: " + call.getId());
+      entity = callStorage.find(call.getId());
+    }
+    if (entity != null) {
+      callStorage.delete(entity);
+      call.setEntity(null);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Delete all user calls. This will not touch any group call. For use on server start to cleanup the
+   * storage.
+   *
+   * @return the int
+   * @throws Exception the exception
+   */
+  @ExoTransactional
+  protected int deleteAllUserCalls() throws Exception {
+    return callStorage.deleteAllUsersCalls();
+  }
+
+  // <<<<<<< Call storage: ExoTransactional managed
 
 }

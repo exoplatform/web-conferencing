@@ -36,16 +36,13 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
  */
 @Entity(name = "WebConfParticipant")
 @ExoEntity
-@Table(name = "WBC_PARTS")
+@Table(name = "WBC_PARTICIPANTS")
 @IdClass(ParticipantId.class)
 @NamedQueries({
     @NamedQuery(name = "WebConfCall.findCallParts",
                 query = "SELECT p FROM WebConfParticipant p WHERE p.callId = :callId ORDER BY p.state, p.type"),
     @NamedQuery(name = "WebConfCall.deleteCallParts", 
                 query = "DELETE FROM WebConfParticipant WHERE callId = :callId")
-    // @NamedQuery(name = "WebConfCall.insertCallPart",
-    // query = "INSERT INTO WebConfParticipant (id, call_id, type, state) values (:partId, :callId, :type,
-    // :state)"),
 })
 public class ParticipantEntity {
 

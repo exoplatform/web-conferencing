@@ -8,16 +8,16 @@
   <property name="now" value="sysdate" dbms="oracle" />
   <property name="now" value="CURRENT_TIMESTAMP" dbms="mssql" />
 
-  <!-- Definition of WBC_CALLS table -->
   <changeSet author="web-conferencing" id="1.0.0">
+    <!-- Definition of WBC_CALLS table -->
     <createTable tableName="WBC_CALLS">
-      <column name="ID" type="NVARCHAR(200)">
+      <column name="ID" type="NVARCHAR(255)">
         <constraints nullable="false" primaryKey="true" primaryKeyName="PK_WBC_CALLID" />
       </column>
       <column name="PROVIDER_TYPE" type="NVARCHAR(32)">
         <constraints nullable="false" />
       </column>
-      <column name="OWNER_ID" type="NVARCHAR(64)">
+      <column name="OWNER_ID" type="NVARCHAR(255)">
         <constraints nullable="false" />
       </column>
       <column name="OWNER_TYPE" type="NVARCHAR(32)">
@@ -26,13 +26,13 @@
       <column name="STATE" type="NVARCHAR(32)">
         <constraints nullable="true" />
       </column>
-      <column name="TITLE" type="NVARCHAR(200)">
+      <column name="TITLE" type="NVARCHAR(255)">
         <constraints nullable="true" />
       </column>
       <column name="SETTINGS" type="NVARCHAR(20480)">
         <constraints nullable="true" />
       </column>
-      <column name="CALL_DATE" type="TIMESTAMP" defaultValue="${now}">
+      <column name="LAST_DATE" type="TIMESTAMP" defaultValue="${now}">
         <constraints nullable="false" />
       </column>
       <column name="IS_GROUP" type="SMALLINT">
@@ -43,11 +43,12 @@
       </column>
     </createTable>
     <addUniqueConstraint tableName="WBC_CALLS" columnNames="OWNER_ID, IS_GROUP" constraintName="CT_WBC_GROUP_CALL" />
-    <createTable tableName="WBC_PARTS">
-      <column name="ID" type="NVARCHAR(64)">
+    <!-- Definition of WBC_PARTICIPANTS table -->
+    <createTable tableName="WBC_PARTICIPANTS">
+      <column name="ID" type="NVARCHAR(255)">
         <constraints nullable="false" />
       </column>
-      <column name="CALL_ID" type="NVARCHAR(200)">
+      <column name="CALL_ID" type="NVARCHAR(255)">
         <constraints nullable="false" />
       </column>
       <column name="TYPE" type="NVARCHAR(32)">
@@ -57,11 +58,11 @@
         <constraints nullable="true" />
       </column>
     </createTable>
-    <addPrimaryKey tableName="WBC_PARTS" columnNames="ID, CALL_ID" constraintName="PK_WBC_CALLPART" />
-    <!-- When call deleted in WBC_CALLS - all parts should be deleted. When call ID updated in WBC_CALLS, all its references in WBC_PARTS 
+    <addPrimaryKey tableName="WBC_PARTICIPANTS" columnNames="ID, CALL_ID" constraintName="PK_WBC_CALLPART" />
+    <!-- When call deleted in WBC_CALLS - all parts should be deleted. When call ID updated in WBC_CALLS, all its references in WBC_PARTICIPANTS 
       should be updated accordingly. -->
-    <addForeignKeyConstraint baseTableName="WBC_PARTS" baseColumnNames="CALL_ID" referencedTableName="WBC_CALLS"
-      referencedColumnNames="ID" constraintName="FK_WBC_PARTCALL" onDelete="CASCADE" onUpdate="CASCADE" />
+    <addForeignKeyConstraint baseTableName="WBC_PARTICIPANTS" baseColumnNames="CALL_ID"
+      referencedTableName="WBC_CALLS" referencedColumnNames="ID" constraintName="FK_WBC_PARTCALL" onDelete="CASCADE" onUpdate="CASCADE" />
     <modifySql dbms="mysql">
       <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci" />
     </modifySql>

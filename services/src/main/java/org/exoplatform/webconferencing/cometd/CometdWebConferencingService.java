@@ -18,6 +18,7 @@
  */
 package org.exoplatform.webconferencing.cometd;
 
+import static org.exoplatform.webconferencing.IdentityInfo.isValidId;
 import static org.exoplatform.webconferencing.Utils.asJSON;
 import static org.exoplatform.webconferencing.support.CallLog.DEBUG_LEVEL;
 import static org.exoplatform.webconferencing.support.CallLog.ERROR_LEVEL;
@@ -70,6 +71,7 @@ import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.CallInfoException;
 import org.exoplatform.webconferencing.CallState;
+import org.exoplatform.webconferencing.IdentityInfo;
 import org.exoplatform.webconferencing.UserCallListener;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;
@@ -124,14 +126,11 @@ public class CometdWebConferencingService implements Startable {
   /** The Constant COMMAND_GET_CALLS_STATE. */
   public static final String             COMMAND_GET_CALLS_STATE               = "get_calls_state";
 
-  /** Remote call command max length. */
-  public static final int                COMMAND_MAX_LENGTH                    = 128;
-
   /**
    * Remote call term (a meta information such as context, user ID, client ID, log level and prefix etc) max
    * length.
    */
-  public static final int                TERM_MAX_LENGTH                       = 24;
+  public static final int                TERM_MAX_LENGTH                       = 32;
 
   /** The Constant LOG. */
   private static final Log               LOG                                   =
@@ -163,24 +162,6 @@ public class CometdWebConferencingService implements Startable {
    */
   @Service("webconferencing")
   public class CallService {
-
-    @Deprecated // TODO not used
-    final class ContainerCommandException extends Exception {
-
-      /**
-       * 
-       */
-      private static final long serialVersionUID = -9163305227537881822L;
-
-      /**
-       * Instantiates a new container command exception.
-       *
-       * @param message the message
-       */
-      public ContainerCommandException(String message) {
-        super(message);
-      }
-    }
 
     abstract class ContainerCommand implements Runnable {
 
@@ -214,7 +195,7 @@ public class CometdWebConferencingService implements Startable {
        */
       @Override
       public void run() {
-        if (isValidArg(containerName)) {
+        if (isValidId(containerName)) {
           // Do the work under eXo container context (for proper work of eXo apps and JPA storage)
           ExoContainer exoContainer = ExoContainerContext.getContainerByName(containerName);
           if (exoContainer != null) {
@@ -493,7 +474,8 @@ public class CometdWebConferencingService implements Startable {
                     }
                   };
                   if (LOG.isDebugEnabled()) {
-                    LOG.debug("<<< Created user call context for " + userId + ", client:" + clientId + ", channel:" + channelId);
+                    LOG.debug("<<< Created user channel context for " + userId + ", client:" + clientId + ", channel:"
+                        + channelId);
                   }
                   return new UserChannelContext(listener);
                 });
@@ -521,9 +503,17 @@ public class CometdWebConferencingService implements Startable {
             }
           }
         } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)) {
-          callChannelContext.computeIfAbsent(channelId, k -> {
-            return new CallChannelContext(exoContainerName);
-          });
+          if (exoContainerName != null) {
+            callChannelContext.computeIfAbsent(channelId, k -> {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("<<< Created call channel context by " + currentUserId + ", client:" + clientId + ", channel:"
+                    + channelId);
+              }
+              return new CallChannelContext(exoContainerName);
+            });
+          } else {
+            LOG.warn("eXo container not defined for " + currentUserId + ", client:" + clientId + ", channel:" + channelId);
+          }
         }
       }
 
@@ -612,7 +602,7 @@ public class CometdWebConferencingService implements Startable {
 
                   CallInfo call = webConferencing.getCall(callId);
                   if (call != null) {
-                    // TODO may be need leave all them and let that logic to stop the call?
+                    // may be need leave all them and let that logic to stop the call?
                     webConferencing.stopCall(callId, !call.getOwner().isGroup());
                   }
                 } catch (Exception e) {
@@ -741,7 +731,7 @@ public class CometdWebConferencingService implements Startable {
             // String exoClientId = (String) arguments.get("exoClientId"); // TODO need it here, for logger
             // may be?
             String currentUserId = (String) arguments.get("exoId");
-            if (isValidArg(currentUserId)) {
+            if (isValidId(currentUserId)) {
               // Do all the job under actual (requester) user: set this user as current identity in eXo
               // XXX We rely on EXoContinuationBayeux.EXoSecurityPolicy for user security here (exoId above)
               // Use services acquired from context container
@@ -932,7 +922,6 @@ public class CometdWebConferencingService implements Startable {
 
       // TODO use thread pool (take in account CPUs number of cores etc)
       new Thread(new Runnable() {
-        @SuppressWarnings("deprecation")
         @Override
         public void run() {
           try {
@@ -946,7 +935,7 @@ public class CometdWebConferencingService implements Startable {
             // prefix - string, a log record prefix (e.g. provider type or app context)
             // time - string, date in ISO format and UTC
             String currentUserId = (String) arguments.get("exoId");
-            if (isValidArg(currentUserId)) {
+            if (isValidId(currentUserId)) {
               // String containerName = (String) arguments.get("exoContainerName");
               // if (isValidArg(containerName)) {
               String clientId = (String) arguments.get("exoClientId");
@@ -1168,10 +1157,11 @@ public class CometdWebConferencingService implements Startable {
    * @return the string, if user cannot be defined it will be {@link IdentityConstants#ANONIM}
    */
   protected String currentUserId(ServerMessage message) {
-    // FIXME Should we rely at ConversationState current's here or only on message's exoId?
     if (message != null) {
       return (String) message.get("exoId");
     } else {
+      // FIXME Should we rely at ConversationState current's here (it will not be set by something external in
+      // Cometd thread) or only on message's exoId?
       ConversationState convo = ConversationState.getCurrent();
       if (convo != null) {
         return convo.getIdentity().getUserId();
@@ -1214,17 +1204,6 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * Checks if is valid argument: a string not null, not empty, not longer of {@value #COMMAND_MAX_LENGTH}
-   * bytes.
-   *
-   * @param arg the argument
-   * @return true, if is valid argument
-   */
-  protected boolean isValidArg(String arg) {
-    return arg != null && arg.length() > 0 && arg.length() <= COMMAND_MAX_LENGTH;
-  }
-
-  /**
    * Checks if is valid term: <code>null</code>, or not empty and not longer of {@value #TERM_MAX_LENGTH}
    * bytes.
    *
@@ -1233,6 +1212,17 @@ public class CometdWebConferencingService implements Startable {
    */
   protected boolean isValidTerm(String term) {
     return term == null || (term.length() > 0 && term.length() <= TERM_MAX_LENGTH);
+  }
+
+  /**
+   * Checks if is valid argument: not null, not empty and not too long.
+   *
+   * @param argument the argument
+   * @return true, if is valid arg
+   * @see IdentityInfo#isValidId(String)
+   */
+  protected boolean isValidArg(String argument) {
+    return isValidId(argument);
   }
 
 }

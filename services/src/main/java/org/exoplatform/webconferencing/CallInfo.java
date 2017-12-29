@@ -35,34 +35,30 @@ import org.exoplatform.webconferencing.domain.CallEntity;
  * @version $Id: CallInfo.java 00000 Jun 19, 2017 pnedonosko $
  */
 public class CallInfo {
-
+  
   /** The id. */
-  protected final String        id;
+  protected final String                      id;
 
   /** The title. */
-  protected final String        title;
-
-  /** The participant IDs. For internal use. */
-  @Deprecated
-  private final Set<String>   participantIds = new LinkedHashSet<>();
+  protected final String                      title;
 
   /** The participants. */
-  protected final Set<UserInfo> participants   = new LinkedHashSet<>();
+  protected final Set<UserInfo>               participants = new LinkedHashSet<>();
 
   /** The owner. */
-  protected final IdentityInfo  owner;
+  protected final IdentityInfo                owner;
 
   /** The provider type. */
-  protected final String        providerType;
+  protected final String                      providerType;
 
   /** The state. */
-  protected String              state;
+  protected String                            state;
 
   /** The last date. */
-  protected Date                lastDate;
-  
-  /** The entity. */
-  protected transient CallEntity                entity; // transient to avoid serialization to JSON
+  protected Date                              lastDate;
+
+  /** The entity. */ // transient to avoid serialization to JSON
+  protected transient ThreadLocal<CallEntity> entity       = new ThreadLocal<>();
 
   /**
    * Instantiates a new call info.
@@ -108,17 +104,6 @@ public class CallInfo {
   }
 
   /**
-   * Checks if it is a participant (by user ID).
-   *
-   * @param partId the part id
-   * @return true, if is participant
-   */
-  @Deprecated
-  private boolean isParticipant(String partId) {
-    return participantIds.contains(partId);
-  }
-
-  /**
    * Gets the owner.
    *
    * @return the owner
@@ -159,7 +144,6 @@ public class CallInfo {
         // keep the entity synced here? but we already do in service's saveCall()
       }
     } // else, it was already existing part
-    //this.participantIds.add(part.getId());
   }
 
   /**
@@ -181,7 +165,7 @@ public class CallInfo {
   }
 
   /**
-   * Gets the last date.
+   * Gets the last use date.
    *
    * @return the lastDate
    */
@@ -190,50 +174,41 @@ public class CallInfo {
   }
 
   /**
-   * Sets the last date.
+   * Sets the last use date.
    *
-   * @param lastDate the lastDate to set
+   * @param lastDate the date to set
    */
   public void setLastDate(Date lastDate) {
     this.lastDate = lastDate;
   }
 
   /**
+   * Gets the entity associated with this call in current thread.
+   *
    * @return the entity
    */
   @Transient // to avoid serialization to JSON
   protected CallEntity getEntity() {
-    return entity;
+    return entity.get();
   }
 
   /**
-   * Sets the entity.
+   * Sets the entity associated with this call in current thread.
    *
    * @param entity the entity to set
    */
   @Transient // to avoid serialization to JSON
   protected void setEntity(CallEntity entity) {
-    this.entity = entity;
+    this.entity.set(entity);
   }
-  
+
   /**
-   * Checks for entity.
+   * Checks if have an entity associated with this call in current thread.
    *
-   * @return true, if successful
+   * @return true, if have an entity associated
    */
   @Transient // to avoid serialization to JSON
   protected boolean hasEntity() {
-    return entity != null;
+    return entity.get() != null;
   }
-
-  /**
-   * Gets the participant ids.
-   *
-   * @return the participantIds
-   */
-  @Deprecated
-  private Set<String> getParticipantIds() {
-    return participantIds;
-  }
-
 }
