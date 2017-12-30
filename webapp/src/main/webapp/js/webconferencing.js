@@ -50,54 +50,87 @@
 	};
 	
 	/**
+	 * Spools buffered logs to CometD channel.
+	 */
+	function LogSpooler() {
+		var buff = [];
+		
+		var flush = function() {
+			if (cometd) { //  && typeof cometd === "object"
+				if (buff.length > 0) {
+					var bucket = buff; 
+					buff = [];
+					// spool in CometD batch
+					cometd.batch(function() {
+						for (var i=0; i<bucket.length; i++) {
+							var msg = bucket[i];
+							cometd.remoteCall("/webconferencing/logs", msg, function(response) {
+								var result = tryParseJson(response);
+								if (response.successful) {
+									//log.trace("<< addCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
+								} else {
+									//log.trace("<< addCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
+									log.trace("ERROR: Failed to send log message to remote spooler", cometdError(response));
+								}
+							});
+						}
+					});
+				}
+			} else if (buff.length > 100) {
+				log.trace("WARNING: CometD not available. Log cannot be spooled remotely and will be cut to avoid memory leak");
+				buff = buff.slice(70);
+			}
+		};
+		
+		var spoolerJob;
+		var activate = function() {
+			if (!spoolerJob) {
+				spoolerJob = setInterval(function() { 
+					flush();
+				}, 5000);
+				setTimeout(function() { 
+					clearInterval(spoolerJob);
+					spoolerJob = null;
+					flush();
+				}, 180000);				
+			}
+		};
+		
+		var windowListener = function(e) {
+			flush();
+		};
+		
+		// We attempt to save all logs on page close
+		$(window).bind("beforeunload", windowListener);
+		$(window).bind("unload", windowListener);
+		
+		this.add = function(msg) {
+			buff.push(msg);
+			activate();
+		};
+	}
+	
+	/**
+	 * Singleton spooler used by all loggers.
+	 */
+	var logSpooler = new LogSpooler();
+	
+	/**
 	 * Logging to browser console and optionally (if enabled) spool the log to remote server.
 	 */
 	function Logger() {
 		
 		var providerType = null;
 		var prefix = null;
-		var remoteLog = null;
-		var buff = [];
+		var remote = false;
 		
 		// Private methods
 		var setPrefix = function(newVal) {
 			prefix = newVal ? newVal : null;
 		};
 		
-		var spoolBuff = function() {
-			if (remoteLog) {
-				var bucket = buff; 
-				buff = [];
-				// spool in CometD batch
-				cometd.batch(function() {
-					for (var i=0; i<bucket.length; i++) {
-						var params = bucket[i];
-						cometd.remoteCall("/webconferencing/logs", params, function(response) {
-							var result = tryParseJson(response);
-							if (response.successful) {
-								//log.trace("<< addCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
-							} else {
-								//log.trace("<< addCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
-								toLog("error", "Failed to send log message to remote spooler.", cometdError(response), true);
-							}
-						});
-					}
-				});	
-			} else if (buff.length > 100) {
-				toLog("warn", "Remote logger not available. Log cannot be spooled remotely and will be cut to avoid memory leak.", null, true);
-				buff = buff.slice(70);
-			}
-		};
-		
-		var windowListener = function(e) {
-			//toLog("trace", "On unload " + e.type, null, true);
-			if (buff.length > 0) {
-				spoolBuff();
-			}
-		};
-		
 		var logRemote = function(level, message, date) {
-			if (remoteLog) {
+			if (remote) {
 				var data;
 				if (typeof message === "function") {
 					data = message();
@@ -113,17 +146,14 @@
 				} else {
 					data = message;
 				}
-				var params = cometdParams({
+				var msg = cometdParams({
 					data : data,
 					level : level,
 					prefix : prefix,
 					provider : providerType,
 					timestamp : date
 				});
-				buff.push(params);
-				if (buff.length > 10) {
-					spoolBuff();
-				}
+				logSpooler.add(msg);
 			} // else, remote spooler not set			
 		};
 		
@@ -230,24 +260,8 @@
 			return log;
 		};
 		
-		this.remoteSpooler = function(theCometd) {
-			if (theCometd && typeof theCometd === "object") { // we also test is it an object (cometd assumed)
-				if (!remoteLog) {
-					// We attempt to save all logs on page close
-					$(window).bind("beforeunload", windowListener);
-					$(window).bind("unload", windowListener);					
-				} // else it's already
-				remoteLog = theCometd;
-				if (buff.length > 0) {
-					spoolBuff();
-				}
-			} else {
-				if (remoteLog) {
-					$(window).unbind("beforeunload", windowListener);
-					$(window).unbind("unload", windowListener);
-				}
-				remoteLog = null;
-			}
+		this.remoteLog = function(value) {
+			remote = value;
 			return this;
 		};
 		
@@ -2397,7 +2411,7 @@
 					var conf = providerConfig(providerType);
 					if (conf) {
 						if (!conf.log) {
-							conf.log = new Logger().provider(providerType).remoteSpooler(conf.logEnabled && cometd).get();
+							conf.log = new Logger().provider(providerType).remoteLog(conf.logEnabled && cometd).get();
 						}
 						return conf.log;
 					} else {
@@ -2410,7 +2424,7 @@
 						var conf = providerConfig(providerType);
 						if (conf) {
 							// When provider configured (via init()), we set real type and, if required, a remote spooler
-							logger.provider(providerType).remoteSpooler(conf.logEnabled && cometd);
+							logger.provider(providerType).remoteLog(conf.logEnabled && cometd);
 							conf.log = logger.get();
 						} else {
 							log.warn("Using log for not registerd provider: " + providerType);

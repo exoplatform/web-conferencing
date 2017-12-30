@@ -124,7 +124,7 @@
 									// already deleted
 									log.debug("Call not found: " + callId);
 								} else {
-									log.error(Failed to delete call: " + callId, err);
+									log.error("Failed to delete call: " + callId, err);
 								}
 							});							
 						}
