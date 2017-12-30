@@ -192,9 +192,9 @@ public class WebrtcProvider extends CallProvider {
     }
 
     /**
-     * Gets the enabled log.
+     * Checks if is log enabled.
      *
-     * @return the logEnabled
+     * @return true, if is log enabled
      */
     public boolean isLogEnabled() {
       return logEnabled;
@@ -203,7 +203,7 @@ public class WebrtcProvider extends CallProvider {
     /**
      * Sets enabled log.
      *
-     * @param logEnabled the logEnabled to set
+     * @param enableLog the new log enabled
      */
     public void setLogEnabled(boolean enableLog) {
       this.logEnabled = enableLog;
