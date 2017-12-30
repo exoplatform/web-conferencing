@@ -200,11 +200,11 @@
 			  });
 			  // Publish messages (with yourData object content)
 			  // To distinguish all Web Conferencing clients (each user page/browser/app etc.) you may need an unique ID for each.
-			  // Here we build it using API client ID from settings on server side appended by random number, but you can apply any logic here.
+			  // Here we build it using API client ID from settings on server side appended by Web Conferencing user's client ID, 
+			  // but you can apply any logic here.
 			  // In your implementation you may exchange connectivity settings this way as well as any business logic data (e.g. texting or
 			  // documents exchange).
-			  var rnd = Math.floor((Math.random() * 10000) + 1);
-			  var clientId = myconnector.getClientId() + "-" + rnd;
+			  var clientId = myconnector.getApiClientId() + "-" +  webConferencing.getUser().clientId;
 				webConferencing.toCallUpdate(callId, {
 	    		"provider" : myconnector.getType(), // required field
 	    		"sender" : currentUserId,  // required field, see use of onCallUpdate() above
