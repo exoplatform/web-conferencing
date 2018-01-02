@@ -1444,14 +1444,14 @@ public class WebConferencingService implements Startable {
         json.put("roomName", room.getName());
         json.put("roomTitle", room.getTitle());
         entity.setSettings(json.toString());
-        entity.setIsGroup(1);
-        entity.setIsUser(0);
+        entity.setIsGroup(true);
+        entity.setIsUser(false);
       } else if (OWNER_TYPE_SPACE.equals(owner.getType())) {
-        entity.setIsGroup(1);
-        entity.setIsUser(0);
+        entity.setIsGroup(true);
+        entity.setIsUser(false);
       } else {
-        entity.setIsGroup(0);
-        entity.setIsUser(1);
+        entity.setIsGroup(false);
+        entity.setIsUser(true);
       }
     } else {
       throw new NullPointerException("Call info is null");
@@ -1483,14 +1483,13 @@ public class WebConferencingService implements Startable {
    * @return the c
    */
   protected <C extends SQLException> C findCause(PersistenceException pe, Class<C> causeClass) {
-    // it's JPA impl exception (like org.hibernate.exception.ConstraintViolationException)
-    // it's java.sql.SQLIntegrityConstraintViolationException
     Throwable e = pe;
     do {
       if (e != null && causeClass.isAssignableFrom(e.getClass())) {
         return causeClass.cast(e);
       } else {
-        e = pe.getCause();
+        Throwable c = e.getCause();
+        e = c != null && c != e ? c : null;
       }
     } while (e != null);
 

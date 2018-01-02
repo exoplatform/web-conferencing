@@ -83,11 +83,11 @@ public class CallEntity {
 
   /** The is group. */
   @Column(name = "IS_GROUP")
-  protected Integer isGroup;
+  protected boolean isGroup;
 
   /** The is user. */
   @Column(name = "IS_USER")
-  protected Integer isUser;
+  protected boolean isUser;
 
   /**
    * Instantiates a new call entity.
@@ -240,11 +240,11 @@ public class CallEntity {
   }
 
   /**
-   * Gets the checks if is group.
+   * Checks if is group.
    *
-   * @return the checks if is group
+   * @return true, if is group
    */
-  public Integer getIsGroup() {
+  public boolean isGroup() {
     return isGroup;
   }
 
@@ -253,7 +253,7 @@ public class CallEntity {
    *
    * @param isGroup the new checks if is group
    */
-  public void setIsGroup(Integer isGroup) {
+  public void setIsGroup(boolean isGroup) {
     this.isGroup = isGroup;
   }
 
@@ -262,7 +262,7 @@ public class CallEntity {
    *
    * @return the integer
    */
-  public Integer isUser() {
+  public boolean isUser() {
     return isUser;
   }
 
@@ -271,7 +271,7 @@ public class CallEntity {
    *
    * @param isUser the new checks if is user
    */
-  public void setIsUser(Integer isUser) {
+  public void setIsUser(boolean isUser) {
     this.isUser = isUser;
   }
 }

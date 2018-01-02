@@ -35,10 +35,10 @@
       <column name="LAST_DATE" type="TIMESTAMP" defaultValue="${now}">
         <constraints nullable="false" />
       </column>
-      <column name="IS_GROUP" type="SMALLINT">
+      <column name="IS_GROUP" type="BOOLEAN">
         <constraints nullable="false" />
       </column>
-      <column name="IS_USER" type="SMALLINT">
+      <column name="IS_USER" type="BOOLEAN">
         <constraints nullable="false" />
       </column>
     </createTable>
@@ -49,7 +49,7 @@
   
   <!-- Definition of WBC_CALLS constraint -->
   <changeSet author="web-conferencing" id="1.0.0-2">
-    <addUniqueConstraint tableName="WBC_CALLS" columnNames="OWNER_ID, IS_GROUP" constraintName="CT_WBC_GROUP_CALL" />
+    <addUniqueConstraint tableName="WBC_CALLS" columnNames="OWNER_ID, IS_GROUP" constraintName="UK_WBC_GROUP_CALL" />
   </changeSet>
   
   <!-- Definition of WBC_PARTICIPANTS table -->
