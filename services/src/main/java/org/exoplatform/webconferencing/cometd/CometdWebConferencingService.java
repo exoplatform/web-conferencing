@@ -34,6 +34,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -128,15 +135,58 @@ public class CometdWebConferencingService implements Startable {
 
   /** The Constant COMMAND_GET_CALLS_STATE. */
   public static final String             COMMAND_GET_CALLS_STATE               = "get_calls_state";
-  
+
   /** The Constant LOG_OK. */
-  public static final String             LOG_OK                           = "{}";
+  public static final String             LOG_OK                                = "{}";
 
   /**
    * Remote call term (a meta information such as context, user ID, client ID, log level and prefix etc) max
    * length.
    */
   public static final int                TERM_MAX_LENGTH                       = 32;
+
+  /**
+   * Base minimum number of threads for remote calls' thread executors.
+   */
+  public static final int                MIN_THREADS                           = 2;
+
+  /**
+   * Minimal number of threads maximum possible for remote calls' thread executors.
+   */
+  public static final int                MIN_MAX_THREADS                       = 4;
+
+  /** Thread idle time for thread executors (in seconds). */
+  public static final int                THREAD_IDLE_TIME                      = 120;
+
+  /**
+   * Maximum threads per CPU for thread executors of user call channel.
+   */
+  public static final int                CALL_MAX_FACTOR                       = 20;
+
+  /**
+   * Queue size per CPU for thread executors of user call channel.
+   */
+  public static final int                CALL_QUEUE_FACTOR                     = CALL_MAX_FACTOR * 2;
+
+  /**
+   * Maximum threads per CPU for thread executors of logs channel.
+   */
+  public static final int                LOG_MAX_FACTOR                        = 5;
+
+  /**
+   * Queue size per CPU for thread executors of user call channel.
+   */
+  public static final int                LOG_QUEUE_FACTOR                      = LOG_MAX_FACTOR * 50;
+
+  /**
+   * Thread name used for calls executor.
+   */
+  public static final String             CALL_THREAD_PREFIX                    = "webconferencing-call-thread-";
+
+  /**
+   * Thread name used for logs executor.
+   */
+  public static final String             LOG_THREAD_PREFIX                     = "webconferencing-log-thread-";
 
   /** The Constant LOG. */
   private static final Log               LOG                                   =
@@ -162,6 +212,60 @@ public class CometdWebConferencingService implements Startable {
 
   /** The call logs. */
   protected final CallLogService         callLogs;
+
+  /** The call handlers. */
+  protected final ExecutorService        callHandlers;
+
+  /** The log handlers. */
+  protected final ExecutorService        logHandlers;
+
+  /**
+   * Command thread factory adapted from {@link Executors#DefaultThreadFactory}.
+   */
+  static class CommandThreadFactory implements ThreadFactory {
+
+    /** The group. */
+    final ThreadGroup   group;
+
+    /** The thread number. */
+    final AtomicInteger threadNumber = new AtomicInteger(1);
+
+    /** The name prefix. */
+    final String        namePrefix;
+
+    /**
+     * Instantiates a new command thread factory.
+     *
+     * @param namePrefix the name prefix
+     */
+    CommandThreadFactory(String namePrefix) {
+      SecurityManager s = System.getSecurityManager();
+      this.group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+      this.namePrefix = namePrefix;
+    }
+
+    public Thread newThread(Runnable r) {
+      Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0) {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        protected void finalize() throws Throwable {
+          super.finalize();
+          threadNumber.decrementAndGet();
+        }
+
+      };
+      if (t.isDaemon()) {
+        t.setDaemon(false);
+      }
+      if (t.getPriority() != Thread.NORM_PRIORITY) {
+        t.setPriority(Thread.NORM_PRIORITY);
+      }
+      return t;
+    }
+  }
 
   /**
    * The Class CallService.
@@ -743,8 +847,7 @@ public class CometdWebConferencingService implements Startable {
       Map<String, Object> arguments = (Map<String, Object>) data;
       String containerName = (String) arguments.get("exoContainerName");
 
-      // TODO use thread pool (take in account CPUs number of cores etc)
-      new Thread(new ContainerCommand(containerName) {
+      callHandlers.submit(new ContainerCommand(containerName) {
         /**
          * {@inheritDoc}
          */
@@ -930,7 +1033,7 @@ public class CometdWebConferencingService implements Startable {
           LOG.warn("Container error: " + error + " (" + containerName + ") for remote call of " + CALLS_CHANNEL_NAME);
           caller.failure(ErrorInfo.clientError(error).asJSON());
         }
-      }).start();
+      });
     }
 
     /**
@@ -942,12 +1045,12 @@ public class CometdWebConferencingService implements Startable {
     @RemoteCall(LOGS_CHANNEL_NAME)
     public void rcLogs(final RemoteCall.Caller caller, final Object args) {
       final ServerSession session = caller.getServerSession();
-      //if (LOG.isDebugEnabled()) { // TODO cleanup
-      //  LOG.debug(">> Remote log by " + session.getId() + " data: " + args);
-      //}
+      // if (LOG.isDebugEnabled()) { // TODO cleanup
+      // LOG.debug(">> Remote log by " + session.getId() + " data: " + args);
+      // }
 
       // TODO use thread pool (take in account CPUs number of cores etc)
-      new Thread(new Runnable() {
+      logHandlers.submit(new Runnable() {
         @Override
         @SuppressWarnings("unchecked")
         public void run() {
@@ -1025,7 +1128,7 @@ public class CometdWebConferencingService implements Startable {
                             callLog.warn("Received not expected level: " + level);
                             caller.failure(ErrorInfo.clientError("Not expected request parameters: level").asJSON());
                           }
-                          
+
                           // Finally send OK response (empty JSON object here)
                           caller.result(LOG_OK);
                         } else {
@@ -1054,7 +1157,7 @@ public class CometdWebConferencingService implements Startable {
             caller.failure(ErrorInfo.serverError("Error processing call request: " + e.getMessage()).asJSON());
           }
         }
-      }).start();
+      });
     }
 
     /**
@@ -1103,6 +1206,10 @@ public class CometdWebConferencingService implements Startable {
     this.exoBayeux = exoBayeux;
     this.callLogs = callLogs;
     this.service = new CallService();
+
+    // Thread executors
+    this.callHandlers = createThreadExecutor(CALL_THREAD_PREFIX, CALL_MAX_FACTOR, CALL_QUEUE_FACTOR);
+    this.logHandlers = createThreadExecutor(LOG_THREAD_PREFIX, LOG_MAX_FACTOR, LOG_QUEUE_FACTOR);
   }
 
   /**
@@ -1266,6 +1373,38 @@ public class CometdWebConferencingService implements Startable {
    */
   protected boolean isValidArg(String argument) {
     return isValidId(argument);
+  }
+
+  /**
+   * Create a new thread executor service.
+   *
+   * @param threadNamePrefix the thread name prefix
+   * @param maxFactor - max processes per CPU core
+   * @param queueFactor - queue size per CPU core
+   * @return the executor service
+   */
+  protected ExecutorService createThreadExecutor(String threadNamePrefix, int maxFactor, int queueFactor) {
+    // Executor will queue all commands and run them in maximum set of threads. Minimum set of threads will be
+    // maintained online even idle, other inactive will be stopped in two minutes.
+    final int cpus = Runtime.getRuntime().availableProcessors();
+    int poolThreads = cpus / 4;
+    poolThreads = poolThreads < MIN_THREADS ? MIN_THREADS : poolThreads;
+    int maxThreads = Math.round(cpus * 1f * maxFactor);
+    maxThreads = maxThreads > 0 ? maxThreads : 1;
+    maxThreads = maxThreads < MIN_MAX_THREADS ? MIN_MAX_THREADS : maxThreads;
+    int queueSize = cpus * queueFactor;
+    queueSize = queueSize < queueFactor ? queueFactor : queueSize;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Creating thread executor " + threadNamePrefix + "* for " + poolThreads + ".." + maxThreads
+          + " threads, queue size " + queueSize);
+    }
+    return new ThreadPoolExecutor(poolThreads,
+                                  maxThreads,
+                                  THREAD_IDLE_TIME,
+                                  TimeUnit.SECONDS,
+                                  new LinkedBlockingQueue<Runnable>(queueSize),
+                                  new CommandThreadFactory(threadNamePrefix),
+                                  new ThreadPoolExecutor.CallerRunsPolicy());
   }
 
 }
