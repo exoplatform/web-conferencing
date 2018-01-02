@@ -299,6 +299,7 @@ public class WebrtcProvider extends CallProvider {
         }
       }
       enabled.setIceServers(iceServers);
+      enabled.setLogEnabled(isLogEnabled());
       return enabled;
     }
   }
@@ -442,6 +443,7 @@ public class WebrtcProvider extends CallProvider {
     } else {
       this.rtcConfiguration = rtcConfiguration;
     }
+    logRemoteLogEnabled();
   }
 
   /**
@@ -462,6 +464,7 @@ public class WebrtcProvider extends CallProvider {
   public void saveRtcConfiguration(RTCConfiguration conf) throws Exception {
     saveRtcConfig(conf);
     this.rtcConfiguration = conf;
+    logRemoteLogEnabled();
   }
 
   /**
@@ -708,4 +711,15 @@ public class WebrtcProvider extends CallProvider {
     return obj != null && obj != NULL;
   }
 
+  /**
+   * Log remote log enabled.
+   */
+  protected void logRemoteLogEnabled() {
+    if (rtcConfiguration != null && rtcConfiguration.isLogEnabled()) {
+      LOG.info("Remote diagnostic log enabled for WebRTC connector");
+    } else {
+      LOG.info("Remote diagnostic log disabled for WebRTC connector");
+    }
+  }
+  
 }

@@ -40,7 +40,7 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
 @Table(name = "WBC_CALLS")
 @NamedQueries({
     @NamedQuery(name = "WebConfCall.findGroupCallByOwnerId",
-                query = "SELECT c FROM WebConfCall c WHERE c.isGroup = 1 AND c.ownerId = :ownerId"),
+                query = "SELECT c FROM WebConfCall c WHERE c.isGroup = true AND c.ownerId = :ownerId"),
     @NamedQuery(name = "WebConfCall.findUserGroupCalls",
                 query = "SELECT c FROM WebConfCall c, WebConfParticipant p WHERE c.id = p.callId AND p.id = :userId ORDER BY c.lastDate"),
     @NamedQuery(name = "WebConfCall.deleteOwnerOlderCalls",

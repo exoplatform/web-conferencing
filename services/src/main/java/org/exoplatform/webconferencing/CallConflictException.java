@@ -22,29 +22,29 @@ package org.exoplatform.webconferencing;
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: CallInfoException.java 00000 Jul 14, 2017 pnedonosko $
+ * @version $Id: CallConflictException.java 00000 Jul 14, 2017 pnedonosko $
  */
-public class CallInfoException extends WebConferencingException {
+public class CallConflictException extends WebConferencingException {
 
   /** The Constant serialVersionUID. */
-  private static final long serialVersionUID = -8254930798051516730L;
+  private static final long serialVersionUID = -8254930798051516930L;
 
   /**
-   * Instantiates a new call info exception.
+   * Instantiates a new call conflict exception.
    *
    * @param message the message
    * @param cause the cause
    */
-  public CallInfoException(String message, Throwable cause) {
+  public CallConflictException(String message, Throwable cause) {
     super(message, cause);
   }
 
   /**
-   * Instantiates a new call info exception.
+   * Instantiates a new call conflict exception.
    *
    * @param message the message
    */
-  public CallInfoException(String message) {
+  public CallConflictException(String message) {
     super(message);
   }
 

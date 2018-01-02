@@ -22,6 +22,8 @@ package org.exoplatform.webconferencing;
 import static org.exoplatform.webconferencing.IdentityInfo.isValidId;
 
 import java.net.URLEncoder;
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +35,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.persistence.PersistenceException;
 
 import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.api.settings.SettingService;
@@ -444,7 +448,7 @@ public class WebConferencingService implements Startable {
         } else {
           throw new CallInfoException("Wrong call owner type: " + ownerType);
         }
-        
+
         Set<UserInfo> participants = new LinkedHashSet<>();
         for (String pid : parts) {
           if (isValidId(pid)) {
@@ -462,40 +466,66 @@ public class WebConferencingService implements Startable {
           }
         }
 
-        String prevId = readOwnerCallId(ownerId);
-
         // Save the call
         CallInfo call = new CallInfo(id, title, owner, providerType);
         call.addParticipants(participants);
         call.setState(CallState.STARTED);
         call.setLastDate(Calendar.getInstance().getTime());
-        createCall(call);
 
-        String userId = currentUserId();
-        if (isSpace || isRoom) {
-          // it's group call
-          // saveOwnerCallId(ownerId, id); // TODO don't need this
-          for (UserInfo part : participants) {
-            if (UserInfo.TYPE_NAME.equals(part.getType())) {
-              if (prevId != null) {
-                // XXX For a case when some client failed to delete an existing (but outdated etc.) call but
-                // already starting a new one
-                // It's SfB usecase when browser client failed to delete outdated call (browser/plugin crashed
-                // in
-                // IE11) and then starts a new one
-                // removeUserGroupCallId(part.getId(), prevId); // TODO change state to leaved?!!
+        boolean notify = true;
+        try {
+          createCall(call);
+        } catch (PersistenceException pe) {
+          // ensure it's not already existing call
+          SQLIntegrityConstraintViolationException constEx = findCause(pe, SQLIntegrityConstraintViolationException.class);
+          if (constEx != null && constEx.getMessage().indexOf("PK_WBC_CALLID") >= 0) {
+            call = readCallById(id);
+            if (call != null) {
+              if (CallState.STARTED.equals(call.getState())) {
+                notify = false;
+              } else {
+                // Mark call started
+                call.setState(CallState.STARTED);
+                updateCall(call);
               }
-              // saveUserGroupCallId(part.getId(), id); // TODO don't need this
-              if (!userId.equals(part.getId())) {
-                // fire group's user listener for incoming, except of the caller
-                fireUserCallStateChanged(part.getId(), id, providerType, CallState.STARTED, ownerId, ownerType);
+            } else {
+              LOG.warn("Call ID already found but cannot read the call: " + id, pe);
+              throw new CallConflictException("Call ID already found", pe);
+            }
+          } else {
+            // We cannot create this call
+            LOG.error("Error creating call: " + id, pe);
+            throw new CallInfoException("Error creating call", pe);
+          }
+        }
+
+        if (notify) {
+          // Notify participants (about started call)
+          String userId = currentUserId();
+          if (isSpace || isRoom) {
+            // it's group call
+            String prevId = readOwnerCallId(ownerId);
+            for (UserInfo part : participants) {
+              if (UserInfo.TYPE_NAME.equals(part.getType())) {
+                if (prevId != null) {
+                  // XXX For a case when some client failed to delete an existing (but outdated etc.) call but
+                  // already starting a new one.
+                  // It's SfB usecase when browser client failed to delete outdated call (browser/plugin
+                  // crashed in IE11) and then starts a new one.
+                  deleteCall(call.getId()); // TODO fire leaved instead?
+                }
+                if (!userId.equals(part.getId())) {
+                  // fire group's user listener for incoming, except of the caller
+                  fireUserCallStateChanged(part.getId(), id, providerType, CallState.STARTED, ownerId, ownerType);
+                }
               }
             }
+          } else if (isUser) {
+            // It's P2P call
+            notifyUserCallStateChanged(call, userId, CallState.STARTED);
           }
-        } else if (isUser) {
-          // It's P2P call
-          notifyUserCallStateChanged(call, userId, CallState.STARTED);
-        }
+        } // otherwise we assume call parts already notified about the state
+
         return call;
       } else {
         throw new WrongIdException("Wrong owner ID value");
@@ -553,7 +583,7 @@ public class WebConferencingService implements Startable {
   protected CallInfo stopCall(CallInfo call, String userId, boolean remove) throws Exception {
     // Delete or update in single tx
     if (remove) {
-      deleteCall(call);
+      deleteCall(call.getId());
     } else {
       call.setState(CallState.STOPPED);
       updateCall(call);
@@ -1444,6 +1474,29 @@ public class WebConferencingService implements Startable {
     return part;
   }
 
+  /**
+   * Find cause exception of given type.
+   *
+   * @param <C> the generic type
+   * @param pe the pe
+   * @param causeClass the cause class
+   * @return the c
+   */
+  protected <C extends SQLException> C findCause(PersistenceException pe, Class<C> causeClass) {
+    // it's JPA impl exception (like org.hibernate.exception.ConstraintViolationException)
+    // it's java.sql.SQLIntegrityConstraintViolationException
+    Throwable e = pe;
+    do {
+      if (e != null && causeClass.isAssignableFrom(e.getClass())) {
+        return causeClass.cast(e);
+      } else {
+        e = pe.getCause();
+      }
+    } while (e != null);
+
+    return null;
+  }
+
   // >>>>>>> Call storage: ExoTransactional managed
 
   /**
@@ -1546,8 +1599,8 @@ public class WebConferencingService implements Startable {
    * @throws Exception the exception
    */
   @ExoTransactional
-  protected boolean deleteCall(CallInfo call) throws Exception {
-    CallEntity entity = callStorage.find(call.getId());
+  protected boolean deleteCall(String callId) throws Exception {
+    CallEntity entity = callStorage.find(callId);
     if (entity != null) {
       callStorage.delete(entity);
       return true;

@@ -24,6 +24,8 @@
 			
 			var CALL_DISABLED_CLASS = "callDisabled";
 			
+			var LOCAL_CALL_PREFIX = "webrtc.call_";
+			
 			var isExoAndroid = /eXo\/.*Android/.test(navigator.userAgent);
 			if (isExoAndroid) {
 				log.debug("Running on eXo app for Android (WebRTC calls not supported currently)");
@@ -99,6 +101,30 @@
 				});
 				return webConferencing.initRequest(request);
 			};
+			
+			var windowId = function(localUserId, callId) {
+				return localUserId + ":" + callId;
+			};
+			
+			var saveCallWindow = function(callId, windowId) {
+				if (typeof Storage != "undefined") {
+			  	localStorage.setItem(LOCAL_CALL_PREFIX + callId, windowId);
+				} // otherwise, save nothing
+			};
+			
+			var removeCallWindow = function(callId) {
+				if (typeof Storage != "undefined") {
+			  	localStorage.removeItem(LOCAL_CALL_PREFIX + callId);
+				}
+			};
+			
+			var readCallWindow = function(callId) {
+				if (typeof Storage != "undefined") {
+			  	return localStorage.getItem(LOCAL_CALL_PREFIX + callId);
+				} else {
+					return null;
+				}
+			};
 
 			var joinedCall = function(callId) {
 				return webConferencing.updateUserCall(callId, "joined");
@@ -117,7 +143,7 @@
 					log.debug("Call deleted: " + callId);
 					process.resolve();
 				}).fail(function(err) {
-					if (err && (err.code == "NOT_FOUND_ERROR" || (typeof(status) == "number" && status == 404))) {
+					if (err && err.code == "NOT_FOUND_ERROR") {
 						// already deleted
 						log.trace("Call not found: " + callId);
 						process.resolve();
@@ -125,6 +151,8 @@
 						log.error("Failed to delete a call: " + callId, err);
 						process.reject(err);
 					}
+				}).always(function() {
+					removeCallWindow(callId);
 				});
 				return process.promise();
 			};
@@ -160,17 +188,36 @@
 			};
 			
 			var setButtonCall = function($button, callId) {
-				if (!$button.hasClass(CALL_DISABLED_CLASS)) {
-					$button.addClass(CALL_DISABLED_CLASS);
-				}
+				// We don't lock, but let open the call window
+				//if (!$button.hasClass(CALL_DISABLED_CLASS)) {
+				//	$button.addClass(CALL_DISABLED_CLASS);
+				//}
 				$button.data("callid", callId);
 				$button.attr("title", message("callRunningTip"));
 			};
 			
 			var removeButtonCall = function($button) {
-				$button.removeClass(CALL_DISABLED_CLASS);
+				//$button.removeClass(CALL_DISABLED_CLASS);
 				$button.removeData("callid"); // we don't touch targetid, it managed by callButton()
 				$button.attr("title", message("callStartTip"));
+			};
+			
+			var openCallWindow = function(callId, onLocalNotFound) {
+				var callWindow;
+				var callWindowId = readCallWindow(callId);
+				if (callWindowId) {
+					// try open already opened call window
+					log.trace("Trying to open window of already running call: " + callWindowId);
+					callWindow = webConferencing.showCallPopup("", callWindowId);
+				}
+				if (callWindow) {
+					callWindow.focus();
+					log.trace("Successfuly opened window of already running call: " + callWindowId);
+				} else {
+					log.trace("Starting a call: " + callId);
+					removeCallWindow(callId); // remove if something saved locally
+					onLocalNotFound(callId); 
+				}
 			};
 			
 			this.callButton = function(context) {
@@ -192,37 +239,48 @@
 									partsAsc.sort();
 									callId = "p/" + partsAsc.join("@");
 								}
-								var link = settings.callUri + "/" + callId;
 								var $button = $("<a title='" + message("callStartTip") + "'"
 											+ " class='webrtcCallAction' data-placement='top' data-toggle='tooltip'>"
 											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + message("call") + "</span></a>");
-								// Check if this call isn't running and joined by this user and disable the button if so
-								webConferencing.getCall(callId).done(function(call) { // this will call server-side via Comet
-									for (var pi = 0; pi < call.participants.length; pi++) {
-										var p = call.participants[pi];
-										if (p.id == context.currentUser.id && p.state == "joined") {
-											log.trace(">>> Call " + callId + " already joined by " + context.currentUser.id);
-											setButtonCall($button, callId);
-											break;
+								// TODO don't check for call remotely until clicked
+								/*if (callWindowId) {
+									// Check if this call isn't running and joined by this user and disable the button if so
+									webConferencing.getCall(callId).done(function(call) { // this will call server-side via Comet
+										if (call.state == "started") {
+											for (var pi = 0; pi < call.participants.length; pi++) {
+												var p = call.participants[pi];
+												if (p.id == context.currentUser.id && p.state == "joined") {
+													log.trace(">>> Call " + callId + " already joined by " + context.currentUser.id);
+													setButtonCall($button, callId);
+													break;
+												}
+											}											
 										}
-									}
-								}).fail(function(err, status) {
-									// we don't show any error at this stage, but let an user to place a new call
-									if (err && (err.code == "NOT_FOUND_ERROR" || (typeof(status) == "number" && status == 404))) {
-										// call not found
-									} else {
-										log.warn("Failed to get call info: " + callId, err); // warn because we continue and let start a call
-									}
-								});
+									}).fail(function(err) {
+										// we don't show any error at this stage, but let an user to place a new call
+										removeCallWindow(callId);
+										if (err && err.code == "NOT_FOUND_ERROR") {
+											// call not found - OK
+										} else {
+											log.warn("Failed to get call info: " + callId, err); // warn because we continue and let start a call
+										}
+									});									
+								}*/
+								var callWindowId = readCallWindow(callId);
+								if (callWindowId) {
+									setButtonCall($button, callId); // should be removed on stop/leaved event in init()
+								}
 								$button.click(function() {
-									if (!$button.hasClass(CALL_DISABLED_CLASS)) {
+									openCallWindow(callId, function() {
 										// Open a window for a new call
-										var callWindow = webConferencing.showCallPopup(link, self.getTitle() + " " + message("call"));
+										var link = settings.callUri + "/" + callId;
+										callWindowId = windowId(context.currentUser.id, callId);
+										var callWindow = webConferencing.showCallPopup(link, callWindowId);
 										// Create a call
 										var callInfo = {
 											owner : context.currentUser.id,
-											ownerType : "user",  
+											ownerType : "user",
 											provider : self.getType(),
 											title : target.title,
 											participants : [context.currentUser.id, target.id].join(";") // eXo user ids separated by ';' !
@@ -236,6 +294,7 @@
 												callWindow.eXo.webConferencing.startCall(call).done(function(state) {
 													log.info("Call " + state + ": " + callId + " target: " + target.title);
 													setButtonCall($button, callId); // should be removed on stop/leaved event in init()
+													saveCallWindow(callId, callWindowId);
 												}).fail(function(err) {
 													log.error("Call start failed: " + callId, err);
 													webConferencing.showError(message("errorStartingCall"), webConferencing.errorText(err));
@@ -247,10 +306,12 @@
 										}).fail(function(err) {
 											log.error("Call creation failed: " + callId, err);
 											webConferencing.showError(message("errorAddCall"), webConferencing.errorText(err));
+											setTimeout(function() {
+												// Let error window to be open a bit to see its state/error/etc - for admins/devs
+												callWindow.close();
+											}, 2500);
 										});
-									} else {
-										log.debug("Call disabled to " + target.id);
-									}
+									});
 								});
                 setTimeout(function(){
 									$button.filter(".webrtcCallAction.preferred").tooltip();
@@ -269,7 +330,7 @@
 							});
 						} else {
 							var msg = "Group calls not supported";
-							log.debug(msg);
+							log.trace(msg);
 							button.reject(msg);
 						}
 					} else {
@@ -355,20 +416,18 @@
 							}								
 						}
 					};
-					var lockCallButton = function(targetId, callId) {
+					var assignCallButton = function(targetId, callId) {
 						$(".webrtcCallAction").each(function() {
 							var $button = $(this);
 							if ($button.data("targetid") == targetId) {
-								//log.trace(">> lockCallButton " + targetId);
 								setButtonCall($button, callId);
 							}
 						});
 					};
-					var unlockCallButton = function(callId) {
+					var unassignCallButton = function(callId) {
 						$(".webrtcCallAction").each(function() {
 							var $button = $(this);
 							if ($button.data("callid") == callId) {
-								//log.trace(">> unlockCallButton " + callId + " " + $button.data("targetid"));
 								removeButtonCall($button);
 							}
 						});
@@ -383,8 +442,8 @@
 						webConferencing.onUserUpdate(currentUserId, function(update, status) {
 							if (update.providerType == self.getType()) {
 								if (update.eventType == "call_state") {
+									var callId = update.callId;
 									if (update.owner.type == "user") {
-										var callId = update.callId;
 										var lastCallId = lastUpdate ? lastUpdate.callId : null;
 										var lastCallState = lastUpdate ? lastUpdate.callState : null;
 										if (callId == lastCallId && update.callState == lastCallState) {
@@ -417,18 +476,23 @@
 														}); 
 														popover.done(function(msg) {
 															log.info("User " + msg + " call: " + callId);
-															var link = settings.callUri + "/" + callId;
-															var callWindow = webConferencing.showCallPopup(link, self.getTitle() + " " + message("call"));
-															// Tell the window to start a call  
-															onCallWindowReady(callWindow).done(function() {
-																log.debug("Call page loaded: " + callId);
-																callWindow.document.title = message("callWith") + " " + call.owner.title;
-																callWindow.eXo.webConferencing.startCall(call).done(function(state) {
-																	log.info("Call " + state + ": " + callId);
-																	lockCallButton(update.owner.id, callId);
-																}).fail(function(err) {
-																	log.error("Failed to start/join call: " + callId, err);
-																	webConferencing.showError(message("errorStartingCall"), webConferencing.errorText(err));
+															// We try open already running call if found, then create a new call if not found
+															openCallWindow(callId, function() {
+																var link = settings.callUri + "/" + callId;
+																var callWindowId = windowId(context.currentUser.id, callId);
+																var callWindow = webConferencing.showCallPopup(link, callWindowId);
+																// Tell the window to start a call  
+																onCallWindowReady(callWindow).done(function() {
+																	log.debug("Call page loaded: " + callId);
+																	callWindow.document.title = message("callWith") + " " + call.owner.title;
+																	callWindow.eXo.webConferencing.startCall(call).done(function(state) {
+																		log.info("Call " + state + ": " + callId);
+																		assignCallButton(update.owner.id, callId);
+																		saveCallWindow(callId, callWindowId);
+																	}).fail(function(err) {
+																		log.error("Failed to start/join call: " + callId, err);
+																		webConferencing.showError(message("errorStartingCall"), webConferencing.errorText(err));
+																	});
 																});
 															});
 														});
@@ -439,7 +503,7 @@
 																deleteCall(callId);
 															}
 														});
-													}).fail(function(err, status) {
+													}).fail(function(err) {
 														log.error("Failed to get user status: " + currentUserId, err);
 														if (err) {
 															webConferencing.showError(message("errorIncomingCall"), webConferencing.errorText(err));
@@ -447,7 +511,7 @@
 															webConferencing.showError(message("errorIncomingCall"), message("errorReadUserStatus"));
 														}
 													});
-												}).fail(function(err, status) {
+												}).fail(function(err) {
 													log.error("Failed to get call info: " + callId, err);
 													if (err) {
 														webConferencing.showError(message("errorIncomingCall"), webConferencing.errorText(err));
@@ -459,14 +523,14 @@
 												log.info("Call stopped remotelly: " + callId);
 												// Hide accept popover for this call, if any
 												closeCallPopup(callId, update.callState);
-												// Unclock the call button
-												unlockCallButton(callId);
+												unassignCallButton(callId);
+												removeCallWindow(callId);
 											} 
 											// "call_joined" to use with group calls and close its popup
 											// "call_leaved" to unlock a call button of group call
 										}
 									} else {
-										log.error("Group calls not supported");
+										log.warn("Group calls not supported: " + callId);
 									}
 								} else if (update.eventType == "call_joined") {
 									// If user has incoming popup open for this call (several user's windows/clients), then close it

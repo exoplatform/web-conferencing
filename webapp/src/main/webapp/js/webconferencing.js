@@ -19,23 +19,44 @@
 		return err && err.message ? err.message : err;
 	};
 	
+	var errorCode = function(err) {
+		return err && err.code ? err.code : undefined;
+	};
+	
 	var tryParseJson = function(message) {
 		var src = message.data ? message.data : (message.error ? message.error : message.failure); 
 		if (src) {
 			try {
-				return typeof src == "string" ? JSON.parse(src) : src;
+				if (typeof src === "string" && (src.startsWith("{") || src.startsWith("["))) {
+					return JSON.parse(src);					
+				}
 			} catch(e) {
 				log.debug("Error parsing '" + src + "' as JSON: " + e, e);
-				return src;
 			}				
-		} else {
-			return src;
 		}
+		return src;
 	};
 	
 	var cometdError = function(response) {
-		return "[" + response.id + "] " + response.channel + " " 
-				+ JSON.stringify(response.error ? response.error : (response.failure ? response.failure : response.data));
+		var msg = "[" + response.id + "] ";
+		if (response.channel) {
+			msg += response.channel + " ";
+		} else if (response.failure && response.failure.message && response.failure.message.channel) {
+			msg += response.failure.message.channel + " ";
+		}
+		if (response.error) {
+			msg += response.error + " ";
+		}
+		if (response.failure) {
+			msg += response.failure.reason + " ";
+			//if (response.failure.clientId) {
+			//	msg += "(clientId: " + response.failure.clientId + ") ";
+			//}
+		}
+		if (response.data) {
+			msg += response.data;
+		}
+		return msg;
 	};
 	
 	var cometdInfo = function(response) {
@@ -56,34 +77,35 @@
 		var buff = [];
 		
 		var flush = function() {
-			if (cometd) { //  && typeof cometd === "object"
-				if (buff.length > 0) {
+			if (buff.length > 0) {
+				if (cometd) {
 					var bucket = buff; 
 					buff = [];
 					// spool in CometD batch
 					cometd.batch(function() {
 						for (var i=0; i<bucket.length; i++) {
 							var msg = bucket[i];
+							//log.trace("Sending remote log: " + JSON.stringify(msg));
 							cometd.remoteCall("/webconferencing/logs", msg, function(response) {
 								var result = tryParseJson(response);
-								if (response.successful) {
-									//log.trace("<< addCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
-								} else {
-									//log.trace("<< addCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
+								if (!response.successful) {
 									log.trace("ERROR: Failed to send log message to remote spooler", cometdError(response));
 								}
 							});
 						}
 					});
+				} else if (buff.length > 100) {
+					log.trace("WARNING: CometD not available. Log cannot be spooled remotely and will be cut to avoid memory leak");
+					buff = buff.slice(20);
 				}
-			} else if (buff.length > 100) {
-				log.trace("WARNING: CometD not available. Log cannot be spooled remotely and will be cut to avoid memory leak");
-				buff = buff.slice(70);
 			}
 		};
 		
 		var spoolerJob;
 		var activate = function() {
+			if (buff.length > 5) {
+				flush();
+			}
 			if (!spoolerJob) {
 				spoolerJob = setInterval(function() { 
 					flush();
@@ -1081,6 +1103,7 @@
 		};
 
 		this.errorText = errorText;
+		this.errorCode = errorCode;
 		
 		var contextId = function(context) {
 			return context.userId ? context.userId : (context.spaceId ? context.spaceId : context.roomName);
@@ -1188,7 +1211,7 @@
 							log.info("Initialized call provider: " + provider.getType());
 							initializer.resolve(provider, true);
 						}).fail(function(err) {
-							log.warn("Failed to initialize call provider '" + provider.getType() + "': " + err);
+							log.warn("Failed to initialize call provider '" + provider.getType() + "'", err);
 							initializer.resolve(provider, false);
 						});
 					} else {
@@ -1314,8 +1337,11 @@
 								}
 								log.trace("<<< addCallButton DONE < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
 							});
-							button.fail(function(msg) {
+							button.fail(function(msg, err) {
 								log.trace("<<< addCallButton CANCELED < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id + ": " + msg);
+								if (err) {
+									log.error("Failed to add a call button for " + contextName + " by " + context.currentUser.id + ". " + msg + ". " + errorText(err));
+								}
 							});
 							button.always(function() {
 								// for the below $.when's always callback we need resolve all workers independently succeeded or failed 
@@ -1535,7 +1561,7 @@
 										});
 										initializer.fail(function(err) {
 											if (error) {
-												log.trace("<< initChat ERROR " + context.roomTitle + " for " + currentUser.id + ": " + err);
+												log.trace("<< initChat ERROR " + context.roomTitle + " for " + currentUser.id, err);
 												log.error("Chat initialization failed in '" + context.roomTitle + "' for " + currentUser.id, err);
 												$roomDetail.removeData("roomcallinitialized");
 											}
@@ -1545,7 +1571,7 @@
 										$roomDetail.removeData("roomcallinitialized");
 									}
 								}).fail(function(err) {
-									log.trace("<< initChat ERROR getting room info from chatServer: " + err);
+									log.trace("<< initChat ERROR getting room info from chatServer", err);
 									log.error("Error getting room info from Chat server", err);
 									$roomDetail.removeData("roomcallinitialized");
 								}); 
@@ -1616,7 +1642,7 @@
 										});
 										initializer.fail(function(err) {
 											if (err) {
-												log.trace("<< initMiniChat ERROR [" + context.roomTitle + "] for " + currentUser.id + ": " + err);
+												log.trace("<< initMiniChat ERROR [" + context.roomTitle + "] for " + currentUser.id, err);
 												log.error("Mini-chat initialization failed in " + context.roomTitle + " for " + currentUser.id, err);
 												$miniChat.removeData("minichatcallinitialized");												
 											}
@@ -1625,7 +1651,7 @@
 										log.trace("<< initMiniChat WARN no room found in context");
 									}
 								}).fail(function(err) {
-									log.trace("<< initMiniChat ERROR getting room info from chatServer: " + err);
+									log.trace("<< initMiniChat ERROR getting room info from chatServer", err);
 									log.error("Error getting room info from Chat server", err);
 								});
 							}, 750);
@@ -1763,7 +1789,7 @@
 			});
 			initializer.fail(function(err) {
 				if (err) {
-					log.trace("<< addPopoverButton ERROR " + contextId(context) + " for " + currentUser.id + ": " + err);
+					log.trace("<< addPopoverButton ERROR " + contextId(context) + " for " + currentUser.id , err);
 				}
 			});
 			return initializer;
@@ -1878,7 +1904,7 @@
 					});
 					initializer.fail(function(err) {
 						if (err) {
-							log.trace("<< initSpace ERROR " + currentSpaceId + " for " + currentUser.id + ": " + err);
+							log.trace("<< initSpace ERROR " + currentSpaceId + " for " + currentUser.id, err);
 							log.error("Space initialization failed in " + currentSpaceId + " for " + currentUser.id, err);
 						}
 					});
@@ -1945,7 +1971,8 @@
 							"url": prefixUrl  + context.cometdPath,
 							"exoId": currentUser.id,
 							"exoToken": context.cometdToken,
-							"maxNetworkDelay" : 15000
+							"maxNetworkDelay" : 30000,
+							"connectTimeout": 60000
 						});
 						cometd = cCometD;
 						cometdContext = {

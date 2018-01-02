@@ -41,7 +41,7 @@ import org.exoplatform.webconferencing.domain.CallEntity;
 public class CallDAO extends GenericDAOJPAImpl<CallEntity, String> {
 
   /** The Constant USER_CALL_DAYS_LIVETIME. */
-  public static final int USER_CALL_DAYS_LIVETIME = 14;
+  public static final int USER_CALL_DAYS_LIVETIME = 2;
 
   /**
    * Instantiates a new call DAO.

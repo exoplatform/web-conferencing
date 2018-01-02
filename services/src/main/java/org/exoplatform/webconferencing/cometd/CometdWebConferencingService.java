@@ -70,6 +70,7 @@ import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityConstants;
 import org.exoplatform.services.security.IdentityRegistry;
+import org.exoplatform.webconferencing.CallConflictException;
 import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.CallInfoException;
 import org.exoplatform.webconferencing.CallState;
@@ -127,6 +128,9 @@ public class CometdWebConferencingService implements Startable {
 
   /** The Constant COMMAND_GET_CALLS_STATE. */
   public static final String             COMMAND_GET_CALLS_STATE               = "get_calls_state";
+  
+  /** The Constant LOG_OK. */
+  public static final String             LOG_OK                           = "{}";
 
   /**
    * Remote call term (a meta information such as context, user ID, client ID, log level and prefix etc) max
@@ -843,6 +847,9 @@ public class CometdWebConferencingService implements Startable {
                                   } catch (CallInfoException e) {
                                     // aka BAD_REQUEST
                                     caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
+                                  } catch (CallConflictException e) {
+                                    // aka SERVER_ERROR
+                                    caller.failure(ErrorInfo.serverError(e.getMessage()).asJSON());
                                   } catch (Throwable e) {
                                     LOG.error("Error creating call for '" + id + "' by '" + currentUserId + "'", e);
                                     caller.failure(ErrorInfo.serverError("Error creating call record").asJSON());
@@ -935,9 +942,9 @@ public class CometdWebConferencingService implements Startable {
     @RemoteCall(LOGS_CHANNEL_NAME)
     public void rcLogs(final RemoteCall.Caller caller, final Object args) {
       final ServerSession session = caller.getServerSession();
-      // if (LOG.isDebugEnabled()) { // TODO cleanup
-      // LOG.debug("Remote log by " + session.getId() + " data: " + args);
-      // }
+      //if (LOG.isDebugEnabled()) { // TODO cleanup
+      //  LOG.debug(">> Remote log by " + session.getId() + " data: " + args);
+      //}
 
       // TODO use thread pool (take in account CPUs number of cores etc)
       new Thread(new Runnable() {
@@ -1018,6 +1025,9 @@ public class CometdWebConferencingService implements Startable {
                             callLog.warn("Received not expected level: " + level);
                             caller.failure(ErrorInfo.clientError("Not expected request parameters: level").asJSON());
                           }
+                          
+                          // Finally send OK response (empty JSON object here)
+                          caller.result(LOG_OK);
                         } else {
                           caller.failure(ErrorInfo.clientError("Not found request parameters: data").asJSON());
                         }
@@ -1036,10 +1046,6 @@ public class CometdWebConferencingService implements Startable {
               } else {
                 caller.failure(ErrorInfo.clientError("Wrong request parameters: clientId").asJSON());
               }
-              //
-              // } else {
-              // caller.failure(ErrorInfo.clientError("Container required").asJSON());
-              // }
             } else {
               caller.failure(ErrorInfo.clientError("Unauthorized user").asJSON());
             }

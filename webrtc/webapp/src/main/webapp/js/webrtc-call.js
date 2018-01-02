@@ -95,11 +95,11 @@ if (eXo.webConferencing) {
 							var isGroup = callId.startsWith("g/");
 							if (isGroup) {
 								log.warn("Group calls not supported: " + callId);
-								showError("Warning", "Group calls not supported by WebRTC provider");
+								showError("Warning", "Group calls not supported by WebRTC connector");
 								setTimeout(function() {
 									window.close();
 								}, 7000);
-								process.reject("Group calls not supported by WebRTC");
+								process.reject("Group calls not supported");
 							} else {
 								log.trace("Preparing call: " + callId);
 								var currentUserId = webConferencing.getUser().id;
@@ -271,8 +271,8 @@ if (eXo.webConferencing) {
 									connection.fail(function(err) {
 										log.error("Failed to start connection for: " + callId, err);
 										err = webConferencing.errorText(err);
-										process.reject(webrtc.message("errorStartingConnection") + ": " + err); 
-										showError(webrtc.message("errorStartingConnection"), err);
+										process.reject(webrtc.message("errorStartingConnection") + ". " + webConferencing.errorText(err)); 
+										showError(webrtc.message("errorStartingConnection"), webConferencing.errorText(err));
 										// we don't stop the call to keep the window open and let user report an error 
 									});
 									
@@ -293,7 +293,7 @@ if (eXo.webConferencing) {
 							    		"hello": isOwner ? "__all__" : call.owner.id
 							      }).fail(function(err) {
 											log.error("Failed to send Hello for " + callId, err);
-											showError("Error starting call", err);
+											showError("Error starting call", webConferencing.errorText(err));
 										});
 									};
 									var sendBye = function() {
@@ -310,33 +310,31 @@ if (eXo.webConferencing) {
 										return sendMessage({
 							    		"offer": JSON.stringify(localDescription)
 							      }).done(function() {
-							      	log.debug("Published offer for " + callId);
+							      	log.debug("Published offer for " + callId + " " + JSON.stringify(localDescription));
 										}).fail(function(err) {
 											log.error("Failed to send offer for " + callId, err);
 											// TODO May retry?
-											showError("Error of sharing media (offer)", err);
+											showError("Error of sharing media (offer)", webConferencing.errorText(err));
 										});
 									};
 									var sendAnswer = function(localDescription) {
 										return sendMessage({
 							    		"answer": JSON.stringify(localDescription)
 							      }).done(function() {
-							      	log.debug("Published answer for " + callId);
+							      	log.debug("Published answer for " + callId + " " + JSON.stringify(localDescription));
 										}).fail(function(err) {
 											log.error("Failed to send answer for " + callId, err);
-											showError("Error of sharing media (answer)", err);
+											showError("Error of sharing media (answer)", webConferencing.errorText(err));
 										});
 									};
 									var sendCandidate = function(candidate) {
 										return sendMessage({
-							    		// "sdpMLineIndex" : event.candidate.sdpMLineIndex,
-							        // "sdpMid": event.candidate.sdpMid,
 							        "candidate" : candidate
 							      }).done(function() {
-							      	log.debug("Published candidate for " + callId);
+							      	log.debug("Published candidate for " + callId + " " + JSON.stringify(candidate));
 										}).fail(function(err) {
 											log.error("Failed to send candidate for " + callId, err);
-											showError("Error of sharing connection", err);
+											showError("Error of sharing connection", webConferencing.errorText(err));
 										});
 									};
 									
@@ -359,12 +357,10 @@ if (eXo.webConferencing) {
 									// Add peer listeners for connection flow
 									pc.onicecandidate = function (event) {
 										// This will happen when browser will be ready to exchange peers setup
-										log.debug("ICE candidate ready for " + callId + ": " + JSON.stringify(event));
+										log.debug("ICE candidate ready for " + callId);
 										connection.then(function() {
 									    if (event.candidate) {
-									    	sendCandidate(event.candidate).done(function() {
-									    		log.debug("Sent candidate for " + callId);
-									    	});
+									    	sendCandidate(event.candidate);
 									    } else {
 									      // else All ICE candidates have been sent. ICE gathering has finished.
 									    	// Send empty candidate as a sign of finished ICE gathering.
@@ -408,11 +404,11 @@ if (eXo.webConferencing) {
 										    		});
 										      }).catch(function(err) {
 										      	log.error("Failed to set local description for " + callId, err);
-										      	showError("Error of preparing connection", err);
+										      	showError("Error of preparing connection", webConferencing.errorText(err));
 											    });
 										    }).catch(function(err) {
 										    	log.error("Failed to create an offer for " + callId, err);
-										    	showErroror("Error of starting connection", err);
+										    	showErroror("Error of starting connection", webConferencing.errorText(err));
 										    });
 						  				});
 								  	}
@@ -474,7 +470,7 @@ if (eXo.webConferencing) {
 												log.trace("Received call update for " + callId + ": " + JSON.stringify(message));
 												if (message.candidate) {
 													// ICE candidate of remote party (can happen several times)
-													log.debug("Received candidate for " + callId);
+													log.debug("Received candidate for " + callId + ": " + JSON.stringify(message.candidate));
 													if (Object.getOwnPropertyNames(message.candidate).length > 0 || isEdge) {
 														connection.then(function() {
 															log.debug("Creating candidate for " + callId);
@@ -484,7 +480,7 @@ if (eXo.webConferencing) {
 															  log.debug("Added candidate for " + callId);
 															}).catch(function(err) {
 																log.error("Failed to add candidate for " + callId, err);
-																showError("Error establishing call", err);
+																showError("Error establishing call", webConferencing.errorText(err));
 															});														
 														});
 													} else {
@@ -524,18 +520,18 @@ if (eXo.webConferencing) {
 														      			});
 														      		}).catch(function(err) {
 														      			log.error("Failed to set local description (answer) for " + callId, err);
-															      		showError("Error accepting call", err);
+															      		showError("Error accepting call", webConferencing.errorText(err));
 														      		});
 														      	}).catch(function(err) {
 														      		log.error("Failed to create an answer for " + callId, err);
-														      		showError("Error answering call", err);
+														      		showError("Error answering call", webConferencing.errorText(err));
 														      	});
 														      } else {
 														      	log.error("Remote description type IS NOT 'offer' BUT '" + pc.remoteDescription.type + "'. Call state not defined.");
 														      }
 														    }).catch(function(err) {
 														    	log.error("Failed to set remote description (offer) for " + callId, err);
-														    	showError("Error applying call", err);
+														    	showError("Error applying call", webConferencing.errorText(err));
 														    });
 															});
 														} catch(e) {
@@ -562,7 +558,7 @@ if (eXo.webConferencing) {
 																	});
 														    }).catch(function(err) {
 														    	log.error("Failed to set remote description (answer) for " + callId, err);
-														    	showError("Error answering call", err);
+														    	showError("Error answering call", webConferencing.errorText(err));
 														    });
 															});
 														} catch(e) {
@@ -606,7 +602,7 @@ if (eXo.webConferencing) {
 										log.error("Call subscribtion failed for " + callId, err);
 										err = webConferencing.errorText(err);
 										process.reject(webrtc.message("errorSubscribeCall") + ": " + err);
-										showError(webrtc.message("errorSubscribeCall"), err);
+										showError(webrtc.message("errorSubscribeCall"), webConferencing.errorText(err));
 									});
 									
 									// Show current user camera in the video,
@@ -759,18 +755,18 @@ if (eXo.webConferencing) {
 											});
 										}).catch(function(err) {
 											log.error("User media error: " + JSON.stringify(err), err);  
-											showError(webrtc.message("mediaDevicesError"), err);
+											showError(webrtc.message("mediaDevicesError"), webConferencing.errorText(err));
 										});
 									}).fail(function(err) {
 										log.error("Media devices discovery failed", err);
-										showError(webrtc.message("audioVideoRequired"), err);
+										showError(webrtc.message("audioVideoRequired"), webConferencing.errorText(err));
 									});
 									// Resolve this in any case of above media devices discovery result
 									process.resolve("started");
-								} catch(e) {
-									log.error("Failed to create RTC peer connection for " + callId, e);
-									process.reject(webrtc.message("connectionFailed") + ": " + (e.message ? e.message : e));
-									showError(webrtc.message("connectionFailed"), e);
+								} catch(err) {
+									log.error("Failed to create RTC peer connection for " + callId, err);
+									process.reject(webrtc.message("connectionFailed"), err);
+									showError(webrtc.message("connectionFailed"), webConferencing.errorText(err));
 									stopCall();
 								}
 							}
@@ -785,7 +781,7 @@ if (eXo.webConferencing) {
 						showError(webrtc.message("providerError"), webrtc.message("notInitialized") + ".");
 					}
 				}).fail(function(err) {
-					log.error("Provider not available");
+					log.error("Provider not available", err);
 					process.reject(webrtc.message("providerNotAvailable"), err);
 				});
 			});

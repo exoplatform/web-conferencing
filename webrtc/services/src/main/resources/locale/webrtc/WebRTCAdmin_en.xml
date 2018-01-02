@@ -18,6 +18,11 @@
       <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
       <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
       <remove>Remove</remove>
+      
+      <!-- Error Diagnostics -->
+      <errorDiagnostic>Error Diagnostics</errorDiagnostic>
+      <enableLogCollection>Enable client-side log collection</enableLogCollection>
+      <logCollectionInfo>Will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

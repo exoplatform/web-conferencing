@@ -9,7 +9,7 @@
     <answer>Answer</answer>
     <decline>Decline</decline>
     <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call already running</callRunningTip>
+    <callRunningTip>This call already running. Click to open.</callRunningTip>
     
     <providerError>WebRTC provider error</providerError>
     <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
