@@ -321,7 +321,7 @@ public class WebConferencingService implements Startable {
    * @throws Exception the exception
    */
   public SpaceInfo getSpaceInfo(String spacePrettyName) throws Exception {
-    return spaceInfo(spacePrettyName, readOwnerCallId(spacePrettyName));
+    return spaceInfo(spacePrettyName, readGroupCallId(spacePrettyName));
   }
 
   /**
@@ -358,7 +358,7 @@ public class WebConferencingService implements Startable {
    * @throws Exception the exception
    */
   public RoomInfo getRoomInfo(String id, String name, String title, String[] members) throws Exception {
-    return roomInfo(id, name, title, members, readOwnerCallId(id));
+    return roomInfo(id, name, title, members, readGroupCallId(id));
   };
 
   /**
@@ -399,6 +399,7 @@ public class WebConferencingService implements Startable {
    * @param ownerType the owner type
    * @param title the title
    * @param providerType the provider type
+   * @param clientId the client id
    * @param parts the parts
    * @return the call info
    * @throws Exception the exception
@@ -412,9 +413,62 @@ public class WebConferencingService implements Startable {
     // Ensure call and owner IDs length is OK
     if (isValidId(id)) {
       if (isValidId(ownerId)) {
+        final String currentUserId = currentUserId();
         final boolean isUser = UserInfo.TYPE_NAME.equals(ownerType);
         final boolean isSpace = OWNER_TYPE_SPACE.equals(ownerType);
         final boolean isRoom = OWNER_TYPE_CHATROOM.equals(ownerType);
+        final boolean isGroup = isSpace || isRoom;
+
+        // TODO Validate fields (length not null etc)
+
+        // Check if group doesn't have a call with another ID assigned
+        if (isGroup) {
+          // it's group call
+          String prevId = readGroupCallId(ownerId);
+          if (prevId != null && !prevId.equals(id)) {
+            // XXX For a case when some client failed to delete an existing (but outdated etc.) call but
+            // already starting a new one.
+            // It's SfB usecase when browser client failed to delete outdated call (browser/plugin
+            // crashed in IE11) and then starts a new one.
+            // deleteCall(prevId); // TODO fire leaved instead?
+            deleteCall(prevId);
+            LOG.warn("Deleted outdated group call: " + prevId);
+          }
+        }
+
+        // Ensure we can create this call
+        CallEntity existingCallEntity = callStorage.find(id);
+        if (existingCallEntity != null) {
+          if (isGroup) {
+            // Group call: already exists, we return an error - it needs read/start existing call
+            throw new CallConflictException("Call already created");
+          } else {
+            // P2P call: need check if it is STARTED and does someone already joined and actually connected,
+            // if have one - it's an error to return, otherwise we treat this call as outdated
+            // (could be left not properly stopped on an error like server crash or network lose)
+            CallInfo existingCall = readCallEntity(existingCallEntity, true);
+            if (CallState.STARTED.equals(existingCall.getState())) {
+              for (UserInfo savedPart : existingCall.getParticipants()) {
+                Set<UserCallListener> ulisteners = userListeners.get(savedPart.getId());
+                if (ulisteners != null) {
+                  for (UserCallListener ul : ulisteners) {
+                    if (savedPart.hasSameClientId(ul.getClientId())) {
+                      // this part already joined and runs in the call
+                      throw new CallConflictException("Call already started");
+                    }
+                  }
+                }
+              }
+              deleteCall(id);
+              LOG.warn("Deleted not active call: " + id);
+            } else {
+              deleteCall(id);
+              LOG.warn("Deleted outdated call: " + id);
+            }
+          }
+        }
+
+        // Collecting the call data
         final IdentityInfo owner;
         if (isUser) {
           UserInfo userInfo = getUserInfo(ownerId);
@@ -472,27 +526,51 @@ public class WebConferencingService implements Startable {
         call.setState(CallState.STARTED);
         call.setLastDate(Calendar.getInstance().getTime());
 
-        boolean notify = true;
         try {
+          // XXX It is REQUIRED stuff (actual when something were deleted above), otherwise ExoTx/Hibernate
+          // will fail to enter into the transaction in createCall() with an exception:
+          // javax.persistence.EntityExistsException: a different object with the same identifier value was
+          // already associated with the session:
+          // [org.exoplatform.webconferencing.domain.ParticipantEntity#org.exoplatform.webconferencing.domain.ParticipantId@4aa63de3]
+          participantsStorage.clear();
+          callStorage.clear();
+
+          // Persist the call with all its participants
           createCall(call);
         } catch (PersistenceException pe) {
           // ensure it's not already existing call
           SQLIntegrityConstraintViolationException constEx = findCause(pe, SQLIntegrityConstraintViolationException.class);
           if (constEx != null && constEx.getMessage().indexOf("PK_WBC_CALLID") >= 0) {
-            call = readCallById(id);
-            if (call != null) {
+            CallEntity conflictedCallEntity = callStorage.find(id);
+            if (conflictedCallEntity != null) {
+              // We can fail from here or return this already created, in second case we may return not
+              // exactly what was originally requested (by data and participants).
+              // Taking in account above check for existence, we raise an error to the caller with details.
               if (CallState.STARTED.equals(call.getState())) {
-                // notify = false; // XXX we want notify in this case also
-                // if we would save client IDs of call page in DB, then we could go ask current
-                // connections in CometD and compare which participants actually connected and saved and then
-                // decide to notify or not.
+                for (UserInfo savedPart : call.getParticipants()) {
+                  Set<UserCallListener> ulisteners = userListeners.get(savedPart.getId());
+                  if (ulisteners != null) {
+                    for (UserCallListener ul : ulisteners) {
+                      if (savedPart.hasSameClientId(ul.getClientId())) {
+                        // this part already joined and runs in the call
+                        if (LOG.isDebugEnabled()) {
+                          LOG.debug("Call already started and running: " + id, pe);
+                        }
+                        throw new CallConflictException("Call already started and running");
+                      }
+                    }
+                  }
+                }
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Call already started: " + id, pe);
+                }
+                throw new CallConflictException("Call already started");
               } else {
-                // Mark call started
-                call.setState(CallState.STARTED);
-                updateCall(call);
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Call already created with state " + conflictedCallEntity.getState() + ": " + id, pe);
+                }
+                throw new CallConflictException("Call already created");
               }
-              // TODO do we need update participants, given and saved may differ (actual for group calls)?
-              // or better drop this call and create an one new from the scratch?
             } else {
               LOG.warn("Call ID already found but cannot read the call: " + id, pe);
               throw new CallConflictException("Call ID already found", pe);
@@ -504,32 +582,20 @@ public class WebConferencingService implements Startable {
           }
         }
 
-        if (notify) {
-          // Notify participants (about started call)
-          String userId = currentUserId();
-          if (isSpace || isRoom) {
-            // it's group call
-            String prevId = readOwnerCallId(ownerId);
-            for (UserInfo part : participants) {
-              if (UserInfo.TYPE_NAME.equals(part.getType())) {
-                if (prevId != null && !prevId.equals(id)) {
-                  // XXX For a case when some client failed to delete an existing (but outdated etc.) call but
-                  // already starting a new one.
-                  // It's SfB usecase when browser client failed to delete outdated call (browser/plugin
-                  // crashed in IE11) and then starts a new one.
-                  deleteCall(call.getId()); // TODO fire leaved instead?
-                }
-                if (!userId.equals(part.getId())) {
-                  // fire group's user listener for incoming, except of the caller
-                  fireUserCallStateChanged(part.getId(), id, providerType, CallState.STARTED, ownerId, ownerType);
-                }
+        // Notify participants (about started call)
+        if (isGroup) {
+          // it's group call: fire group's user listener for incoming, except of the caller
+          for (UserInfo part : call.getParticipants()) {
+            if (UserInfo.TYPE_NAME.equals(part.getType())) {
+              if (!currentUserId.equals(part.getId())) {
+                fireUserCallStateChanged(part.getId(), id, providerType, CallState.STARTED, ownerId, ownerType);
               }
             }
-          } else if (isUser) {
-            // It's P2P call
-            notifyUserCallStateChanged(call, userId, CallState.STARTED);
           }
-        } // otherwise we assume call parts already notified about the state
+        } else if (isUser) {
+          // It's P2P call
+          notifyUserCallStateChanged(call, currentUserId, CallState.STARTED);
+        }
 
         return call;
       } else {
@@ -591,6 +657,8 @@ public class WebConferencingService implements Startable {
       deleteCall(call.getId());
     } else {
       call.setState(CallState.STOPPED);
+      // we don't update each participant with LEAVED state here as the call state already shows this, see
+      // startCall()
       updateCall(call);
     }
     // Then notify users
@@ -623,13 +691,14 @@ public class WebConferencingService implements Startable {
    * Starts existing call and fires STARTED event. It's actual for group calls.
    *
    * @param id the id
+   * @param clientId the client id
    * @return the call info or <code>null</code> if call not found
    * @throws Exception the exception
    */
-  public CallInfo startCall(String id) throws Exception {
+  public CallInfo startCall(String id, String clientId) throws Exception {
     CallInfo call = readCallById(id);
     if (call != null) {
-      startCall(call);
+      startCall(call, clientId);
     }
     return call;
   }
@@ -638,46 +707,64 @@ public class WebConferencingService implements Startable {
    * Start existing call.
    *
    * @param call the call
+   * @param clientId the client id
    * @throws Exception the exception
    */
-  protected void startCall(CallInfo call) throws Exception {
+  protected void startCall(CallInfo call, String clientId) throws Exception {
     // TODO exception if user not a participant?
 
     String callId = call.getId();
-    UserInfo joined = null;
 
     // We save call in a single tx, thus logic split on gathering the changes and saving them at the end
     call.setState(CallState.STARTED);
 
-    if (call.getOwner().isGroup()) {
-      // Find an user who joins (current user who starts a group call will join it first)
-      String userId = currentUserId();
-      for (UserInfo part : call.getParticipants()) {
-        if (UserInfo.TYPE_NAME.equals(part.getType()) && userId.equals(part.getId())) {
-          part.setState(UserState.JOINED);
-          joined = part;
-          break;
-        }
-      }
-      if (joined != null) {
-        // First save the group call with joined participant (in single tx)
-        updateCallAndParticipant(call, joined);
+    String userId = currentUserId();
+    for (UserInfo part : call.getParticipants()) {
+      if (UserInfo.TYPE_NAME.equals(part.getType()) && userId.equals(part.getId())) {
+        part.setState(UserState.JOINED);
+        part.setClientId(clientId);
       } else {
-        // This should not be a case, but we preserve the logic - may be admin could start it?
-        LOG.warn("Call started by not a participant: " + userId + ", call: " + callId);
-        updateCall(call);
+        part.setState(UserState.LEAVED);
+        part.setClientId(null);
       }
-      // Then fire this call started to all parts, including the user itself
-      for (UserInfo part : call.getParticipants()) {
-        fireUserCallStateChanged(part.getId(),
-                                 callId,
-                                 call.getProviderType(),
-                                 CallState.STARTED,
-                                 call.getOwner().getId(),
-                                 call.getOwner().getType());
-      }
-    } else {
-      updateCall(call);
+    }
+
+    // TODO cleanup
+    /*
+     * UserInfo joined = null;
+     * if (call.getOwner().isGroup()) {
+     * // Find an user who joins (current user who starts a group call will join it first)
+     * if (joined != null) {
+     * // First save the group call with joined participant (in single tx)
+     * updateCallAndParticipant(call, joined);
+     * } else {
+     * // This should not be a case, but we preserve the logic - may be admin could start it?
+     * LOG.warn("Call started by not a participant: " + userId + ", call: " + callId);
+     * updateCall(call);
+     * }
+     * // Then fire this call started to all parts, including the user itself
+     * for (UserInfo part : call.getParticipants()) {
+     * fireUserCallStateChanged(part.getId(),
+     * callId,
+     * call.getProviderType(),
+     * CallState.STARTED,
+     * call.getOwner().getId(), // TODO client ID also?
+     * call.getOwner().getType());
+     * }
+     * } else {
+     * updateCall(call);
+     * }
+     */
+
+    updateCallAndParticipants(call);
+
+    for (UserInfo part : call.getParticipants()) {
+      fireUserCallStateChanged(part.getId(),
+                               callId,
+                               call.getProviderType(),
+                               CallState.STARTED,
+                               call.getOwner().getId(), // TODO client ID also?
+                               call.getOwner().getType());
     }
   }
 
@@ -687,10 +774,11 @@ public class WebConferencingService implements Startable {
    *
    * @param id the id
    * @param userId the user id
+   * @param clientId the client id
    * @return the call info or <code>null</code> if call not found
    * @throws Exception the exception
    */
-  public CallInfo joinCall(String id, String userId) throws Exception {
+  public CallInfo joinCall(String id, String userId, String clientId) throws Exception {
     // TODO exception if user not a participant?
     CallInfo call = readCallById(id);
     if (call != null) {
@@ -700,6 +788,7 @@ public class WebConferencingService implements Startable {
         for (UserInfo part : call.getParticipants()) {
           if (UserInfo.TYPE_NAME.equals(part.getType()) && userId.equals(part.getId())) {
             part.setState(UserState.JOINED);
+            part.setClientId(clientId);
             joined = part;
             break;
           }
@@ -714,12 +803,12 @@ public class WebConferencingService implements Startable {
                                call.getProviderType(),
                                call.getOwner().getId(),
                                call.getOwner().getType(),
-                               userId,
+                               userId, // TODO send client ID also
                                part.getId());
           }
         }
       } else {
-        startCall(call);
+        startCall(call, clientId);
       }
     } // TODO else an error?
     return call;
@@ -731,10 +820,11 @@ public class WebConferencingService implements Startable {
    *
    * @param id the id
    * @param userId the user id
+   * @param clientId the client id
    * @return the call info or <code>null</code> if call not found
    * @throws Exception the exception
    */
-  public CallInfo leaveCall(String id, String userId) throws Exception {
+  public CallInfo leaveCall(String id, String userId, String clientId) throws Exception {
     // TODO exception if user not a participant?
     CallInfo call = readCallById(id);
     if (call != null) {
@@ -745,7 +835,9 @@ public class WebConferencingService implements Startable {
         for (UserInfo part : call.getParticipants()) {
           if (UserInfo.TYPE_NAME.equals(part.getType())) {
             if (userId.equals(part.getId())) {
+              // FYI here we leave all user clients present in the call
               part.setState(UserState.LEAVED);
+              part.setClientId(null);
               leaved = part;
               leavedNum++;
             } else {
@@ -760,20 +852,30 @@ public class WebConferencingService implements Startable {
         if (leaved != null) {
           // First save the call with the participant (in single tx)
           updateParticipant(id, leaved);
-          // Fire user joined to all parts, including the user itself
+          // Fire user leaved to all parts, including the user itself
           for (UserInfo part : call.getParticipants()) {
             // Fire user leaved to all parts, including the user itself
             fireUserCallLeaved(id,
                                call.getProviderType(),
                                call.getOwner().getId(),
                                call.getOwner().getType(),
-                               userId,
+                               userId, // TODO send client ID also (all were present)
                                part.getId());
           }
-          // Check if don't need stop the call if all parts leaved already
+        }
+        // Check if don't need stop the call if all parts leaved already
+        boolean needStop = false;
+        if (call.getOwner().isGroup()) {
           if (leavedNum == call.getParticipants().size()) {
-            stopCall(call, userId, false); // Stop in another tx
+            // Stop when all group members leave the call
+            needStop = true;
           }
+        } else if (call.getParticipants().size() - leavedNum <= 1) {
+          // For P2P we stop when one of parts stand alone
+          needStop = true;
+        }
+        if (needStop) {
+          stopCall(call, userId, false); // Stop in another tx
         }
       } else {
         // It seems has no big sense to return error for already stopped call
@@ -1129,12 +1231,12 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Read owner call ID.
+   * Read group owned call ID.
    *
    * @param ownerId the owner id
    * @return the string or <code>null</code> if no call found
    */
-  protected String readOwnerCallId(String ownerId) {
+  protected String readGroupCallId(String ownerId) {
     // TODO it's not efficient read the whole entity when we need only an ID (or null)
     CallEntity savedCall = callStorage.findGroupCallByOwnerId(ownerId);
     if (savedCall != null) {
@@ -1476,6 +1578,7 @@ public class WebConferencingService implements Startable {
     part.setCallId(callId);
     part.setType(user.getType());
     part.setState(user.getState());
+    part.setClientId(user.getClientId());
     return part;
   }
 
@@ -1561,6 +1664,7 @@ public class WebConferencingService implements Startable {
     ParticipantEntity part = participantsStorage.find(new ParticipantId(participant.getId(), callId));
     if (part != null) {
       part.setState(participant.getState());
+      part.setClientId(participant.getClientId());
       participantsStorage.update(part);
     } else {
       throw new CallInfoException("Call participant has no saved entity " + participant.getId() + " for " + callId);
@@ -1593,6 +1697,24 @@ public class WebConferencingService implements Startable {
 
     // Update participant
     saveParticipant(call.getId(), participant);
+  }
+
+  /**
+   * Update call and all its participants.
+   *
+   * @param call the call
+   * @throws Exception the exception
+   */
+  @ExoTransactional
+  protected void updateCallAndParticipants(CallInfo call) throws Exception {
+    // Update call
+    saveCall(call);
+
+    // Update participants
+    String callId = call.getId();
+    for (UserInfo p : call.getParticipants()) {
+      saveParticipant(callId, p);
+    }
   }
 
   /**

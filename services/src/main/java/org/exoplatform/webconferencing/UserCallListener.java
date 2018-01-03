@@ -29,13 +29,18 @@ public abstract class UserCallListener {
   /** The user id. */
   protected final String userId;
 
+  /** The client id. */
+  protected final String clientId;
+
   /**
    * Instantiates a new incoming call listener.
    *
    * @param userId the user id
+   * @param clientId the client id
    */
-  public UserCallListener(String userId) {
+  public UserCallListener(String userId, String clientId) {
     this.userId = userId;
+    this.clientId = clientId;
   }
 
   /**
@@ -45,6 +50,15 @@ public abstract class UserCallListener {
    */
   public String getUserId() {
     return userId;
+  }
+
+  /**
+   * Gets the client id.
+   *
+   * @return the clientId
+   */
+  public String getClientId() {
+    return clientId;
   }
 
   /**

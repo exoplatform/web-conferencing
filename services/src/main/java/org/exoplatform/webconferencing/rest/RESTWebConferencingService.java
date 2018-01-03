@@ -347,7 +347,8 @@ public class RESTWebConferencingService implements ResourceContainer {
                               @PathParam("name") String userName,
                               @PathParam("type") String type,
                               @PathParam("id") String id,
-                              @FormParam("state") String state) {
+                              @FormParam("state") String state,
+                              @FormParam("clientId") String clientId) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
@@ -359,7 +360,7 @@ public class RESTWebConferencingService implements ResourceContainer {
           String callId = callId(type, id);
           try {
             if (UserState.JOINED.equals(state)) {
-              CallInfo call = webConferencing.joinCall(callId, userName);
+              CallInfo call = webConferencing.joinCall(callId, userName, clientId);
               if (call != null) {
                 return Response.ok().cacheControl(cacheControl).entity(call).build();
               } else {
@@ -369,7 +370,7 @@ public class RESTWebConferencingService implements ResourceContainer {
                                .build();
               }
             } else if (UserState.LEAVED.equals(state)) {
-              CallInfo call = webConferencing.leaveCall(callId, userName);
+              CallInfo call = webConferencing.leaveCall(callId, userName, clientId);
               if (call != null) {
                 return Response.ok().cacheControl(cacheControl).entity(call).build();
               } else {
@@ -705,7 +706,8 @@ public class RESTWebConferencingService implements ResourceContainer {
   public Response putCall(@Context UriInfo uriInfo,
                           @PathParam("type") String type,
                           @PathParam("id") String id,
-                          @FormParam("state") String state) {
+                          @FormParam("state") String state,
+                          @FormParam("clientId") String clientId) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String callId = callId(type, id);
@@ -722,7 +724,7 @@ public class RESTWebConferencingService implements ResourceContainer {
                            .build();
           }
         } else if (CallState.STARTED.equals(state)) {
-          CallInfo call = webConferencing.startCall(callId);
+          CallInfo call = webConferencing.startCall(callId, clientId);
           if (call != null) {
             return Response.ok().cacheControl(cacheControl).entity(call).build();
           } else {

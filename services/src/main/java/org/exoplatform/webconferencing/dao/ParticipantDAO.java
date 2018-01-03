@@ -71,5 +71,12 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
   public int deleteCallParts(String callId) throws PersistenceException {
     return getEntityManager().createNamedQuery("WebConfCall.deleteCallParts").setParameter("callId", callId).executeUpdate();
   }
+  
+  /**
+   * Clear the storage. 
+   */
+  public void clear() {
+    getEntityManager().clear();
+  }
 
 }

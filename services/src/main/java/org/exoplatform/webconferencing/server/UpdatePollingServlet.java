@@ -70,7 +70,7 @@ public class UpdatePollingServlet extends AbstractHttpServlet {
           final AtomicBoolean polling = new AtomicBoolean(true);
           final AsyncContext acontext = req.startAsync(req, resp);
           final WebConferencingService webConferencing = getContainer().getComponentInstanceOfType(WebConferencingService.class);
-          final UserCallListener userListener = new UserCallListener(userId) {
+          final UserCallListener userListener = new UserCallListener(userId, "fake_id") {
             @Override
             public boolean isListening() {
               return polling.get();

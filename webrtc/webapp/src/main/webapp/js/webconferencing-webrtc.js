@@ -102,6 +102,10 @@
 				return webConferencing.initRequest(request);
 			};
 			
+			var callLink = function(callId) {
+				return settings.callUri + "/" + callId;
+			}
+			
 			var windowId = function(localUserId, callId) {
 				return localUserId + ":" + callId;
 			};
@@ -213,12 +217,10 @@
 					callWindow.focus();
 					log.trace("Successfuly opened window of already running call: " + callWindowId);
 				} else {
-					if (callWindow) {
-						callWindow.close();
-					}
 					log.trace("Starting a call: " + callId);
-					removeCallWindow(callId); // remove if something saved locally
-					onLocalNotFound(callId); 
+					// if callWindow defined (was open successful) it already assigned the windowId above
+					// and need only set its location to the call link.
+					onLocalNotFound(callWindow);
 				}
 			};
 			
@@ -245,20 +247,22 @@
 											+ " class='webrtcCallAction' data-placement='top' data-toggle='tooltip'>"
 											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + message("call") + "</span></a>");
-								// TODO don't check for call remotely until clicked
-								/*if (callWindowId) {
-									// Check if this call isn't running and joined by this user and disable the button if so
+								if (readCallWindow(callId)) {
+									// If call window saved locally: check if the call isn't running and joined by this user and mark the button if so
 									webConferencing.getCall(callId).done(function(call) { // this will call server-side via Comet
 										if (call.state == "started") {
 											for (var pi = 0; pi < call.participants.length; pi++) {
 												var p = call.participants[pi];
-												if (p.id == context.currentUser.id && p.state == "joined") {
-													log.trace(">>> Call " + callId + " already joined by " + context.currentUser.id);
-													setButtonCall($button, callId);
-													break;
+												if (p.id == context.currentUser.id) {
+													if (p.state == "joined") {
+														log.trace(">>> Call " + callId + " already joined by " + context.currentUser.id);
+														setButtonCall($button, callId); // should be removed on stop/leaved event in init()
+														return;
+													}
 												}
 											}											
 										}
+										removeCallWindow(callId);
 									}).fail(function(err) {
 										// we don't show any error at this stage, but let an user to place a new call
 										removeCallWindow(callId);
@@ -267,18 +271,19 @@
 										} else {
 											log.warn("Failed to get call info: " + callId, err); // warn because we continue and let start a call
 										}
-									});									
-								}*/
-								var callWindowId = readCallWindow(callId);
-								if (callWindowId) {
-									setButtonCall($button, callId); // should be removed on stop/leaved event in init()
+									}); 
 								}
 								$button.click(function() {
-									openCallWindow(callId, function() {
+									openCallWindow(callId, function(callWindow) {
 										// Open a window for a new call
-										var link = settings.callUri + "/" + callId;
-										callWindowId = windowId(context.currentUser.id, callId);
-										var callWindow = webConferencing.showCallPopup(link, callWindowId);
+										var link = callLink(callId);
+										var callWindowId;
+										if (callWindow) {
+											callWindow.location.href = link;
+										} else {
+											callWindowId = windowId(context.currentUser.id, callId);
+											callWindow = webConferencing.showCallPopup(link, callWindowId);
+										}
 										// Create a call
 										var callInfo = {
 											owner : context.currentUser.id,
@@ -296,7 +301,9 @@
 												callWindow.eXo.webConferencing.startCall(call).done(function(state) {
 													log.info("Call " + state + ": " + callId + " target: " + target.title);
 													setButtonCall($button, callId); // should be removed on stop/leaved event in init()
-													saveCallWindow(callId, callWindowId);
+													if (callWindowId) {
+														saveCallWindow(callId, callWindowId);
+													}
 												}).fail(function(err) {
 													log.error("Call start failed: " + callId, err);
 													webConferencing.showError(message("errorStartingCall"), webConferencing.errorText(err));
@@ -493,10 +500,15 @@
 															popover.done(function(msg) {
 																log.info("User " + msg + " call: " + callId);
 																// We try open already running call if found, then create a new call if not found
-																openCallWindow(callId, function() {
-																	var link = settings.callUri + "/" + callId;
-																	var callWindowId = windowId(context.currentUser.id, callId);
-																	var callWindow = webConferencing.showCallPopup(link, callWindowId);
+																openCallWindow(callId, function(callWindow) {
+																	var link = callLink(callId);
+																	var callWindowId;
+																	if (callWindow) {
+																		callWindow.location.href = link;
+																	} else {
+																		callWindowId = windowId(context.currentUser.id, callId);
+																		callWindow = webConferencing.showCallPopup(link, callWindowId);
+																	}
 																	// Tell the window to start a call  
 																	onCallWindowReady(callWindow).done(function() {
 																		log.debug("Call page loaded: " + callId);
@@ -504,7 +516,9 @@
 																		callWindow.eXo.webConferencing.startCall(call).done(function(state) {
 																			log.info("Call " + state + ": " + callId);
 																			assignCallButton(update.owner.id, callId);
-																			saveCallWindow(callId, callWindowId);
+																			if (callWindowId) {
+																				saveCallWindow(callId, callWindowId);
+																			}
 																		}).fail(function(err) {
 																			log.error("Failed to start/join call: " + callId, err);
 																			webConferencing.showError(message("errorStartingCall"), webConferencing.errorText(err));
