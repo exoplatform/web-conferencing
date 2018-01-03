@@ -482,12 +482,17 @@ public class WebConferencingService implements Startable {
             call = readCallById(id);
             if (call != null) {
               if (CallState.STARTED.equals(call.getState())) {
-                notify = false;
+                // notify = false; // XXX we want notify in this case also
+                // if we would save client IDs of call page in DB, then we could go ask current
+                // connections in CometD and compare which participants actually connected and saved and then
+                // decide to notify or not.
               } else {
                 // Mark call started
                 call.setState(CallState.STARTED);
                 updateCall(call);
               }
+              // TODO do we need update participants, given and saved may differ (actual for group calls)?
+              // or better drop this call and create an one new from the scratch?
             } else {
               LOG.warn("Call ID already found but cannot read the call: " + id, pe);
               throw new CallConflictException("Call ID already found", pe);
@@ -507,7 +512,7 @@ public class WebConferencingService implements Startable {
             String prevId = readOwnerCallId(ownerId);
             for (UserInfo part : participants) {
               if (UserInfo.TYPE_NAME.equals(part.getType())) {
-                if (prevId != null) {
+                if (prevId != null && !prevId.equals(id)) {
                   // XXX For a case when some client failed to delete an existing (but outdated etc.) call but
                   // already starting a new one.
                   // It's SfB usecase when browser client failed to delete outdated call (browser/plugin
