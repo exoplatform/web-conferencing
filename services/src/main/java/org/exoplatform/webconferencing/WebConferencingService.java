@@ -399,7 +399,6 @@ public class WebConferencingService implements Startable {
    * @param ownerType the owner type
    * @param title the title
    * @param providerType the provider type
-   * @param clientId the client id
    * @param parts the parts
    * @return the call info
    * @throws Exception the exception

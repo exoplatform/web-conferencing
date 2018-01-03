@@ -338,6 +338,7 @@ public class RESTWebConferencingService implements ResourceContainer {
    * @param type the type
    * @param id the id
    * @param state the state
+   * @param clientId the client id
    * @return the user calls response
    */
   @PUT
@@ -698,6 +699,7 @@ public class RESTWebConferencingService implements ResourceContainer {
    * @param type the type
    * @param id the id
    * @param state the state
+   * @param clientId the client id
    * @return the response
    */
   @PUT
