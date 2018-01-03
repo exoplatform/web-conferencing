@@ -159,12 +159,12 @@
 			
 			var onCallWindowReady = function(theWindow) {
 				var process = $.Deferred();
-				if (typeof theWindow == "undefined" && theWindow == null) {
+				if (typeof theWindow === "undefined" || theWindow == null) {
 					process.reject(message("callWindowNotOpen"));
 				} else {
 					var resolve = function() {
 						if (process.state() == "pending") {
-							if (theWindow.eXo && theWindow.eXo.webConferencing && typeof theWindow.eXo.webConferencing.startCall == "function") {
+							if (theWindow && theWindow.eXo && theWindow.eXo.webConferencing && typeof theWindow.eXo.webConferencing.startCall == "function") {
 								process.resolve(theWindow);
 								return true;
 							} else {
