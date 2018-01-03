@@ -1598,7 +1598,7 @@ public class WebConferencingService implements Startable {
   /**
    * Delete call.
    *
-   * @param call the call
+   * @param callId the call id
    * @return true, if successful
    * @throws Exception the exception
    */
