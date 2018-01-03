@@ -772,19 +772,6 @@
 		return initRequest(request);
 	};
 	
-	var pollUserUpdates = function(userId) {
-		var request = $.ajax({
-			async : true,
-			type : "GET",
-			url : prefixUrl + "/webconferencing/updates/" + userId,
-			timeout : 310000, 
-			headers: {
-		    "Cache-Control": "no-cache"
-		  }
-		});
-		return initRequest(request);
-	};
-	
 	var cachedUsers = new Cache();
 	var getUserInfoReq = function(userId) {
 		var request = $.ajax({
@@ -2167,7 +2154,9 @@
 				});
 				return process.promise();
 			} else {
-				return getCallInfo(id);
+				//return getCallInfo(id);
+				log.trace("Getting call requires CometD. Was call: " + id);
+				return $.Deferred().reject("CometD required").promise();
 			}
 		};
 		
@@ -2195,7 +2184,9 @@
 				});
 				return process.promise();
 			} else {
-				return putCallInfo(id, state);
+				//return putCallInfo(id, state);
+				log.trace("Updating call requires CometD. Was call: " + id);
+				return $.Deferred().reject("CometD required").promise();
 			}
 		};
 		
@@ -2222,7 +2213,9 @@
 				});
 				return process.promise();
 			} else {
-				return deleteCallInfo(id);
+				//return deleteCallInfo(id);
+				log.trace("Deleting call requires CometD. Was call: " + id);
+				return $.Deferred().reject("CometD required").promise();
 			}
 		};
 		
@@ -2249,7 +2242,9 @@
 				});
 				return process.promise();
 			} else {
-				return postCallInfo(id, callInfo);
+				//return postCallInfo(id, callInfo);
+				log.trace("Adding call requires CometD. Was call: " + id);
+				return $.Deferred().reject("CometD required").promise();
 			}
 		};
 				
@@ -2273,7 +2268,9 @@
 				});
 				return process.promise();
 			} else {
-				return getUserCallsState();
+				//return getUserCallsState();
+				log.trace("Reading of user group calls requires CometD");
+				return $.Deferred().reject("CometD required").promise();
 			}
 		};
 		
@@ -2282,7 +2279,9 @@
 				// It's the same channel to call in CometD
 				return this.updateCall(id, state);
 			} else {
-				return putUserCallState(id, state);
+				//return putUserCallState(id, state);
+				log.trace("User call update requires CometD. Was call: " + id);
+				return $.Deferred().reject("CometD required").promise();
 			}
 		};
 		
@@ -2310,7 +2309,7 @@
 						var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
 						log.debug("User updates subscription failed for " + userId, err);
 						if (typeof onError == "function") {
-							onError("User updates subscription failed (" + err + ")", 0);								
+							onError("User updates subscription failed (" + err + ")");								
 						}
 					}
 				});
@@ -2320,31 +2319,12 @@
 					}
 				};
 			} else {
-				var loop = true;
-				var poll = function(prevData, prevStatus) {
-					if (loop) {
-						var timeout = prevStatus == 0 ? 60000 : (prevStatus >= 400 ? 15000 : 250);
-						setTimeout(function() {
-							pollUserUpdates(userId).done(function(update, status) {
-								if (typeof onUpdate == "function") {
-									onUpdate(update, status);								
-								}
-							}).fail(function(err, status) {
-								if (typeof onError == "function") {
-									onError(err, status);								
-								}
-							}).always(poll);
-						}, timeout);						
-					}
-				};
-				poll();
+				log.trace("User updates require CometD. Was user: " + userId);
+				if (typeof onError == "function") {
+					onError("CometD required");								
+				}
 				return {
-					off : function(callback) {
-						loop = false;
-						if (typeof callback == "function") {
-							callback();
-						}
-					}
+					off : function(callback) {}
 				};
 			}
 		};
@@ -2356,11 +2336,11 @@
 					var result = tryParseJson(message);
 					if (message.data.error) {
 						if (typeof onError == "function") {
-							onError(result, 400);
+							onError(result);
 						}
 					} else {
 						if (typeof onUpdate == "function") {
-							onUpdate(result, 200);
+							onUpdate(result);
 						}							
 					}
 				}, cometdContext, function(subscribeReply) {
@@ -2372,7 +2352,7 @@
 						var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
 						log.trace("Call updates subscription failed for " + callId, err);
 						if (typeof onError == "function") {
-							onError("Call updates subscription failed (" + err + ")", 0);								
+							onError("Call updates subscription failed (" + err + ")");								
 						}
 					}
 				});
@@ -2384,7 +2364,7 @@
 			} else {
 				log.trace("Call updates require CometD. Was call: " + callId);
 				if (typeof onError == "function") {
-					onError("Call updates require CometD", 0);								
+					onError("Call updates require CometD");								
 				}
 				return {
 					off : function() {}
@@ -2401,12 +2381,12 @@
 			    	process.resolve("successful", 200);
 			    } else {
 			    	//log.trace("<< Call update failed to reach the server: " + JSON.stringify(publishAck));
-			    	process.reject(publishAck.failure ? publishAck.failure.reason : publishAck.error, 500);
+			    	process.reject(publishAck.failure ? publishAck.failure.reason : publishAck.error);
 			    }
 				});
 			} else {
 				log.trace("Call updates require CometD. Was call: " + callId);
-				process.reject("CometD required", 400);
+				process.reject("CometD required");
 			}
 			return process.promise();
 		};

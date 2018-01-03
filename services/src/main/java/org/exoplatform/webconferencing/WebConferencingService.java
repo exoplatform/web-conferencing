@@ -835,11 +835,21 @@ public class WebConferencingService implements Startable {
         for (UserInfo part : call.getParticipants()) {
           if (UserInfo.TYPE_NAME.equals(part.getType())) {
             if (userId.equals(part.getId())) {
-              // FYI here we leave all user clients present in the call
-              part.setState(UserState.LEAVED);
-              part.setClientId(null);
-              leaved = part;
-              leavedNum++;
+              // TODO move this logic in CometD layer - where it can be managed properly knowing
+              // actually connected clients and invoked call start/creations.
+              // Leave should not be called on a call session started after stopping an one previous of this
+              // call.
+              // Or we need assign each call session an unique ID that will help to distinguish. This also
+              // would improve addCall/startCall logic. 
+              // TODO Call's lastDate timestamp already could do the job.
+              if (part.hasSameClientId(clientId)) {
+                part.setState(UserState.LEAVED);
+                part.setClientId(null);
+                leaved = part;
+                leavedNum++;
+              } // otherwise we may meet this user running a new same call too quickly (before CometD will
+                // unsubscribe this call previous channel), we ignore this leave so)
+                // TODO this doesn't work in fact - Jan 3, 2018
             } else {
               // if null - user hasn't joined
               if (part.getState() == null || part.getState().equals(UserState.LEAVED)) {
