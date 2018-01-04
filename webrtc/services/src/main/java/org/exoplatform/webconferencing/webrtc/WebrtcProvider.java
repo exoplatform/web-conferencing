@@ -322,6 +322,15 @@ public class WebrtcProvider extends CallProvider {
     protected List<String> urls = new ArrayList<>();
 
     /**
+     * Checks if is default.
+     *
+     * @return true, if is default
+     */
+    public boolean isDefault() {
+      return false;
+    }
+
+    /**
      * Checks if is enabled.
      *
      * @return the enabled
@@ -394,6 +403,19 @@ public class WebrtcProvider extends CallProvider {
     }
   }
 
+  /**
+   * The Class DefaultICEServer.
+   */
+  public static final class DefaultICEServer extends ICEServer {
+  
+    /**
+     * {@inheritDoc}
+     */
+    public boolean isDefault() {
+      return true;
+    }
+  }
+
   /** The settings service. */
   protected final SettingService        settingService;
 
@@ -431,10 +453,10 @@ public class WebrtcProvider extends CallProvider {
       ObjectParameter objParam = params.getObjectParam(CONFIG_RTC_CONFIGURATION);
       if (objParam != null) {
         Object obj = objParam.getObject();
-        if (obj != null) {
-          this.rtcConfiguration = (RTCConfiguration) obj;
+        if (obj != null && RTCConfiguration.class.isAssignableFrom(obj.getClass())) {
+          this.rtcConfiguration = RTCConfiguration.class.cast(obj);
         } else {
-          LOG.warn("Predefined services configuration found but null object returned.");
+          LOG.warn("Predefined services configuration exists but RTCConfiguration object not found.");
           this.rtcConfiguration = new RTCConfiguration();
         }
       } else {
@@ -443,6 +465,15 @@ public class WebrtcProvider extends CallProvider {
     } else {
       this.rtcConfiguration = rtcConfiguration;
     }
+
+    // Log warning if default (aka public) ICE servers in use
+    for (ICEServer ices : this.rtcConfiguration.getIceServers()) {
+      if (ices.isEnabled() && ices.isDefault()) {
+        LOG.warn("Default ICE servers will be used for WebRTC calls: " + ices.getUrls().toString()
+            + ". Configure own set of servers and disable the default one.");
+      }
+    }
+
     logRemoteLogEnabled();
   }
 
@@ -650,9 +681,9 @@ public class WebrtcProvider extends CallProvider {
     if (rtcConf.getIceCandidatePoolSize() > 0) {
       json.put("iceCandidatePoolSize", rtcConf.getIceCandidatePoolSize());
     }
-    
+
     json.put("logEnabled", rtcConf.isLogEnabled());
-    
+
     return json;
   }
 
@@ -721,5 +752,5 @@ public class WebrtcProvider extends CallProvider {
       LOG.info("Remote diagnostic log disabled for WebRTC connector");
     }
   }
-  
+
 }

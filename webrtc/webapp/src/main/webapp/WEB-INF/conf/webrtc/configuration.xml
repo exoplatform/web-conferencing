@@ -70,7 +70,12 @@
               <collection type="java.util.LinkedHashSet">
                 <value>
                   <!-- Pool of STUN servers for default use (development & testing) -->
-                  <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$ICEServer">
+                  <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$DefaultICEServer">
+                    <!-- 
+                      It's default set of ICE servers. Default servers are public out of the box. 
+                      Don't use them in production. This will be warned in the server log. 
+                      Instead define a new object in this configuration to configure own ICE servers set.
+                     -->
                     <field name="enabled">
                       <boolean>${webconferencing.webrtc.default.stun.enabled:true}</boolean>
                     </field>
