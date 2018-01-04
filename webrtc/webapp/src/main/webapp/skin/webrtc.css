@@ -69,6 +69,7 @@
 	transform: translate(-50%, -50%);
 	margin: auto;
 	width: 600px;
+    padding: 0;
 }
 
 #webrtc-settings-popup .settingsForm .popupContent {
@@ -82,6 +83,10 @@
 
 #webrtc-settings-popup .settingsForm .title .tooltip-inner {
 	max-width: 300px;
+}
+
+#webrtc-settings-popup .form-horizontal input[type="text"] {
+	margin-bottom: 10px;
 }
 
 .iceServers, .diagnostic-errors {
@@ -111,8 +116,9 @@
 	margin-left: 10px;
 }
 
-.iceServer .urlGroup .actions-container>.uiIconTrash {
-	font-size: 21px;
+.iceServer .urlGroup .actions-container>.uiIconTrash:before {
+	font-family: "PLF-FONT-ICONS";
+  	content: "\e799";
 }
 
 .iceServer .urlGroup>input {
@@ -121,8 +127,9 @@
 
 .iceServer .control-label {
 	flex-shrink: 0;
-	margin-right: 20px;
-	padding-top: 9px;
+	padding-right: 20px;
+	float: none;
+	width: auto;
 }
 
 .iceServer .enabler .uiCheckbox {
@@ -134,7 +141,7 @@
 }
 
 .iceServer .credentials {
-	margin-top: 5px;
+	margin: 5px 0 10px 0;
 	display: table;
 	width: calc(100% - 60px);
 }

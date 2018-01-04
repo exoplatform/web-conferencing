@@ -5,7 +5,7 @@
   Map<String, String> messages = (Map<String, String>) request.getAttribute("messages");
 %>
 
-<div class="uiPopup settingsForm">
+<div class="uiPopup settingsForm form-horizontal">
 	<div class="popupHeader ClearFix">
 		<a aria-hidden="true" class="uiIconClose pull-right">&nbsp;</a> <span class="PopupTitle popupTitle">${messages["webrtc.admin.title"]}</span>
 	</div>
