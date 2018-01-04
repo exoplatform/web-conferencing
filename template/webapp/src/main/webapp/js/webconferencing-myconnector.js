@@ -423,7 +423,7 @@
 												log.info("User " + msg + " call: " + callId);
 												var longTitle = self.getTitle() + " " + self.getCallTitle();
 												var callUrl = self.getUrl() + "/call?apiClientId=" + self.getApiClientId() 
-													+ "&topic=" + encodeURIComponent(call.title);
+													+ "&id=" + encodeURIComponent(callId);
 												var callWindow = webConferencing.showCallPopup(callUrl, longTitle);
 												callWindow.document.title = call.title;
 												// Optionally, we may invoke a call window to initialize the call.

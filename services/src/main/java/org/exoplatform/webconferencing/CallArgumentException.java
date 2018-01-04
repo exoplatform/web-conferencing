@@ -22,29 +22,29 @@ package org.exoplatform.webconferencing;
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: WrongIdException.java 00000 Dec 28, 2017 pnedonosko $
+ * @version $Id: CallArgumentException.java 00000 Dec 28, 2017 pnedonosko $
  */
-public class WrongIdException extends CallInfoException {
+public class CallArgumentException extends CallInfoException {
 
   /** The Constant serialVersionUID. */
   private static final long serialVersionUID = 4382448461295970208L;
 
   /**
-   * Instantiates a new wrong id exaception.
+   * Instantiates a new wrong value exaception.
    *
    * @param message the message
    * @param cause the cause
    */
-  public WrongIdException(String message, Throwable cause) {
+  public CallArgumentException(String message, Throwable cause) {
     super(message, cause);
   }
 
   /**
-   * Instantiates a new wrong id exaception.
+   * Instantiates a new wrong value exaception.
    *
    * @param message the message
    */
-  public WrongIdException(String message) {
+  public CallArgumentException(String message) {
     super(message);
   }
 

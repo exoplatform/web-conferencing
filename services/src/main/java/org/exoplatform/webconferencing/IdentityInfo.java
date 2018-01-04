@@ -30,11 +30,8 @@ package org.exoplatform.webconferencing;
  */
 public abstract class IdentityInfo {
 
-  /** The Constant ID_MAX_LENGTH. */
-  public static final int    ID_MAX_LENGTH = 255;
-
   /** The Constant EMPTY. */
-  public static final String EMPTY         = "".intern();
+  public static final String EMPTY = "".intern();
 
   /** The title. */
   protected final String     title;
@@ -47,16 +44,6 @@ public abstract class IdentityInfo {
 
   /** The profile link. */
   protected String           profileLink;
-
-  /**
-   * Checks is ID valid (not null, not empty and not longer of {@value #ID_MAX_LENGTH}) chars.
-   *
-   * @param id the id
-   * @return true, if is valid id
-   */
-  public static boolean isValidId(String id) {
-    return id != null && id.length() > 0 && id.length() <= ID_MAX_LENGTH;
-  }
 
   /**
    * Instantiates a new identity info.
