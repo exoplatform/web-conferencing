@@ -1417,6 +1417,7 @@ public class WebConferencingService implements Startable {
     if (UserInfo.TYPE_NAME.equals(savedPart.getType())) {
       UserInfo user = getUserInfo(savedPart.getId());
       user.setState(savedPart.getState());
+      user.setClientId(savedPart.getClientId());
       return user;
     }
     return null;
