@@ -97,5 +97,12 @@ public class CallDAO extends GenericDAOJPAImpl<CallEntity, String> {
                              .setParameter("expiredDate", Timestamp.valueOf(expired))
                              .executeUpdate();
   }
+  
+  /**
+   * Clear the storage. 
+   */
+  public void clear() {
+    getEntityManager().clear();
+  }
 
 }

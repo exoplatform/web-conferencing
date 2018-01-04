@@ -126,18 +126,4 @@
     </depends>
   </module>
   
-  <!-- portlet>
-    <name>WebConferencingPortlet</name>
-    <module>
-      <depends>
-        <module>jquery</module>
-      </depends>
-      <depends>
-        <module>webConferencing</module>
-      </depends>
-      <depends>
-        <module>webConferencingPortlet</module>
-      </depends>
-    </module>
-  </portlet -->
 </gatein-resources>

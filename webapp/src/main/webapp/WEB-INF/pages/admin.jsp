@@ -1,11 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%-- @ taglib uri="http://java.sun.com/portlet.tld" prefix="portlet" --%>
 
 <%@ page import="java.util.Map"%>
-<%-- @ page import="javax.portlet.PortletURL"%>
-<%@ page import="javax.portlet.PortletMode"%>
-<%@ page import="javax.portlet.PortletPreferences"--%>
-<%-- <portlet:defineObjects /> --%>
 
 <%
   Map<String, String> messages = (Map<String, String>) request.getAttribute("messages");

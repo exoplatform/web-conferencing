@@ -691,100 +691,6 @@
   	return res;
 	};
 	
-	var getCallInfo = function(id) {
-		var request = $.ajax({
-			async : true,
-			type : "GET",
-			url : prefixUrl + "/portal/rest/webconferencing/call/" + id
-		});
-		return initRequest(request);
-	};
-	
-	var deleteCallInfo = function(id) {
-		var request = $.ajax({
-			async : true,
-			type : "DELETE",
-			url : prefixUrl + "/portal/rest/webconferencing/call/" + id
-		});
-		return initRequest(request);
-	};
-	
-	var postCallInfo = function(id, info) {
-		var request = $.ajax({
-			async : true,
-			type : "POST",
-			url : prefixUrl + "/portal/rest/webconferencing/call/" + id,
-			data : info
-		});
-		return initRequest(request);
-	};
-	
-	var putCallInfo = function(id, state) {
-		var request = $.ajax({
-			async : true,
-			type : "PUT",
-			url : prefixUrl + "/portal/rest/webconferencing/call/" + id,
-			data : {
-				state : state
-			}
-		});
-		return initRequest(request);
-	}; 
-	
-	var putUserCallState = function(callId, state) {
-		var request = $.ajax({
-			async : true,
-			type : "PUT",
-			url : prefixUrl + "/portal/rest/webconferencing/user/me/call/" + callId,
-			data : {
-				state : state
-			}
-		});
-		return initRequest(request);
-	};
-	
-	//TODO not used
-	var postUserCallId = function(callId) {
-		var request = $.ajax({
-			async : true,
-			type : "POST",
-			url : prefixUrl + "/portal/rest/webconferencing/user/me/call/" + callId
-		});
-		return initRequest(request);
-	};
-	
-	// TODO not used
-	var deleteUserCallId = function(callId) {
-		var request = $.ajax({
-			async : true,
-			type : "DELETE",
-			url : prefixUrl + "/portal/rest/webconferencing/user/me/call/" + callId
-		});
-		return initRequest(request);
-	};
-	
-	var getUserCallsState = function() {
-		var request = $.ajax({
-			async : true,
-			type : "GET",
-			url : prefixUrl + "/portal/rest/webconferencing/user/me/calls"
-		});
-		return initRequest(request);
-	};
-	
-	var pollUserUpdates = function(userId) {
-		var request = $.ajax({
-			async : true,
-			type : "GET",
-			url : prefixUrl + "/webconferencing/updates/" + userId,
-			timeout : 310000, 
-			headers: {
-		    "Cache-Control": "no-cache"
-		  }
-		});
-		return initRequest(request);
-	};
-	
 	var cachedUsers = new Cache();
 	var getUserInfoReq = function(userId) {
 		var request = $.ajax({
@@ -798,38 +704,7 @@
 		return getCached(userId, cachedUsers, getUserInfoReq);
 	};
 
-	/** TODO not yet used */
-	var getUsersInfoReq = function(names) {
-		var request = $.ajax({
-			async : true,
-			type : "GET",
-			url : prefixUrl + "/portal/rest/webconferencing/users",
-			data : {
-				names : names
-			}
-		});
-		return initRequest(request);
-	};
-	var getUsersInfo = function(names) {
-		// TODO get by one user using local cache or get all from the server, or get all not cached from the server?
-		// 1. get by one user using local cache
-		var all = $.Deferred();
-		var users = [];
-		var workers = [];
-		for (var i=0; i<names.length; i++) {
-			var uname = names[i];
-			var get = getCached(uname, cachedUsers, getUserInfoReq);
-			get.done(function(u) {
-				users.push(u);
-			});
-			workers.push(get);
-		}
-		$.when.apply($, workers).always(function() {
-			all.resolve(users);
-		});
-		return all.promise();
-	};
-
+	// Local caches not yet used, but still good thing to add as an improvements
 	var cachedSpaces = new Cache();
 	var getSpaceInfoReq = function(spaceId) {
 		var request = $.ajax({
@@ -1740,26 +1615,6 @@
 						//log.trace(">>> onTiptipUpdate mutations " + mutations.length);
 						for(var i=0; i<mutations.length; i++) {
 							var m = mutations[i];
-							// TODO for development tracing: cleanup
-							/*if (m.target.nodeType == 1) {
-								function nodeListString(list) {
-									var s = "";
-									for (var n of list) {
-										s += n.localName + (n.id ? "#" + n.id : "");
-										for (var c of n.classList) {
-											s += "." + c;
-										}
-										s += " ";
-									}
-									return s;
-								} 
-								log.trace(">>> initUserPopups mutation " + m.type + " of " + m.target.nodeName 
-											+ (m.type == "attributes" ? " " + m.attributeName : (m.type == "childList" ? " added:" + nodeListString(m.addedNodes) + " removed:" + nodeListString(m.removedNodes) : ""))
-											+ (m.target.id ? " id:" + m.target.id : "")
-											+ (m.target.classList.length > 0 ? " class:" + m.target.classList.value : ""));
-							} else {
-								log.trace(">>> initUserPopups mutation " + m.type + " " + m.target.nodeName + "(" + m.target.nodeType + ")");
-							}*/
 							var tipName;
 							if (m.type == "childList" && (tipName = findNodeById("tipName", m.addedNodes))) {
 								var $tipName = $(tipName);
@@ -2074,7 +1929,6 @@
 		
 		/**
 		 * Return a provider registered by the type. This method doesn't check if provider was successfully configured and initialized.
-		 * TODO not used so far
 		 */
 		this.findProvider = function(type) {
 			for (var i = 0; i < providers.length; i++) {
@@ -2140,6 +1994,7 @@
 			}
 		};
 		
+		// TODO move these calls to CometD
 		this.getUserInfo = getUserInfoReq; 
 		this.getSpaceInfo = getSpaceInfoReq;
 		this.getRoomInfo = getRoomInfoReq;
@@ -2167,7 +2022,8 @@
 				});
 				return process.promise();
 			} else {
-				return getCallInfo(id);
+				log.trace("Getting call requires CometD. Was call: " + id);
+				return $.Deferred().reject("CometD required").promise();
 			}
 		};
 		
@@ -2195,7 +2051,8 @@
 				});
 				return process.promise();
 			} else {
-				return putCallInfo(id, state);
+				log.trace("Updating call requires CometD. Was call: " + id);
+				return $.Deferred().reject("CometD required").promise();
 			}
 		};
 		
@@ -2222,7 +2079,8 @@
 				});
 				return process.promise();
 			} else {
-				return deleteCallInfo(id);
+				log.trace("Deleting call requires CometD. Was call: " + id);
+				return $.Deferred().reject("CometD required").promise();
 			}
 		};
 		
@@ -2249,7 +2107,8 @@
 				});
 				return process.promise();
 			} else {
-				return postCallInfo(id, callInfo);
+				log.trace("Adding call requires CometD. Was call: " + id);
+				return $.Deferred().reject("CometD required").promise();
 			}
 		};
 				
@@ -2273,7 +2132,8 @@
 				});
 				return process.promise();
 			} else {
-				return getUserCallsState();
+				log.trace("Reading of user group calls requires CometD");
+				return $.Deferred().reject("CometD required").promise();
 			}
 		};
 		
@@ -2282,7 +2142,8 @@
 				// It's the same channel to call in CometD
 				return this.updateCall(id, state);
 			} else {
-				return putUserCallState(id, state);
+				log.trace("User call update requires CometD. Was call: " + id);
+				return $.Deferred().reject("CometD required").promise();
 			}
 		};
 		
@@ -2310,7 +2171,7 @@
 						var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
 						log.debug("User updates subscription failed for " + userId, err);
 						if (typeof onError == "function") {
-							onError("User updates subscription failed (" + err + ")", 0);								
+							onError("User updates subscription failed (" + err + ")");								
 						}
 					}
 				});
@@ -2320,31 +2181,12 @@
 					}
 				};
 			} else {
-				var loop = true;
-				var poll = function(prevData, prevStatus) {
-					if (loop) {
-						var timeout = prevStatus == 0 ? 60000 : (prevStatus >= 400 ? 15000 : 250);
-						setTimeout(function() {
-							pollUserUpdates(userId).done(function(update, status) {
-								if (typeof onUpdate == "function") {
-									onUpdate(update, status);								
-								}
-							}).fail(function(err, status) {
-								if (typeof onError == "function") {
-									onError(err, status);								
-								}
-							}).always(poll);
-						}, timeout);						
-					}
-				};
-				poll();
+				log.trace("User updates require CometD. Was user: " + userId);
+				if (typeof onError == "function") {
+					onError("CometD required");								
+				}
 				return {
-					off : function(callback) {
-						loop = false;
-						if (typeof callback == "function") {
-							callback();
-						}
-					}
+					off : function(callback) {}
 				};
 			}
 		};
@@ -2356,11 +2198,11 @@
 					var result = tryParseJson(message);
 					if (message.data.error) {
 						if (typeof onError == "function") {
-							onError(result, 400);
+							onError(result);
 						}
 					} else {
 						if (typeof onUpdate == "function") {
-							onUpdate(result, 200);
+							onUpdate(result);
 						}							
 					}
 				}, cometdContext, function(subscribeReply) {
@@ -2372,7 +2214,7 @@
 						var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
 						log.trace("Call updates subscription failed for " + callId, err);
 						if (typeof onError == "function") {
-							onError("Call updates subscription failed (" + err + ")", 0);								
+							onError("Call updates subscription failed (" + err + ")");								
 						}
 					}
 				});
@@ -2384,7 +2226,7 @@
 			} else {
 				log.trace("Call updates require CometD. Was call: " + callId);
 				if (typeof onError == "function") {
-					onError("Call updates require CometD", 0);								
+					onError("Call updates require CometD");								
 				}
 				return {
 					off : function() {}
@@ -2401,12 +2243,12 @@
 			    	process.resolve("successful", 200);
 			    } else {
 			    	//log.trace("<< Call update failed to reach the server: " + JSON.stringify(publishAck));
-			    	process.reject(publishAck.failure ? publishAck.failure.reason : publishAck.error, 500);
+			    	process.reject(publishAck.failure ? publishAck.failure.reason : publishAck.error);
 			    }
 				});
 			} else {
 				log.trace("Call updates require CometD. Was call: " + callId);
-				process.reject("CometD required", 400);
+				process.reject("CometD required");
 			}
 			return process.promise();
 		};

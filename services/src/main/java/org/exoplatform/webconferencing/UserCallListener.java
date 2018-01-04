@@ -29,13 +29,18 @@ public abstract class UserCallListener {
   /** The user id. */
   protected final String userId;
 
+  /** The client id. */
+  protected final String clientId;
+
   /**
    * Instantiates a new incoming call listener.
    *
    * @param userId the user id
+   * @param clientId the client id
    */
-  public UserCallListener(String userId) {
+  public UserCallListener(String userId, String clientId) {
     this.userId = userId;
+    this.clientId = clientId;
   }
 
   /**
@@ -48,12 +53,13 @@ public abstract class UserCallListener {
   }
 
   /**
-   * Checks if is listening.
+   * Gets the client id.
    *
-   * @return true, if is listening
+   * @return the clientId
    */
-  @Deprecated // TODO what a usecase?
-  public abstract boolean isListening();
+  public String getClientId() {
+    return clientId;
+  }
 
   /**
    * On call state changed.

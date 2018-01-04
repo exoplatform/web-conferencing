@@ -24,42 +24,6 @@
   xmlns="http://www.gatein.org/xml/ns/gatein_resources_1_3">
 
   <!-- CSS for WebRTC support in Platform -->
-  <!-- 
-      FIXME loading styles via portlet skin doesn't work with Enterprise skin where the skin loads after the portlet skin.
-      Thus, we load styles from Javascript, later when DOM already loaded.
-   -->
-  <!-- portlet-skin>
-    <application-name>skype</application-name>
-    <portlet-name>SkypeProviderPortlet</portlet-name>
-    <skin-name>Default</skin-name>
-    <css-path>/skin/skype.css</css-path>
-    <overwrite>true</overwrite>
-    <css-priority>1</css-priority>
-  </portlet-skin>
-  <portlet-skin>
-    <application-name>skype</application-name>
-    <portlet-name>SkypeProviderPortlet</portlet-name>
-    <skin-name>Enterprise</skin-name>
-    <css-path>/skin/skype.css</css-path>
-    <overwrite>true</overwrite>
-    <css-priority>1</css-priority>
-  </portlet-skin>
-  <portlet-skin>
-    <application-name>skype</application-name>
-    <portlet-name>SkypeBusinessProviderPortlet</portlet-name>
-    <skin-name>Default</skin-name>
-    <css-path>/skin/mssfb.css</css-path>
-    <overwrite>true</overwrite>
-    <css-priority>1</css-priority>
-  </portlet-skin>
-  <portlet-skin>
-    <application-name>skype</application-name>
-    <portlet-name>SkypeBusinessProviderPortlet</portlet-name>
-    <skin-name>Enterprise</skin-name>
-    <css-path>/skin/mssfb.css</css-path>
-    <overwrite>true</overwrite>
-    <css-priority>1</css-priority>
-  </portlet-skin -->
   
   <!-- CSS tweaks for Enterprise skin -->
   <!-- XXX Will be loaded by provider's JS after the base styles-->
@@ -67,14 +31,7 @@
     <application-name>skype</application-name>
     <portlet-name>SkypeProviderPortlet</portlet-name>
     <skin-name>Enterprise</skin-name>
-    <css-path>/skin/skype-mssfb-enterprise.css</css-path>
-    <overwrite>true</overwrite>
-  </portlet-skin>
-  <portlet-skin>
-    <application-name>skype</application-name>
-    <portlet-name>SkypeBusinessProviderPortlet</portlet-name>
-    <skin-name>Enterprise</skin-name>
-    <css-path>/skin/skype-mssfb-enterprise.css</css-path>
+    <css-path>/skin/webrtc-enterprise.css</css-path>
     <overwrite>true</overwrite>
   </portlet-skin -->
   

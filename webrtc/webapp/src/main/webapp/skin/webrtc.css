@@ -1,7 +1,4 @@
 /* Styles for WebRTC provider */
-/*.uiIconSocWebrtc:before {
-	content: url("/webrtc/skin/icons/webrtcicon_14px.png") !important;
-}*/
 .uiIconWebrtcCall {
 	vertical-align: text-bottom;
 }

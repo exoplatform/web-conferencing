@@ -67,6 +67,9 @@
       <column name="STATE" type="NVARCHAR(32)">
         <constraints nullable="true" />
       </column>
+      <column name="CLIENT_ID" type="NVARCHAR(255)">
+        <constraints nullable="true" />
+      </column>
     </createTable>
     <modifySql dbms="mysql">
       <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci" />

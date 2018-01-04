@@ -399,8 +399,8 @@
 									// Get call details by ID
 									webConferencing.getCall(callId).done(function(call) {
 										var callerId = call.owner.id;
-										var callerLink = call.ownerLink;
-										var callerAvatar = call.avatarLink;
+										var callerLink = call.owner.profileLink;
+										var callerAvatar = call.owner.avatarLink;
 										var callerMessage = call.owner.title + " is calling you...";
 										var callerRoom = callerId;
 										call.title = call.owner.title; // for callee the call title is a caller name

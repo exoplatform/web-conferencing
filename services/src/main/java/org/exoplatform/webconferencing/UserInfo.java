@@ -99,6 +99,9 @@ public class UserInfo extends IdentityInfo {
   /** The state. */
   private String                          state;
 
+  /** The client id. */
+  private String                          clientId;
+
   /**
    * Instantiates a new user info.
    *
@@ -215,6 +218,34 @@ public class UserInfo extends IdentityInfo {
    */
   public void setState(String state) {
     this.state = state;
+  }
+
+  /**
+   * Gets the client id.
+   *
+   * @return the clientId
+   */
+  public String getClientId() {
+    return clientId;
+  }
+
+  /**
+   * Sets the client id.
+   *
+   * @param clientId the clientId to set
+   */
+  public void setClientId(String clientId) {
+    this.clientId = clientId;
+  }
+  
+  /**
+   * Checks for same client id.
+   *
+   * @param clientId the client id
+   * @return true, if this user has same client ID (it is set and the same)
+   */
+  public boolean hasSameClientId(String clientId) {
+    return this.clientId != null && this.clientId.equals(clientId);
   }
 
 }

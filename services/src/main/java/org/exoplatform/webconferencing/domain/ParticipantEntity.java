@@ -41,9 +41,7 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
 @NamedQueries({
     @NamedQuery(name = "WebConfCall.findCallParts",
                 query = "SELECT p FROM WebConfParticipant p WHERE p.callId = :callId ORDER BY p.state, p.type"),
-    @NamedQuery(name = "WebConfCall.deleteCallParts", 
-                query = "DELETE FROM WebConfParticipant WHERE callId = :callId")
-})
+    @NamedQuery(name = "WebConfCall.deleteCallParts", query = "DELETE FROM WebConfParticipant WHERE callId = :callId") })
 public class ParticipantEntity {
 
   /** The id. */
@@ -63,6 +61,10 @@ public class ParticipantEntity {
   /** The state. */
   @Column(name = "STATE")
   protected String state;
+
+  /** The client id. */
+  @Column(name = "CLIENT_ID")
+  protected String clientId;
 
   /**
    * Instantiates a new participant entity.
@@ -140,6 +142,24 @@ public class ParticipantEntity {
    */
   public void setState(String state) {
     this.state = state;
+  }
+
+  /**
+   * Gets the client id.
+   *
+   * @return the clientId
+   */
+  public String getClientId() {
+    return clientId;
+  }
+
+  /**
+   * Sets the client id.
+   *
+   * @param clientId the clientId to set
+   */
+  public void setClientId(String clientId) {
+    this.clientId = clientId;
   }
 
 }

@@ -48,19 +48,9 @@
     <servlet-class>org.gatein.wci.api.GateInServlet</servlet-class>
     <load-on-startup>0</load-on-startup>
   </servlet>
-  <servlet>
-    <servlet-name>UpdatePollingServlet</servlet-name>
-    <servlet-class>org.exoplatform.webconferencing.server.UpdatePollingServlet</servlet-class>
-    <load-on-startup>0</load-on-startup>
-    <async-supported>true</async-supported>
-  </servlet>
   <servlet-mapping>
     <servlet-name>GateInServlet</servlet-name>
     <url-pattern>/gateinservlet</url-pattern>
-  </servlet-mapping>
-  <servlet-mapping>
-    <servlet-name>UpdatePollingServlet</servlet-name>
-    <url-pattern>/updates/*</url-pattern>
   </servlet-mapping>
   
 </web-app>
