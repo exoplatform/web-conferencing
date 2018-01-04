@@ -105,8 +105,8 @@ if (eXo.webConferencing) {
 								var currentUserId = webConferencing.getUser().id;
 								var isOwner = currentUserId == call.owner.id;
 								// TODO Use this for avatar when no video stream available
-								//var callerLink = call.ownerLink;
-								//var callerAvatar = call.avatarLink;
+								//var callerLink = call.owner.profileLink;
+								//var callerAvatar = call.owner.avatarLink;
 								
 								$("#webrtc-call-starting").hide();
 								$("#webrtc-call-container").show();

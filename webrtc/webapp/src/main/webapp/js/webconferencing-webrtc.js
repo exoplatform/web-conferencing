@@ -485,8 +485,8 @@
 															callWindow.close();
 														}
 														var callerId = call.owner.id;
-														var callerLink = call.ownerLink;
-														var callerAvatar = call.avatarLink;
+														var callerLink = call.owner.profileLink;
+														var callerAvatar = call.owner.avatarLink;
 														var callerMessage = call.owner.title + " " + message("callingYou");
 														var callerRoom = callerId;
 														call.title = call.owner.title; // for callee the call title is a caller name
