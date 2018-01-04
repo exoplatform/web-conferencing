@@ -143,7 +143,7 @@
                   <!-- Xirsys STUN server for testing -->
                   <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$ICEServer">
                     <field name="enabled">
-                      <boolean>${webconferencing.webrtc.xirsys.stun.enabled_no:false}</boolean>
+                      <boolean>${webconferencing.webrtc.xirsys.stun.enabled:false}</boolean>
                     </field>
                     <field name="urls">
                       <collection type="java.util.ArrayList">
