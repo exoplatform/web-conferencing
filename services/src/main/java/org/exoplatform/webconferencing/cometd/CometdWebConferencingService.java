@@ -657,12 +657,6 @@ public class CometdWebConferencingService implements Startable {
                         LOG.debug(">>>> Sent call state update to " + channelId + " by " + currentUserId(null));
                       }
                     }
-
-                    @Override
-                    public boolean isListening() {
-                      // TODO change the flag ASAP when will know about unsubscribing or session disconnected
-                      return true;
-                    }
                   };
                   if (LOG.isDebugEnabled()) {
                     LOG.debug("<<< Created user channel context for " + userId + ", client:" + sessionId + ", channel:"
@@ -742,7 +736,6 @@ public class CometdWebConferencingService implements Startable {
        */
       @Override
       public void configureChannel(ConfigurableServerChannel channel) {
-        // TODO need something special?
       }
 
       /**
@@ -882,7 +875,7 @@ public class CometdWebConferencingService implements Startable {
     public void subscribeCalls(Message message, @Param("callType") String callType, @Param("callInfo") String callInfo) {
       if (LOG.isDebugEnabled()) {
         String callId = callId(callType, callInfo);
-        // TODO log this to a dedicated diagnostic log!
+        // Should log this to a dedicated diagnostic log!
         LOG.debug("Call published in " + message.getChannel() + " by " + message.get("sender") + " callId: " + callId + " data: "
             + message.getJSON());
       }
@@ -1120,11 +1113,6 @@ public class CometdWebConferencingService implements Startable {
     @RemoteCall(LOGS_CHANNEL_NAME)
     public void rcLogs(final RemoteCall.Caller caller, final Object args) {
       final ServerSession session = caller.getServerSession();
-      // if (LOG.isDebugEnabled()) { // TODO cleanup
-      // LOG.debug(">> Remote log by " + session.getId() + " data: " + args);
-      // }
-
-      // TODO use thread pool (take in account CPUs number of cores etc)
       logHandlers.submit(new Runnable() {
         @Override
         @SuppressWarnings("unchecked")
@@ -1292,8 +1280,6 @@ public class CometdWebConferencingService implements Startable {
           LOG.warn("Call context not found for " + callId);
         }
       }
-      // TODO for CALL_SUBSCRIPTION_CHANNEL_NAME channel we could treat unsubscribe as 'leaved' participant
-      // and invoke this on the call service (or stop for p2p)
     }
   }
 

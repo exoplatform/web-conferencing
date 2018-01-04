@@ -128,7 +128,6 @@ if (eXo.webConferencing) {
 								var $hangupButton = $controls.find("#hangup");
 								
 								var handleError = function(title, message) {
-									//userLog.error(title + ". " + message);
 									showError(title, message);
 								};
 								
@@ -136,7 +135,7 @@ if (eXo.webConferencing) {
 								var pc;
 								var stopping = false;
 								var stopCall = function(localOnly) {
-									// TODO here we also could send 'bye' message - it will work for 'Hang Up' button, 
+									// TODO Here we also could send 'bye' message - it will work for 'Hang Up' button, 
 									// but in case of page close it may not be sent to others, thus we delete the call here.
 									if (!stopping) {
 										stopping = true;
@@ -159,7 +158,7 @@ if (eXo.webConferencing) {
 										if (localOnly) {
 											stopLocal();
 										} else {
-											//leavedCall(); // No sense to send 'leaved' for P2P, it is already should be stopped
+											// No sense to send 'leaved' for P2P, it is already should be stopped
 											webrtc.deleteCall(callId).always(function() {
 												stopLocal();
 											});
@@ -313,7 +312,7 @@ if (eXo.webConferencing) {
 							      	log.debug("Published offer for " + callId + " " + JSON.stringify(localDescription));
 										}).fail(function(err) {
 											log.error("Failed to send offer for " + callId, err);
-											// TODO May retry?
+											// TODO May be to retry?
 											showError("Error of sharing media (offer)", webConferencing.errorText(err));
 										});
 									};
@@ -379,7 +378,7 @@ if (eXo.webConferencing) {
 						  			}*/
 								  };
 								  if (isEdge) {
-								  	sdpConstraints = {}; // TODO in fact even undefined doesn't fit, need call without a parameter
+								  	sdpConstraints = {}; // XXX in fact even undefined doesn't fit, need call without a parameter
 								  }
 							  	// let the 'negotiationneeded' event trigger offer generation
 								  pc.onnegotiationneeded = function () {
@@ -641,17 +640,16 @@ if (eXo.webConferencing) {
 												  	width: { min: isPortrait ? vh : vw, ideal: isPortrait ? 720 : 1280 }
 												  	//height: { min: 480, ideal: vh } // 360? it's small mobile like Galaxy S7
 												  };
-									    		//constraints.video = true;
+									    		//constraints.video = true; // it's simple way
 										    	constraints.video = videoSettings;
 									    		if (typeof constraints.video === "object") {
 									    			try {
 															var supportedConstraints = navigator.mediaDevices.getSupportedConstraints();
 															if (supportedConstraints.hasOwnProperty("facingMode")) {
-																constraints.video.facingMode = "user"; // or { exact: "user" }
+																constraints.video.facingMode = "user";
 															}
 														} catch(e) {
 															log.warn("MediaDevices.getSupportedConstraints() failed", e);
-															// constraints.video = true; // TODO set this?
 														}							    			
 									    		}
 										    } else {
@@ -672,8 +670,7 @@ if (eXo.webConferencing) {
 									inputsReady.done(function(constraints, comment) {
 										log.debug("Media constraints: " + JSON.stringify(constraints) + " " + comment);
 										navigator.mediaDevices.getUserMedia(constraints).then(function(localStream) {
-											// successCallback
-											// show local camera output
+											// successCallback: show local camera output
 											localVideo.srcObject = localStream;
 											$localVideo.addClass("active");
 											
@@ -736,7 +733,6 @@ if (eXo.webConferencing) {
 													});
 								  			});
 										  }
-											// TODO should we do this only on connection done, in the resolved promise below?
 											// if user had saved audio/video disabled, mute them accordingly
 											if (getPreference("audio.disable") == "true") {
 												enableAudio(false);

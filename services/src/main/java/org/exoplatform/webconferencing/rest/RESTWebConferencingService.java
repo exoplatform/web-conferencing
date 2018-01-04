@@ -278,7 +278,8 @@ public class RESTWebConferencingService implements ResourceContainer {
    */
   @GET
   @RolesAllowed("users")
-  @Path("/user/{name}/calls")
+  @Path("/user_/{name}/calls")
+  @Deprecated // CometD used instead
   public Response getUserCalls(@Context UriInfo uriInfo,
                                @PathParam("name") String userName,
                                @QueryParam("state") String callState /* TODO not used */) {
@@ -343,7 +344,8 @@ public class RESTWebConferencingService implements ResourceContainer {
    */
   @PUT
   @RolesAllowed("users")
-  @Path("/user/{name}/call/{type}/{id}")
+  @Path("/user_/{name}/call/{type}/{id}")
+  @Deprecated // CometD used instead
   public Response putUserCall(@Context UriInfo uriInfo,
                               @PathParam("name") String userName,
                               @PathParam("type") String type,
@@ -422,7 +424,8 @@ public class RESTWebConferencingService implements ResourceContainer {
    */
   @GET
   @RolesAllowed("users")
-  @Path("/users") // TODO not used
+  @Path("/users")
+  @Deprecated // not used
   public Response getUsersInfo(@Context UriInfo uriInfo, @QueryParam("names") String names) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
@@ -620,7 +623,8 @@ public class RESTWebConferencingService implements ResourceContainer {
    */
   @GET
   @RolesAllowed("users")
-  @Path("/call/{type}/{id}")
+  @Path("/call_/{type}/{id}")
+  @Deprecated // CometD used instead
   public Response getCallInfo(@Context UriInfo uriInfo, @PathParam("type") String type, @PathParam("id") String id) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
@@ -661,7 +665,8 @@ public class RESTWebConferencingService implements ResourceContainer {
    */
   @DELETE
   @RolesAllowed("users")
-  @Path("/call/{type}/{id}")
+  @Path("/call_/{type}/{id}")
+  @Deprecated // CometD used instead
   public Response deleteCall(@Context UriInfo uriInfo, @PathParam("type") String type, @PathParam("id") String id) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
@@ -704,7 +709,8 @@ public class RESTWebConferencingService implements ResourceContainer {
    */
   @PUT
   @RolesAllowed("users")
-  @Path("/call/{type}/{id}")
+  @Path("/call_/{type}/{id}")
+  @Deprecated // CometD used instead
   public Response putCall(@Context UriInfo uriInfo,
                           @PathParam("type") String type,
                           @PathParam("id") String id,
@@ -768,7 +774,8 @@ public class RESTWebConferencingService implements ResourceContainer {
    */
   @POST
   @RolesAllowed("users")
-  @Path("/call/{type}/{id}")
+  @Path("/call_/{type}/{id}")
+  @Deprecated // CometD used instead
   public Response postCall(@Context UriInfo uriInfo,
                            @PathParam("type") String type,
                            @PathParam("id") String id,
