@@ -717,6 +717,8 @@ public class WebConferencingService implements Startable {
     // We save call in a single tx, thus logic split on gathering the changes and saving them at the end
     call.setState(CallState.STARTED);
 
+    // On call start we mark all parts LEAVED and then each of them will join and be marked as JOINED in
+    // joinCall()
     String userId = currentUserId();
     for (UserInfo part : call.getParticipants()) {
       if (UserInfo.TYPE_NAME.equals(part.getType()) && userId.equals(part.getId())) {
@@ -727,33 +729,6 @@ public class WebConferencingService implements Startable {
         part.setClientId(null);
       }
     }
-
-    // TODO cleanup
-    /*
-     * UserInfo joined = null;
-     * if (call.getOwner().isGroup()) {
-     * // Find an user who joins (current user who starts a group call will join it first)
-     * if (joined != null) {
-     * // First save the group call with joined participant (in single tx)
-     * updateCallAndParticipant(call, joined);
-     * } else {
-     * // This should not be a case, but we preserve the logic - may be admin could start it?
-     * LOG.warn("Call started by not a participant: " + userId + ", call: " + callId);
-     * updateCall(call);
-     * }
-     * // Then fire this call started to all parts, including the user itself
-     * for (UserInfo part : call.getParticipants()) {
-     * fireUserCallStateChanged(part.getId(),
-     * callId,
-     * call.getProviderType(),
-     * CallState.STARTED,
-     * call.getOwner().getId(), // TODO client ID also?
-     * call.getOwner().getType());
-     * }
-     * } else {
-     * updateCall(call);
-     * }
-     */
 
     updateCallAndParticipants(call);
 
@@ -839,7 +814,7 @@ public class WebConferencingService implements Startable {
               // Leave should not be called on a call session started after stopping an one previous of this
               // call.
               // Or we need assign each call session an unique ID that will help to distinguish. This also
-              // would improve addCall/startCall logic. 
+              // would improve addCall/startCall logic.
               // TODO Call's lastDate timestamp already could do the job.
               if (part.hasSameClientId(clientId)) {
                 part.setState(UserState.LEAVED);
@@ -1720,6 +1695,9 @@ public class WebConferencingService implements Startable {
     saveCall(call);
 
     // Update participants
+    // TODO this could be done with a single SQL UPDATE, but need ensure that JPA will not fail after that to
+    // access the call due to presence in the session of participant entities with outdated state (like it was
+    // faced in addCall() when deleted outdated call before creating a new one)
     String callId = call.getId();
     for (UserInfo p : call.getParticipants()) {
       saveParticipant(callId, p);
