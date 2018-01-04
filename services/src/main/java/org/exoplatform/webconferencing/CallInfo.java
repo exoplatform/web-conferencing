@@ -79,9 +79,9 @@ public class CallInfo {
   }
 
   /**
-   * Gets the title.
+   * Gets the title. Can be <code>null</code>.
    *
-   * @return the title
+   * @return the title or <code>null</code> 
    */
   public String getTitle() {
     return title;

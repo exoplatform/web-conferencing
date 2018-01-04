@@ -19,8 +19,6 @@
  */
 package org.exoplatform.webconferencing;
 
-import static org.exoplatform.webconferencing.IdentityInfo.isValidId;
-
 import java.net.URLEncoder;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
@@ -81,6 +79,18 @@ import com.ibm.icu.util.Calendar;
  * @version $Id: SkypeService.java 00000 Feb 22, 2017 pnedonosko $
  */
 public class WebConferencingService implements Startable {
+
+  /** The Constant ID_MAX_LENGTH. */
+  public static final int       ID_MAX_LENGTH         = 255;
+  
+  /** The Constant TEXT_MAX_LENGTH. */
+  public static final int       TEXT_MAX_LENGTH         = 255;
+
+  /** The Constant ARG_MAX_LENGTH. */
+  public static final int       ARG_MAX_LENGTH        = 32;
+
+  /** The Constant DATA_MAX_LENGTH. */
+  public static final int       DATA_MAX_LENGTH       = 20480;
 
   /** The Constant SPACE_TYPE_NAME. */
   public static final String    SPACE_TYPE_NAME       = "space".intern();
@@ -225,6 +235,64 @@ public class WebConferencingService implements Startable {
 
   /** The user listeners. */
   protected final Map<String, Set<UserCallListener>> userListeners       = new ConcurrentHashMap<>();
+
+  /**
+   * Checks if is valid argument: not null, not empty and not too long.
+   *
+   * @param argument the argument
+   * @return true, if is valid arg
+   * @see IdentityInfo#isValidId(String)
+   */
+
+  /**
+   * Checks is ID valid (not null, not empty and not longer of {@value #ID_MAX_LENGTH} chars).
+   *
+   * @param id the id
+   * @return true, if is valid id
+   */
+  public static boolean isValidId(String id) {
+    return id != null && id.length() > 0 && id.length() <= ID_MAX_LENGTH;
+  }
+
+  /**
+   * Checks if is valid text (null, not empty and not longer of {@value #TEXT_MAX_LENGTH} chars).
+   *
+   * @param text the text
+   * @return true, if is valid text
+   */
+  public static boolean isValidText(String text) {
+    return text == null || (text.length() > 0 && text.length() <= TEXT_MAX_LENGTH);
+  }
+
+  /**
+   * Checks if argument valid (null or not empty and not longer of {@value #ARG_MAX_LENGTH} chars).
+   *
+   * @param arg the arg
+   * @return true, if is valid arg
+   */
+  public static boolean isValidArg(String arg) {
+    return arg == null || (arg.length() > 0 && arg.length() <= ARG_MAX_LENGTH);
+  }
+
+  /**
+   * Checks if argument not null (also not empty and not longer of {@value #ARG_MAX_LENGTH} chars).
+   *
+   * @param arg the arg
+   * @return true, if is not null arg
+   */
+  public static boolean isNotNullArg(String arg) {
+    return arg != null && arg.length() > 0 && arg.length() <= ARG_MAX_LENGTH;
+  }
+
+  /**
+   * Checks if data valid (null or not empty and not longer of {@value #DATA_MAX_LENGTH} chars).
+   *
+   * @param data the data
+   * @return true, if is valid data
+   */
+  public static boolean isValidData(String data) {
+    return data == null || (data.length() > 0 && data.length() <= DATA_MAX_LENGTH);
+  }
 
   /**
    * Instantiates a new web conferencing service.
@@ -412,195 +480,210 @@ public class WebConferencingService implements Startable {
     // Ensure call and owner IDs length is OK
     if (isValidId(id)) {
       if (isValidId(ownerId)) {
-        final String currentUserId = currentUserId();
-        final boolean isUser = UserInfo.TYPE_NAME.equals(ownerType);
-        final boolean isSpace = OWNER_TYPE_SPACE.equals(ownerType);
-        final boolean isRoom = OWNER_TYPE_CHATROOM.equals(ownerType);
-        final boolean isGroup = isSpace || isRoom;
+        if (isNotNullArg(ownerType)) {
+          if (isNotNullArg(providerType)) {
+            if (isValidText(title)) {
 
-        // TODO Validate fields (length not null etc)
+              final String currentUserId = currentUserId();
+              final boolean isUser = UserInfo.TYPE_NAME.equals(ownerType);
+              final boolean isSpace = OWNER_TYPE_SPACE.equals(ownerType);
+              final boolean isRoom = OWNER_TYPE_CHATROOM.equals(ownerType);
+              final boolean isGroup = isSpace || isRoom;
 
-        // Check if group doesn't have a call with another ID assigned
-        if (isGroup) {
-          // it's group call
-          String prevId = readGroupCallId(ownerId);
-          if (prevId != null && !prevId.equals(id)) {
-            // XXX For a case when some client failed to delete an existing (but outdated etc.) call but
-            // already starting a new one.
-            // It's SfB usecase when browser client failed to delete outdated call (browser/plugin
-            // crashed in IE11) and then starts a new one.
-            deleteCall(prevId);
-            LOG.warn("Deleted outdated group call: " + prevId);
-          }
-        }
-
-        // Ensure we can create this call
-        CallEntity existingCallEntity = callStorage.find(id);
-        if (existingCallEntity != null) {
-          if (isGroup) {
-            // Group call: already exists, we return an error - it needs read/start existing call
-            throw new CallConflictException("Call already created");
-          } else {
-            // P2P call: need check if it is STARTED and does someone already joined and actually connected,
-            // if have one - it's an error to return, otherwise we treat this call as outdated
-            // (could be left not properly stopped on an error like server crash or network lose)
-            CallInfo existingCall = readCallEntity(existingCallEntity, true);
-            if (CallState.STARTED.equals(existingCall.getState())) {
-              for (UserInfo savedPart : existingCall.getParticipants()) {
-                Set<UserCallListener> ulisteners = userListeners.get(savedPart.getId());
-                if (ulisteners != null) {
-                  for (UserCallListener ul : ulisteners) {
-                    if (savedPart.hasSameClientId(ul.getClientId())) {
-                      // this part already joined and runs in the call
-                      throw new CallConflictException("Call already started");
-                    }
-                  }
+              // Check if group doesn't have a call with another ID assigned
+              if (isGroup) {
+                // it's group call
+                String prevId = readGroupCallId(ownerId);
+                if (prevId != null && !prevId.equals(id)) {
+                  // XXX For a case when some client failed to delete an existing (but outdated etc.) call but
+                  // already starting a new one.
+                  // It's SfB usecase when browser client failed to delete outdated call (browser/plugin
+                  // crashed in IE11) and then starts a new one.
+                  deleteCall(prevId);
+                  LOG.warn("Deleted outdated group call: " + prevId);
                 }
               }
-              deleteCall(id);
-              LOG.warn("Deleted not active call: " + id);
-            } else {
-              deleteCall(id);
-              LOG.warn("Deleted outdated call: " + id);
-            }
-          }
-        }
 
-        // Collecting the call data
-        final IdentityInfo owner;
-        if (isUser) {
-          UserInfo userInfo = getUserInfo(ownerId);
-          if (userInfo == null) {
-            // if owner user not found, it's possibly an external user, thus treat it as a chat room
-            owner = new RoomInfo(ownerId, ownerId, title);
-            owner.setAvatarLink(LinkProvider.PROFILE_DEFAULT_AVATAR_URL);
-          } else {
-            owner = userInfo;
-            owner.setProfileLink(userInfo.getProfileLink());
-            String avatar = userInfo.getAvatarLink();
-            avatar = avatar != null ? avatar : LinkProvider.PROFILE_DEFAULT_AVATAR_URL;
-            owner.setAvatarLink(avatar);
-          }
-        } else if (isSpace) {
-          Space space = spaceService.getSpaceByPrettyName(ownerId);
-          if (space != null) {
-            owner = new SpaceInfo(space);
-            owner.setProfileLink(space.getUrl());
-            String avatar = space.getAvatarUrl();
-            avatar = avatar != null ? avatar : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
-            owner.setAvatarLink(avatar);
-          } else {
-            LOG.warn("Cannot find call's owner space: " + ownerId);
-            owner = new RoomInfo(ownerId, ownerId, title);
-            owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
-          }
-        } else if (isRoom) {
-          owner = new RoomInfo(ownerId, ownerId, title);
-          owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
-        } else {
-          throw new CallInfoException("Wrong call owner type: " + ownerType);
-        }
-
-        Set<UserInfo> participants = new LinkedHashSet<>();
-        for (String pid : parts) {
-          if (isValidId(pid)) {
-            UserInfo part = getUserInfo(pid);
-            if (part != null) {
-              // it's eXo user
-              participants.add(part);
-            } else {
-              // external participant
-              participants.add(new ParticipantInfo(providerType, pid));
-            }
-          } else {
-            LOG.error("Cannot add call participant with too long ID: " + pid);
-            throw new WrongIdException("Wrong participant ID (" + pid + ")");
-          }
-        }
-
-        // Save the call
-        CallInfo call = new CallInfo(id, title, owner, providerType);
-        call.addParticipants(participants);
-        call.setState(CallState.STARTED);
-        call.setLastDate(Calendar.getInstance().getTime());
-
-        try {
-          // XXX It is REQUIRED stuff (actual when something were deleted above), otherwise ExoTx/Hibernate
-          // will fail to enter into the transaction in createCall() with an exception:
-          // javax.persistence.EntityExistsException: a different object with the same identifier value was
-          // already associated with the session:
-          // [org.exoplatform.webconferencing.domain.ParticipantEntity#org.exoplatform.webconferencing.domain.ParticipantId@4aa63de3]
-          participantsStorage.clear();
-          callStorage.clear();
-
-          // Persist the call with all its participants
-          createCall(call);
-        } catch (PersistenceException pe) {
-          // ensure it's not already existing call
-          SQLIntegrityConstraintViolationException constEx = findCause(pe, SQLIntegrityConstraintViolationException.class);
-          if (constEx != null && constEx.getMessage().indexOf("PK_WBC_CALLID") >= 0) {
-            CallEntity conflictedCallEntity = callStorage.find(id);
-            if (conflictedCallEntity != null) {
-              // We can fail from here or return this already created, in second case we may return not
-              // exactly what was originally requested (by data and participants).
-              // Taking in account above check for existence, we raise an error to the caller with details.
-              if (CallState.STARTED.equals(call.getState())) {
-                for (UserInfo savedPart : call.getParticipants()) {
-                  Set<UserCallListener> ulisteners = userListeners.get(savedPart.getId());
-                  if (ulisteners != null) {
-                    for (UserCallListener ul : ulisteners) {
-                      if (savedPart.hasSameClientId(ul.getClientId())) {
-                        // this part already joined and runs in the call
-                        if (LOG.isDebugEnabled()) {
-                          LOG.debug("Call already started and running: " + id, pe);
+              // Ensure we can create this call
+              CallEntity existingCallEntity = callStorage.find(id);
+              if (existingCallEntity != null) {
+                if (isGroup) {
+                  // Group call: already exists, we return an error - it needs read/start existing call
+                  throw new CallConflictException("Call already created");
+                } else {
+                  // P2P call: need check if it is STARTED and does someone already joined and actually
+                  // connected,
+                  // if have one - it's an error to return, otherwise we treat this call as outdated
+                  // (could be left not properly stopped on an error like server crash or network lose)
+                  CallInfo existingCall = readCallEntity(existingCallEntity, true);
+                  if (CallState.STARTED.equals(existingCall.getState())) {
+                    for (UserInfo savedPart : existingCall.getParticipants()) {
+                      Set<UserCallListener> ulisteners = userListeners.get(savedPart.getId());
+                      if (ulisteners != null) {
+                        for (UserCallListener ul : ulisteners) {
+                          if (savedPart.hasSameClientId(ul.getClientId())) {
+                            // this part already joined and runs in the call
+                            throw new CallConflictException("Call already started");
+                          }
                         }
-                        throw new CallConflictException("Call already started and running");
                       }
                     }
+                    deleteCall(id);
+                    LOG.warn("Deleted not active call: " + id);
+                  } else {
+                    deleteCall(id);
+                    LOG.warn("Deleted outdated call: " + id);
                   }
                 }
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("Call already started: " + id, pe);
-                }
-                throw new CallConflictException("Call already started");
-              } else {
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("Call already created with state " + conflictedCallEntity.getState() + ": " + id, pe);
-                }
-                throw new CallConflictException("Call already created");
               }
+
+              // Collecting the call data
+              final IdentityInfo owner;
+              if (isUser) {
+                UserInfo userInfo = getUserInfo(ownerId);
+                if (userInfo == null) {
+                  // if owner user not found, it's possibly an external user, thus treat it as a chat room
+                  owner = new RoomInfo(ownerId, ownerId, title);
+                  owner.setAvatarLink(LinkProvider.PROFILE_DEFAULT_AVATAR_URL);
+                } else {
+                  owner = userInfo;
+                  owner.setProfileLink(userInfo.getProfileLink());
+                  String avatar = userInfo.getAvatarLink();
+                  avatar = avatar != null ? avatar : LinkProvider.PROFILE_DEFAULT_AVATAR_URL;
+                  owner.setAvatarLink(avatar);
+                }
+              } else if (isSpace) {
+                Space space = spaceService.getSpaceByPrettyName(ownerId);
+                if (space != null) {
+                  owner = new SpaceInfo(space);
+                  owner.setProfileLink(space.getUrl());
+                  String avatar = space.getAvatarUrl();
+                  avatar = avatar != null ? avatar : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
+                  owner.setAvatarLink(avatar);
+                } else {
+                  LOG.warn("Cannot find call's owner space: " + ownerId);
+                  owner = new RoomInfo(ownerId, ownerId, title);
+                  owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
+                }
+              } else if (isRoom) {
+                owner = new RoomInfo(ownerId, ownerId, title);
+                owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
+              } else {
+                throw new CallInfoException("Wrong call owner type: " + ownerType);
+              }
+
+              Set<UserInfo> participants = new LinkedHashSet<>();
+              for (String pid : parts) {
+                if (isValidId(pid)) {
+                  UserInfo part = getUserInfo(pid);
+                  if (part != null) {
+                    // it's eXo user
+                    participants.add(part);
+                  } else {
+                    // external participant
+                    participants.add(new ParticipantInfo(providerType, pid));
+                  }
+                } else {
+                  LOG.error("Cannot add call participant with too long ID: " + pid);
+                  throw new CallArgumentException("Wrong participant ID (" + pid + ")");
+                }
+              }
+
+              // Save the call
+              CallInfo call = new CallInfo(id, title, owner, providerType);
+              call.addParticipants(participants);
+              call.setState(CallState.STARTED);
+              call.setLastDate(Calendar.getInstance().getTime());
+
+              try {
+                // XXX It is REQUIRED stuff (actual when something were deleted above), otherwise
+                // ExoTx/Hibernate
+                // will fail to enter into the transaction in createCall() with an exception:
+                // javax.persistence.EntityExistsException: a different object with the same identifier value
+                // was
+                // already associated with the session:
+                // [org.exoplatform.webconferencing.domain.ParticipantEntity#org.exoplatform.webconferencing.domain.ParticipantId@4aa63de3]
+                participantsStorage.clear();
+                callStorage.clear();
+
+                // Persist the call with all its participants
+                createCall(call);
+              } catch (PersistenceException pe) {
+                // ensure it's not already existing call
+                SQLIntegrityConstraintViolationException constEx = findCause(pe, SQLIntegrityConstraintViolationException.class);
+                if (constEx != null && constEx.getMessage().indexOf("PK_WBC_CALLID") >= 0) {
+                  CallEntity conflictedCallEntity = callStorage.find(id);
+                  if (conflictedCallEntity != null) {
+                    // We can fail from here or return this already created, in second case we may return not
+                    // exactly what was originally requested (by data and participants).
+                    // Taking in account above check for existence, we raise an error to the caller with
+                    // details.
+                    if (CallState.STARTED.equals(call.getState())) {
+                      for (UserInfo savedPart : call.getParticipants()) {
+                        Set<UserCallListener> ulisteners = userListeners.get(savedPart.getId());
+                        if (ulisteners != null) {
+                          for (UserCallListener ul : ulisteners) {
+                            if (savedPart.hasSameClientId(ul.getClientId())) {
+                              // this part already joined and runs in the call
+                              if (LOG.isDebugEnabled()) {
+                                LOG.debug("Call already started and running: " + id, pe);
+                              }
+                              throw new CallConflictException("Call already started and running");
+                            }
+                          }
+                        }
+                      }
+                      if (LOG.isDebugEnabled()) {
+                        LOG.debug("Call already started: " + id, pe);
+                      }
+                      throw new CallConflictException("Call already started");
+                    } else {
+                      if (LOG.isDebugEnabled()) {
+                        LOG.debug("Call already created with state " + conflictedCallEntity.getState() + ": " + id, pe);
+                      }
+                      throw new CallConflictException("Call already created");
+                    }
+                  } else {
+                    LOG.warn("Call ID already found but cannot read the call: " + id, pe);
+                    throw new CallConflictException("Call ID already found", pe);
+                  }
+                } else {
+                  // We cannot create this call
+                  LOG.error("Error creating call: " + id, pe);
+                  throw new CallInfoException("Error creating call", pe);
+                }
+              }
+
+              // Notify participants (about started call)
+              if (isGroup) {
+                // it's group call: fire group's user listener for incoming, except of the caller
+                for (UserInfo part : call.getParticipants()) {
+                  if (UserInfo.TYPE_NAME.equals(part.getType())) {
+                    if (!currentUserId.equals(part.getId())) {
+                      fireUserCallStateChanged(part.getId(), id, providerType, CallState.STARTED, ownerId, ownerType);
+                    }
+                  }
+                }
+              } else if (isUser) {
+                // It's P2P call
+                notifyUserCallStateChanged(call, currentUserId, CallState.STARTED);
+              }
+
+              return call;
             } else {
-              LOG.warn("Call ID already found but cannot read the call: " + id, pe);
-              throw new CallConflictException("Call ID already found", pe);
+              throw new CallArgumentException("Wrong call title");
             }
           } else {
-            // We cannot create this call
-            LOG.error("Error creating call: " + id, pe);
-            throw new CallInfoException("Error creating call", pe);
+            throw new CallArgumentException("Wrong provider");
           }
+        } else {
+          throw new CallArgumentException("Wrong owner type");
         }
-
-        // Notify participants (about started call)
-        if (isGroup) {
-          // it's group call: fire group's user listener for incoming, except of the caller
-          for (UserInfo part : call.getParticipants()) {
-            if (UserInfo.TYPE_NAME.equals(part.getType())) {
-              if (!currentUserId.equals(part.getId())) {
-                fireUserCallStateChanged(part.getId(), id, providerType, CallState.STARTED, ownerId, ownerType);
-              }
-            }
-          }
-        } else if (isUser) {
-          // It's P2P call
-          notifyUserCallStateChanged(call, currentUserId, CallState.STARTED);
-        }
-
-        return call;
       } else {
-        throw new WrongIdException("Wrong owner ID value");
+        throw new CallArgumentException("Wrong owner ID value");
       }
     } else {
-      throw new WrongIdException("Wrong call ID value");
+      throw new CallArgumentException("Wrong call ID value");
     }
   }
 
