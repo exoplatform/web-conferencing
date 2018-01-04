@@ -307,7 +307,7 @@ public class WebConferencingService implements Startable {
             + ")");
       }
     } else {
-      // TODO exception here?
+      // exception here?
       LOG.warn("User not found: " + id);
     }
     return null;
@@ -429,7 +429,6 @@ public class WebConferencingService implements Startable {
             // already starting a new one.
             // It's SfB usecase when browser client failed to delete outdated call (browser/plugin
             // crashed in IE11) and then starts a new one.
-            // deleteCall(prevId); // TODO fire leaved instead?
             deleteCall(prevId);
             LOG.warn("Deleted outdated group call: " + prevId);
           }
@@ -928,14 +927,7 @@ public class WebConferencingService implements Startable {
     Set<UserCallListener> listeners = userListeners.get(userId);
     if (listeners != null) {
       for (UserCallListener listener : listeners) {
-        // TODO we may lose events: when one request is completing pooling with some event, the listener will
-        // stop listen and next one will be registered after some period - this time events will not be
-        // delivered to the client.
-        // As a solution, we need a temporal pool to save (deferred) events for given user
-        // (listener.getUserId()) until it will send a new request or the pool expired
-        if (listener.isListening()) {
-          listener.onCallStateChanged(callId, providerType, callState, ownerId, ownerType);
-        }
+        listener.onCallStateChanged(callId, providerType, callState, ownerId, ownerType);
       }
     }
   }
@@ -959,9 +951,7 @@ public class WebConferencingService implements Startable {
     Set<UserCallListener> listeners = userListeners.get(userId);
     if (listeners != null) {
       for (UserCallListener listener : listeners) {
-        if (listener.isListening()) {
-          listener.onPartJoined(callId, providerType, ownerId, ownerType, partId);
-        }
+        listener.onPartJoined(callId, providerType, ownerId, ownerType, partId);
       }
     }
   }
@@ -985,9 +975,7 @@ public class WebConferencingService implements Startable {
     Set<UserCallListener> listeners = userListeners.get(userId);
     if (listeners != null) {
       for (UserCallListener listener : listeners) {
-        if (listener.isListening()) {
-          listener.onPartLeaved(callId, providerType, ownerId, ownerType, partId);
-        }
+        listener.onPartLeaved(callId, providerType, ownerId, ownerType, partId);
       }
     }
   }
@@ -1243,69 +1231,6 @@ public class WebConferencingService implements Startable {
       calls.add(readCallEntity(c, false));
     }
     return Collections.unmodifiableCollection(calls);
-  }
-
-  /**
-   * Save user group call id.
-   *
-   * @param userId the user id
-   * @param callId the call id
-   */
-  @Deprecated
-  protected void saveUserGroupCallId(String userId, String callId) {
-    final String initialContextId = Context.USER.getId();
-    final String initialScopeId = Scope.GLOBAL.getId();
-    final Context userContext = userId != null ? Context.USER.id(userId) : Context.USER;
-    final Scope userScope = Scope.GLOBAL.id(USER_CALLS_SCOPE_NAME);
-    try {
-      StringBuilder newVal = new StringBuilder();
-      SettingValue<?> val = settingService.get(userContext, userScope, GROUP_CALL_TYPE);
-      if (val != null) {
-        String oldVal = String.valueOf(val.getValue());
-        // XXX it may happen that user will list already deleted call IDs (if client failed to call delete but
-        // started
-        if (oldVal.indexOf(callId) >= 0) {
-          return; // already contains this call ID
-        } else {
-          newVal.append(oldVal);
-          newVal.append('\n');
-        }
-      }
-      newVal.append(callId);
-      settingService.set(userContext, userScope, GROUP_CALL_TYPE, SettingValue.create(newVal.toString()));
-    } finally {
-      Scope.GLOBAL.id(initialScopeId);
-      Context.USER.id(initialContextId);
-    }
-  }
-
-  /**
-   * Removes the user group call id.
-   *
-   * @param userId the user id
-   * @param callId the call id
-   */
-  @Deprecated
-  protected void removeUserGroupCallId(String userId, String callId) {
-    final String initialContextId = Context.USER.getId();
-    final String initialScopeId = Scope.GLOBAL.getId();
-    final Context userContext = userId != null ? Context.USER.id(userId) : Context.USER;
-    final Scope userScope = Scope.GLOBAL.id(USER_CALLS_SCOPE_NAME);
-    try {
-      SettingValue<?> val = settingService.get(userContext, userScope, GROUP_CALL_TYPE);
-      if (val != null) {
-        String oldVal = String.valueOf(val.getValue());
-        int start = oldVal.indexOf(callId);
-        if (start >= 0) {
-          StringBuilder newVal = new StringBuilder(oldVal);
-          newVal.delete(start, start + callId.length() + 1); // also delete a \n as separator
-          settingService.set(userContext, userScope, GROUP_CALL_TYPE, SettingValue.create(newVal.toString()));
-        }
-      }
-    } finally {
-      Scope.GLOBAL.id(initialScopeId);
-      Context.USER.id(initialContextId);
-    }
   }
 
   /**

@@ -191,16 +191,11 @@
 			};
 			
 			var setButtonCall = function($button, callId) {
-				// We don't lock, but let open the call window
-				//if (!$button.hasClass(CALL_DISABLED_CLASS)) {
-				//	$button.addClass(CALL_DISABLED_CLASS);
-				//}
 				$button.data("callid", callId);
 				$button.attr("title", message("callRunningTip"));
 			};
 			
 			var removeButtonCall = function($button) {
-				//$button.removeClass(CALL_DISABLED_CLASS);
 				$button.removeData("callid"); // we don't touch targetid, it managed by callButton()
 				$button.attr("title", message("callStartTip"));
 			};

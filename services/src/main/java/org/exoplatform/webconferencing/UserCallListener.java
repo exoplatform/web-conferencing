@@ -62,14 +62,6 @@ public abstract class UserCallListener {
   }
 
   /**
-   * Checks if is listening.
-   *
-   * @return true, if is listening
-   */
-  @Deprecated // TODO what a usecase?
-  public abstract boolean isListening();
-
-  /**
    * On call state changed.
    *
    * @param callId the call id
