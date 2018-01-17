@@ -19,9 +19,9 @@
 package org.exoplatform.webconferencing.webrtc.portlet;
 
 import static org.exoplatform.webconferencing.Utils.asJSON;
+import static org.exoplatform.webconferencing.Utils.buildUrl;
 
 import java.io.IOException;
-import java.net.URI;
 
 import javax.portlet.GenericPortlet;
 import javax.portlet.PortletException;
@@ -79,14 +79,21 @@ public class WebrtcProviderPortlet extends GenericPortlet {
   protected void doView(final RenderRequest request, final RenderResponse response) throws PortletException, IOException {
     if (this.provider != null) {
       try {
-        URI callURI = new URI(request.getScheme(),
-                              null,
-                              request.getServerName(),
-                              request.getServerPort(),
-                              "/webrtc/call",
-                              null,
-                              null);
-        Settings settings = provider.settings().callUri(callURI.toString()).locale(request.getLocale()).build();
+        // TODO cleanup
+        // URI callURI = new URI(request.getScheme(),
+        // null,
+        // request.getServerName(),
+        // request.getServerPort(),
+        // "/webrtc/call",
+        // null,
+        // null);
+        Settings settings = provider.settings()
+                                    .callUri(buildUrl(request.getScheme(),
+                                                      request.getServerName(),
+                                                      request.getServerPort(),
+                                                      "/webrtc/call"))
+                                    .locale(request.getLocale())
+                                    .build();
 
         // Markup (incoming call popup etc)
         request.setAttribute("messages", settings.getMessages());

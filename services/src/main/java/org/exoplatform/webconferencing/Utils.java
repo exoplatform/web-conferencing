@@ -18,8 +18,8 @@
  */
 package org.exoplatform.webconferencing;
 
-import static org.exoplatform.webconferencing.Utils.getResourceMessages;
-
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Locale;
@@ -175,7 +175,7 @@ public class Utils {
     }
     return resMap;
   }
-  
+
   /**
    * Gets the resource message.
    *
@@ -209,6 +209,20 @@ public class Utils {
     } else {
       return "null".intern();
     }
+  }
+
+  /**
+   * Build client URL using given parameters.
+   *
+   * @param protocol the scheme
+   * @param hostname the host name
+   * @param port the port
+   * @param path the path
+   * @return the string
+   * @throws MalformedURLException if the protocol hasn't a handled
+   */
+  public static String buildUrl(String protocol, String hostname, int port, String path) throws MalformedURLException {
+    return new URL(protocol, hostname, port, path).toString();
   }
 
 }
