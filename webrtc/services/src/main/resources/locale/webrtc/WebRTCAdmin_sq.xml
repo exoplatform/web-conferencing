@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <webrtc>
+    <admin>
+      <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
+      <title>crwdns6858715:0crwdne6858715:0</title>
+      <servers>crwdns6858716:0crwdne6858716:0</servers>
+      <serversTip>crwdns6858717:0crwdne6858717:0</serversTip>
+      <url>crwdns6858718:0crwdne6858718:0</url>
+      <serverUrl>crwdns6858719:0crwdne6858719:0</serverUrl>
+      <credentials>crwdns6858720:0crwdne6858720:0</credentials>
+      <username>crwdns6858721:0crwdne6858721:0</username>
+      <credential>crwdns6858722:0crwdne6858722:0</credential>
+      <save>crwdns6858723:0crwdne6858723:0</save>
+      <cancel>crwdns6858724:0crwdne6858724:0</cancel>
+      
+      <!-- Confirmation dialog -->
+      <confirmServerRemoval>crwdns6858725:0crwdne6858725:0</confirmServerRemoval>
+      <serverRemoveText>crwdns6858726:0crwdne6858726:0</serverRemoveText>
+      <remove>crwdns6858727:0crwdne6858727:0</remove>
+      
+      <!-- Error Diagnostics -->
+      <errorDiagnostic>crwdns6858728:0crwdne6858728:0</errorDiagnostic>
+      <enableLogCollection>crwdns6858729:0crwdne6858729:0</enableLogCollection>
+      <logCollectionInfo>crwdns6858730:0crwdne6858730:0</logCollectionInfo>
+    </admin>
+  </webrtc>
+</bundle>

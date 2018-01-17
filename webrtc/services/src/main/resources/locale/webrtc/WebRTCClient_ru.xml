@@ -1,41 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Call</call>
+    <call>Вызов</call>
     <callingYou>is calling you...</callingYou>
     <callWith>Call with</callWith>
     <callTo>Call to</callTo>
     <incomingCall>Incoming call</incomingCall>
-    <answer>Answer</answer>
-    <decline>Decline</decline>
+    <answer>Ответить</answer>
+    <decline>Отклонить</decline>
     <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to open.</callRunningTip>
+    <callRunningTip>This call already running. Click to open.</callRunningTip>
     
     <providerError>WebRTC provider error</providerError>
     <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
     <errorAddCall>Error saving call</errorAddCall>
-    <errorGettingCall>Error receiving the call</errorGettingCall>
-    <errorOpeningCall>Error opening call page</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
+    <errorGettingCall>Error opening call</errorGettingCall>
+    <errorOpeningCall>Error open call page</errorOpeningCall>
+    <callWindowNotOpen>Call window not open (check if not blocked by browser)</callWindowNotOpen>
     <errorStartingCall>Error starting call</errorStartingCall>
     <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
+    <errorReadUserStatus>Error read user status information from the server</errorReadUserStatus>
+    <errorReadCall>Error read call information from the server</errorReadCall>
     <errorSubscribeUser>Error subscribing user updates</errorSubscribeUser>
     <errorSubscribeCall>Error subscribing call updates</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
+    <errorStartingConnection>Error of starting connection</errorStartingConnection>
+    <notSupportedPlatform>Not supported platform</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
     <notInitialized>Not initialized or initialization error</notInitialized>
     <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>Audio and/or video are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
+    <audioVideoRequired>Audio and/or video required to place a call</audioVideoRequired>
+    <mediaDevicesError>Error getting user media devices (audio or video)</mediaDevicesError>
     <noAudioFound>No audio input found</noAudioFound>
-    <butVideoFound>Video feed not found</butVideoFound>
+    <butVideoFound>But video found</butVideoFound>
     
     <admin>
       <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
+      <serverUrlMandatory>URL cannot be empty for server</serverUrlMandatory>
       <usernameMandatory>Username cannot be empty</usernameMandatory>
       <credentialMandatory>Password cannot be empty</credentialMandatory>
       <errorSavingSettings>Error saving settings</errorSavingSettings>

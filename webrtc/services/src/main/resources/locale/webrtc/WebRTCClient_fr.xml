@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <webrtc>
+    <call>Appel</call>
+    <callingYou>is calling you...</callingYou>
+    <callWith>Call with</callWith>
+    <callTo>Call to</callTo>
+    <incomingCall>Appel entrant</incomingCall>
+    <answer>Réponse</answer>
+    <decline>Décliner</decline>
+    <callStartTip>Cliquez pour démarrer un appel vidéo</callStartTip>
+    <callRunningTip>This call already running. Click to open.</callRunningTip>
+    
+    <providerError>Erreur du connecteur WebRTC</providerError>
+    <providerNotAvailable>Connecteur WebRTC non disponible</providerNotAvailable>
+    <errorAddCall>Error saving call</errorAddCall>
+    <errorGettingCall>Error opening call</errorGettingCall>
+    <errorOpeningCall>Erreur à l'ouverture de la page d'appel</errorOpeningCall>
+    <callWindowNotOpen>Call window not open (check if not blocked by browser)</callWindowNotOpen>
+    <errorStartingCall>Erreur au démarrage de l'appel</errorStartingCall>
+    <errorIncomingCall>Incoming call error</errorIncomingCall>
+    <errorReadUserStatus>Erreur à la lecture de l'état de l'utilisateur sur le serveur</errorReadUserStatus>
+    <errorReadCall>Erreur à la lecture des informations de l'appel sur le serveur</errorReadCall>
+    <errorSubscribeUser>Error subscribing user updates</errorSubscribeUser>
+    <errorSubscribeCall>Error subscribing call updates</errorSubscribeCall>
+    <errorStartingConnection>Erreur au démarrage de la connection</errorStartingConnection>
+    <notSupportedPlatform>Plateforme non supportée</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Votre navigateur ne supporte pas les appels WebRTC</yourBrowserNotSupportWebrtc>
+    <notInitialized>Not initialized or initialization error</notInitialized>
+    <connectionFailed>La connexion a échoué</connectionFailed>
+    <audioVideoRequired>L'audio et/ou la vidéo sont requis pour passer un appel</audioVideoRequired>
+    <mediaDevicesError>Error getting user media devices (audio or video)</mediaDevicesError>
+    <noAudioFound>Aucune entrée audio trouvée</noAudioFound>
+    <butVideoFound>But video found</butVideoFound>
+    
+    <admin>
+      <wrongSettings>Paramètres erronés</wrongSettings>
+      <serverUrlMandatory>L'URL du serveur ne doit pas être vide</serverUrlMandatory>
+      <usernameMandatory>Le nom d'utilisateur ne doit pas être vide</usernameMandatory>
+      <credentialMandatory>Le mot de passe ne doit pas être vide</credentialMandatory>
+      <errorSavingSettings>Erreur à la sauvegarde des paramètres</errorSavingSettings>
+    </admin>
+  </webrtc>
+</bundle>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <webrtc>
+    <call>crwdns6858676:0crwdne6858676:0</call>
+    <callingYou>crwdns6858677:0crwdne6858677:0</callingYou>
+    <callWith>crwdns6858678:0crwdne6858678:0</callWith>
+    <callTo>crwdns6858679:0crwdne6858679:0</callTo>
+    <incomingCall>crwdns6858680:0crwdne6858680:0</incomingCall>
+    <answer>crwdns6858681:0crwdne6858681:0</answer>
+    <decline>crwdns6858682:0crwdne6858682:0</decline>
+    <callStartTip>crwdns6858683:0crwdne6858683:0</callStartTip>
+    <callRunningTip>crwdns6858684:0crwdne6858684:0</callRunningTip>
+    
+    <providerError>crwdns6858685:0crwdne6858685:0</providerError>
+    <providerNotAvailable>crwdns6858686:0crwdne6858686:0</providerNotAvailable>
+    <errorAddCall>crwdns6858687:0crwdne6858687:0</errorAddCall>
+    <errorGettingCall>crwdns6858688:0crwdne6858688:0</errorGettingCall>
+    <errorOpeningCall>crwdns6858689:0crwdne6858689:0</errorOpeningCall>
+    <callWindowNotOpen>crwdns6858690:0crwdne6858690:0</callWindowNotOpen>
+    <errorStartingCall>crwdns6858691:0crwdne6858691:0</errorStartingCall>
+    <errorIncomingCall>crwdns6858692:0crwdne6858692:0</errorIncomingCall>
+    <errorReadUserStatus>crwdns6858693:0crwdne6858693:0</errorReadUserStatus>
+    <errorReadCall>crwdns6858694:0crwdne6858694:0</errorReadCall>
+    <errorSubscribeUser>crwdns6858695:0crwdne6858695:0</errorSubscribeUser>
+    <errorSubscribeCall>crwdns6858696:0crwdne6858696:0</errorSubscribeCall>
+    <errorStartingConnection>crwdns6858697:0crwdne6858697:0</errorStartingConnection>
+    <notSupportedPlatform>crwdns6858698:0crwdne6858698:0</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>crwdns6858699:0crwdne6858699:0</yourBrowserNotSupportWebrtc>
+    <notInitialized>crwdns6858700:0crwdne6858700:0</notInitialized>
+    <connectionFailed>crwdns6858701:0crwdne6858701:0</connectionFailed>
+    <audioVideoRequired>crwdns6858702:0crwdne6858702:0</audioVideoRequired>
+    <mediaDevicesError>crwdns6858703:0crwdne6858703:0</mediaDevicesError>
+    <noAudioFound>crwdns6858704:0crwdne6858704:0</noAudioFound>
+    <butVideoFound>crwdns6858705:0crwdne6858705:0</butVideoFound>
+    
+    <admin>
+      <wrongSettings>crwdns6858706:0crwdne6858706:0</wrongSettings>
+      <serverUrlMandatory>crwdns6858707:0crwdne6858707:0</serverUrlMandatory>
+      <usernameMandatory>crwdns6858708:0crwdne6858708:0</usernameMandatory>
+      <credentialMandatory>crwdns6858709:0crwdne6858709:0</credentialMandatory>
+      <errorSavingSettings>crwdns6858710:0crwdne6858710:0</errorSavingSettings>
+    </admin>
+  </webrtc>
+</bundle>
