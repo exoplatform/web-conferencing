@@ -24,6 +24,7 @@ import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.CALL_R
 import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.WEBRTC_SERVLET_CTX;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -37,6 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.exoplatform.container.web.AbstractFilter;
 import org.exoplatform.web.filter.Filter;
+import org.exoplatform.webconferencing.Utils;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 
@@ -82,15 +84,11 @@ public class WebrtcCallFilter extends AbstractFilter implements Filter {
                                                                                       .append(". Redirecting to secure page."));
         String secure;
         try {
-          URI secureURI = new URI(SCHEME_HTTPS,
-                                  null,
+          secure = Utils.buildUrl(SCHEME_HTTPS,
                                   httpReq.getServerName(),
                                   httpReq.getServerPort(),
-                                  httpReq.getServletPath(),
-                                  httpReq.getQueryString(),
-                                  null);
-          secure = secureURI.toASCIIString();
-        } catch (URISyntaxException e) {
+                                  httpReq.getServletPath() + "?" + httpReq.getQueryString());
+        } catch (MalformedURLException e) {
           LOG.warn("Error creating secure URL for " + httpReq.getRequestURL().toString(), e);
           // Replace http to https manually
           secure = new StringBuilder(SCHEME_HTTPS).append(httpReq.getRequestURL().substring(4))

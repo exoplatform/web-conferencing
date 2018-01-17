@@ -4,12 +4,12 @@
 package org.exoplatform.webconferencing.webrtc.server;
 
 import static org.exoplatform.webconferencing.Utils.asJSON;
+import static org.exoplatform.webconferencing.Utils.buildUrl;
 import static org.exoplatform.webconferencing.Utils.getCurrentContext;
 import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.CALL_REDIRECT;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -56,19 +56,16 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-    HttpServletRequest httpReq = (HttpServletRequest) req;
-    HttpServletResponse httpRes = (HttpServletResponse) resp;
-
-    Object redirectUri = httpReq.getAttribute(CALL_REDIRECT);
+    Object redirectUri = req.getAttribute(CALL_REDIRECT);
     if (redirectUri != null) {
       String ruri = (String) redirectUri;
       if (ruri.length() > 0) {
-        httpRes.sendRedirect(ruri);
+        resp.sendRedirect(ruri);
       }
     } else {
-      httpRes.setContentType("text/html; charset=UTF-8");
+      resp.setContentType("text/html; charset=UTF-8");
 
-      String remoteUser = httpReq.getRemoteUser();
+      String remoteUser = req.getRemoteUser();
 
       ExoContainer container = getContainer();
       WebConferencingService webConferencing =
@@ -94,27 +91,25 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
             try {
               // init page scope with settings for webConferencing and WebRTC provider
               ContextInfo context = getCurrentContext(remoteUser, req.getLocale());
-              httpReq.setAttribute("contextInfo", asJSON(context));
+              req.setAttribute("contextInfo", asJSON(context));
 
               UserInfo exoUser = webConferencing.getUserInfo(remoteUser);
               if (exoUser != null) {
-                httpReq.setAttribute("userInfo", asJSON(exoUser));
-
-                URI callURI = new URI(httpReq.getScheme(),
-                                      null,
-                                      httpReq.getServerName(),
-                                      httpReq.getServerPort(),
-                                      "/webrtc/call",
-                                      null,
-                                      null);
-                WebrtcSettings settings = provider.settings().callUri(callURI.toString()).locale(httpReq.getLocale()).build();
-                httpReq.setAttribute("settings", asJSON(settings));
+                req.setAttribute("userInfo", asJSON(exoUser));
+                WebrtcSettings settings = provider.settings()
+                                                  .callUri(buildUrl(req.getScheme(),
+                                                                    req.getServerName(),
+                                                                    req.getServerPort(),
+                                                                    "/webrtc/call"))
+                                                  .locale(req.getLocale())
+                                                  .build();
+                req.setAttribute("settings", asJSON(settings));
 
                 // XXX nasty-nasty-nasty include of CometD script
-                httpReq.getRequestDispatcher("/WEB-INF/pages/call_part1.jsp").include(httpReq, httpRes);
-                ServletContext cometdContext = httpReq.getSession().getServletContext().getContext("/cometd");
-                cometdContext.getRequestDispatcher("/javascript/eXo/commons/commons-cometd3.js").include(httpReq, httpRes);
-                httpReq.getRequestDispatcher("/WEB-INF/pages/call_part2.jsp").include(httpReq, httpRes);
+                req.getRequestDispatcher("/WEB-INF/pages/call_part1.jsp").include(req, resp);
+                ServletContext cometdContext = req.getSession().getServletContext().getContext("/cometd");
+                cometdContext.getRequestDispatcher("/javascript/eXo/commons/commons-cometd3.js").include(req, resp);
+                req.getRequestDispatcher("/WEB-INF/pages/call_part2.jsp").include(req, resp);
 
                 // to JSP page (in a right way)
                 // httpReq.getRequestDispatcher(CALL_PAGE).include(httpReq, httpRes);
@@ -123,22 +118,22 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
               }
             } catch (Exception e) {
               LOG.error("Error processing WebRTC call page", e);
-              httpRes.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-              httpReq.getRequestDispatcher(SERVER_ERROR_PAGE).include(httpReq, httpRes);
+              resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+              req.getRequestDispatcher(SERVER_ERROR_PAGE).include(req, resp);
             }
           } else {
-            httpRes.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            httpReq.getRequestDispatcher(UNAUTHORIZED_PAGE).include(httpReq, httpRes);
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            req.getRequestDispatcher(UNAUTHORIZED_PAGE).include(req, resp);
           }
         } else {
           LOG.error("WebRTC provider not found for call page and user " + remoteUser);
-          httpRes.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-          httpReq.getRequestDispatcher(SERVER_ERROR_PAGE).include(httpReq, httpRes);
+          resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+          req.getRequestDispatcher(SERVER_ERROR_PAGE).include(req, resp);
         }
       } else {
         LOG.error("Web Conferencing service not found for call page and user " + remoteUser);
-        httpRes.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        httpReq.getRequestDispatcher(SERVER_ERROR_PAGE).include(httpReq, httpRes);
+        resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        req.getRequestDispatcher(SERVER_ERROR_PAGE).include(req, resp);
       }
     }
   }
