@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <webconferencing>
+    <admin>
+      <page>Conférences Web</page>
+      <title>Administration des Conférences Web</title>
+      <info>Les conférences web peuvent être traitées par différents connecteurs. Vous pouvez activer les connecteurs dont vous avez besoin et les paramétrer.</info>
+      <provider>Connecteur</provider>
+      <description>Description</description>
+      <active>Activé</active>
+      <actions>Actions</actions>
+    </admin>
+  </webconferencing>
+</bundle>
