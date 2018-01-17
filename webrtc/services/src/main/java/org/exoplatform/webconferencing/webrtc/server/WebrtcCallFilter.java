@@ -84,14 +84,6 @@ public class WebrtcCallFilter extends AbstractFilter implements Filter {
                                                                                       .append(". Redirecting to secure page."));
         String secure;
         try {
-          // TODO
-          // URI secureURI = new URI(SCHEME_HTTPS,
-          // null,
-          // httpReq.getServerName(),
-          // httpReq.getServerPort(),
-          // httpReq.getServletPath(),
-          // httpReq.getQueryString(),
-          // null);
           secure = Utils.buildUrl(SCHEME_HTTPS,
                                   httpReq.getServerName(),
                                   httpReq.getServerPort(),

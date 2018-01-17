@@ -79,14 +79,6 @@ public class WebrtcProviderPortlet extends GenericPortlet {
   protected void doView(final RenderRequest request, final RenderResponse response) throws PortletException, IOException {
     if (this.provider != null) {
       try {
-        // TODO cleanup
-        // URI callURI = new URI(request.getScheme(),
-        // null,
-        // request.getServerName(),
-        // request.getServerPort(),
-        // "/webrtc/call",
-        // null,
-        // null);
         Settings settings = provider.settings()
                                     .callUri(buildUrl(request.getScheme(),
                                                       request.getServerName(),

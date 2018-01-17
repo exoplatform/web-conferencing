@@ -96,14 +96,6 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
               UserInfo exoUser = webConferencing.getUserInfo(remoteUser);
               if (exoUser != null) {
                 req.setAttribute("userInfo", asJSON(exoUser));
-
-                // URI callURI = new URI(httpReq.getScheme(),
-                // null,
-                // httpReq.getServerName(),
-                // httpReq.getServerPort(),
-                // "/webrtc/call",
-                // null,
-                // null);
                 WebrtcSettings settings = provider.settings()
                                                   .callUri(buildUrl(req.getScheme(),
                                                                     req.getServerName(),
