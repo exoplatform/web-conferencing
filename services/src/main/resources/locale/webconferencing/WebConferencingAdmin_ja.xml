@@ -6,9 +6,9 @@
       <title>Web Conferencing Administration</title>
       <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
       <provider>Provider</provider>
-      <description>Description</description>
-      <active>Active</active>
-      <actions>Actions</actions>
+      <description>説明</description>
+      <active>アクティブ</active>
+      <actions>アクション</actions>
     </admin>
   </webconferencing>
 </bundle>

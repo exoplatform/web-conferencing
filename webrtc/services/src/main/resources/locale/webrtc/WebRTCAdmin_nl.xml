@@ -5,24 +5,24 @@
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
       <title>WebRTC settings</title>
       <servers>STUN / TURN servers</servers>
-      <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
+      <serversTip>STUN/TURN servers are required to ensure web conferencing calls  work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum accessibility.</serversTip>
       <url>URL</url>
       <serverUrl>Server URL...</serverUrl>
       <credentials>Credentials</credentials>
-      <username>Username</username>
+      <username>Gebruikersnaam</username>
       <credential>Credential</credential>
-      <save>Save</save>
-      <cancel>Cancel</cancel>
+      <save>Opslaan</save>
+      <cancel>Annuleren</cancel>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
       <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
-      <remove>Remove</remove>
+      <remove>Verwijderen</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Error Diagnostics</errorDiagnostic>
       <enableLogCollection>Enable client-side log collection</enableLogCollection>
-      <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
+      <logCollectionInfo>Will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

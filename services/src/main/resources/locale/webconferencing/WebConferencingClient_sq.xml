@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <!-- Messages and UI texts for client parts -->
+  <webconferencing>
+    <ok>crwdns6858711:0crwdne6858711:0</ok>
+    <cancel>crwdns6858712:0crwdne6858712:0</cancel>
+    
+    <notConfigured>crwdns6858713:0crwdne6858713:0</notConfigured>
+  </webconferencing>
+</bundle>
