@@ -743,11 +743,7 @@ if (eXo.webConferencing) {
 												$muteVideo.addClass("on");
 											}
 											connection.then(function() {
-												webConferencing.updateUserCall(callId, "joined").done(function() {
-													log.debug("Joined a call " + callId);
-												}).fail(function(err) {
-													log.error("Error joining call " + callId, err);
-												});
+												webrtc.joinedCall(callId);
 											});
 										}).catch(function(err) {
 											log.error("User media error: " + JSON.stringify(err), err);  
