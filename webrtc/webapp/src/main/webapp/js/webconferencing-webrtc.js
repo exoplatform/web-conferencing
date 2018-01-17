@@ -131,12 +131,20 @@
 			};
 
 			var joinedCall = function(callId) {
-				return webConferencing.updateUserCall(callId, "joined");
+				return webConferencing.updateUserCall(callId, "joined").done(function() {
+					log.info("Call joined: " + callId);
+				}).fail(function(err) {
+					log.error("Error joining call: " + callId, err);
+				});
 			};
 			this.joinedCall = joinedCall;
 			
 			var leavedCall = function(callId) {
-				return webConferencing.updateUserCall(callId, "leaved");
+				return webConferencing.updateUserCall(callId, "leaved").done(function() {
+					log.info("Call leaved: " + callId);
+				}).fail(function(err) {
+					log.error("Error leaving call: " + callId, err);
+				});
 			};
 			this.leavedCall = leavedCall;
 			
@@ -145,7 +153,7 @@
 				removeCallWindow(callId); // do this first!
 				var process = $.Deferred();
 				webConferencing.deleteCall(callId).done(function() {
-					log.debug("Call deleted: " + callId);
+					log.info("Call deleted: " + callId);
 					process.resolve();
 				}).fail(function(err) {
 					if (err && err.code == "NOT_FOUND_ERROR") {
