@@ -55,7 +55,7 @@ public class CallLog {
   public static final String MESSAGE_NO_DATA               = "<no data>";
 
   /** Log message max length. */
-  public static final int    MESSAGE_MAX_LENGTH            = 1024 * 4;
+  public static final int    MESSAGE_MAX_LENGTH            = 1024 * 5;
 
   /** Log message critical length. Values longer of this will be cut by the logger. */
   public static final int    MESSAGE_CRITICAL_LENGTH       = 1024 * 10;

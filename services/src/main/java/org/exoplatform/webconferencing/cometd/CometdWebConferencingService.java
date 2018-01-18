@@ -18,8 +18,10 @@
  */
 package org.exoplatform.webconferencing.cometd;
 
-import static org.exoplatform.webconferencing.IdentityInfo.isValidId;
 import static org.exoplatform.webconferencing.Utils.asJSON;
+import static org.exoplatform.webconferencing.WebConferencingService.isValidArg;
+import static org.exoplatform.webconferencing.WebConferencingService.isValidId;
+import static org.exoplatform.webconferencing.WebConferencingService.isValidText;
 import static org.exoplatform.webconferencing.support.CallLog.DEBUG_LEVEL;
 import static org.exoplatform.webconferencing.support.CallLog.ERROR_LEVEL;
 import static org.exoplatform.webconferencing.support.CallLog.INFO_LEVEL;
@@ -81,7 +83,7 @@ import org.exoplatform.webconferencing.CallConflictException;
 import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.CallInfoException;
 import org.exoplatform.webconferencing.CallState;
-import org.exoplatform.webconferencing.IdentityInfo;
+import org.exoplatform.webconferencing.CallArgumentException;
 import org.exoplatform.webconferencing.UserCallListener;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;
@@ -139,12 +141,6 @@ public class CometdWebConferencingService implements Startable {
 
   /** The Constant LOG_OK. */
   public static final String             LOG_OK                                = "{}";
-
-  /**
-   * Remote call term (a meta information such as context, user ID, client ID, log level and prefix etc) max
-   * length.
-   */
-  public static final int                TERM_MAX_LENGTH                       = 32;
 
   /**
    * Base minimum number of threads for remote calls' thread executors.
@@ -482,7 +478,7 @@ public class CometdWebConferencingService implements Startable {
       }
 
       /** The container name. */
-      final String              containerName;
+      final String                  containerName;
 
       final Map<String, CallClient> clients = new ConcurrentHashMap<>();
 
@@ -515,7 +511,7 @@ public class CometdWebConferencingService implements Startable {
       CallClient getUser(String clientId) {
         return clients.get(clientId);
       }
-      
+
       /**
        * Removes the client user.
        *
@@ -558,8 +554,8 @@ public class CometdWebConferencingService implements Startable {
         String sessionId = remote.getId();
         String channelId = channel.getId();
         String currentUserId = currentUserId(message);
-        String exoClientId = (String) message.get("exoClientId");
-        String exoContainerName = (String) message.get("exoContainerName");
+        String exoClientId = asString(message.get("exoClientId"));
+        String exoContainerName = asString(message.get("exoContainerName"));
         if (LOG.isDebugEnabled()) {
           LOG.debug(">> Subscribed: " + currentUserId + ", session:" + sessionId + " (" + exoContainerName + "@" + exoClientId
               + "), channel:" + channelId);
@@ -713,8 +709,8 @@ public class CometdWebConferencingService implements Startable {
         String exoClientId = null;
         String exoContainerName = null;
         if (message != null) {
-          exoClientId = (String) message.get("exoClientId");
-          exoContainerName = (String) message.get("exoContainerName");
+          exoClientId = asString(message.get("exoClientId"));
+          exoContainerName = asString(message.get("exoContainerName"));
         }
         if (LOG.isDebugEnabled()) {
           LOG.debug(">> Unsubscribed: " + currentUserId + ", session:" + sessionId + " (" + exoContainerName + "@" + exoClientId
@@ -911,7 +907,7 @@ public class CometdWebConferencingService implements Startable {
 
       @SuppressWarnings("unchecked")
       Map<String, Object> arguments = (Map<String, Object>) data;
-      String containerName = (String) arguments.get("exoContainerName");
+      String containerName = asString(arguments.get("exoContainerName"));
 
       callHandlers.submit(new ContainerCommand(containerName) {
         /**
@@ -920,13 +916,13 @@ public class CometdWebConferencingService implements Startable {
         @Override
         void execute(ExoContainer exoContainer) {
           try {
-            String currentUserId = (String) arguments.get("exoId");
+            String currentUserId = asString(arguments.get("exoId"));
             if (isValidId(currentUserId)) {
-              String exoClientId = (String) arguments.get("exoClientId");
+              String exoClientId = asString(arguments.get("exoClientId"));
               if (isValidId(exoClientId)) {
                 // Do all the job under actual (requester) user: set this user as current identity in eXo
-                // XXX We rely on EXoContinuationBayeux.EXoSecurityPolicy for user security here (exoId above)
-                // Use services acquired from context container
+                // We rely on EXoContinuationBayeux.EXoSecurityPolicy for user security here (exoId above)
+                // Use services acquired from context container.
                 IdentityRegistry identityRegistry = exoContainer.getComponentInstanceOfType(IdentityRegistry.class);
                 SessionProviderService sessionProviders = exoContainer.getComponentInstanceOfType(SessionProviderService.class);
                 WebConferencingService webConferencing = exoContainer.getComponentInstanceOfType(WebConferencingService.class);
@@ -942,10 +938,10 @@ public class CometdWebConferencingService implements Startable {
                     SessionProvider userProvider = new SessionProvider(convState);
                     sessionProviders.setSessionProvider(null, userProvider);
                     // Process the request
-                    String id = (String) arguments.get("id");
-                    if (id != null) {
-                      String command = (String) arguments.get("command");
-                      if (command != null) {
+                    String id = asString(arguments.get("id"));
+                    if (isValidId(id)) {
+                      String command = asString(arguments.get("command"));
+                      if (isValidArg(command)) {
                         if (COMMAND_GET.equals(command)) {
                           try {
                             CallInfo call = webConferencing.getCall(id);
@@ -959,8 +955,8 @@ public class CometdWebConferencingService implements Startable {
                             caller.failure(ErrorInfo.serverError("Error reading call record").asJSON());
                           }
                         } else if (COMMAND_UPDATE.equals(command)) {
-                          String state = (String) arguments.get("state");
-                          if (state != null) {
+                          String state = asString(arguments.get("state"));
+                          if (isValidArg(state)) {
                             try {
                               boolean stateRecognized = true;
                               CallInfo call;
@@ -985,6 +981,8 @@ public class CometdWebConferencingService implements Startable {
                               } else {
                                 caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized").asJSON());
                               }
+                            } catch (CallInfoException e) { // aka BAD_REQUEST
+                              caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
                             } catch (Throwable e) {
                               LOG.error("Error updating call '" + id + "' by '" + currentUserId + "'", e);
                               caller.failure(ErrorInfo.serverError("Error updating call record").asJSON());
@@ -993,49 +991,26 @@ public class CometdWebConferencingService implements Startable {
                             caller.failure(ErrorInfo.clientError("Wrong request parameters: state").asJSON());
                           }
                         } else if (COMMAND_CREATE.equals(command)) {
-                          String ownerId = (String) arguments.get("owner");
-                          if (ownerId != null) {
-                            String ownerType = (String) arguments.get("ownerType");
-                            if (ownerType != null) {
-                              String providerType = (String) arguments.get("provider");
-                              if (providerType != null) {
-                                String title = (String) arguments.get("title"); // topic
-                                if (title != null) {
-                                  String pstr = (String) arguments.get("participants");
-                                  if (pstr != null) {
-                                    List<String> participants = Arrays.asList(pstr.split(";"));
-                                    try {
-                                      CallInfo call = webConferencing.addCall(id,
-                                                                              ownerId,
-                                                                              ownerType,
-                                                                              title,
-                                                                              providerType,
-                                                                              participants);
-                                      caller.result(asJSON(call));
-                                    } catch (CallInfoException e) {
-                                      // aka BAD_REQUEST
-                                      caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
-                                    } catch (CallConflictException e) {
-                                      // aka SERVER_ERROR
-                                      caller.failure(ErrorInfo.serverError(e.getMessage()).asJSON());
-                                    } catch (Throwable e) {
-                                      LOG.error("Error creating call for '" + id + "' by '" + currentUserId + "'", e);
-                                      caller.failure(ErrorInfo.serverError("Error creating call record").asJSON());
-                                    }
-                                  } else {
-                                    caller.failure(ErrorInfo.clientError("Wrong request parameters: participants").asJSON());
-                                  }
-                                } else {
-                                  caller.failure(ErrorInfo.clientError("Wrong request parameters: title").asJSON());
-                                }
-                              } else {
-                                caller.failure(ErrorInfo.clientError("Wrong request parameters: provider").asJSON());
-                              }
-                            } else {
-                              caller.failure(ErrorInfo.clientError("Wrong request parameters: ownerType").asJSON());
+                          String ownerId = asString(arguments.get("owner"));
+                          String ownerType = asString(arguments.get("ownerType"));
+                          String providerType = asString(arguments.get("provider"));
+                          String title = asString(arguments.get("title"));
+                          String pstr = asString(arguments.get("participants"));
+                          if (pstr != null) { // we don't check max length here
+                            List<String> participants = Arrays.asList(pstr.split(";"));
+                            try {
+                              CallInfo call = webConferencing.addCall(id, ownerId, ownerType, title, providerType, participants);
+                              caller.result(asJSON(call));
+                            } catch (CallInfoException e) { // aka BAD_REQUEST
+                              caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
+                            } catch (CallConflictException e) { // aka SERVER_ERROR
+                              caller.failure(ErrorInfo.serverError(e.getMessage()).asJSON());
+                            } catch (Throwable e) {
+                              LOG.error("Error creating call for '" + id + "' by '" + currentUserId + "'", e);
+                              caller.failure(ErrorInfo.serverError("Error creating call record").asJSON());
                             }
                           } else {
-                            caller.failure(ErrorInfo.clientError("Wrong request parameters: owner").asJSON());
+                            caller.failure(ErrorInfo.clientError("Wrong request parameters: participants").asJSON());
                           }
                         } else if (COMMAND_DELETE.equals(command)) {
                           try {
@@ -1126,19 +1101,19 @@ public class CometdWebConferencingService implements Startable {
             // level - string, it's a log level: one of "trace", "debug", "info", "warn", "error"
             // prefix - string, a log record prefix (e.g. provider type or app context)
             // timestamp - string, date in ISO format and UTC
-            String currentUserId = (String) params.get("exoId");
+            String currentUserId = asString(params.get("exoId"));
             if (isValidId(currentUserId)) {
               // TODO validate all log params on max length in like validate() method
-              String clientId = (String) params.get("exoClientId");
+              String clientId = asString(params.get("exoClientId"));
               if (isValidArg(clientId)) {
-                String level = (String) params.get("level");
+                String level = asString(params.get("level"));
                 if (isValidArg(level)) {
-                  String timestamp = (String) params.get("timestamp");
+                  String timestamp = asString(params.get("timestamp"));
                   if (isValidArg(timestamp)) {
-                    String provider = (String) params.get("provider"); // can be null or non empty
-                    if (isValidTerm(provider)) {
-                      String prefix = (String) params.get("prefix"); // can be null or non empty
-                      if (isValidTerm(prefix)) {
+                    String provider = asString(params.get("provider")); // can be null or non empty
+                    if (isValidId(provider)) {
+                      String prefix = asString(params.get("prefix")); // can be null or non empty
+                      if (isValidText(prefix)) {
                         Map<String, Object> msgData;
                         Object msgObj = params.get("data");
                         if (msgObj != null) {
@@ -1152,7 +1127,7 @@ public class CometdWebConferencingService implements Startable {
                             msgData = Collections.emptyMap();
                           }
 
-                          String message = validate((String) msgData.get("message"));
+                          String message = validate(asString(msgData.get("message")));
 
                           CallLog callLog = callLogs.getLog();
                           StringBuilder msgLine = new StringBuilder();
@@ -1408,7 +1383,7 @@ public class CometdWebConferencingService implements Startable {
    */
   protected String currentUserId(ServerMessage message) {
     if (message != null) {
-      return (String) message.get("exoId");
+      return asString(message.get("exoId"));
     } else {
       // FIXME Should we rely at ConversationState current's here (it will not be set by something external in
       // Cometd thread) or only on message's exoId?
@@ -1454,25 +1429,16 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * Checks if is valid term: <code>null</code>, or not empty and not longer of {@value #TERM_MAX_LENGTH}
-   * bytes.
+   * Return object if it's String instance or null if it is not.
    *
-   * @param term the term
-   * @return true, if is valid term
+   * @param obj the obj
+   * @return the string or null
    */
-  protected boolean isValidTerm(String term) {
-    return term == null || (term.length() > 0 && term.length() <= TERM_MAX_LENGTH);
-  }
-
-  /**
-   * Checks if is valid argument: not null, not empty and not too long.
-   *
-   * @param argument the argument
-   * @return true, if is valid arg
-   * @see IdentityInfo#isValidId(String)
-   */
-  protected boolean isValidArg(String argument) {
-    return isValidId(argument);
+  protected String asString(Object obj) {
+    if (obj != null && String.class.isAssignableFrom(obj.getClass())) {
+      return String.class.cast(obj);
+    }
+    return null;
   }
 
   /**
