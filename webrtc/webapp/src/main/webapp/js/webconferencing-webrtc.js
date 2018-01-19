@@ -526,6 +526,9 @@
 																			log.error("Failed to start/join call: " + callId, err);
 																			webConferencing.showError(message("errorStartingCall"), webConferencing.errorText(err));
 																		});
+																	}).fail(function(err) {
+																		log.error("Call page failed: " + callId, err);
+																		webConferencing.showError(message("errorOpeningCall"), webConferencing.errorText(err));
 																	});
 																});
 															});
