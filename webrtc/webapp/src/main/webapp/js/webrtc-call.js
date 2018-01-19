@@ -127,10 +127,6 @@ if (eXo.webConferencing) {
 								$controls.show(); // TODO apply show/hide on timeout 
 								var $hangupButton = $controls.find("#hangup");
 								
-								var handleError = function(title, message) {
-									showError(title, message);
-								};
-								
 								// Page closing should end a call properly
 								var pc;
 								var stopping = false;
@@ -256,6 +252,10 @@ if (eXo.webConferencing) {
 									var negotiation = $.Deferred();
 									var connection = $.Deferred();
 									
+									var showConnectionError = function(err) {
+										showError(webrtc.message("errorStartingConnection"), webConferencing.errorText(err));
+									};
+									
 									// Play incoming ringtone for the call owner until complete negotiation
 									if (isOwner) {
 										var $ring = $("<audio loop autoplay style='display: none;'>" 
@@ -266,14 +266,6 @@ if (eXo.webConferencing) {
 											$ring.remove();
 										});
 									}
-									
-									connection.fail(function(err) {
-										log.error("Failed to start connection for: " + callId, err);
-										err = webConferencing.errorText(err);
-										process.reject(webrtc.message("errorStartingConnection") + ". " + webConferencing.errorText(err)); 
-										showError(webrtc.message("errorStartingConnection"), webConferencing.errorText(err));
-										// we don't stop the call to keep the window open and let user report an error 
-									});
 									
 									var sendMessage = function(message) {
 										return webConferencing.toCallUpdate(callId, $.extend({
@@ -290,9 +282,11 @@ if (eXo.webConferencing) {
 										// owner ID to this sender ID.
 										return sendMessage({
 							    		"hello": isOwner ? "__all__" : call.owner.id
+							      }).done(function() {
+							      	log.debug("Sent Hello by " + (isOwner ? "owner" : "participant") + " for " + callId);
 							      }).fail(function(err) {
 											log.error("Failed to send Hello for " + callId, err);
-											showError("Error starting call", webConferencing.errorText(err));
+											showConnectionError(err);
 										});
 									};
 									var sendBye = function() {
@@ -301,6 +295,8 @@ if (eXo.webConferencing) {
 										// other side should treat is as call successfully ended and no further action required (don't need delete the call)
 										return sendMessage({
 							    		"bye": isOwner ? "__all__" : call.owner.id
+							      }).done(function() {
+							      	log.debug("Sent Bye by " + (isOwner ? "owner" : "participant") + " for " + callId);
 							      }).fail(function(err) {
 											log.error("Failed to send Bye for " + callId, err);
 										});
@@ -313,7 +309,7 @@ if (eXo.webConferencing) {
 										}).fail(function(err) {
 											log.error("Failed to send offer for " + callId, err);
 											// TODO May be to retry?
-											showError("Error of sharing media (offer)", webConferencing.errorText(err));
+											showConnectionError(err);
 										});
 									};
 									var sendAnswer = function(localDescription) {
@@ -323,7 +319,7 @@ if (eXo.webConferencing) {
 							      	log.debug("Published answer for " + callId + " " + JSON.stringify(localDescription));
 										}).fail(function(err) {
 											log.error("Failed to send answer for " + callId, err);
-											showError("Error of sharing media (answer)", webConferencing.errorText(err));
+											showConnectionError(err);
 										});
 									};
 									var sendCandidate = function(candidate) {
@@ -333,7 +329,7 @@ if (eXo.webConferencing) {
 							      	log.debug("Published candidate for " + callId + " " + JSON.stringify(candidate));
 										}).fail(function(err) {
 											log.error("Failed to send candidate for " + callId, err);
-											showError("Error of sharing connection", webConferencing.errorText(err));
+											showConnectionError(err);
 										});
 									};
 									
@@ -384,31 +380,29 @@ if (eXo.webConferencing) {
 								  pc.onnegotiationneeded = function () {
 								  	// This will be fired after adding a local media stream and browser readiness
 								  	log.debug("Negotiation needed for " + callId);
-								  	
 								  	// Ready to join the call: say hello to each other
 						  			if (isOwner) {
 						  				sendHello().then(function() {
-							  				log.debug("Sent Hello by " + (isOwner ? "owner" : "participant") + " for " + callId);
-							  			});
-								  		// Owner will send the offer when negotiation will be resolved (received Hello from others)
-						  				negotiation.then(function() {
-						  					log.debug("Creating offer for " + callId);
-										    pc.createOffer().then(function(desc) { // sdpConstraints
-										    	log.debug("Setting local description for " + callId);
-										    	pc.setLocalDescription(desc).then(function() {
-										    		log.debug("Sending offer for " + callId);
-										    		sendOffer(pc.localDescription).then(function() {
-										    			log.debug("Sent offer for " + callId);
-										    			// TODO Something else here?
-										    		});
-										      }).catch(function(err) {
-										      	log.error("Failed to set local description for " + callId, err);
-										      	showError("Error of preparing connection", webConferencing.errorText(err));
+						  					// Owner will send the offer when negotiation will be resolved (received Hello from others)
+							  				negotiation.then(function() {
+							  					log.debug("Creating offer for " + callId);
+											    pc.createOffer().then(function(desc) { // sdpConstraints
+											    	log.debug("Setting local description for " + callId);
+											    	pc.setLocalDescription(desc).then(function() {
+											    		log.debug("Sending offer for " + callId);
+											    		sendOffer(pc.localDescription).then(function() {
+											    			log.debug("Sent offer for " + callId);
+											    			// TODO Something else here?
+											    		});
+											      }).catch(function(err) {
+											      	log.error("Failed to set local description for " + callId, err);
+											      	showConnectionError(err);
+												    });
+											    }).catch(function(err) {
+											    	log.error("Failed to create an offer for " + callId, err);
+											    	showConnectionError(err);
 											    });
-										    }).catch(function(err) {
-										    	log.error("Failed to create an offer for " + callId, err);
-										    	showErroror("Error of starting connection", webConferencing.errorText(err));
-										    });
+							  				});
 						  				});
 								  	}
 								  };			  	
@@ -466,7 +460,6 @@ if (eXo.webConferencing) {
 									var listener = webConferencing.onCallUpdate(callId, function(message) {
 										if (message.provider == webrtc.getType()) {
 											if (message.sender != currentUserId) {
-												log.trace("Received call update for " + callId + ": " + JSON.stringify(message));
 												if (message.candidate) {
 													// ICE candidate of remote party (can happen several times)
 													log.debug("Received candidate for " + callId + ": " + JSON.stringify(message.candidate));
@@ -479,14 +472,14 @@ if (eXo.webConferencing) {
 															  log.debug("Added candidate for " + callId);
 															}).catch(function(err) {
 																log.error("Failed to add candidate for " + callId, err);
-																showError("Error establishing call", webConferencing.errorText(err));
+																showConnectionError(err);
 															});														
 														});
 													} else {
 														log.debug("All candidates received for " + callId);
 													}
 												} else if (message.offer) {
-													log.debug("Received offer for " + callId);
+													log.debug("Received offer for " + callId + ": " + JSON.stringify(message.offer));
 													// Offer of a caller on callee side
 													if (isOwner) {
 														log.warn("Unexpected offer received on owner side for " + callId);
@@ -516,60 +509,64 @@ if (eXo.webConferencing) {
 														      					// Participant ready to exchange ICE candidates
 																						log.debug("Started exchange network information with peers for " + callId);
 																					});
+														      			}).catch(function(err) { // error will be logged in sendAnswer()
+														      				showConnectionError(err);
 														      			});
 														      		}).catch(function(err) {
 														      			log.error("Failed to set local description (answer) for " + callId, err);
-															      		showError("Error accepting call", webConferencing.errorText(err));
+															      		showConnectionError(err);
 														      		});
 														      	}).catch(function(err) {
 														      		log.error("Failed to create an answer for " + callId, err);
-														      		showError("Error answering call", webConferencing.errorText(err));
+														      		showConnectionError(err);
 														      	});
 														      } else {
 														      	log.error("Remote description type IS NOT 'offer' BUT '" + pc.remoteDescription.type + "'. Call state not defined.");
 														      }
 														    }).catch(function(err) {
 														    	log.error("Failed to set remote description (offer) for " + callId, err);
-														    	showError("Error applying call", webConferencing.errorText(err));
+														    	showConnectionError(err);
 														    });
 															});
-														} catch(e) {
-															log.error("Error processing offer for " + callId + ": " + JSON.stringify(message.offer), e);
+														} catch(err) {
+															log.error("Error processing offer for " + callId, err);
+															showConnectionError(err);
 														}
 													}
 												} else if (message.answer) {
+													log.debug("Received answer for " + callId + ": " + JSON.stringify(message.answer));
 													if (isOwner) {
 														// Answer of a callee to the caller: it's final stage of the parties discovery
-														log.debug("Received answer for " + callId);
 														try {
 															var answer = JSON.parse(message.answer);
 															if (isEdge) {
 																answer = new RTCSessionDescription(answer);
 															}
 															negotiation.then(function() {
-																log.debug("Setting remote description for " + callId);
+																log.debug("Setting answer (remote description) for " + callId);
 																pc.setRemoteDescription(answer).then(function() {
-														      log.debug("Apllied remote description (answer) for " + callId);
+														      log.debug("Apllied answer (remote description) for " + callId);
 														      // Resolve connection (network) exchange only from here
 														      connection.resolve().then(function() {
 														      	// Owner ready to exchange ICE candidates
 																		log.debug("Started exchange network information with peers for " + callId);
 																	});
 														    }).catch(function(err) {
-														    	log.error("Failed to set remote description (answer) for " + callId, err);
-														    	showError("Error answering call", webConferencing.errorText(err));
+														    	log.error("Failed to set answer (remote description) for " + callId, err);
+														    	showConnectionError(err);
 														    });
 															});
-														} catch(e) {
-															log.error("Error processing answer for " + callId + ": " + JSON.stringify(message.answer), e);
+														} catch(err) {
+															log.error("Error processing answer for " + callId, err);
+															showConnectionError(err);
 														}
 													} else {
 														// FYI this could be OK to receive for group call
-														log.error("Unexpected answer received on participant side of " + callId);
+														log.warn("Unexpected answer received on participant side of " + callId);
 													}
 												} else if (message.hello) {
 													// To start the call send "hello" - first message in the flow for each client
-													log.debug("Received Hello for " + callId);
+													log.debug("Received Hello for " + callId + ": " + JSON.stringify(message.hello));
 													if (message.hello == currentUserId) {
 														// We assume it's a hello to the call owner: start sending offer and candidates
 														// This will works once (for group calls, need re-initialize the process)
@@ -577,25 +574,23 @@ if (eXo.webConferencing) {
 															log.debug("Started exchange (owner) media information of " + callId);
 														});
 													} else {
-														log.debug("Hello was not to me (" + message.hello + ")");
+														log.debug("Hello was not to me (but to " + message.hello + ")");
 													}
 												} else if (message.bye && false) {
 													// TODO not used
 													// Remote part leaved the call: stop listen the call
-													log.debug("Received Bye for " + callId);
+													log.debug("Received Bye for " + callId + ": " + JSON.stringify(message.bye));
 													if (message.bye == currentUserId || message.bye == "__all__") {
 														// We assume it's a Bye from the call owner or other party to us: ends the call locally and close the window
 														stopCall(true);
 														listener.off();											
 													} else {
-														log.debug("Bye was not to me (" + message.bye + ")");
+														log.debug("Bye was not to me (but to " + message.bye + ")");
 													}
 												} else {
-													log.error("Received unexpected message for " + callId);
+													log.warn("Received unexpected message for " + callId + ": " + JSON.stringify(message));
 												}
-											} else {
-												//log.trace("<<< skip own update");
-											}
+											} // otherwise: skip own update 
 										}
 									}, function(err) {
 										log.error("Call subscribtion failed for " + callId, err);
@@ -616,8 +611,7 @@ if (eXo.webConferencing) {
 												return device.kind == "audioinput";
 											});
 									    
-											var constraints = {
-											};
+											var constraints = {};
 									    if (mics.length > 0) {
 									    	constraints.audio = true;
 									    	if (cams.length > 0) {
@@ -726,7 +720,6 @@ if (eXo.webConferencing) {
 										  	// Participant sends Hello to the other end to initiate a negotiation there
 										  	log.debug("Sending Hello by participant for " + callId);
 										  	sendHello().then(function() {
-								  				log.debug("Sent Hello by participant for " + callId);
 								  				// Participant on the other end is ready for negotiation and waits for an offer message
 										  		negotiation.resolve(localStream).then(function() {
 														log.debug("Started exchange (participant) media information for " + callId);
@@ -743,6 +736,12 @@ if (eXo.webConferencing) {
 												$muteVideo.addClass("on");
 											}
 											connection.then(function() {
+												// It's still not fully 'joined' user here, RTC only starts exchange ICE candidates at this point
+												// and actual call will start in few seconds (depends on network and other factors),
+												// User may also fail to exchange candidates and media stream will not be established -
+												// it will look like the call not started to an user.
+												// If we want join the call after actual media streams will be obtained we need do more advanced
+												// logic and look for All candidates will be sent, then check if all media streams added. 
 												webrtc.joinedCall(callId);
 											});
 										}).catch(function(err) {
@@ -757,7 +756,7 @@ if (eXo.webConferencing) {
 									process.resolve("started");
 								} catch(err) {
 									log.error("Failed to create RTC peer connection for " + callId, err);
-									process.reject(webrtc.message("connectionFailed"), err);
+									process.reject(err);
 									showError(webrtc.message("connectionFailed"), webConferencing.errorText(err));
 									stopCall();
 								}
@@ -774,7 +773,7 @@ if (eXo.webConferencing) {
 					}
 				}).fail(function(err) {
 					log.error("Provider not available", err);
-					process.reject(webrtc.message("providerNotAvailable"), err);
+					process.reject(webrtc.message("providerNotAvailable") + ". " + webConferencing.errorText(err));
 				});
 			});
 			return process.promise();
