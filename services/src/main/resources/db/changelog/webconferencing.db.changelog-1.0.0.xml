@@ -10,6 +10,8 @@
   
   <!-- Definition of WBC_CALLS table -->
   <changeSet author="web-conferencing" id="1.0.0-1">
+    <validCheckSum>7:5cbb71c1f850347e1e695be5e35d07f9</validCheckSum><!-- 1.1.0-RC06 -> 1.1.0-RC07 others -->
+    <validCheckSum>7:a1c59638496075ebd6a85cc721f06057</validCheckSum><!-- 1.1.0-RC06 -> 1.1.0-RC07 mysql -->
     <createTable tableName="WBC_CALLS">
       <column name="ID" type="NVARCHAR(255)">
         <constraints nullable="false" primaryKey="true" primaryKeyName="PK_WBC_CALLID" />
@@ -29,7 +31,7 @@
       <column name="TITLE" type="NVARCHAR(255)">
         <constraints nullable="true" />
       </column>
-      <column name="SETTINGS" type="NVARCHAR(20480)">
+      <column name="SETTINGS" type="NVARCHAR(4000)">
         <constraints nullable="true" />
       </column>
       <column name="LAST_DATE" type="TIMESTAMP" defaultValue="${now}">

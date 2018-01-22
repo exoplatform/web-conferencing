@@ -19,6 +19,7 @@
  */
 package org.exoplatform.webconferencing;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
@@ -90,7 +91,7 @@ public class WebConferencingService implements Startable {
   public static final int       ARG_MAX_LENGTH        = 32;
 
   /** The Constant DATA_MAX_LENGTH. */
-  public static final int       DATA_MAX_LENGTH       = 20480;
+  public static final int       DATA_MAX_LENGTH       = 4000;
 
   /** The Constant SPACE_TYPE_NAME. */
   public static final String    SPACE_TYPE_NAME       = "space".intern();
@@ -277,13 +278,14 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Checks if data valid (null or not empty and not longer of {@value #DATA_MAX_LENGTH} chars).
+   * Checks if data valid (null or not empty and not longer of {@value #DATA_MAX_LENGTH} bytes in UTF8 encoding).
    *
    * @param data the data
    * @return true, if is valid data
+   * @throws UnsupportedEncodingException if UTF8 encoding not found in runtime 
    */
-  public static boolean isValidData(String data) {
-    return data == null || (data.length() > 0 && data.length() <= DATA_MAX_LENGTH);
+  public static boolean isValidData(String data) throws UnsupportedEncodingException {
+    return data == null || (data.length() > 0 && data.getBytes("UTF8").length <= DATA_MAX_LENGTH);
   }
 
   /**
@@ -1439,8 +1441,8 @@ public class WebConferencingService implements Startable {
         if (roomName != null && roomName.length() > 0 && roomTitle != null && roomTitle.length() > 0) {
           owner = roomInfo(ownerId, roomName, roomTitle, new String[0], savedCall.getId());
         } else {
-          LOG.error("Saved call doesn't contain room settings: '" + settings + "'");
-          throw new CallInfoException("Saved call doesn't contain room settings");
+          LOG.error("Saved call doesn't have room settings: '" + settings + "'");
+          throw new CallInfoException("Saved call doesn't have room settings");
         }
       } else if (OWNER_TYPE_SPACE.equals(savedCall.getOwnerType())) {
         owner = spaceInfo(ownerId, savedCall.getId());
@@ -1524,13 +1526,19 @@ public class WebConferencingService implements Startable {
       entity.setLastDate(call.getLastDate());
 
       if (OWNER_TYPE_CHATROOM.equals(owner.getType())) {
+        entity.setIsGroup(true);
+        entity.setIsUser(false);
         RoomInfo room = RoomInfo.class.cast(owner);
         JSONObject json = new JSONObject();
         json.put("roomName", room.getName());
         json.put("roomTitle", room.getTitle());
-        entity.setSettings(json.toString());
-        entity.setIsGroup(true);
-        entity.setIsUser(false);
+        String settings = json.toString();
+        if (isValidData(settings)) {
+          entity.setSettings(settings);
+        } else {
+          LOG.error("Call settings too long: " + settings + ". Max value is " + DATA_MAX_LENGTH + " bytes in UTF8 encoding.");
+          throw new CallInfoException("Call settings too long"); 
+        }
       } else if (OWNER_TYPE_SPACE.equals(owner.getType())) {
         entity.setIsGroup(true);
         entity.setIsUser(false);
