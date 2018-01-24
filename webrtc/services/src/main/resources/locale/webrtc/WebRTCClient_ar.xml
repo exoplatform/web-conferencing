@@ -2,43 +2,43 @@
 <bundle>
   <webrtc>
     <call>مكالمة</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <callingYou>يتصل بك...</callingYou>
+    <callWith>الاتصال مع</callWith>
+    <callTo>إتصال إلى</callTo>
+    <incomingCall>مكالمة واردة</incomingCall>
     <answer>إجابة</answer>
     <decline>خفض</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call already running. Click to open.</callRunningTip>
+    <callStartTip>إضغط فوق بدء مكالمة فيديو</callStartTip>
+    <callRunningTip>المكالمة جارية بالفعل. اضغط لاظهار نافذة المكالمة.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
-    <errorAddCall>Error saving call</errorAddCall>
-    <errorGettingCall>Error opening call</errorGettingCall>
-    <errorOpeningCall>Error open call page</errorOpeningCall>
-    <callWindowNotOpen>Call window not open (check if not blocked by browser)</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error read user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error read call information from the server</errorReadCall>
-    <errorSubscribeUser>Error subscribing user updates</errorSubscribeUser>
-    <errorSubscribeCall>Error subscribing call updates</errorSubscribeCall>
-    <errorStartingConnection>Error of starting connection</errorStartingConnection>
-    <notSupportedPlatform>Not supported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>Not initialized or initialization error</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>Audio and/or video required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error getting user media devices (audio or video)</mediaDevicesError>
-    <noAudioFound>No audio input found</noAudioFound>
-    <butVideoFound>But video found</butVideoFound>
+    <providerError>خطأ في موفر WebRTC</providerError>
+    <providerNotAvailable>موفر WebRTC غير متوفر</providerNotAvailable>
+    <errorAddCall>تعذر بدء المكالمة نظراً لاستمرار خطأ على الخادم. الرجاء المحاولة مرة أخرى.</errorAddCall>
+    <errorGettingCall>Error receiving the call</errorGettingCall>
+    <errorOpeningCall>حدث خطأ أثناء فتح صفحة المكالمة</errorOpeningCall>
+    <callWindowNotOpen>تعذر فتح نافذة الاتصال. الرجاء التحقق إذا كان تم حظره بواسطة المستعرض الخاص بك.</callWindowNotOpen>
+    <errorStartingCall>خطأ في بدء تشغيل الاتصال</errorStartingCall>
+    <errorIncomingCall>خطأ المكالمات الواردة</errorIncomingCall>
+    <errorReadUserStatus>حدث خطأ أثناء قراءة معلومات حالة المستخدم من الخادم</errorReadUserStatus>
+    <errorReadCall>حدث خطأ أثناء قراءة معلومات الاتصال من الخادم</errorReadCall>
+    <errorSubscribeUser>خطأ في تحديثات اشتراك المستخدم</errorSubscribeUser>
+    <errorSubscribeCall>خطأ في تحديثات إشتراك الإتصال</errorSubscribeCall>
+    <errorStartingConnection>حدث خطأ أثناء بدء الاتصال</errorStartingConnection>
+    <notSupportedPlatform>نظام أساسي غير مدعوم</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>المتصفح الخاص بك لا يدعم المكالمات WebRTC</yourBrowserNotSupportWebrtc>
+    <notInitialized>لم يتم تهيئة أو خطأ في التهيئة</notInitialized>
+    <connectionFailed>فشل في الاتصال</connectionFailed>
+    <audioVideoRequired>ميكروفون و/أو كاميرا مطلوبة لإجراء مكالمة</audioVideoRequired>
+    <mediaDevicesError>خطأ في الوصول إلى الكاميرا أو الميكروفون</mediaDevicesError>
+    <noAudioFound>لم يتم العثور على ميكروفون</noAudioFound>
+    <butVideoFound>لم يتم العثور على الفيديو</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>URL cannot be empty for server</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>إعدادات خاطئة</wrongSettings>
+      <serverUrlMandatory>لا يمكن أن يكون رابط الخادم فارغا</serverUrlMandatory>
+      <usernameMandatory>لا يمكن ترك اسم المستخدم فارغا</usernameMandatory>
+      <credentialMandatory>كلمة المرور لا يمكن أن تكون فارغة</credentialMandatory>
+      <errorSavingSettings>حدث خطأ أثناء حفظ الإعدادات</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

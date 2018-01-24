@@ -2,9 +2,9 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>Ok</ok>
+    <ok>موافق</ok>
     <cancel>الغاء</cancel>
     
-    <notConfigured>not configured</notConfigured>
+    <notConfigured>لم يتم تشكيله</notConfigured>
   </webconferencing>
 </bundle>

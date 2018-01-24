@@ -2,36 +2,36 @@
 <bundle>
   <webrtc>
     <call>Appel</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
+    <callingYou>vous appelle...</callingYou>
+    <callWith>Appel avec</callWith>
+    <callTo>Appel de</callTo>
     <incomingCall>Appel entrant</incomingCall>
     <answer>Réponse</answer>
     <decline>Décliner</decline>
     <callStartTip>Cliquez pour démarrer un appel vidéo</callStartTip>
-    <callRunningTip>This call already running. Click to open.</callRunningTip>
+    <callRunningTip>Cet appel est déjà en cours. Cliquez pour ouvrir la fenêtre d'appel.</callRunningTip>
     
     <providerError>Erreur du connecteur WebRTC</providerError>
     <providerNotAvailable>Connecteur WebRTC non disponible</providerNotAvailable>
-    <errorAddCall>Error saving call</errorAddCall>
-    <errorGettingCall>Error opening call</errorGettingCall>
+    <errorAddCall>Cet appel n'a pas pu démarrer en raison d'une erreur de persistance sur le serveur. Veuillez réessayer. Si le problème persiste, veuillez contacter votre administrateur.</errorAddCall>
+    <errorGettingCall>Error receiving the call</errorGettingCall>
     <errorOpeningCall>Erreur à l'ouverture de la page d'appel</errorOpeningCall>
-    <callWindowNotOpen>Call window not open (check if not blocked by browser)</callWindowNotOpen>
+    <callWindowNotOpen>La fenêtre d'appel n'a pas pu s'ouvrir. Veuillez vérifier qu'elle n'ait pas été bloquée par votre navigateur.</callWindowNotOpen>
     <errorStartingCall>Erreur au démarrage de l'appel</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
+    <errorIncomingCall>Erreur d'appel entrant</errorIncomingCall>
     <errorReadUserStatus>Erreur à la lecture de l'état de l'utilisateur sur le serveur</errorReadUserStatus>
     <errorReadCall>Erreur à la lecture des informations de l'appel sur le serveur</errorReadCall>
-    <errorSubscribeUser>Error subscribing user updates</errorSubscribeUser>
-    <errorSubscribeCall>Error subscribing call updates</errorSubscribeCall>
-    <errorStartingConnection>Erreur au démarrage de la connection</errorStartingConnection>
+    <errorSubscribeUser>Impossible d'établir le canal de communication des mises à jour utilisateur entre le serveur et votre navigateur. Veuillez recharger la page et réessayer. Si le problème persiste, faites appel à votre administrateur.</errorSubscribeUser>
+    <errorSubscribeCall>Impossible d'établir le canal de communication des mises à jour d'appel entre le serveur et votre navigateur. Veuillez recharger la page et réessayer. Si le problème persiste, faites appel à votre administrateur.</errorSubscribeCall>
+    <errorStartingConnection>Erreur au démarrage de la connexion</errorStartingConnection>
     <notSupportedPlatform>Plateforme non supportée</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Votre navigateur ne supporte pas les appels WebRTC</yourBrowserNotSupportWebrtc>
-    <notInitialized>Not initialized or initialization error</notInitialized>
+    <notInitialized>Le connecteur d'appels WebRTC ne s'est pas correctement initialisé. Veuillez fermer cette fenêtre et réessayer.</notInitialized>
     <connectionFailed>La connexion a échoué</connectionFailed>
-    <audioVideoRequired>L'audio et/ou la vidéo sont requis pour passer un appel</audioVideoRequired>
-    <mediaDevicesError>Error getting user media devices (audio or video)</mediaDevicesError>
-    <noAudioFound>Aucune entrée audio trouvée</noAudioFound>
-    <butVideoFound>But video found</butVideoFound>
+    <audioVideoRequired>Un microphone et/ou une camera sont nécessaires pour passer un appel</audioVideoRequired>
+    <mediaDevicesError>Erreur d’accès à la caméra ou au microphone</mediaDevicesError>
+    <noAudioFound>Aucun microphone trouvé.</noAudioFound>
+    <butVideoFound>mais la caméra a été trouvée</butVideoFound>
     
     <admin>
       <wrongSettings>Paramètres erronés</wrongSettings>

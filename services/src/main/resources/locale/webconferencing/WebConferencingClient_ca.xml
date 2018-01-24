@@ -2,7 +2,7 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>Ok</ok>
+    <ok>Accepta</ok>
     <cancel>Cancel·la</cancel>
     
     <notConfigured>not configured</notConfigured>
