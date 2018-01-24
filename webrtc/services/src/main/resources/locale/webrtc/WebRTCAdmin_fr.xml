@@ -7,7 +7,7 @@
       <servers>Serveurs STUN/TURN</servers>
       <serversTip>Des serveurs STUN ou TURN sont nécessaires pour assurer que les appels de web conférences marchent correctement au travers des routeurs réseau. Nous recommandons fortement d'installer votre propre serveur TURN afin de garder le contrôle de la sécurité des communications et assurer une disponibilité maximale.</serversTip>
       <url>URL</url>
-      <serverUrl>Server URL...</serverUrl>
+      <serverUrl>URL Serveur...</serverUrl>
       <credentials>Identifiants</credentials>
       <username>Nom d'utilisateur</username>
       <credential>Identifiant</credential>
@@ -22,7 +22,7 @@
       <!-- Error Diagnostics -->
       <errorDiagnostic>Diagnostics d'erreur</errorDiagnostic>
       <enableLogCollection>Activer la collecte de journaux côté client</enableLogCollection>
-      <logCollectionInfo>Cela tracera des informations provenant du client dans les journaux du serveur afin d'aider à diagnostiquer les problèmes de connectivité WebRTC. A utiliser avec prudence car ce mode peut causer une surcharge réseau significative sur votre système.</logCollectionInfo>
+      <logCollectionInfo>Cette option activera le traçage des informations provenant du client dans les journaux du serveur afin d'aider à diagnostiquer les problèmes de connectivité WebRTC. A utiliser avec prudence car ce mode peut causer une surcharge réseau significative sur votre système.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

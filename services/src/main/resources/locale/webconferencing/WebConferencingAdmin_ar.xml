@@ -2,10 +2,10 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
-      <provider>Provider</provider>
+      <page>عقد المؤتمرات على الويب</page>
+      <title>إدارة محتوى مؤتمرات الويب</title>
+      <info>عقد المؤتمرات على الويب يمكن أن تعالج عن طريق عدة مزودي خدمات. يمكنك تفعيل مزود الخدمات الذي تحتاجه وتهيئة الإعدادات.</info>
+      <provider>مزود الخدمة</provider>
       <description>الوصف</description>
       <active>ناشط</active>
       <actions>الإجراءات</actions>

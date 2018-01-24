@@ -9,29 +9,29 @@
     <answer>Answer</answer>
     <decline>Decline</decline>
     <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to open.</callRunningTip>
+    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
     
     <providerError>WebRTC provider error</providerError>
     <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
-    <errorAddCall>Error saving call</errorAddCall>
+    <errorAddCall>The call could not be started due to a server error. Please try again. If the problem persists, please contact your administrator.</errorAddCall>
     <errorGettingCall>Error receiving the call</errorGettingCall>
-    <errorOpeningCall>Error opening call page</errorOpeningCall>
+    <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
     <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
     <errorStartingCall>Error starting call</errorStartingCall>
     <errorIncomingCall>Incoming call error</errorIncomingCall>
     <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
     <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Error subscribing user updates</errorSubscribeUser>
-    <errorSubscribeCall>Error subscribing call updates</errorSubscribeCall>
+    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeUser>
+    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeCall>
     <errorStartingConnection>Error starting connection</errorStartingConnection>
     <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>Not initialized or initialization error</notInitialized>
+    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
     <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>Audio and/or video are required to place a call</audioVideoRequired>
+    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
     <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <noAudioFound>No audio input found</noAudioFound>
-    <butVideoFound>Video feed not found</butVideoFound>
+    <noAudioFound>No microphone was detected</noAudioFound>
+    <butVideoFound>but a camera was found</butVideoFound>
     
     <admin>
       <wrongSettings>Wrong settings</wrongSettings>
