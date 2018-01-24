@@ -1675,17 +1675,19 @@
 			});
 
 			// single user profile;
-			$("#socialTopLayout").each(function(i, elem) {
-				var $userStatus = $(elem).find("#UIStatusProfilePortlet .user-status");
-				var userId = $userStatus.data("userid");
-				if (userId != currentUser.id) {
-					var $userActions = $(elem).find("#UIRelationshipAction .user-actions");
-					addCallButton($userActions, userContext(userId)).done(function($container) {
-						$container.addClass("pull-left");
-						log.trace("<< initUsers profile DONE " + userId + " for " + currentUser.id);
-					});
+			var $userProfileMenu = $(".uiProfileMenu:first");
+			var userId = $userProfileMenu.find(".profileMenuNavHeader h3").data("userid");
+			if (userId != currentUser.id) {
+				var $userActions = $userProfileMenu.find(".profileMenuApps");
+				var $callButtons = $userActions.find(".userMenuCallButtons");
+				if ($callButtons.length == 0) {
+					$callButtons = $("<li></li>").appendTo($userActions).addClass("userMenuCallButtons");
 				}
-			});
+				addCallButton($callButtons, userContext(userId)).done(function($container) {
+					$container.addClass("pull-left");
+					log.trace("<< initUsers profile DONE " + userId + " for " + currentUser.id);
+				});
+			}
 		};
 		
 		var spaceContext = function(spaceId) {
