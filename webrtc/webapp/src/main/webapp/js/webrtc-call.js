@@ -249,6 +249,7 @@ if (eXo.webConferencing) {
 									//log.trace("WebRTC configuration: " + JSON.stringify(rtcConfig));
 									log.trace("Creating RTCPeerConnection");
 									pc = new RTCPeerConnection(rtcConfig);
+									var subscribed = $.Deferred();
 									var negotiation = $.Deferred();
 									var connection = $.Deferred();
 									
@@ -379,31 +380,36 @@ if (eXo.webConferencing) {
 							  	// let the 'negotiationneeded' event trigger offer generation
 								  pc.onnegotiationneeded = function () {
 								  	// This will be fired after adding a local media stream and browser readiness
-								  	log.debug("Negotiation needed for " + callId);
 								  	// Ready to join the call: say hello to each other
 						  			if (isOwner) {
-						  				sendHello().then(function() {
-						  					// Owner will send the offer when negotiation will be resolved (received Hello from others)
-							  				negotiation.then(function() {
-							  					log.debug("Creating offer for " + callId);
-											    pc.createOffer().then(function(desc) { // sdpConstraints
-											    	log.debug("Setting local description for " + callId);
-											    	pc.setLocalDescription(desc).then(function() {
-											    		log.debug("Sending offer for " + callId);
-											    		sendOffer(pc.localDescription).then(function() {
-											    			log.debug("Sent offer for " + callId);
-											    			// TODO Something else here?
-											    		});
-											      }).catch(function(err) {
-											      	log.error("Failed to set local description for " + callId, err);
-											      	showConnectionError(err);
+						  				log.debug("Negotiation needed by owner for " + callId);
+						  				subscribed.then(function() {
+						  					log.debug("Sending Hello by owner for " + callId);
+							  				sendHello().then(function() {
+							  					// Owner will send the offer when negotiation will be resolved (received Hello from others)
+								  				negotiation.then(function() {
+								  					log.debug("Creating offer for " + callId);
+												    pc.createOffer().then(function(desc) { // sdpConstraints
+												    	log.debug("Setting local description for " + callId);
+												    	pc.setLocalDescription(desc).then(function() {
+												    		log.debug("Sending offer for " + callId);
+												    		sendOffer(pc.localDescription).then(function() {
+												    			log.debug("Sent offer for " + callId);
+												    			// TODO Something else here?
+												    		});
+												      }).catch(function(err) {
+												      	log.error("Failed to set local description for " + callId, err);
+												      	showConnectionError(err);
+													    });
+												    }).catch(function(err) {
+												    	log.error("Failed to create an offer for " + callId, err);
+												    	showConnectionError(err);
 												    });
-											    }).catch(function(err) {
-											    	log.error("Failed to create an offer for " + callId, err);
-											    	showConnectionError(err);
-											    });
-							  				});
+								  				});
+							  				});						  					
 						  				});
+								  	} else {
+								  		log.trace("Negotiation needed by NOT owner for " + callId);
 								  	}
 								  };			  	
 								  // once remote stream arrives, show it in the remote video element
@@ -571,7 +577,12 @@ if (eXo.webConferencing) {
 														// We assume it's a hello to the call owner: start sending offer and candidates
 														// This will works once (for group calls, need re-initialize the process)
 														negotiation.resolve().then(function() {
-															log.debug("Started exchange (owner) media information of " + callId);
+															if (isOwner) {
+																log.debug("Started exchange (owner) media information of " + callId);
+															} else {
+																// This should not happen until group calls will be supported
+																log.warn("Started exchange (NOT owner) media information of " + callId);
+															}
 														});
 													} else {
 														log.debug("Hello was not to me (but to " + message.hello + ")");
@@ -597,6 +608,8 @@ if (eXo.webConferencing) {
 										err = webConferencing.errorText(err);
 										process.reject(webrtc.message("errorSubscribeCall") + ": " + err);
 										showError(webrtc.message("errorSubscribeCall"), webConferencing.errorText(err));
+									}, function() {
+										subscribed.resolve();
 									});
 									
 									// Show current user camera in the video,
@@ -717,14 +730,17 @@ if (eXo.webConferencing) {
 											  //  pc.addTrack(track, localStream);
 											  //});
 										  } else {
-										  	// Participant sends Hello to the other end to initiate a negotiation there
-										  	log.debug("Sending Hello by participant for " + callId);
-										  	sendHello().then(function() {
-								  				// Participant on the other end is ready for negotiation and waits for an offer message
-										  		negotiation.resolve(localStream).then(function() {
-														log.debug("Started exchange (participant) media information for " + callId);
-													});
-								  			});
+										  	log.debug("Negotiation ready by participant for " + callId);
+										  	subscribed.then(function() {
+										  		// Participant sends Hello to the other end to initiate a negotiation there
+										  		log.debug("Sending Hello by participant for " + callId);
+											  	sendHello().then(function() {
+									  				// Participant on the other end is ready for negotiation and waits for an offer message
+											  		negotiation.resolve(localStream).then(function() {
+															log.debug("Started exchange (participant) media information for " + callId);
+														});
+									  			});
+										  	});
 										  }
 											// if user had saved audio/video disabled, mute them accordingly
 											if (getPreference("audio.disable") == "true") {

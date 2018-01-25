@@ -278,11 +278,12 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Checks if data valid (null or not empty and not longer of {@value #DATA_MAX_LENGTH} bytes in UTF8 encoding).
+   * Checks if data valid (null or not empty and not longer of {@value #DATA_MAX_LENGTH} bytes in UTF8
+   * encoding).
    *
    * @param data the data
    * @return true, if is valid data
-   * @throws UnsupportedEncodingException if UTF8 encoding not found in runtime 
+   * @throws UnsupportedEncodingException if UTF8 encoding not found in runtime
    */
   public static boolean isValidData(String data) throws UnsupportedEncodingException {
     return data == null || (data.length() > 0 && data.getBytes("UTF8").length <= DATA_MAX_LENGTH);
@@ -905,7 +906,7 @@ public class WebConferencingService implements Startable {
             }
           }
         }
-        // then save if someone joined (it should but we preserve the logic)
+        // then save if someone leaved
         if (leaved != null) {
           // First save the call with the participant (in single tx)
           updateParticipant(id, leaved);
@@ -919,17 +920,18 @@ public class WebConferencingService implements Startable {
                                userId, // TODO send client ID also (all were present)
                                part.getId());
           }
-        }
-        // Check if don't need stop the call if all parts leaved already
-        if (call.getOwner().isGroup()) {
-          if (leavedNum == call.getParticipants().size()) {
-            // Stop when all group members leave the call
-            stopCall(call, userId, false);
+          // Check if don't need stop the call if all parts leaved already
+          if (call.getOwner().isGroup()) {
+            if (leavedNum == call.getParticipants().size()) {
+              // Stop when all group members leave the call
+              stopCall(call, userId, false);
+            }
+          } else if (call.getParticipants().size() - leavedNum <= 1) {
+            // For P2P we remove the call when one of parts stand alone
+            stopCall(call, userId, true);
           }
-        } else if (call.getParticipants().size() - leavedNum <= 1) {
-          // For P2P we remove the call when one of parts stand alone
-          stopCall(call, userId, true);
-        }
+        } // else, if no one leaved, we don't need any action (it may be leaved an user of already stopped
+          // call, see comments above)
       } else {
         // It seems has no big sense to return error for already stopped call
         // XXX throw new InvalidCallStateException("Call not started");
@@ -1537,7 +1539,7 @@ public class WebConferencingService implements Startable {
           entity.setSettings(settings);
         } else {
           LOG.error("Call settings too long: " + settings + ". Max value is " + DATA_MAX_LENGTH + " bytes in UTF8 encoding.");
-          throw new CallInfoException("Call settings too long"); 
+          throw new CallInfoException("Call settings too long");
         }
       } else if (OWNER_TYPE_SPACE.equals(owner.getType())) {
         entity.setIsGroup(true);
