@@ -2149,7 +2149,7 @@
 			}
 		};
 		
-		this.onUserUpdate = function(userId, onUpdate, onError) {
+		this.onUserUpdate = function(userId, onUpdate, onError, onReady) {
 			if (cometd) {
 				// /service/webconferencing/calls
 				var subscription = cometd.subscribe("/eXo/Application/WebConferencing/user/" + userId, function(message) {
@@ -2169,6 +2169,9 @@
 					if (subscribeReply.successful) {
 		        // The server successfully subscribed this client to the channel.
 						log.trace("User updates subscribed successfully: " + JSON.stringify(subscribeReply));
+						if (typeof onReady == "function") {
+							onReady(subscribeReply);
+						}
 					} else {
 						var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
 						log.debug("User updates subscription failed for " + userId, err);
@@ -2193,7 +2196,7 @@
 			}
 		};
 		
-		this.onCallUpdate = function(callId, onUpdate, onError) {
+		this.onCallUpdate = function(callId, onUpdate, onError, onReady) {
 			if (cometd) {
 				var subscription = cometd.subscribe("/eXo/Application/WebConferencing/call/" + callId, function(message) {
 					// Channel message handler
@@ -2212,6 +2215,9 @@
 					if (subscribeReply.successful) {
 		        // The server successfully subscribed this client to the channel.
 						log.trace("Call updates subscribed successfully: " + JSON.stringify(subscribeReply));
+						if (typeof onReady == "function") {
+							onReady(subscribeReply);
+						}
 					} else {
 						var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
 						log.trace("Call updates subscription failed for " + callId, err);

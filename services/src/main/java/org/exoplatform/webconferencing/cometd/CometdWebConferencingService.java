@@ -530,6 +530,15 @@ public class CometdWebConferencingService implements Startable {
       String getContainerName() {
         return containerName;
       }
+
+      /**
+       * Checks if the call channel has clients.
+       *
+       * @return true, if successful
+       */
+      boolean hasClients() {
+        return clients.size() > 0;
+      }
     }
 
     /**
@@ -691,6 +700,10 @@ public class CometdWebConferencingService implements Startable {
               }
               return new CallChannelContext(exoContainerName);
             }).addUser(sessionId, currentUserId, exoClientId);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("<< Added call session for " + currentUserId + ", session:" + sessionId + " (" + exoContainerName + "@"
+                  + exoClientId + "), channel:" + channelId);
+            }
           } else {
             LOG.warn("eXo container not defined for " + currentUserId + ", client:" + sessionId + ", channel:" + channelId);
           }
@@ -716,7 +729,68 @@ public class CometdWebConferencingService implements Startable {
           LOG.debug(">> Unsubscribed: " + currentUserId + ", session:" + sessionId + " (" + exoContainerName + "@" + exoClientId
               + "), channel:" + channelId);
         }
-        cleanupChannelClient(channelId, sessionId, exoClientId);
+        if (channelId.startsWith(USER_SUBSCRIPTION_CHANNEL_NAME)) {
+          // cleanup session stuff, note that disconnected session already unsubscribed and has not channels
+          UserChannelContext context = userChannelContext.get(channelId);
+          if (context != null) {
+            context.removeClient(sessionId);
+          } else {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("<<< User call channel context not found for session: " + sessionId + ", channel:" + channelId);
+            }
+          }
+        } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)
+            && channelId.length() > CALL_SUBSCRIPTION_CHANNEL_NAME.length()) {
+          String callId = channelId.substring(CALL_SUBSCRIPTION_CHANNEL_NAME.length() + 1);
+          CallChannelContext context = callChannelContext.get(channelId);
+          if (context != null) {
+            callHandlers.submit(new ContainerCommand(context.getContainerName()) {
+              /**
+               * {@inheritDoc}
+               */
+              @Override
+              void execute(ExoContainer exoContainer) {
+                try {
+                  CallInfo call = webConferencing.getCall(callId);
+                  if (call != null) {
+                    CallClient client = context.removeUser(sessionId);
+                    if (client != null) {
+                      if (LOG.isDebugEnabled()) {
+                        LOG.debug(">>> Removed call session for " + client.getUserId() + ", session:" + sessionId + " ("
+                            + context.getContainerName() + "@" + client.getClientId() + "), channel:" + channelId);
+                      }
+                      webConferencing.leaveCall(callId, client.getUserId(), client.getClientId());
+                    } else {
+                      LOG.warn("Client not found for session " + sessionId + " of " + channelId);
+                    }
+                    // TODO remove mapping of the context if it has not clients, but how safe to make this
+                    // when call exists?
+                    // Client could be added at next moment, at the same time mapping will be
+                    // cleaned when channel will be removed (but this not proven to happen according logs).
+                    // If do that, then need do consistent for the mapping: above instead of
+                    // callChannelContext.get() use callChannelContext.computeIfPresent() with all this code
+                    // inside it (and return null from bi-function if context has not clients).
+                  } else {
+                    // Remove existing context(!) for not existing call - this can be considered as safe.
+                    callChannelContext.remove(channelId, context);
+                  }
+                } catch (Exception e) {
+                  LOG.error("Error reading call " + callId, e);
+                }
+              }
+
+              /**
+               * {@inheritDoc}
+               */
+              @Override
+              void onContainerError(String error) {
+                LOG.error("Container error: " + error + " (" + containerName + ") for channel removal " + channelId);
+              }
+            });
+          } else {
+            LOG.warn("Call context not found for " + callId);
+          }
+        }
       }
     }
 
@@ -776,9 +850,10 @@ public class CometdWebConferencingService implements Startable {
         } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)
             && channelId.length() > CALL_SUBSCRIPTION_CHANNEL_NAME.length()) {
           String callId = channelId.substring(CALL_SUBSCRIPTION_CHANNEL_NAME.length() + 1);
-          // This call communications ended, in normal way or by network failure - we assume the call ended,
-          // ensure its parties, including those who received incoming notification but not yet
-          // accepted/rejected it, will be notified that the call stopped/removed.
+          // This call channel communications ended, in a normal way or by network failure - we assume all
+          // clients gone (all call parties that have been connected). And so, we stop the call and every
+          // party, including those who received incoming notification but not yet accepted/rejected it, will
+          // be notified that the call stopped/removed.
           CallChannelContext context = callChannelContext.remove(channelId);
           if (context != null) {
             callHandlers.submit(new ContainerCommand(context.getContainerName()) {
@@ -788,7 +863,6 @@ public class CometdWebConferencingService implements Startable {
               @Override
               void execute(ExoContainer exoContainer) {
                 try {
-
                   CallInfo call = webConferencing.getCall(callId);
                   if (call != null) {
                     // may be need leave all them and let that logic to stop the call?
@@ -1196,65 +1270,6 @@ public class CometdWebConferencingService implements Startable {
           }
         }
       });
-    }
-
-    /**
-     * Cleanup channel client.
-     *
-     * @param channelId the channel id
-     * @param sessionId the session id
-     * @param clientiId the exo client id
-     * @param exoContainerName the exo container name
-     */
-    void cleanupChannelClient(String channelId, String sessionId, String clientiId) {
-      if (channelId.startsWith(USER_SUBSCRIPTION_CHANNEL_NAME)) {
-        // cleanup session stuff, note that disconnected session already unsubscribed and has not channels
-        UserChannelContext context = userChannelContext.get(channelId);
-        if (context != null) {
-          context.removeClient(sessionId);
-        } else {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("<<< User call channel context not found for session: " + sessionId + ", channel:" + channelId);
-          }
-        }
-      } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)
-          && channelId.length() > CALL_SUBSCRIPTION_CHANNEL_NAME.length()) {
-        String callId = channelId.substring(CALL_SUBSCRIPTION_CHANNEL_NAME.length() + 1);
-        CallChannelContext context = callChannelContext.get(channelId);
-        if (context != null) {
-          callHandlers.submit(new ContainerCommand(context.getContainerName()) {
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            void execute(ExoContainer exoContainer) {
-              try {
-                CallInfo call = webConferencing.getCall(callId);
-                if (call != null) {
-                  CallClient client = context.removeUser(sessionId);
-                  if (client != null) {
-                    webConferencing.leaveCall(callId, client.getUserId(), client.getClientId());
-                  } else {
-                    LOG.warn("Client not found for session " + sessionId + " of " + channelId);
-                  }
-                }
-              } catch (Exception e) {
-                LOG.error("Error reading call " + callId, e);
-              }
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            void onContainerError(String error) {
-              LOG.error("Container error: " + error + " (" + containerName + ") for channel removal " + channelId);
-            }
-          });
-        } else {
-          LOG.warn("Call context not found for " + callId);
-        }
-      }
     }
   }
 
