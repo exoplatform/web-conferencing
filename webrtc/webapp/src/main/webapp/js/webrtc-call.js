@@ -606,8 +606,8 @@ if (eXo.webConferencing) {
 									}, function(err) {
 										log.error("Call subscribtion failed for " + callId, err);
 										err = webConferencing.errorText(err);
-										process.reject(webrtc.message("errorSubscribeCall") + ": " + err);
-										showError(webrtc.message("errorSubscribeCall"), webConferencing.errorText(err));
+										process.reject(webrtc.message("errorSubscribeCall") + ". " + err);
+										showError(webrtc.message("errorSubscribeCall"), err);
 									}, function() {
 										subscribed.resolve();
 									});
@@ -763,10 +763,18 @@ if (eXo.webConferencing) {
 										}).catch(function(err) {
 											// In case of getting user medias we can face with different errors (on different browsers and its versions)
 											var errMessage = webConferencing.errorText(err);
-											if (!errMessage && err.code && err.PERMISSION_DENIED) {
-												// Older version of NavigatorUserMediaError (Chrome?)
-												errMessage = webrtc.message("accessDenied");
-												log.error("Failed to get media devices", "PERMISSION_DENIED " + err.code);
+											if (!errMessage) {
+												if (err.code && err.PERMISSION_DENIED) {
+													// For older version of Chrome
+													log.error("Failed to get media devices", "PERMISSION_DENIED " + err.code);
+													errMessage = webrtc.message("accessDenied");
+												} else {
+													log.error("Failed to get media devices", err);
+													if (err.name && err.name == "PermissionDeniedError") {
+														// Chrome may not provide a message for this error
+														errMessage = webrtc.message("accessDenied");
+													}
+												}
 											} else {
 												log.error("Failed to get media devices", err);
 											}

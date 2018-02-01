@@ -16,11 +16,7 @@
 	var clientId = "" + getRandomArbitrary(100000, 999998);
 	
 	var errorText = function(err) {
-		return err && err.message ? err.message : err;
-	};
-	
-	var errorCode = function(err) {
-		return err && err.code ? err.code : undefined;
+		return err && err.message ? err.message : "";
 	};
 	
 	var tryParseJson = function(message) {
@@ -183,7 +179,7 @@
 				msgLine += ". Error: ";
 				if (err.name || err.message) {
 					if (err.name) {
-						msgLine += "[" + err.name + "]";
+						msgLine += "[" + err.name + "] ";
 					}
 					if (err.message) {
 						msgLine += err.message;
@@ -976,7 +972,6 @@
 		};
 
 		this.errorText = errorText;
-		this.errorCode = errorCode;
 		
 		var contextId = function(context) {
 			return context.userId ? context.userId : (context.spaceId ? context.spaceId : context.roomName);
@@ -1856,7 +1851,7 @@
 							}
 						}
 
-						log.info("User initialized in Web Conferencing: " + currentUser.id + ". Lang: " + (navigator.language || navigator.userLanguage || navigator.browserLanguage) 
+						log.debug("User initialized in Web Conferencing: " + currentUser.id + ". Lang: " + (navigator.language || navigator.userLanguage || navigator.browserLanguage) 
 									+ ". Local date: " + new Date().toLocaleString() + ". Browser: " + navigator.userAgent);
 					} else {
 						log.warn("CometD not found in context settings");
