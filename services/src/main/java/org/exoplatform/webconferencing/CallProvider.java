@@ -133,7 +133,7 @@ public abstract class CallProvider extends BaseComponentPlugin {
   protected boolean                   active;
 
   /**
-   * Instantiates a new video calls provider.
+   * Instantiates a new web conferencing provider.
    *
    * @param params the params
    * @throws ConfigurationException the configuration exception

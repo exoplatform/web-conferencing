@@ -1185,7 +1185,7 @@ public class CometdWebConferencingService implements Startable {
                   String timestamp = asString(params.get("timestamp"));
                   if (isValidArg(timestamp)) {
                     String provider = asString(params.get("provider")); // can be null or non empty
-                    if (isValidId(provider)) {
+                    if (isValidText(provider)) {
                       String prefix = asString(params.get("prefix")); // can be null or non empty
                       if (isValidText(prefix)) {
                         Map<String, Object> msgData;
@@ -1205,18 +1205,20 @@ public class CometdWebConferencingService implements Startable {
 
                           CallLog callLog = callLogs.getLog();
                           StringBuilder msgLine = new StringBuilder();
+                          msgLine.append('[');
                           if (provider != null) {
-                            msgLine.append('[');
                             msgLine.append(provider);
                           }
                           if (prefix != null) {
-                            if (msgLine.length() > 0) {
+                            if (msgLine.length() > 1) {
                               msgLine.append('.');
                             }
                             msgLine.append(prefix);
                           }
-                          if (msgLine.length() > 0) {
+                          if (msgLine.length() > 1) {
                             msgLine.append("] ");
+                          } else {
+                            msgLine.deleteCharAt(0); // remove [
                           }
                           msgLine.append(currentUserId);
                           msgLine.append('-');
@@ -1279,7 +1281,7 @@ public class CometdWebConferencingService implements Startable {
    * @param sessionProviders the session providers
    * @param identityRegistry the identity registry
    * @param organization the organization
-   * @param webConferencing the video calls
+   * @param webConferencing the web conferencing
    * @param exoBayeux the exo bayeux
    * @param callLogs the call logs
    */

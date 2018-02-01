@@ -14,7 +14,6 @@
     <providerError>Erreur du connecteur WebRTC</providerError>
     <providerNotAvailable>Connecteur WebRTC non disponible</providerNotAvailable>
     <errorAddCall>Cet appel n'a pas pu démarrer en raison d'une erreur de persistance sur le serveur. Veuillez réessayer. Si le problème persiste, veuillez contacter votre administrateur.</errorAddCall>
-    <errorGettingCall>Error receiving the call</errorGettingCall>
     <errorOpeningCall>Erreur à l'ouverture de la page d'appel</errorOpeningCall>
     <callWindowNotOpen>La fenêtre d'appel n'a pas pu s'ouvrir. Veuillez vérifier qu'elle n'ait pas été bloquée par votre navigateur.</callWindowNotOpen>
     <errorStartingCall>Erreur au démarrage de l'appel</errorStartingCall>

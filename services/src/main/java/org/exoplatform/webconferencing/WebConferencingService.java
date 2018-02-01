@@ -1076,7 +1076,7 @@ public class WebConferencingService implements Startable {
     for (String type : provider.getSupportedTypes()) {
       CallProvider existing = providers.putIfAbsent(type, provider);
       if (existing != null) {
-        LOG.warn("Video Calls provider type '" + existing.getType() + "' already registered. Skipped plugin: " + provider);
+        LOG.warn("Web Conferencing provider type '" + existing.getType() + "' already registered. Skipped plugin: " + provider);
       }
     }
   }

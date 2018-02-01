@@ -14,7 +14,6 @@
     <providerError>WebRTC provider error</providerError>
     <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
     <errorAddCall>The call could not be started due to a persistence error on server. Please try again.</errorAddCall>
-    <errorGettingCall>Error receiving the call</errorGettingCall>
     <errorOpeningCall>Error opening call page</errorOpeningCall>
     <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
     <errorStartingCall>Error starting call</errorStartingCall>

@@ -48,7 +48,7 @@
     <type>org.exoplatform.webconferencing.dao.ParticipantDAO</type>
   </component>
   
-  <!-- Calls storage layour (Liquebase initializer) -->
+  <!-- Calls storage layout (Liquebase initializer) -->
   <external-component-plugins>
     <target-component>org.exoplatform.commons.api.persistence.DataInitializer</target-component>
     <component-plugin>

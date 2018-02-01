@@ -14,7 +14,6 @@
     <providerError>خطأ في موفر WebRTC</providerError>
     <providerNotAvailable>موفر WebRTC غير متوفر</providerNotAvailable>
     <errorAddCall>تعذر بدء المكالمة نظراً لاستمرار خطأ على الخادم. الرجاء المحاولة مرة أخرى.</errorAddCall>
-    <errorGettingCall>Error receiving the call</errorGettingCall>
     <errorOpeningCall>حدث خطأ أثناء فتح صفحة المكالمة</errorOpeningCall>
     <callWindowNotOpen>تعذر فتح نافذة الاتصال. الرجاء التحقق إذا كان تم حظره بواسطة المستعرض الخاص بك.</callWindowNotOpen>
     <errorStartingCall>خطأ في بدء تشغيل الاتصال</errorStartingCall>

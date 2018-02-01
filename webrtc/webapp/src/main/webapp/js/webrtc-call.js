@@ -675,7 +675,7 @@ if (eXo.webConferencing) {
 										}, "Unable read devices, go with default audio and video.");
 									}
 									inputsReady.done(function(constraints, comment) {
-										log.debug("Media constraints: " + JSON.stringify(constraints) + " " + comment);
+										log.info("Media constraints: " + JSON.stringify(constraints) + " " + comment);
 										navigator.mediaDevices.getUserMedia(constraints).then(function(localStream) {
 											// successCallback: show local camera output
 											localVideo.srcObject = localStream;
@@ -761,8 +761,16 @@ if (eXo.webConferencing) {
 												webrtc.joinedCall(callId);
 											});
 										}).catch(function(err) {
-											log.error("User media error: " + JSON.stringify(err), err);  
-											showError(webrtc.message("mediaDevicesError"), webConferencing.errorText(err));
+											// In case of getting user medias we can face with different errors (on different browsers and its versions)
+											var errMessage = webConferencing.errorText(err);
+											if (!errMessage && err.code && err.PERMISSION_DENIED) {
+												// Older version of NavigatorUserMediaError (Chrome?)
+												errMessage = webrtc.message("accessDenied");
+												log.error("Failed to get media devices", "PERMISSION_DENIED " + err.code);
+											} else {
+												log.error("Failed to get media devices", err);
+											}
+											showError(webrtc.message("mediaDevicesError"), errMessage);
 										});
 									}).fail(function(err) {
 										log.error("Media devices discovery failed", err);
