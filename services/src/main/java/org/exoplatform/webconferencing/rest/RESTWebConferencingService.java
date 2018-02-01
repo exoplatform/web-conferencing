@@ -75,20 +75,19 @@ public class RESTWebConferencingService implements ResourceContainer {
   /** The Constant LOG. */
   protected static final Log             LOG   = ExoLogger.getLogger(RESTWebConferencingService.class);
 
-  /** The video calls. */
+  /** The web conferencing. */
   protected final WebConferencingService webConferencing;
 
   /** The cache control. */
   private final CacheControl             cacheControl;
 
   /**
-   * Instantiates a new REST video calls service.
+   * Instantiates a new REST service for web conferencing.
    *
-   * @param skype
-   *          the skype
+   * @param webConferencing the web conferencing
    */
-  public RESTWebConferencingService(WebConferencingService skype) {
-    this.webConferencing = skype;
+  public RESTWebConferencingService(WebConferencingService webConferencing) {
+    this.webConferencing = webConferencing;
     this.cacheControl = new CacheControl();
     cacheControl.setNoCache(true);
     cacheControl.setNoStore(true);

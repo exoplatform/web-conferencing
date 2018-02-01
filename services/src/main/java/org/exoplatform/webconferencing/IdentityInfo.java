@@ -20,7 +20,7 @@
 package org.exoplatform.webconferencing;
 
 /**
- * Identity abstraction for conversations in eXo video calls.<br>
+ * Identity abstraction for conversations in eXo web conferencing.<br>
  * 
  * Created by The eXo Platform SAS
  * 

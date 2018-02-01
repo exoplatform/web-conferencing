@@ -49,9 +49,6 @@
 		}
 		if (response.failure) {
 			msg += response.failure.reason + " ";
-			//if (response.failure.clientId) {
-			//	msg += "(clientId: " + response.failure.clientId + ") ";
-			//}
 		}
 		if (response.data) {
 			msg += response.data;
@@ -181,20 +178,20 @@
 		
 		var toLog = function(level, msg, err, localOnly) {
 			// Log to browser console and remotely when remote service become available.
-			var msgLine;
+			var msgLine = msg;
 			if (err) {
-				if (err instanceof Error) {
-					msgLine = msg + ". " + (err.name && err.message ? err.name + ": " + err.message : err.toString());
-				} if (err.name && err.message) {
-					msgLine = msg + ". " + err.name + ": " + err.message;
-				} if (err.message) {
-					msgLine = msg + ". " + err.message;
+				msgLine += ". Error: ";
+				if (err.name || err.message) {
+					if (err.name) {
+						msgLine += "[" + err.name + "]";
+					}
+					if (err.message) {
+						msgLine += err.message;
+					}
 				} else {
-					msgLine = msg + ". Cause: " + (typeof err === "string" ? err : JSON.stringify(err) 
+					msgLine += (typeof err === "string" ? err : JSON.stringify(err) 
 								+ (err.toString && typeof err.toString === "function" ? "; " + err.toString() : ""));
 				}
-			} else {
-				msgLine = msg;
 			}
 			var msgDate = new Date().toISOString();
 			if (typeof console !== "undefined" && typeof console.log === "function") {
@@ -300,7 +297,8 @@
 		};
 	}
 	
-	var log = new Logger().prefix("webconferencing").get(); // core log not enabled for remote spooling currently
+	// core log not enabled for remote spooling until some provider will do this, see init()
+	var log = new Logger().prefix("webconferencing").get();
 	//log.trace("> Loading at " + location.origin + location.pathname);
 	
 	/** 
@@ -1061,7 +1059,7 @@
 		var providerConfig = function(type) {
 			for (var i=0; i<providersConfig.length; i++) {
 				var conf = providersConfig[i];
-				if (conf.type == type) {
+				if (conf && conf.type == type) {
 					return conf;
 				}
 			}
@@ -1083,19 +1081,19 @@
 					if (provider.init && provider.hasOwnProperty("init")) {
 						provider.init(initContext()).done(function() {
 							provider.isInitialized = true;
-							log.info("Initialized call provider: " + provider.getType());
+							log.debug("Initialized call provider: " + provider.getType());
 							initializer.resolve(provider, true);
 						}).fail(function(err) {
 							log.warn("Failed to initialize call provider '" + provider.getType() + "'", err);
 							initializer.resolve(provider, false);
 						});
 					} else {
-						log.info("Marked call provider as Initialized: " + provider.getType());
+						log.debug("Marked call provider as Initialized: " + provider.getType());
 						provider.isInitialized = true;
 						initializer.resolve(provider, true);
 					}
 				} else {
-					log.info("CANCELED initialization of not active call provider '" + provider.getType() + "'");
+					log.debug("CANCELED initialization of not active call provider '" + provider.getType() + "'");
 					initializer.resolve(provider, false);
 				}
 			} else {
@@ -1809,8 +1807,6 @@
 					currentUser.clientId = clientId;
 					providersConfig = context.providersConfig;
 					prepareUser(currentUser);
-					log.info("User initialized in Web Conferencing: " + currentUser.id + ". Lang: " + (navigator.language || navigator.userLanguage || navigator.browserLanguage) 
-								+ ". Local date: " + new Date().toLocaleString() + ". Browser: " + navigator.userAgent);
 					if (context.spaceId) {
 						currentSpaceId = context.spaceId;
 					} else {
@@ -1846,6 +1842,22 @@
 					        this.unsubscribe(subscriptionHandle);
 					    }
 						}
+						
+						// Check if need core log remote spooling. Cometd required also for remote logger.
+						if (providersConfig && cometd) {
+							for (var i=0; i<providersConfig.length; i++) {
+								var conf = providersConfig[i];
+								if (conf && conf.logEnabled) {
+									// core log also should be spooled remotely from this moment, it contains info important for 
+									// monitoring a provider functionality
+									log = new Logger().prefix("webconferencing").remoteLog(true).get();
+									break;
+								}
+							}
+						}
+
+						log.info("User initialized in Web Conferencing: " + currentUser.id + ". Lang: " + (navigator.language || navigator.userLanguage || navigator.browserLanguage) 
+									+ ". Local date: " + new Date().toLocaleString() + ". Browser: " + navigator.userAgent);
 					} else {
 						log.warn("CometD not found in context settings");
 					}
@@ -2292,7 +2304,7 @@
 						}
 						return conf.log;
 					} else {
-						log.warn("Asked log for not registerd provider: " + providerType);
+						log.warn("Asked logger for not registerd provider: " + providerType);
 					}
 				} else {
 					// If no provider config yet, we create log but with asterisk suffix and not remote
@@ -2304,7 +2316,7 @@
 							logger.provider(providerType).remoteLog(conf.logEnabled && cometd);
 							conf.log = logger.get();
 						} else {
-							log.warn("Using log for not registerd provider: " + providerType);
+							log.warn("Using logger for not registerd provider: " + providerType);
 						}
 					});
 					return logger.get();
@@ -2371,12 +2383,12 @@
 			webConferencing.loadStyle("/webconferencing/skin/jquery.pnotify.default.icons.css");
 			//webConferencing.loadStyle("/webconferencing/skin/webconferencing.css"); // this CSS will be loaded as portlet skin
 			// FYI eXo.env.client.skin contains skin name, it can be consulted to load a specific CSS
-		} catch(e) {
-			log.error("Error configuring Web Conferencing notifications.", e);
+		} catch(err) {
+			log.error("Error configuring Web Conferencing notifications.", err);
 		}
 	});
 
-	log.trace("< Loaded at " + location.origin + location.pathname + " -- " + new Date().toLocaleString());
+	log.trace("< Loaded at " + location.origin + location.pathname);
 	
 	return webConferencing;
 })($, cCometD);

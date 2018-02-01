@@ -56,7 +56,7 @@ public class RESTWebRTCService implements ResourceContainer {
   /** The Constant LOG. */
   protected static final Log             LOG = ExoLogger.getLogger(RESTWebRTCService.class);
 
-  /** The video calls. */
+  /** The web conferencing. */
   protected final WebConferencingService webConferencing;
 
   /** The cache control. */
