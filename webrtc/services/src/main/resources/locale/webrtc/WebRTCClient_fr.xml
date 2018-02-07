@@ -13,8 +13,8 @@
     
     <providerError>Erreur du connecteur WebRTC</providerError>
     <providerNotAvailable>Connecteur WebRTC non disponible</providerNotAvailable>
-    <errorAddCall>Cet appel n'a pas pu démarrer en raison d'une erreur de persistance sur le serveur. Veuillez réessayer. Si le problème persiste, veuillez contacter votre administrateur.</errorAddCall>
-    <errorOpeningCall>Erreur à l'ouverture de la page d'appel</errorOpeningCall>
+    <errorAddCall>Cet appel n'a pas pu démarrer en raison d'une erreur de persistance sur le serveur. Veuillez réessayer.</errorAddCall>
+    <errorOpeningCall>Une erreur est survenue à l'ouverture de la fenêtre d'appel. Veuillez recharger la page et réessayer. Si le problème persiste, veuillez contacter votre administrateur.</errorOpeningCall>
     <callWindowNotOpen>La fenêtre d'appel n'a pas pu s'ouvrir. Veuillez vérifier qu'elle n'ait pas été bloquée par votre navigateur.</callWindowNotOpen>
     <errorStartingCall>Erreur au démarrage de l'appel</errorStartingCall>
     <errorIncomingCall>Erreur d'appel entrant</errorIncomingCall>
@@ -29,6 +29,7 @@
     <connectionFailed>La connexion a échoué</connectionFailed>
     <audioVideoRequired>Un microphone et/ou une camera sont nécessaires pour passer un appel</audioVideoRequired>
     <mediaDevicesError>Erreur d’accès à la caméra ou au microphone</mediaDevicesError>
+    <accessDenied>Could not open the media device due to a access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
     <noAudioFound>Aucun microphone trouvé.</noAudioFound>
     <butVideoFound>mais la caméra a été trouvée</butVideoFound>
     

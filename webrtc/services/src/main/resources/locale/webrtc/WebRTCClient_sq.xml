@@ -29,6 +29,7 @@
     <connectionFailed>crwdns6858701:0crwdne6858701:0</connectionFailed>
     <audioVideoRequired>crwdns6858702:0crwdne6858702:0</audioVideoRequired>
     <mediaDevicesError>crwdns6858703:0crwdne6858703:0</mediaDevicesError>
+    <accessDenied>crwdns6858938:0crwdne6858938:0</accessDenied>
     <noAudioFound>crwdns6858704:0crwdne6858704:0</noAudioFound>
     <butVideoFound>crwdns6858705:0crwdne6858705:0</butVideoFound>
     
