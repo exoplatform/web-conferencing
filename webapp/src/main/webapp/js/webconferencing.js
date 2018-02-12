@@ -800,12 +800,12 @@
 	function Chat() {
 		
 		var isApplication = function() {
-			return typeof chatApplication == "object" && chatApplication;
+			return typeof chatApplication === "object" && chatApplication;
 		};
 		this.isApplication = isApplication;
 		
 		var isEmbedded = function() {
-			return typeof chatNotification == "object" && chatNotification;
+			return typeof chatNotification === "object" && chatNotification && !isApplication();
 		};
 		this.isEmbedded = isEmbedded;
 		
@@ -1005,7 +1005,11 @@
 			if (currentUser) {
 				var key = userPreferenceKey(contextName + ".provider");
 				if (typeof Storage != "undefined") {
-					localStorage.setItem(key, providerType);
+					try {
+						localStorage.setItem(key, providerType);						
+					} catch(err) {
+						log.error("Error saving preferred provider for " + contextName, err);
+					}
 				} else {
 				  // No Web Storage support.
 					if (eXo && eXo.webConferencing && eXo.webConferencing.__preferences) {
@@ -1078,8 +1082,8 @@
 							provider.isInitialized = true;
 							log.debug("Initialized call provider: " + provider.getType());
 							initializer.resolve(provider, true);
-						}).fail(function(err) {
-							log.warn("Failed to initialize call provider '" + provider.getType() + "'", err);
+						}).fail(function() {
+							log.debug("Skipped or cannot initialize call provider: " + provider.getType());
 							initializer.resolve(provider, false);
 						});
 					} else {
@@ -1306,13 +1310,9 @@
 						  		var spaceId = roomName; // XXX no other way within Chat
 							  	getSpaceInfoReq(spaceId).done(function(space) { // TODO use getSpaceInfo() for caching spaces
 							  		data.resolve(space);
-							  	}).fail(function(e, status) {
-							  		if (typeof status == "number" && status == 404) {
-											log.trace(">> chatContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
-										} else {
-											log.trace(">> chatContext < ERROR get_space " + spaceId + " for " + currentUser.id, e);
-										}
-							  		data.reject(e);
+							  	}).fail(function(err) {
+							  		log.debug("Error getting space info " + spaceId + " for chat context", err);
+										data.reject(err);
 									});
 						  	} else if (isRoom) {
 						  		chat.getUsers(roomId).done(function(users) {
@@ -1325,38 +1325,25 @@
 										}
 										getRoomInfoReq(roomName + "/" + roomId, roomTitle, unames).done(function(info) {
 											data.resolve(info);												
-										}).fail(function(e, status) {
-											if (typeof status == "number" && status == 404) {
-												var msg = (e.message ? e.message + " " : "Not found ");
-												log.trace(">> chatContext < ERROR get_room " + roomName + " (" + msg + ") for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + roomName + ": " + JSON.stringify(e));
-												data.reject(msg);
-											} else {
-												log.trace(">> chatContext < ERROR get_room " + roomName + " for " + currentUser.id + ": " + JSON.stringify(e));
-												data.reject(e);
-											}
+										}).fail(function(err) {
+											log.debug("Error getting Chat room info " + roomName + "/" + roomId + " for chat context", err);
+											data.reject(err);
 											// TODO notify the user?
 										});
 							  	}).fail(function(err) {
-							  		log.trace("Error reading Chat room users " + roomId, err);
-										data.reject("Error reading Chat room users for " + roomId, err);
+							  		log.debug("Error getting Chat room users " + roomId + " for chat context", err);
+										data.reject("Error reading Chat room users for " + roomId);
 							  	});
 						  	} else {
-						  		log.trace(">> chatContext < ERROR unexpected chat type '" + chatType + "' and room '" + roomId + "' for " + currentUser.id);
-						  		data.reject("Unexpected chat type: " + chatType);
+						  		data.reject("Unexpected context chat type: " + chatType + " for " + roomTitle);
 						  	}
 							} else {
 								// roomId is an user name for P2P chats
 								getUserInfoReq(roomId).done(function(user) {
 									data.resolve(user);												
-								}).fail(function(e, status) {
-									if (typeof status == "number" && status == 404) {
-										var msg = (e.message ? e.message + " " : "Not found ");
-										log.trace(">> chatContext < ERROR get_user " + msg + " for " + currentUser.id + ": " + JSON.stringify(e));
-										data.reject(msg);
-									} else {
-										log.trace(">> chatContext < ERROR get_user : " + JSON.stringify(e));
-										data.reject(e);
-									}
+								}).fail(function(err) {
+									log.debug("Error getting user info " + roomId + " for chat context", err);
+									data.reject(err);
 								});
 							}
 							return data.promise();
@@ -1474,73 +1461,74 @@
 		};
 		
 		var initMiniChat = function() {
-			var $miniChat = $(".mini-chat").first();
-			var $fullName = $miniChat.find(".fullname");
-			if (typeof chatApplication === "undefined" && $fullName.length > 0 && chatNotification) {
-				if ($miniChat.data("minichatcallinitialized")) {
-					//log.trace("<< initMiniChat CANCELED < Already initialized [" + $fullName.text().trim() + "] for " + currentUser.id);
-				} else {
-					$miniChat.data("minichatcallinitialized", true);
-					var process = $.Deferred();
-					var addMiniChatCallButton = function() {
-						var roomTitle = $fullName.text().trim();
-						log.trace(">> initMiniChat [" + roomTitle + "] for " + currentUser.id);
-						var $titleBar = $miniChat.find(".title-right");
-						if ($titleBar.length > 0 && roomTitle.length > 0) {
-							var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
-							$wrapper.children().remove(); // clean the previous state, if have one
-							// Wait a bit for completing Chat workers
-							setTimeout(function() {
-								getChatContext().done(function(context) {
-									if (context.roomId) {
-										if ($wrapper.length == 0) {
-											$wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");											
-										}
-										var initializer = addCallButton($wrapper, context);
-										initializer.done(function($container) {
-											var $first = $container.find(".callButton").first();
-											$first.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
-											$first.children(".callTitle").remove();
-											$first.children(".uiIconLightGray").add($container.find(".dropdown-toggle > .uiIconLightGray"))
-													.removeClass("uiIconLightGray").addClass("uiIconWhite");
-											$container.find(".dropdown-toggle").removeClass("btn").addClass("btn-mini");
-											$container.find(".dropdown-menu").addClass("pull-right");
-											$titleBar.prepend($wrapper);
-											log.trace("<< initMiniChat DONE [" + context.roomTitle + "] for " + currentUser.id);
-										});
-										initializer.fail(function(err) {
-											if (err) {
-												log.trace("<< initMiniChat ERROR [" + context.roomTitle + "] for " + currentUser.id, err);
-												log.error("Mini-chat initialization failed in " + context.roomTitle + " for " + currentUser.id, err);
-												$miniChat.removeData("minichatcallinitialized");												
+			$(function() {
+				var $miniChat = $(".mini-chat").first();
+				var $fullName = $miniChat.find(".fullname");
+				if (chat.isEmbedded() && $fullName.length > 0) {
+					if ($miniChat.data("minichatcallinitialized")) {
+						//log.trace("<< initMiniChat CANCELED < Already initialized [" + $fullName.text().trim() + "] for " + currentUser.id);
+					} else {
+						$miniChat.data("minichatcallinitialized", true);
+						var process = $.Deferred();
+						var addMiniChatCallButton = function() {
+							var roomTitle = $fullName.text().trim();
+							log.trace(">> initMiniChat [" + roomTitle + "] for " + currentUser.id);
+							var $titleBar = $miniChat.find(".title-right");
+							if ($titleBar.length > 0 && roomTitle.length > 0) {
+								var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
+								$wrapper.children().remove(); // clean the previous state, if have one
+								// Wait a bit for completing Chat workers
+								setTimeout(function() {
+									getChatContext().done(function(context) {
+										if (context.roomId) {
+											if ($wrapper.length == 0) {
+												$wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");											
 											}
-										});
-									} else {
-										log.trace("<< initMiniChat WARN no room found in context");
-									}
-								}).fail(function(err) {
-									log.trace("<< initMiniChat ERROR getting room info from chatServer", err);
-									log.error("Error getting room info from Chat server", err);
-								});
-							}, 750);
-						} else {
-							log.trace("<< initMiniChat CANCELED mini-chat not found or empty");
-						}
+											var initializer = addCallButton($wrapper, context);
+											initializer.done(function($container) {
+												var $first = $container.find(".callButton").first();
+												$first.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
+												$first.children(".callTitle").remove();
+												$first.children(".uiIconLightGray").add($container.find(".dropdown-toggle > .uiIconLightGray"))
+														.removeClass("uiIconLightGray").addClass("uiIconWhite");
+												$container.find(".dropdown-toggle").removeClass("btn").addClass("btn-mini");
+												$container.find(".dropdown-menu").addClass("pull-right");
+												$titleBar.prepend($wrapper);
+												log.trace("<< initMiniChat DONE [" + context.roomTitle + "] for " + currentUser.id);
+											});
+											initializer.fail(function(err) {
+												if (err) {
+													log.trace("<< initMiniChat ERROR [" + context.roomTitle + "] for " + currentUser.id, err);
+													log.error("Mini-chat initialization failed in " + context.roomTitle + " for " + currentUser.id, err);
+													$miniChat.removeData("minichatcallinitialized");												
+												}
+											});
+										} else {
+											log.trace("<< initMiniChat WARN no room found in context");
+										}
+									}).fail(function(err) {
+										log.trace("<< initMiniChat ERROR getting room info from chatServer", err);
+										log.error("Error getting room info from Chat server", err);
+									});
+								}, 750);
+							} else {
+								log.trace("<< initMiniChat CANCELED mini-chat not found or empty");
+							}
+						};
+						// run DOM listener to know when mini chat will be completed (by notif.js script)
+						var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+						var observer = new MutationObserver(function(mutations) {
+							addMiniChatCallButton();
+						});
+						observer.observe($fullName.get(0), {
+							subtree : false,
+							childList : true,
+							attributes : false,
+							characterData : false
+						});
 					};
-					//addMiniChatCallButton(); // TODO need this, or observer's one will be enough?
-					// run DOM listener to know when mini chat will be completed (by notif.js script)
-					var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
-					var observer = new MutationObserver(function(mutations) {
-						addMiniChatCallButton();
-					});
-					observer.observe($fullName.get(0), {
-						subtree : false,
-						childList : true,
-						attributes : false,
-						characterData : false
-					});
-				};
-			}
+				}
+			});
 		};
 
 		var userContext = function(userId) {
@@ -1556,12 +1544,8 @@
 				isWindowsMobile : isWindowsMobile,
 				details : function() {
 					var user = getUserInfoReq(userId);
-					user.fail(function(e, status) {
-						if (typeof status == "number" && status == 404) {
-							log.trace(">> userContext < ERROR get_user " + (e.message ? e.message + " " : "Not found ") + userId + " for " + currentUser.id + ": " + JSON.stringify(e));
-						} else {
-							log.trace(">> userContext < ERROR get_user : " + JSON.stringify(e));
-						}
+					user.fail(function(err) {
+						log.debug("Error getting user info " + userId + " for user context", err);
 					});
 					return user;
 				}
@@ -1696,12 +1680,8 @@
 				isWindowsMobile : isWindowsMobile,
 				details : function() {
 					var space = getSpaceInfoReq(spaceId); // TODO use getSpaceInfo() for caching spaces
-			  	space.fail(function(e, status) {
-						if (typeof status == "number" && status == 404) {
-							log.trace(">> spaceContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + (e.message ? e.message + " " : "Not found ") + spaceId + ": " + JSON.stringify(e));
-						} else {
-							log.trace(">> spaceContext < ERROR get_space " + spaceId + " for " + currentUser.id + ": " + JSON.stringify(e));
-						}
+			  	space.fail(function(err) {
+			  		log.debug("Error getting space info " + spaceId + " for space context", err);
 					});
 					return space;
 				}
@@ -1761,7 +1741,7 @@
 				};
 				
 				// XXX if Chat found, ensure Call button added after it to respect its CSS
-				if (chatBundleData || $("#chat-status").length > 0) {
+				if (chat.isEmbedded()) {
 					var waitAttempts = 0;
 					var waitAndAdd = function() {
 						waitAttempts++;
