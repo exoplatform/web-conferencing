@@ -344,7 +344,11 @@ if (eXo.webConferencing) {
 										return currentUserId + "@exo.webconferencing.webrtc." + name;
 									};
 									var savePreference = function(name, value) {
-										localStorage.setItem(preferenceKey(name), value);
+										try {
+											localStorage.setItem(preferenceKey(name), value);
+										} catch(err) {
+											log.error("Error saving call preference for " + callId, err);
+										}
 									};
 									var getPreference = function(name) {
 										return localStorage.getItem(preferenceKey(name));
@@ -795,7 +799,7 @@ if (eXo.webConferencing) {
 							}
 						} else {
 							log.error("WebRTC call not supported in this browser: " + navigator.userAgent);
-							process.reject(webrtc.message("yourBrowserNotSupportWebrtc") + ": " + navigator.userAgent);
+							process.reject(webrtc.message("yourBrowserNotSupportWebrtc"));
 							showError(webrtc.message("notSupportedPlatform"), webrtc.message("yourBrowserNotSupportWebrtc") + ".");
 						}						
 					} else {
