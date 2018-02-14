@@ -2,43 +2,43 @@
 <bundle>
   <webrtc>
     <call>Pokliči</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <callingYou>vas kliče...</callingYou>
+    <callWith>Pokliči s/z</callWith>
+    <callTo>Klic za</callTo>
+    <incomingCall>Dohodni klic</incomingCall>
     <answer>Odgovor</answer>
     <decline>Zavrni</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <callStartTip>Kliknite za pričetek video klica</callStartTip>
+    <callRunningTip>Ta klic je že v teku. Kliknite za prikaz okna klica.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
-    <errorAddCall>The call could not be started due to a server error. Please try again. If the problem persists, please contact your administrator.</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to a access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <providerError>Napačen WebRTC ponudnik</providerError>
+    <providerNotAvailable>WebRTC ponudnika ni na voljo</providerNotAvailable>
+    <errorAddCall>Klica ni mogoče zagnati zaradi napake strežnika. Prosimo, poskusite znova. Če se težava ponavlja, se obrnite na skrbnika.</errorAddCall>
+    <errorOpeningCall>Pri odpiranju okna klica je prišlo do napake. Osvežite stran in poskusite znova. Če se napaka ponavlja, se obrnite na skrbnika.</errorOpeningCall>
+    <callWindowNotOpen>Okna klica ni bilo mogoče odpreti. Prosimo preverite, ali ga je blokiral vaš brskalnik.</callWindowNotOpen>
+    <errorStartingCall>Napaka pri zagonu klica</errorStartingCall>
+    <errorIncomingCall>Napaka dohodnega klica</errorIncomingCall>
+    <errorReadUserStatus>Napaka pri branju informacije o statusu uporabnika s strežnika</errorReadUserStatus>
+    <errorReadCall>Napaka pri branju informacije o klicu s strežnika</errorReadCall>
+    <errorSubscribeUser>Neuspešna vzpostavitev kanala strežnik-brskalnik za posodobitve uporabnikov. Osvežite stran in poskusite znova. Če se težava ponavlja, se obrnite na skrbnika.</errorSubscribeUser>
+    <errorSubscribeCall>Neuspešna vzpostavitev kanala strežnik-brskalnik za posodobitve klicev. Osvežite stran in poskusite znova. Če se težava ponavlja, se obrnite na skrbnika.</errorSubscribeCall>
+    <errorStartingConnection>Napaka pri vzpostavitvi povezave</errorStartingConnection>
+    <notSupportedPlatform>Nepodprta platforma</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Vaš brskalnik ne podpira WebRTC klicev</yourBrowserNotSupportWebrtc>
+    <notInitialized>WebRTC priključek za video klic ni bil pravilno inicializiran. Zaprite to okno in poskusite znova.</notInitialized>
+    <connectionFailed>Povezava ni uspela</connectionFailed>
+    <audioVideoRequired>Za izvebo klica sta potrebna mikrofon in/ali akmera</audioVideoRequired>
+    <mediaDevicesError>Napaka pri dostopu do kamere ali mikrofona</mediaDevicesError>
+    <accessDenied>Predstavnostne naprave zaradi napake pri dostopu ali neustreznih dovoljenj ni bilo mogoče odpreti. Preverite, ali je naprava povezana in je ne uporablja drug program.</accessDenied>
+    <noAudioFound>Mikrofon ni bil zaznan</noAudioFound>
+    <butVideoFound>toda kamera je bila zaznana</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>Napačne nastavitve</wrongSettings>
+      <serverUrlMandatory>URL strežnika ne sme biti prazno</serverUrlMandatory>
+      <usernameMandatory>Uporabniško ime ne more biti prazno</usernameMandatory>
+      <credentialMandatory>Polje za geslo ne more biti prazno</credentialMandatory>
+      <errorSavingSettings>Napaka pri shranjevanju nastavitev</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

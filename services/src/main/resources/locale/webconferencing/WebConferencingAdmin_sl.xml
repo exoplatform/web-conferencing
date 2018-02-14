@@ -2,10 +2,10 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
-      <provider>Provider</provider>
+      <page>Spletna konference</page>
+      <title>Adminstracija spletne konference</title>
+      <info>Spletno konferenco omogočajo različni ponudniki. Omogočite ponudnika, ki ga potrebujete in konfigurirajte nastavitve.</info>
+      <provider>Ponudnik</provider>
       <description>Opis</description>
       <active>Aktiven</active>
       <actions>Dejanja</actions>

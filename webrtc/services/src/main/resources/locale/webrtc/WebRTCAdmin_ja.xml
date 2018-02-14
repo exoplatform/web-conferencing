@@ -3,26 +3,26 @@
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
-      <title>WebRTC settings</title>
-      <servers>STUN / TURN servers</servers>
-      <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
+      <title>WebRTC 設定</title>
+      <servers>STUN / TURN サーバー</servers>
+      <serversTip>STUN / TUN サーバーはネットワーク ルーター経由で呼び出しが正常に動作する web 会議を確保する必要があります。専用 TURN サーバーのコントロール、通信のセキュリティを維持し、最大の可用性を確保する設定お勧めします。</serversTip>
       <url>URL</url>
-      <serverUrl>Server URL...</serverUrl>
-      <credentials>Credentials</credentials>
+      <serverUrl>サーバー URL...</serverUrl>
+      <credentials>認証情報</credentials>
       <username>ユーザ名</username>
-      <credential>Credential</credential>
+      <credential>認証情報</credential>
       <save>保存</save>
       <cancel>キャンセル</cancel>
       
       <!-- Confirmation dialog -->
-      <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
+      <confirmServerRemoval>ICE サーバーを削除しますか?</confirmServerRemoval>
+      <serverRemoveText>本当にこのサーバーの設定を削除しますか？</serverRemoveText>
       <remove>削除</remove>
       
       <!-- Error Diagnostics -->
-      <errorDiagnostic>Error Diagnostics</errorDiagnostic>
-      <enableLogCollection>Enable client-side log collection</enableLogCollection>
-      <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
+      <errorDiagnostic>エラー診断</errorDiagnostic>
+      <enableLogCollection>クライアントサイドのログ収集を有効化</enableLogCollection>
+      <logCollectionInfo>このフラグは、WebRTC 接続の問題をトラブルシューティングするために、サーバー ログにクライアントから情報を記録します。このモードは冗長で、深刻なネットワークのオーバーヘッドを引き起こす可能性がありますので、慎重に使用してください。</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

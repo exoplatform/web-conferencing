@@ -2,9 +2,9 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>Ok</ok>
-    <cancel>キャンセル</cancel>
+    <ok>OK</ok>
+    <cancel>Cancel</cancel>
     
-    <notConfigured>未設定</notConfigured>
+    <notConfigured>not configured</notConfigured>
   </webconferencing>
 </bundle>

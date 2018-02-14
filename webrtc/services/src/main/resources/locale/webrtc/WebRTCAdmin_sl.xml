@@ -3,14 +3,14 @@
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
-      <title>WebRTC settings</title>
+      <title>WebRTC nastavitve</title>
       <servers>STUN / TURN servers</servers>
       <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
       <url>URL</url>
-      <serverUrl>Server URL...</serverUrl>
-      <credentials>Credentials</credentials>
+      <serverUrl>URL strežnika...</serverUrl>
+      <credentials>Poverilnice</credentials>
       <username>Uporabniško ime</username>
-      <credential>Credential</credential>
+      <credential>Poverilnica</credential>
       <save>Shrani</save>
       <cancel>Prekliči</cancel>
       
