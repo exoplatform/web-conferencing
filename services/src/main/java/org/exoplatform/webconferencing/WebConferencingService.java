@@ -91,7 +91,7 @@ public class WebConferencingService implements Startable {
   public static final int       ARG_MAX_LENGTH        = 32;
 
   /** The Constant DATA_MAX_LENGTH. */
-  public static final int       DATA_MAX_LENGTH       = 4000;
+  public static final int       DATA_MAX_LENGTH       = 2000;
 
   /** The Constant SPACE_TYPE_NAME. */
   public static final String    SPACE_TYPE_NAME       = "space".intern();
@@ -155,29 +155,15 @@ public class WebConferencingService implements Startable {
    */
   public class RoomInfo extends GroupInfo {
 
-    /** The pretty name. */
-    protected final String name;
-
     /**
      * Instantiates a new room info.
      *
      * @param id the id
-     * @param name the name, it's pretty name of the room (like what spaces have)
      * @param title the title
      */
-    public RoomInfo(String id, String name, String title) {
+    public RoomInfo(String id, String title) {
       super(id, title);
-      this.name = name;
       this.profileLink = IdentityInfo.EMPTY;
-    }
-
-    /**
-     * Gets the pretty name.
-     *
-     * @return the name
-     */
-    public String getName() {
-      return name;
     }
 
     /**
@@ -414,29 +400,27 @@ public class WebConferencingService implements Startable {
    * Gets the room info.
    *
    * @param id the id
-   * @param name the name
    * @param title the title
    * @param members the room members
    * @return the room info
    * @throws Exception the exception
    */
-  public RoomInfo getRoomInfo(String id, String name, String title, String[] members) throws Exception {
-    return roomInfo(id, name, title, members, readGroupCallId(id));
+  public RoomInfo getRoomInfo(String id, String title, String[] members) throws Exception {
+    return roomInfo(id, title, members, readGroupCallId(id));
   };
 
   /**
    * Room info.
    *
    * @param id the id
-   * @param name the name
    * @param title the title
    * @param members the members
    * @param callId the call id
    * @return the room info
    * @throws Exception the exception
    */
-  protected RoomInfo roomInfo(String id, String name, String title, String[] members, String callId) throws Exception {
-    RoomInfo room = new RoomInfo(id, name, title);
+  protected RoomInfo roomInfo(String id, String title, String[] members, String callId) throws Exception {
+    RoomInfo room = new RoomInfo(id, title);
     for (String userName : members) {
       UserInfo user = getUserInfo(userName);
       if (user != null) {
@@ -537,7 +521,7 @@ public class WebConferencingService implements Startable {
                 UserInfo userInfo = getUserInfo(ownerId);
                 if (userInfo == null) {
                   // if owner user not found, it's possibly an external user, thus treat it as a chat room
-                  owner = new RoomInfo(ownerId, ownerId, title);
+                  owner = new RoomInfo(ownerId, title);
                   owner.setAvatarLink(LinkProvider.PROFILE_DEFAULT_AVATAR_URL);
                 } else {
                   owner = userInfo;
@@ -556,11 +540,11 @@ public class WebConferencingService implements Startable {
                   owner.setAvatarLink(avatar);
                 } else {
                   LOG.warn("Cannot find call's owner space: " + ownerId);
-                  owner = new RoomInfo(ownerId, ownerId, title);
+                  owner = new RoomInfo(ownerId, title);
                   owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
                 }
               } else if (isRoom) {
-                owner = new RoomInfo(ownerId, ownerId, title);
+                owner = new RoomInfo(ownerId, title);
                 owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
               } else {
                 throw new CallInfoException("Wrong call owner type: " + ownerType);
@@ -1438,10 +1422,9 @@ public class WebConferencingService implements Startable {
       if (OWNER_TYPE_CHATROOM.equals(savedCall.getOwnerType())) {
         String settings = savedCall.getSettings(); // we expect JSON here
         JSONObject json = readJson(settings);
-        String roomName = json.optString("roomName");
         String roomTitle = json.optString("roomTitle");
-        if (roomName != null && roomName.length() > 0 && roomTitle != null && roomTitle.length() > 0) {
-          owner = roomInfo(ownerId, roomName, roomTitle, new String[0], savedCall.getId());
+        if (roomTitle != null && roomTitle.length() > 0) {
+          owner = roomInfo(ownerId, roomTitle, new String[0], savedCall.getId());
         } else {
           LOG.error("Saved call doesn't have room settings: '" + settings + "'");
           throw new CallInfoException("Saved call doesn't have room settings");
@@ -1532,13 +1515,12 @@ public class WebConferencingService implements Startable {
         entity.setIsUser(false);
         RoomInfo room = RoomInfo.class.cast(owner);
         JSONObject json = new JSONObject();
-        json.put("roomName", room.getName());
         json.put("roomTitle", room.getTitle());
         String settings = json.toString();
         if (isValidData(settings)) {
           entity.setSettings(settings);
         } else {
-          LOG.error("Call settings too long: " + settings + ". Max value is " + DATA_MAX_LENGTH + " bytes in UTF8 encoding.");
+          LOG.error("Call settings too long: '" + settings + "'. Max value is " + DATA_MAX_LENGTH + " bytes in UTF8 encoding.");
           throw new CallInfoException("Call settings too long");
         }
       } else if (OWNER_TYPE_SPACE.equals(owner.getType())) {
