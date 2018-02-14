@@ -29,7 +29,7 @@
     <connectionFailed>فشل في الاتصال</connectionFailed>
     <audioVideoRequired>ميكروفون و/أو كاميرا مطلوبة لإجراء مكالمة</audioVideoRequired>
     <mediaDevicesError>خطأ في الوصول إلى الكاميرا أو الميكروفون</mediaDevicesError>
-    <accessDenied>Could not open the media device due to a access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
+    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
     <noAudioFound>No microphone was detected</noAudioFound>
     <butVideoFound>but a camera was found</butVideoFound>
     

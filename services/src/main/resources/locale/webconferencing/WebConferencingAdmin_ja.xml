@@ -2,12 +2,12 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
-      <provider>Provider</provider>
+      <page>Web 会議</page>
+      <title>Web 会議の管理</title>
+      <info>Web 会議は、異なるプロバイダーによって処理することができます。必要な設定を構成してプロバイダーを有効にできます。</info>
+      <provider>プロバイダー</provider>
       <description>説明</description>
-      <active>アクティブ</active>
+      <active>有効化</active>
       <actions>アクション</actions>
     </admin>
   </webconferencing>
