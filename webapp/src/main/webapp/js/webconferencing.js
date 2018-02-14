@@ -713,7 +713,7 @@
 	};
 	
 	var cachedRooms = new Cache();
-	var getRoomInfoReq = function(roomRef, title, members) {
+	var getRoomInfoReq = function(roomId, title, members) {
 		var q = "";
 		if (title) {
 			q += "?title=" + encodeURIComponent(title); 
@@ -729,12 +729,12 @@
 		var request = $.ajax({
 			async : true,
 			type : "GET",
-			url : prefixUrl + "/portal/rest/webconferencing/room/" + roomRef + q
+			url : prefixUrl + "/portal/rest/webconferencing/room/" + roomId + q
 		});
 		return initRequest(request);
 	};
 	var getRoomInfo = function(id, name, title, members) {
-		return getCached(name + "/" + id, cachedRooms, function(key) {
+		return getCached(id, cachedRooms, function(key) {
 			return getRoomInfoReq(key, title, members);
 		});
 	};
@@ -1323,7 +1323,7 @@
 												unames.push(u.name);
 											}
 										}
-										getRoomInfoReq(roomName + "/" + roomId, roomTitle, unames).done(function(info) {
+										getRoomInfoReq(roomId, roomTitle, unames).done(function(info) {
 											data.resolve(info);												
 										}).fail(function(e, status) {
 											if (typeof status == "number" && status == 404) {

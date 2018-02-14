@@ -530,7 +530,6 @@ public class RESTWebConferencingService implements ResourceContainer {
    * Gets the chat room info.
    *
    * @param uriInfo the uri info
-   * @param roomName the room name
    * @param roomId the room id
    * @param roomTitle the room title
    * @param roomMembers the room members
@@ -538,9 +537,8 @@ public class RESTWebConferencingService implements ResourceContainer {
    */
   @GET
   @RolesAllowed("users")
-  @Path("/room/{name}/{id}")
+  @Path("/room/{id}")
   public Response getRoomInfo(@Context UriInfo uriInfo,
-                              @PathParam("name") String roomName,
                               @PathParam("id") String roomId,
                               @QueryParam("title") String roomTitle,
                               @QueryParam("members") String roomMembers) {
@@ -549,12 +547,9 @@ public class RESTWebConferencingService implements ResourceContainer {
       String currentUserName = convo.getIdentity().getUserId();
       if (roomId != null && roomId.length() > 0) {
         if (roomTitle != null && roomTitle.length() > 0) {
-          if (roomName == null || roomName.length() == 0) {
-            roomName = roomTitle.toUpperCase().toLowerCase().replace(' ', '_');
-          }
           if (roomMembers != null && roomMembers.length() > 0) {
             try {
-              GroupInfo room = webConferencing.getRoomInfo(roomId, roomName, roomTitle, roomMembers.trim().split(";"));
+              GroupInfo room = webConferencing.getRoomInfo(roomId, roomTitle, roomMembers.trim().split(";"));
               if (room != null) {
                 if (room.getMembers().containsKey(currentUserName)) {
                   return Response.ok().cacheControl(cacheControl).entity(room).build();
@@ -580,10 +575,10 @@ public class RESTWebConferencingService implements ResourceContainer {
                              .entity(ErrorInfo.notFoundError(e.getMessage()))
                              .build();
             } catch (Throwable e) {
-              LOG.error("Error reading room info of '" + roomName + "' by '" + currentUserName + "'", e);
+              LOG.error("Error reading room info of '" + roomTitle + "' by '" + currentUserName + "'", e);
               return Response.serverError()
                              .cacheControl(cacheControl)
-                             .entity(ErrorInfo.serverError("Error reading room " + roomName))
+                             .entity(ErrorInfo.serverError("Error reading room '" + roomTitle + "'"))
                              .build();
             }
           } else {
@@ -595,7 +590,7 @@ public class RESTWebConferencingService implements ResourceContainer {
         } else {
           return Response.status(Status.BAD_REQUEST)
                          .cacheControl(cacheControl)
-                         .entity(ErrorInfo.clientError("Wrong request parameters: name"))
+                         .entity(ErrorInfo.clientError("Wrong request parameters: title"))
                          .build();
         }
       } else {
