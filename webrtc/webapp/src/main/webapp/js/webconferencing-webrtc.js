@@ -112,7 +112,11 @@
 			
 			var saveCallWindow = function(callId, windowId) {
 				if (typeof Storage != "undefined") {
-			  	localStorage.setItem(LOCAL_CALL_PREFIX + callId, windowId);
+					try {
+						localStorage.setItem(LOCAL_CALL_PREFIX + callId, windowId);
+					} catch(err) {
+						log.error("Error saving call window for " + callId, err);
+					}
 				} // otherwise, save nothing
 			};
 			
@@ -589,8 +593,22 @@
 					}
 					process.resolve();
 				} else {
-					log.error("WebRTC not supported in this browser: " + navigator.userAgent);
-					process.reject(message("yourBrowserNotSupportWebrtc") + ": " + navigator.userAgent);
+					// We don't want log not supported browser on each page load, but we'll do once a day
+					if (typeof Storage != "undefined") {
+						var now = new Date().getTime();
+						var logged = localStorage.getItem("exo.webconferencing.webrtc.notSupportedLogged");
+						if (!logged || (now - parseInt(logged) >= 86400000)) {
+							log.warn("WebRTC not supported in this browser: " + navigator.userAgent);
+							try {
+								localStorage.saveItem("exo.webconferencing.webrtc.notSupportedLogged", "" + now); // save as string
+							} catch(err) {
+								log.error("Error saving WebRTC notSupportedLogged flag", err);
+							}
+						} // else, this stuff already logged for this user browser
+					} else {
+						log.warn("WebRTC not supported in this browser: " + navigator.userAgent);
+					}
+					process.reject();
 				}
 				return process.promise();
 			};
