@@ -3,12 +3,12 @@
   <webconferencing>
     <admin>
       <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
-      <provider>Provider</provider>
-      <description>Description</description>
-      <active>Active</active>
-      <actions>Actions</actions>
+      <title>Ang administrasyon ng Web Conference</title>
+      <info>Ang Web Conferencing ay maaaring humawak ng iba't ibang provider. Maaari mong paganahin ang provider na iyong kailangan at mag-configure ng mga setting.</info>
+      <provider>Anga tagapaghatid</provider>
+      <description>Deskripsyon</description>
+      <active>Gawing aktibo</active>
+      <actions>Ang mga Aksyon</actions>
     </admin>
   </webconferencing>
 </bundle>

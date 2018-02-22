@@ -13,25 +13,25 @@
     
     <providerError>خطأ في موفر WebRTC</providerError>
     <providerNotAvailable>موفر WebRTC غير متوفر</providerNotAvailable>
-    <errorAddCall>The call could not be started due to a server error. Please try again. If the problem persists, please contact your administrator.</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
+    <errorAddCall>تعذر بدء المكالمة نظراً لاستمرار خطأ على الخادم. الرجاء المحاولة مرة أخرى. في صورة استمرار هذه المشكلة ، يُرجى الاتـّصال بالمسؤول المعني بالأمر.</errorAddCall>
+    <errorOpeningCall>حدث خطأ أثناء فتح صفحة المكالمة. الرجاء تحديث الصفحة وحاول مرة أخرى. إذا استمر الخطأ، الرجاء الاتصال بالمسؤول.</errorOpeningCall>
     <callWindowNotOpen>تعذر فتح نافذة الاتصال. الرجاء التحقق إذا كان تم حظره بواسطة المستعرض الخاص بك.</callWindowNotOpen>
     <errorStartingCall>خطأ في بدء تشغيل الاتصال</errorStartingCall>
     <errorIncomingCall>خطأ المكالمات الواردة</errorIncomingCall>
     <errorReadUserStatus>حدث خطأ أثناء قراءة معلومات حالة المستخدم من الخادم</errorReadUserStatus>
     <errorReadCall>حدث خطأ أثناء قراءة معلومات الاتصال من الخادم</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeCall>
+    <errorSubscribeUser>خطأ في تحديثات اشتراك المستخدم. الرجاء تحديث الصفحة وحاول مرة أخرى. إذا استمرت المشكلة، الرجاء الاتصال بالمسؤول.</errorSubscribeUser>
+    <errorSubscribeCall>خطأ في تحديثات إشتراك الإتصال. الرجاء تحديث الصفحة وحاول مرة أخرى. إذا استمرت المشكلة، الرجاء الاتصال بالمسؤول.</errorSubscribeCall>
     <errorStartingConnection>حدث خطأ أثناء بدء الاتصال</errorStartingConnection>
     <notSupportedPlatform>نظام أساسي غير مدعوم</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>المتصفح الخاص بك لا يدعم المكالمات WebRTC</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
+    <notInitialized>لم يتم تهيئة أو خطأ في التهيئة. الرجاء إغلاق هذا الإطار ثم حاول مرة أخرى.</notInitialized>
     <connectionFailed>فشل في الاتصال</connectionFailed>
     <audioVideoRequired>ميكروفون و/أو كاميرا مطلوبة لإجراء مكالمة</audioVideoRequired>
     <mediaDevicesError>خطأ في الوصول إلى الكاميرا أو الميكروفون</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <accessDenied>لا يمكن فتح الجهاز الإعلامي بسبب خطأ في إذن الوصول إلى خطأ أخر. تأكد من توصيل الجهاز و أن يكون غير مستخدم من قبل تطبيق آخر.</accessDenied>
+    <noAudioFound>لم يتم العثور على ميكروفون</noAudioFound>
+    <butVideoFound>ولكن تم العثور على كاميرا</butVideoFound>
     
     <admin>
       <wrongSettings>إعدادات خاطئة</wrongSettings>

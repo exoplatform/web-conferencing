@@ -2,13 +2,13 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
-      <provider>Provider</provider>
-      <description>Description</description>
-      <active>Active</active>
-      <actions>Actions</actions>
+      <page>Konferensi web</page>
+      <title>Administrasi Konferensi Web</title>
+      <info>Konferensi Web dapat ditangani oleh penyedia yang berbeda. Anda dapat mengaktifkan penyedia yang Anda butuhkan dan mengkonfigurasi pengaturan.</info>
+      <provider>penyedia</provider>
+      <description>Deskripsi</description>
+      <active>Aktif</active>
+      <actions>Tindakan</actions>
     </admin>
   </webconferencing>
 </bundle>
