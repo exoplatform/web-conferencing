@@ -1,44 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Call</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
-    <answer>Answer</answer>
-    <decline>Decline</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <call>Tumawag</call>
+    <callingYou>ay tumatawag sa iyo...</callingYou>
+    <callWith>Tumawag sa</callWith>
+    <callTo>Tumawag sa</callTo>
+    <incomingCall>Paparating na tawag</incomingCall>
+    <answer>Sagot</answer>
+    <decline>Tanggihan</decline>
+    <callStartTip>I-click para simulan ang video call</callStartTip>
+    <callRunningTip>Ang tawag na ito ay tumatakbo na. I-click para buksan.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
-    <errorAddCall>The call could not be started due to a server error. Please try again. If the problem persists, please contact your administrator.</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <providerError>Pagkakamali ng WebRTC provider</providerError>
+    <providerNotAvailable>Hindi magagamit ang WebRTC provider</providerNotAvailable>
+    <errorAddCall>Hindi masimulan ang tawag dahil sa isang pagkakamali ng server. Pakisubukang muli. Kung nagpapatuloy ang problema, mangyaring makipag-ugnay sa iyong administrator.</errorAddCall>
+    <errorOpeningCall>May naganap na pagkakamali habang binubuksan ang window na tawag. Paki-refresh ang pahina at subukan muli. Kung nagpapatuloy ang pagkakamali, mangyaring makipag-ugnayan sa iyong administrator.</errorOpeningCall>
+    <callWindowNotOpen>Hindi mabuksan ang tawag ng window. Pakiusap suriin kung na-block ito ng iyong browser.</callWindowNotOpen>
+    <errorStartingCall>Pagkakamali sa pagsisimula ng tawag</errorStartingCall>
+    <errorIncomingCall>Pagkakamali sa paparating na tawag</errorIncomingCall>
+    <errorReadUserStatus>Pagkakamali sa pagbasa ng gumagamit ng katunayan na impormasyon mula sa server</errorReadUserStatus>
+    <errorReadCall>Pagkakamali sa pagbasa ng impormasyon ng tawag mula sa server</errorReadCall>
+    <errorSubscribeUser>Nabigong magtatag ng channel ng server-sa-browser para sa pakikipag-ugnay sa mga pagbabago ng gumagamit. Pakiusap i-refresh ang pahina at subukan muli. Pakiusap makipag-ugnay sa iyong administrator.</errorSubscribeUser>
+    <errorSubscribeCall>Nabigong matatag na isang channel ng server-sa browser para sa mga update sa tawag. Paki-refresh ang pahina at subukan muli. Kung nagpapatuloy ang problema, manyaring makipag-ugnay sa iyong administrator.</errorSubscribeCall>
+    <errorStartingConnection>Pagkakamali sa pagsisimula ng koneksyon</errorStartingConnection>
+    <notSupportedPlatform>Hindi suportadong plataporma</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Ang iyong browser ay hindi nagsusuporta ng mga WebRTC na tawag</yourBrowserNotSupportWebrtc>
+    <notInitialized>Ang konektor ng tawag sa video sa WebRTC ay hindi maayos na pinasimulan. Mangyaring isara ang window na ito at subukang muli.</notInitialized>
+    <connectionFailed>Nabigong Koneksyon</connectionFailed>
+    <audioVideoRequired>Ang isang mikropono at/o isang kamera ay kinakailangang maglagay ng isang tawag</audioVideoRequired>
+    <mediaDevicesError>Pagkakamali sa pag-access sa kamera o mikropono</mediaDevicesError>
+    <accessDenied>Hindi mabuksan ang mga aparato ng media dahil sa mga mali sa pag-access o pahintulot. Siguraduhin na ang iyong kagamitan ay nakakonekta at hindi na ginagamit ng ibang aplikasyon.</accessDenied>
+    <noAudioFound>Walang mikropono na natagpuan</noAudioFound>
+    <butVideoFound>ngunit natagpuan ang isang kamera</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>Mali ang mga setting</wrongSettings>
+      <serverUrlMandatory>Ang URL ng server ay hindi maaaring walang laman</serverUrlMandatory>
+      <usernameMandatory>Ang Username ay hindi maaaring walang laman</usernameMandatory>
+      <credentialMandatory>Ang Password ay hindi maaaring walang laman</credentialMandatory>
+      <errorSavingSettings>Nagkamali sa pag-save ng mga setting</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

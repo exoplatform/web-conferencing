@@ -2,10 +2,10 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
-      <provider>Provider</provider>
+      <page>Vídeo Chamada Web</page>
+      <title>Administração de Vídeo Chamada Web</title>
+      <info>Vídeo Chamada Web pode ser fornecida por diferentes operadores. Identifique e defina as configurações consoante o operador escolhido.</info>
+      <provider>Operador</provider>
       <description>Descrição</description>
       <active>Ativo</active>
       <actions>Ações</actions>

@@ -2,43 +2,43 @@
 <bundle>
   <webrtc>
     <call>Ligar</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <callingYou>está a ligar...</callingYou>
+    <callWith>Chamada com</callWith>
+    <callTo>Ligar para</callTo>
+    <incomingCall>A receber chamada</incomingCall>
     <answer>Resposta</answer>
     <decline>Recusar</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <callStartTip>Clique para iniciar vídeo chamada</callStartTip>
+    <callRunningTip>Esta ligação está em curso. Clique para mostrar a janela de chamada.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
-    <errorAddCall>The call could not be started due to a server error. Please try again. If the problem persists, please contact your administrator.</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <providerError>Erro de fornecedor Vídeo Chamada Web</providerError>
+    <providerNotAvailable>Operador de Vídeo Chamada Web não disponível</providerNotAvailable>
+    <errorAddCall>A ligação não pode ser iniciada devido a um erro no servidor. Por favor, tente novamente. Se o problema persistir, contacte o administrador.</errorAddCall>
+    <errorOpeningCall>Ocorreu um erro ao abrir a janela de chamada. Por favor, atualize a página e tente novamente. Se o erro persistir, contacte o administrador.</errorOpeningCall>
+    <callWindowNotOpen>Janela de chamada não pode ser aberta. Por favor verifique se o browser está a bloquear pop-ups.</callWindowNotOpen>
+    <errorStartingCall>Erro ao iniciar ligação</errorStartingCall>
+    <errorIncomingCall>Erro na chamada recebida</errorIncomingCall>
+    <errorReadUserStatus>Erro ao ler as informações de utilizador do servidor</errorReadUserStatus>
+    <errorReadCall>Erro ao ler detalhes de chamada do servidor</errorReadCall>
+    <errorSubscribeUser>Erro ao estabelecer ligação servidor-cliente para atualizar dados de utilizador. Por favor atualize a página e tente novamente. Se o problema persistir, contacte o administrador.</errorSubscribeUser>
+    <errorSubscribeCall>Erro ao estabelecer ligação servidor-cliente para atualizar dados de chamada. Por favor atualize a página e tente novamente. Se o problema persistir, contacte o administrador.</errorSubscribeCall>
+    <errorStartingConnection>Erro ao iniciar ligação</errorStartingConnection>
+    <notSupportedPlatform>Operador não suportado</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>O seu browser não suporta vídeo chamadas web</yourBrowserNotSupportWebrtc>
+    <notInitialized>O conector de Vídeo Chamada Web não foi inicializado corretamente. Feche esta janela e tente novamente.</notInitialized>
+    <connectionFailed>A ligação falhou</connectionFailed>
+    <audioVideoRequired>É necessário um dispositivo microfone e/ou camera para fazer a ligação</audioVideoRequired>
+    <mediaDevicesError>Erro ao aceder ao dispositivo de camera ou microfone</mediaDevicesError>
+    <accessDenied>Não foi possível abrir o dispositivo de media devido a um erro de acesso ou permissão. Verifique se seu dispositivo está conectado e não está a ser utilizador por outro aplicativo.</accessDenied>
+    <noAudioFound>O microfone não foi detectado</noAudioFound>
+    <butVideoFound>mas o dispositivo de camera foi encontrado</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>Configurações erradas</wrongSettings>
+      <serverUrlMandatory>URL do servidor não pode estar vazio</serverUrlMandatory>
+      <usernameMandatory>O nome de utilizador não pode estar vazio</usernameMandatory>
+      <credentialMandatory>A palavra-passe não pode estar vazia</credentialMandatory>
+      <errorSavingSettings>Erro ao guardar configurações</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

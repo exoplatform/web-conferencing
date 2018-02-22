@@ -1,44 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Call</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
-    <answer>Answer</answer>
-    <decline>Decline</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <call>Panggilan</call>
+    <callingYou>menelepon anda...</callingYou>
+    <callWith>Panggilan dengan</callWith>
+    <callTo>Panggilan untuk</callTo>
+    <incomingCall>Panggilan masuk</incomingCall>
+    <answer>Jawab</answer>
+    <decline>Menurun</decline>
+    <callStartTip>Tekan untuk memulai obrolan video</callStartTip>
+    <callRunningTip>Panggilan ini sudah berlangsung. Tekan untuk menampilkan jendela panggilan.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
-    <errorAddCall>The call could not be started due to a server error. Please try again. If the problem persists, please contact your administrator.</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <providerError>Kesalahan pada penyedia WebRTC</providerError>
+    <providerNotAvailable>Penyedia WebRTC tidak ada</providerNotAvailable>
+    <errorAddCall>Panggilan ini tidak bisa di mulai karena kesalahan ketekunan pada server. Silahkan coba lagi.</errorAddCall>
+    <errorOpeningCall>Terjadi kesalahan saat membuka jendela panggilan. Harap segarkan halaman dan coba lagi. Jika kesalahan berlanjut, hubungi administrator Anda.</errorOpeningCall>
+    <callWindowNotOpen>Jendela panggilan tidak bisa di buka. Harap periksa apakah itu diblokir oleh browser Anda.</callWindowNotOpen>
+    <errorStartingCall>Gagal mulai panggilan</errorStartingCall>
+    <errorIncomingCall>Kesalahan saat panggilan masuk</errorIncomingCall>
+    <errorReadUserStatus>Kesalahan saat membaca informasi status pengguna dari server</errorReadUserStatus>
+    <errorReadCall>Kesalahan saat membaca informasi status panggilan dari server</errorReadCall>
+    <errorSubscribeUser>Gagal membuat saluran server-ke-browser untuk mengkomunikasikan pembaruan pengguna. Harap segarkan halaman dan coba lagi. Jika masalah berlanjut, hubungi administrator Anda.</errorSubscribeUser>
+    <errorSubscribeCall>Gagal membuat saluran server-ke-browser untuk pembaruan panggilan. Harap segarkan halaman dan coba lagi. Jika masalah berlanjut, hubungi administrator Anda.</errorSubscribeCall>
+    <errorStartingConnection>Kesalahan saat mulai koneksi</errorStartingConnection>
+    <notSupportedPlatform>Platform yang tidak di dukung</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Browser Anda tidak bisa mendukung panggilan WebRTC</yourBrowserNotSupportWebrtc>
+    <notInitialized>Konektor panggilan video WebRTC tidak diinisialisasi dengan benar. Silakan tutup jendela ini dan coba lagi.</notInitialized>
+    <connectionFailed>Gagal konek</connectionFailed>
+    <audioVideoRequired>Mikrofon dan/atau kamera di haruskan melakukan panggilan</audioVideoRequired>
+    <mediaDevicesError>Kesalahan pada saat mengakses kamera atau mikrofon</mediaDevicesError>
+    <accessDenied>Tidak dapat membuka perangkat media karena adanya kesalahan akses atau izin. Pastikan perangkat Anda terhubung dan tidak digunakan oleh aplikasi lain.</accessDenied>
+    <noAudioFound>Tidak ada mikrofon yang di temukan</noAudioFound>
+    <butVideoFound>tapi ada kamera yang di temukan</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>Kesalahan pada pengaturan</wrongSettings>
+      <serverUrlMandatory>URL server tidak boleh di kosongkan</serverUrlMandatory>
+      <usernameMandatory>Nama pengguna tidak boleh kosong</usernameMandatory>
+      <credentialMandatory>Kata sandi tidak boleh kosong</credentialMandatory>
+      <errorSavingSettings>Kesalahan menyimpan pengaturan</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

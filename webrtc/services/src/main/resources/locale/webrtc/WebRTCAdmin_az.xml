@@ -9,15 +9,15 @@
       <url>URL</url>
       <serverUrl>Server URL...</serverUrl>
       <credentials>Credentials</credentials>
-      <username>Ім’я користувача</username>
+      <username>Username</username>
       <credential>Credential</credential>
-      <save>Зберегти</save>
-      <cancel>Скасувати</cancel>
+      <save>Save</save>
+      <cancel>Ləğv Et</cancel>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
       <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
-      <remove>Remove</remove>
+      <remove>Sil</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Error Diagnostics</errorDiagnostic>
