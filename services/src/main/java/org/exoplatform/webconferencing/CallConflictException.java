@@ -19,12 +19,14 @@
 package org.exoplatform.webconferencing;
 
 /**
+ * Call already exists or cannot be created with given identifier(s). 
+ * 
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: CallConflictException.java 00000 Jul 14, 2017 pnedonosko $
  */
-public class CallConflictException extends WebConferencingException {
+public class CallConflictException extends CallInfoException {
 
   /** The Constant serialVersionUID. */
   private static final long serialVersionUID = -8254930798051516930L;

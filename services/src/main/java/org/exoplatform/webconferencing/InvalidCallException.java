@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2017 eXo Platform SAS.
+ * Copyright (C) 2003-2018 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -19,35 +19,27 @@
 package org.exoplatform.webconferencing;
 
 /**
- * General error with a call settings or its persistent state.
+ * Indicates a call in invalid state and cannot be used currently. 
  * 
- * Created by The eXo Platform SAS.
- *
+ * Created by The eXo Platform SAS
+ * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: CallInfoException.java 00000 Jul 14, 2017 pnedonosko $
+ * @version $Id: InvalidCallException.java 00000 Feb 19, 2018 pnedonosko $
+ * 
  */
-public abstract class CallInfoException extends WebConferencingException {
-
-  /** The Constant serialVersionUID. */
-  private static final long serialVersionUID = -8254930798051516730L;
+public class InvalidCallException extends WebConferencingException {
 
   /**
-   * Instantiates a new call info exception.
-   *
-   * @param message the message
-   * @param cause the cause
+   * 
    */
-  public CallInfoException(String message, Throwable cause) {
-    super(message, cause);
+  private static final long serialVersionUID = 4329084337896657792L;
+
+  public InvalidCallException(String message) {
+    super(message);
   }
 
-  /**
-   * Instantiates a new call info exception.
-   *
-   * @param message the message
-   */
-  public CallInfoException(String message) {
-    super(message);
+  public InvalidCallException(String message, Throwable cause) {
+    super(message, cause);
   }
 
 }

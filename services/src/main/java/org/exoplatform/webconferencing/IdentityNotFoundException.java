@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2003-2017 eXo Platform SAS.
  *
@@ -19,50 +18,36 @@
  */
 package org.exoplatform.webconferencing;
 
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
-
 /**
- * Represent external participant in calls. 
+ * Identity not found in Organization Service.<br>
+ * Created by The eXo Platform SAS
  * 
- * Created by The eXo Platform SAS.
- *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: ParticipantInfo.java 00000 Feb 23, 2017 pnedonosko $
+ * @version $Id: IdentityNotFoundException.java 00000 Jul 6, 2017 pnedonosko $
+ * 
  */
-public class ParticipantInfo extends UserInfo {
+@Deprecated
+public class IdentityNotFoundException extends WebConferencingException {
 
-  /** The Constant TYPE_NAME. */
-  public static final String TYPE_NAME = "participant".intern();
-
-  /** The Constant LOG. */
-  protected static final Log LOG       = ExoLogger.getLogger(ParticipantInfo.class);
+  /** The Constant serialVersionUID. */
+  private static final long serialVersionUID = 4083029013588721462L;
 
   /**
-   * Instantiates a new participant with an ID.
+   * Instantiates a new identity not found.
    *
-   * @param imId the IM id
+   * @param message the message
    */
-  protected ParticipantInfo(String imId) {
-    super(EMPTY, imId, EMPTY);
-  }
-  
-  /**
-   * Instantiates a new participant with IM type and ID.
-   *
-   * @param imType the im type
-   * @param imId the IM id
-   */
-  protected ParticipantInfo(String imType, String imId) {
-    super(EMPTY, imId, EMPTY);
-    addImAccount(imType, imId);
+  public IdentityNotFoundException(String message) {
+    super(message);
   }
 
   /**
-   * {@inheritDoc}
+   * Instantiates a new identity not found.
+   *
+   * @param message the message
+   * @param cause the cause
    */
-  @Override
-  public String getType() {
-    return TYPE_NAME;
+  public IdentityNotFoundException(String message, Throwable cause) {
+    super(message, cause);
   }
 }

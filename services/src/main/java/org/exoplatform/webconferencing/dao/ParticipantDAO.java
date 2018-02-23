@@ -49,8 +49,12 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
    * @param callId the call id
    * @return the list
    * @throws PersistenceException the persistence exception
+   * @throws IllegalStateException the illegal state exception
+   * @throws IllegalArgumentException the illegal argument exception
    */
-  public List<ParticipantEntity> findCallParts(String callId) throws PersistenceException {
+  public List<ParticipantEntity> findCallParts(String callId) throws PersistenceException,
+                                                              IllegalStateException,
+                                                              IllegalArgumentException {
     TypedQuery<ParticipantEntity> query =
                                         getEntityManager().createNamedQuery("WebConfCall.findCallParts", ParticipantEntity.class)
                                                           .setParameter("callId", callId);
@@ -67,13 +71,15 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
    * @param callId the call id
    * @return the int
    * @throws PersistenceException the persistence exception
+   * @throws IllegalStateException the illegal state exception
+   * @throws IllegalArgumentException the illegal argument exception
    */
-  public int deleteCallParts(String callId) throws PersistenceException {
+  public int deleteCallParts(String callId) throws PersistenceException, IllegalStateException, IllegalArgumentException {
     return getEntityManager().createNamedQuery("WebConfCall.deleteCallParts").setParameter("callId", callId).executeUpdate();
   }
-  
+
   /**
-   * Clear the storage. 
+   * Clear the storage.
    */
   public void clear() {
     getEntityManager().clear();

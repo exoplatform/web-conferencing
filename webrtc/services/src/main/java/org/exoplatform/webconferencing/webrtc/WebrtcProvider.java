@@ -512,7 +512,7 @@ public class WebrtcProvider extends CallProvider {
    */
   @Override
   public IMInfo getIMInfo(String imId) throws CallProviderException {
-    return null; // WebRTC has not (and don't need) an IM account // new WebrtcIMInfo(imId);
+    return null; // WebRTC has not (and don't need) an IM account
   }
 
   /**

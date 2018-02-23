@@ -55,8 +55,12 @@ public class CallDAO extends GenericDAOJPAImpl<CallEntity, String> {
    * @param ownerId the owner id
    * @return the call entity or <code>null</code> if no call found
    * @throws PersistenceException the persistence exception
+   * @throws IllegalStateException the illegal state exception
+   * @throws IllegalArgumentException the illegal argument exception
    */
-  public CallEntity findGroupCallByOwnerId(String ownerId) throws PersistenceException {
+  public CallEntity findGroupCallByOwnerId(String ownerId) throws PersistenceException,
+                                                           IllegalStateException,
+                                                           IllegalArgumentException {
     TypedQuery<CallEntity> query = getEntityManager().createNamedQuery("WebConfCall.findGroupCallByOwnerId", CallEntity.class)
                                                      .setParameter("ownerId", ownerId);
 
@@ -73,8 +77,12 @@ public class CallDAO extends GenericDAOJPAImpl<CallEntity, String> {
    * @param userId the user id
    * @return the list, it will be empty if no calls found
    * @throws PersistenceException the persistence exception
+   * @throws IllegalStateException the illegal state exception
+   * @throws IllegalArgumentException the illegal argument exception
    */
-  public List<CallEntity> findUserGroupCalls(String userId) throws PersistenceException {
+  public List<CallEntity> findUserGroupCalls(String userId) throws PersistenceException,
+                                                            IllegalStateException,
+                                                            IllegalArgumentException {
     TypedQuery<CallEntity> query = getEntityManager().createNamedQuery("WebConfCall.findUserGroupCalls", CallEntity.class)
                                                      .setParameter("userId", userId);
 
@@ -89,17 +97,20 @@ public class CallDAO extends GenericDAOJPAImpl<CallEntity, String> {
    * Delete all users calls older of {@value #USER_CALL_DAYS_LIVETIME} days.
    *
    * @return the int number of actually removed calls
+   * @throws PersistenceException the persistence exception
+   * @throws IllegalStateException the illegal state exception
+   * @throws IllegalArgumentException the illegal argument exception
    */
-  public int deleteAllUsersCalls() {
+  public int deleteAllUsersCalls() throws PersistenceException, IllegalStateException, IllegalArgumentException {
     LocalDateTime expired = LocalDate.now().atStartOfDay().minusDays(USER_CALL_DAYS_LIVETIME);
     return getEntityManager().createNamedQuery("WebConfCall.deleteOwnerOlderCalls")
                              .setParameter("ownerType", UserInfo.TYPE_NAME)
                              .setParameter("expiredDate", Timestamp.valueOf(expired))
                              .executeUpdate();
   }
-  
+
   /**
-   * Clear the storage. 
+   * Clear the storage.
    */
   public void clear() {
     getEntityManager().clear();

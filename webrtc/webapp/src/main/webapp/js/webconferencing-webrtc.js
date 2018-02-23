@@ -331,7 +331,7 @@
 								});
                 setTimeout(function(){
 									$button.filter(".webrtcCallAction.preferred").tooltip();
-								},200)
+								}, 200)
 								// Assign target ID to the button for later use on started event in init()
 								$button.data("targetid", target.id);
 								setTimeout(function() {
@@ -455,7 +455,7 @@
 						// Move incomingCall element to root of the document to do not be affected by parent CSS
 						$(document.body).append($(".incomingCall"));
 						// Listen to user updates
-						webConferencing.onUserUpdate(currentUserId, function(update, status) {
+						webConferencing.onUserUpdate(currentUserId, function(update) {
 							if (update.providerType == self.getType()) {
 								if (update.eventType == "call_state") {
 									var callId = update.callId;
@@ -463,9 +463,9 @@
 										var lastCallId = lastUpdate ? lastUpdate.callId : null;
 										var lastCallState = lastUpdate ? lastUpdate.callState : null;
 										if (callId == lastCallId && update.callState == lastCallState) {
-											log.trace("<<< XXX User call state updated skipped as duplicated: " + JSON.stringify(update) + " [" + status + "]");
+											log.trace("<<< XXX User call state updated skipped as duplicated: " + JSON.stringify(update));
 										} else {
-											log.trace(">>> User call state updated: " + JSON.stringify(update) + " [" + status + "]");
+											log.trace(">>> User call state updated: " + JSON.stringify(update));
 											if (lastUpdateReset) {
 												clearTimeout(lastUpdateReset);
 											}
@@ -582,7 +582,7 @@
 								} else if (update.eventType == "call_leaved") {
 									// TODO not used
 								} else if (update.eventType == "retry") {
-									log.trace("<<< Retry for user updates [" + status + "]");
+									log.trace("<<< Retry for user updates");
 								} else {
 									log.warn("Unexpected user update: " + JSON.stringify(update));
 								}

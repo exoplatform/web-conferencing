@@ -19,6 +19,8 @@
 package org.exoplatform.webconferencing;
 
 /**
+ * Indicates that call parameter is wrong (for creation or update).
+ * 
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
@@ -30,7 +32,7 @@ public class CallArgumentException extends CallInfoException {
   private static final long serialVersionUID = 4382448461295970208L;
 
   /**
-   * Instantiates a new wrong value exaception.
+   * Instantiates a new wrong value exception.
    *
    * @param message the message
    * @param cause the cause
@@ -40,7 +42,7 @@ public class CallArgumentException extends CallInfoException {
   }
 
   /**
-   * Instantiates a new wrong value exaception.
+   * Instantiates a new wrong value exception.
    *
    * @param message the message
    */

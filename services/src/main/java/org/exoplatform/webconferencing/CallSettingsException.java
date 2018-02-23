@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2017 eXo Platform SAS.
+ * Copyright (C) 2003-2018 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -19,40 +19,28 @@
 package org.exoplatform.webconferencing;
 
 /**
- * Identity not found.<br>
+ * Indicate that call has wrong or not applicable settings (badly formatted, not possibly to encoded, too long
+ * etc).
+ * 
  * Created by The eXo Platform SAS
  * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: IdentityNotFound.java 00000 Jul 6, 2017 pnedonosko $
+ * @version $Id: CallSettingsException.java 00000 Feb 19, 2018 pnedonosko $
  * 
  */
-public class IdentityNotFound extends WebConferencingException {
-
-  /** The Constant serialVersionUID. */
-  private static final long serialVersionUID = 4083029013588721462L;
+public class CallSettingsException extends CallInfoException {
 
   /**
-   * Instantiates a new identity not found.
+   * 
    */
-  public IdentityNotFound() {
+  private static final long serialVersionUID = 4422261986618273609L;
+
+  public CallSettingsException(String message, Throwable cause) {
+    super(message, cause);
   }
 
-  /**
-   * Instantiates a new identity not found.
-   *
-   * @param message the message
-   */
-  public IdentityNotFound(String message) {
+  public CallSettingsException(String message) {
     super(message);
   }
 
-  /**
-   * Instantiates a new identity not found.
-   *
-   * @param message the message
-   * @param cause the cause
-   */
-  public IdentityNotFound(String message, Throwable cause) {
-    super(message, cause);
-  }
 }

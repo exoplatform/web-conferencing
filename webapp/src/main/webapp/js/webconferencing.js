@@ -2003,10 +2003,10 @@
 					var result = tryParseJson(response);
 					if (response.successful) {
 						//log.trace("<< getCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
-					  process.resolve(result, 200);
+					  process.resolve(result);
 					} else {
 						//log.trace("<< getCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
-						process.reject(result, 400);
+						process.reject(result);
 					}
 				});
 				return process.promise();
@@ -2032,10 +2032,10 @@
 					var result = tryParseJson(response);
 					if (response.successful) {
 						//log.trace("<< updateCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
-					  process.resolve(result, 200);
+					  process.resolve(result);
 					} else {
 						//log.trace("<< updateCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
-						process.reject(result, 400);
+						process.reject(result);
 					}
 				});
 				return process.promise();
@@ -2060,10 +2060,10 @@
 					var result = tryParseJson(response);
 					if (response.successful) {
 						//log.trace("<< deleteCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
-					  process.resolve(result, 200);
+					  process.resolve(result);
 					} else {
 						//log.trace("<< deleteCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
-						process.reject(result, 400);
+						process.reject(result);
 					}
 				});
 				return process.promise();
@@ -2088,10 +2088,10 @@
 					var result = tryParseJson(response);
 					if (response.successful) {
 						//log.trace("<< addCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
-					  process.resolve(result, 200);
+					  process.resolve(result);
 					} else {
 						//log.trace("<< addCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
-						process.reject(result, 400);
+						process.reject(result);
 					}
 				});
 				return process.promise();
@@ -2113,10 +2113,10 @@
 					var result = tryParseJson(response);
 					if (response.successful) {
 						//log.trace("<< getUserGroupCalls:/webconferencing/calls - success: " + cometdInfo(response));
-					  process.resolve(result, 200);
+					  process.resolve(result);
 					} else {
 						//log.trace("<< getUserGroupCalls:/webconferencing/calls - failure: " + cometdError(response));
-						process.reject(result, 400);
+						process.reject(result);
 					}
 				});
 				return process.promise();
@@ -2144,11 +2144,11 @@
 					var result = tryParseJson(message);
 					if (message.data.error) {
 						if (typeof onError == "function") {
-							onError(result, 400);
+							onError(result);
 						}
 					} else {
 						if (typeof onUpdate == "function") {
-							onUpdate(result, 200);
+							onUpdate(result);
 						}							
 					}
 				}, cometdContext, function(subscribeReply) {
@@ -2235,7 +2235,7 @@
 				cometd.publish("/eXo/Application/WebConferencing/call/" + callId, cometdParams(data), function(publishAck) {
 			    if (publishAck.successful) {
 			    	//log.trace("<< Call update reached the server: " + JSON.stringify(publishAck));
-			    	process.resolve("successful", 200);
+			    	process.resolve("successful");
 			    } else {
 			    	//log.trace("<< Call update failed to reach the server: " + JSON.stringify(publishAck));
 			    	process.reject(publishAck.failure ? publishAck.failure.reason : publishAck.error);

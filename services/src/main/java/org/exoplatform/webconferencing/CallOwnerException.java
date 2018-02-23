@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2017 eXo Platform SAS.
+ * Copyright (C) 2003-2018 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -19,32 +19,22 @@
 package org.exoplatform.webconferencing;
 
 /**
- * Created by The eXo Platform SAS.
- *
+ * Call has wrong owner type.
+ * 
+ * Created by The eXo Platform SAS
+ * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: CallInfoException.java 00000 Jul 14, 2017 pnedonosko $
+ * @version $Id: CallOwnerException.java 00000 Feb 19, 2018 pnedonosko $
+ * 
  */
-public class InvalidCallStateException extends WebConferencingException {
-
-  /** The Constant serialVersionUID. */
-  private static final long serialVersionUID = 3073182166981855568L;
+public class CallOwnerException extends CallInfoException {
 
   /**
-   * Instantiates a new invalid call state exception.
-   *
-   * @param message the message
-   * @param cause the cause
+   * 
    */
-  public InvalidCallStateException(String message, Throwable cause) {
-    super(message, cause);
-  }
+  private static final long serialVersionUID = -2189094659846996986L;
 
-  /**
-   * Instantiates a new invalid call state exception.
-   *
-   * @param message the message
-   */
-  public InvalidCallStateException(String message) {
+  public CallOwnerException(String message) {
     super(message);
   }
 

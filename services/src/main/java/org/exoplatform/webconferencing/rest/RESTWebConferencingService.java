@@ -46,15 +46,16 @@ import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.CallInfoException;
+import org.exoplatform.webconferencing.CallNotFoundException;
 import org.exoplatform.webconferencing.CallProviderConfiguration;
 import org.exoplatform.webconferencing.CallState;
 import org.exoplatform.webconferencing.GroupInfo;
-import org.exoplatform.webconferencing.IdentityNotFound;
-import org.exoplatform.webconferencing.InvalidCallStateException;
+import org.exoplatform.webconferencing.IdentityStateException;
 import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.client.ErrorInfo;
+import org.exoplatform.webconferencing.dao.StorageException;
 
 /**
  * Created by The eXo Platform SAS.
@@ -383,7 +384,7 @@ public class RESTWebConferencingService implements ResourceContainer {
               }
             }
             return Response.ok().build();
-          } catch (InvalidCallStateException e) {
+          } catch (CallNotFoundException e) {
             return Response.status(Status.BAD_REQUEST)
                            .cacheControl(cacheControl)
                            .entity(ErrorInfo.clientError(e.getMessage()))
@@ -505,6 +506,18 @@ public class RESTWebConferencingService implements ResourceContainer {
                            .entity(ErrorInfo.notFoundError("Space not found or not accessible"))
                            .build();
           }
+        } catch (IdentityStateException e) {
+          LOG.error("Error reading member of space '" + spaceName + "' by '" + currentUserName + "'", e);
+          return Response.serverError()
+                         .cacheControl(cacheControl)
+                         .entity(ErrorInfo.serverError("Error reading member of space '" + spaceName + "'"))
+                         .build();
+        } catch (StorageException e) {
+          LOG.error("Storage error for space info of '" + spaceName + "' by '" + currentUserName + "'", e);
+          return Response.serverError()
+                         .cacheControl(cacheControl)
+                         .entity(ErrorInfo.serverError("Storage error for space '" + spaceName + "'"))
+                         .build();
         } catch (Throwable e) {
           LOG.error("Error reading space info of '" + spaceName + "' by '" + currentUserName + "'", e);
           return Response.serverError()
@@ -566,13 +579,17 @@ public class RESTWebConferencingService implements ResourceContainer {
                                .entity(ErrorInfo.notFoundError("Room not found or not accessible"))
                                .build();
               }
-            } catch (IdentityNotFound e) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Room member not found", e);
-              }
-              return Response.status(Status.NOT_FOUND)
+            } catch (IdentityStateException e) {
+              LOG.error("Error reading member of room '" + roomTitle + "' by '" + currentUserName + "'", e);
+              return Response.serverError()
                              .cacheControl(cacheControl)
-                             .entity(ErrorInfo.notFoundError(e.getMessage()))
+                             .entity(ErrorInfo.serverError("Error reading member of room '" + roomTitle + "'"))
+                             .build();
+            } catch (StorageException e) {
+              LOG.error("Storage error for room info of '" + roomTitle + "' by '" + currentUserName + "'", e);
+              return Response.serverError()
+                             .cacheControl(cacheControl)
+                             .entity(ErrorInfo.serverError("Storage error for room '" + roomTitle + "'"))
                              .build();
             } catch (Throwable e) {
               LOG.error("Error reading room info of '" + roomTitle + "' by '" + currentUserName + "'", e);
