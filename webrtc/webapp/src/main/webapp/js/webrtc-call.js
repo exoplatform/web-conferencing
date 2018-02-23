@@ -178,7 +178,7 @@ if (eXo.webConferencing) {
 								};
 								
 								// Subscribe to user calls to know if this call updated/stopped remotely
-							  webConferencing.onUserUpdate(currentUserId, function(update, status) {
+							  webConferencing.onUserUpdate(currentUserId, function(update) {
 									if (update.eventType == "call_state") {
 										if (update.owner.type == "user") {
 											if (update.callState == "stopped" && update.callId == callId) {

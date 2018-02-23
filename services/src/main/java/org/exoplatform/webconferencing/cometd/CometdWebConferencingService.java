@@ -79,11 +79,12 @@ import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityConstants;
 import org.exoplatform.services.security.IdentityRegistry;
-import org.exoplatform.webconferencing.CallConflictException;
 import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.CallInfoException;
+import org.exoplatform.webconferencing.CallNotFoundException;
 import org.exoplatform.webconferencing.CallState;
-import org.exoplatform.webconferencing.CallArgumentException;
+import org.exoplatform.webconferencing.IdentityNotFoundException;
+import org.exoplatform.webconferencing.ParticipantNotFoundException;
 import org.exoplatform.webconferencing.UserCallListener;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;
@@ -1025,8 +1026,8 @@ public class CometdWebConferencingService implements Startable {
                               caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
                             }
                           } catch (Throwable e) {
-                            LOG.error("Error reading call info '" + id + "' by '" + currentUserId + "'", e);
-                            caller.failure(ErrorInfo.serverError("Error reading call record").asJSON());
+                            LOG.error("Error reading call '" + id + "' by '" + currentUserId + "'", e);
+                            caller.failure(ErrorInfo.serverError("Error reading call").asJSON());
                           }
                         } else if (COMMAND_UPDATE.equals(command)) {
                           String state = asString(arguments.get("state"));
@@ -1055,7 +1056,7 @@ public class CometdWebConferencingService implements Startable {
                               } else {
                                 caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized").asJSON());
                               }
-                            } catch (CallInfoException e) { // aka BAD_REQUEST
+                            } catch (CallNotFoundException e) { // aka BAD_REQUEST
                               caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
                             } catch (Throwable e) {
                               LOG.error("Error updating call '" + id + "' by '" + currentUserId + "'", e);
@@ -1075,10 +1076,9 @@ public class CometdWebConferencingService implements Startable {
                             try {
                               CallInfo call = webConferencing.addCall(id, ownerId, ownerType, title, providerType, participants);
                               caller.result(asJSON(call));
-                            } catch (CallInfoException e) { // aka BAD_REQUEST
+                            } catch (CallInfoException e) { 
+                              // aka BAD_REQUEST - user did bad input, need to retry or reuse existing call
                               caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
-                            } catch (CallConflictException e) { // aka SERVER_ERROR
-                              caller.failure(ErrorInfo.serverError(e.getMessage()).asJSON());
                             } catch (Throwable e) {
                               LOG.error("Error creating call for '" + id + "' by '" + currentUserId + "'", e);
                               caller.failure(ErrorInfo.serverError("Error creating call record").asJSON());
@@ -1094,6 +1094,8 @@ public class CometdWebConferencingService implements Startable {
                             } else {
                               caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
                             }
+                          } catch (CallNotFoundException e) {
+                            caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
                           } catch (Throwable e) {
                             LOG.error("Error deleting call '" + id + "' by '" + currentUserId + "'", e);
                             caller.failure(ErrorInfo.serverError("Error deleting call record").asJSON());
@@ -1105,7 +1107,7 @@ public class CometdWebConferencingService implements Startable {
                               caller.result(asJSON(calls));
                             } catch (Throwable e) {
                               LOG.error("Error reading users calls for '" + id + "'", e);
-                              caller.failure(ErrorInfo.serverError("Error reading users calls").asJSON());
+                              caller.failure(ErrorInfo.serverError("Error reading user calls").asJSON());
                             }
                           } else {
                             // Don't let read other user calls

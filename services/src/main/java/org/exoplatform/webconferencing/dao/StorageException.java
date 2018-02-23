@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2017 eXo Platform SAS.
+ * Copyright (C) 2003-2018 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -16,37 +16,43 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.exoplatform.webconferencing;
+package org.exoplatform.webconferencing.dao;
+
+import org.exoplatform.webconferencing.WebConferencingException;
 
 /**
- * Call participant not found.<br>
+ * Error in persistence layer.
+ * 
  * Created by The eXo Platform SAS
  * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: ParticipantNotFound.java 00000 Jul 6, 2017 pnedonosko $
+ * @version $Id: StorageException.java 00000 Jan 25, 2018 pnedonosko $
  * 
  */
-public class ParticipantNotFound extends WebConferencingException {
-
-  /** The Constant serialVersionUID. */
-  private static final long serialVersionUID = -339427871016542888L;
+public class StorageException extends WebConferencingException {
 
   /**
-   * Instantiates a new participant not found.
+   * 
+   */
+  private static final long serialVersionUID = 282860859579336467L;
+
+  /**
+   * Instantiates a new storage exception.
    *
    * @param message the message
    */
-  public ParticipantNotFound(String message) {
+  public StorageException(String message) {
     super(message);
   }
 
   /**
-   * Instantiates a new participant not found.
+   * Instantiates a new storage exception.
    *
    * @param message the message
    * @param cause the cause
    */
-  public ParticipantNotFound(String message, Throwable cause) {
+  public StorageException(String message, Throwable cause) {
     super(message, cause);
   }
+
 }

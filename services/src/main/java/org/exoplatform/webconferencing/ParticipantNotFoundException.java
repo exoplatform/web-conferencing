@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2003-2017 eXo Platform SAS.
  *
@@ -19,50 +18,34 @@
  */
 package org.exoplatform.webconferencing;
 
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
-
 /**
- * Represent external participant in calls. 
- * 
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: ParticipantInfo.java 00000 Feb 23, 2017 pnedonosko $
+ * @version $Id: CallInfoException.java 00000 Jul 14, 2017 pnedonosko $
  */
-public class ParticipantInfo extends UserInfo {
+public class ParticipantNotFoundException extends WebConferencingException {
 
-  /** The Constant TYPE_NAME. */
-  public static final String TYPE_NAME = "participant".intern();
-
-  /** The Constant LOG. */
-  protected static final Log LOG       = ExoLogger.getLogger(ParticipantInfo.class);
+  /** The Constant serialVersionUID. */
+  private static final long serialVersionUID = 3073182166981855568L;
 
   /**
-   * Instantiates a new participant with an ID.
+   * Instantiates a new invalid call state exception.
    *
-   * @param imId the IM id
+   * @param message the message
+   * @param cause the cause
    */
-  protected ParticipantInfo(String imId) {
-    super(EMPTY, imId, EMPTY);
-  }
-  
-  /**
-   * Instantiates a new participant with IM type and ID.
-   *
-   * @param imType the im type
-   * @param imId the IM id
-   */
-  protected ParticipantInfo(String imType, String imId) {
-    super(EMPTY, imId, EMPTY);
-    addImAccount(imType, imId);
+  public ParticipantNotFoundException(String message, Throwable cause) {
+    super(message, cause);
   }
 
   /**
-   * {@inheritDoc}
+   * Instantiates a new invalid call state exception.
+   *
+   * @param message the message
    */
-  @Override
-  public String getType() {
-    return TYPE_NAME;
+  public ParticipantNotFoundException(String message) {
+    super(message);
   }
+
 }
