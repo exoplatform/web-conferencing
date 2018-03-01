@@ -178,9 +178,9 @@
 											// Call already running - join it
 											log.info("Joining call: " + callId);
 											callProcess.resolve(call, false);
-										}).fail(function(err, status) {
+										}).fail(function(err) {
 											if (err) {
-												if (err.code == "NOT_FOUND_ERROR" || (typeof(status) == "number" && status == 404)) {
+												if (err.code == "NOT_FOUND_ERROR") {
 													// OK, this call not found - start a new one,
 													var callInfo = {
 														// for group calls an owner is a group entity (space or room), otherwise it's 1:1 and who started is an owner 
@@ -385,7 +385,7 @@
 						});
 					};
 					// Subscribe to user updates (incoming calls will be notified here)
-					webConferencing.onUserUpdate(currentUserId, function(update, status) {
+					webConferencing.onUserUpdate(currentUserId, function(update) {
 						// This connector cares only about own provider events
 						if (update.providerType == self.getType()) {
 							var callId = update.callId;
@@ -393,7 +393,7 @@
 								// A call state changed (can be 'started', 'stopped', 'paused' (not used for the moment)
 								// rely on logic implemented in callButton() here: group call ID starts with 'g/'
 								var isGroup = callId.startsWith("g/");
-								log.trace(">>> User call state updated: " + JSON.stringify(update) + " [" + status + "]");
+								log.trace(">>> User call state updated: " + JSON.stringify(update));
 								if (update.callState == "started") {
 									log.info("Incoming call: " + callId);
 									// Get call details by ID
@@ -454,7 +454,7 @@
 													webConferencing.deleteCall(callId).done(function() {
 														log.info("Call deleted: " + callId);
 													}).fail(function(err) {
-														if (err && (err.code == "NOT_FOUND_ERROR" || (typeof(status) == "number" && status == 404))) {
+														if (err && (err.code == "NOT_FOUND_ERROR")) {
 															// already deleted
 															log.trace("<< Call not found " + callId);
 														} else {
@@ -464,7 +464,7 @@
 													});
 												}
 											});
-										}).fail(function(err, status) {
+										}).fail(function(err) {
 											log.error("Failed to get user status: " + currentUserId, err);
 											if (err) {
 												webConferencing.showError("Incoming call error", webConferencing.errorText(err));
@@ -472,7 +472,7 @@
 												webConferencing.showError("Incoming call error", "Error read user status information from the server");
 											}
 										});
-									}).fail(function(err, status) {
+									}).fail(function(err) {
 										log.error("Failed to get call info: " + callId, err);
 										if (err) {
 											webConferencing.showError("Incoming call error", webConferencing.errorText(err));

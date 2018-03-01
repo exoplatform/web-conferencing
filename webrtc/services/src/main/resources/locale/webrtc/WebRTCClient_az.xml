@@ -13,15 +13,17 @@
     
     <providerError>WebRTC provider error</providerError>
     <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
-    <errorAddCall>The call could not be started due to a server error. Please try again. If the problem persists, please contact your administrator.</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
+    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
+    <callStopped>Call was stopped</callStopped>
+    <errorAddCall>The call could not be started due to a server error</errorAddCall>
+    <errorOpeningCall>An error occurred while opening the call window</errorOpeningCall>
     <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
     <errorStartingCall>Error starting call</errorStartingCall>
     <errorIncomingCall>Incoming call error</errorIncomingCall>
     <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
     <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates. Please refresh the page and try again. If the problem persists, please contact your administrator.</errorSubscribeCall>
+    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
+    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
     <errorStartingConnection>Error starting connection</errorStartingConnection>
     <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>

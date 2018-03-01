@@ -83,8 +83,6 @@ import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.CallInfoException;
 import org.exoplatform.webconferencing.CallNotFoundException;
 import org.exoplatform.webconferencing.CallState;
-import org.exoplatform.webconferencing.IdentityNotFoundException;
-import org.exoplatform.webconferencing.ParticipantNotFoundException;
 import org.exoplatform.webconferencing.UserCallListener;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;

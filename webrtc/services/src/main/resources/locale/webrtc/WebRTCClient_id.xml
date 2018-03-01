@@ -13,15 +13,17 @@
     
     <providerError>Kesalahan pada penyedia WebRTC</providerError>
     <providerNotAvailable>Penyedia WebRTC tidak ada</providerNotAvailable>
-    <errorAddCall>Panggilan ini tidak bisa di mulai karena kesalahan ketekunan pada server. Silahkan coba lagi.</errorAddCall>
-    <errorOpeningCall>Terjadi kesalahan saat membuka jendela panggilan. Harap segarkan halaman dan coba lagi. Jika kesalahan berlanjut, hubungi administrator Anda.</errorOpeningCall>
+    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
+    <callStopped>Call was stopped</callStopped>
+    <errorAddCall>Panggilan ini tidak bisa di mulai karena kesalahan ketekunan pada server</errorAddCall>
+    <errorOpeningCall>Terjadi kesalahan saat membuka jendela panggilan</errorOpeningCall>
     <callWindowNotOpen>Jendela panggilan tidak bisa di buka. Harap periksa apakah itu diblokir oleh browser Anda.</callWindowNotOpen>
     <errorStartingCall>Gagal mulai panggilan</errorStartingCall>
     <errorIncomingCall>Kesalahan saat panggilan masuk</errorIncomingCall>
     <errorReadUserStatus>Kesalahan saat membaca informasi status pengguna dari server</errorReadUserStatus>
     <errorReadCall>Kesalahan saat membaca informasi status panggilan dari server</errorReadCall>
-    <errorSubscribeUser>Gagal membuat saluran server-ke-browser untuk mengkomunikasikan pembaruan pengguna. Harap segarkan halaman dan coba lagi. Jika masalah berlanjut, hubungi administrator Anda.</errorSubscribeUser>
-    <errorSubscribeCall>Gagal membuat saluran server-ke-browser untuk pembaruan panggilan. Harap segarkan halaman dan coba lagi. Jika masalah berlanjut, hubungi administrator Anda.</errorSubscribeCall>
+    <errorSubscribeUser>Gagal membuat saluran server-ke-browser untuk mengkomunikasikan pembaruan pengguna</errorSubscribeUser>
+    <errorSubscribeCall>Gagal membuat saluran server-ke-browser untuk pembaruan panggilan</errorSubscribeCall>
     <errorStartingConnection>Kesalahan saat mulai koneksi</errorStartingConnection>
     <notSupportedPlatform>Platform yang tidak di dukung</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Browser Anda tidak bisa mendukung panggilan WebRTC</yourBrowserNotSupportWebrtc>

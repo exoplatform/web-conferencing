@@ -312,16 +312,14 @@
 														saveCallWindow(callId, callWindowId);
 													}
 												}).fail(function(err) {
-													log.error("Call start failed: " + callId, err);
-													webConferencing.showError(message("errorStartingCall"), webConferencing.errorText(err));
+													log.showError("Call start failed: " + callId, err, message("errorStartingCall"));
 												});
 											}).fail(function(err) {
-												log.error("Call page failed: " + callId, err);
-												webConferencing.showError(message("errorOpeningCall"), webConferencing.errorText(err));
+												log.showError("Call page failed: " + callId, err, message("errorOpeningCall"));
 											});
 										}).fail(function(err) {
-											log.error("Call creation failed: " + callId, err);
-											webConferencing.showError(message("errorAddCall"), webConferencing.errorText(err));
+											log.showError("Call creation failed: " + callId, err, message("errorStartingCall"), 
+														message("errorAddCall") + ". " + message("refreshTryAgainContactAdmin"));
 											setTimeout(function() {
 												// Let error window to be open a bit to see its state/error/etc - for admins/devs
 												callWindow.close();
@@ -527,38 +525,29 @@
 																				saveCallWindow(callId, callWindowId);
 																			}
 																		}).fail(function(err) {
-																			log.error("Failed to start/join call: " + callId, err);
-																			webConferencing.showError(message("errorStartingCall"), webConferencing.errorText(err));
+																			log.showError("Failed to start/join call: " + callId, err, message("errorStartingCall"));
 																		});
 																	}).fail(function(err) {
-																		log.error("Call page failed: " + callId, err);
-																		webConferencing.showError(message("errorOpeningCall"), webConferencing.errorText(err));
+																		log.showError("Call page failed: " + callId, err, message("errorOpeningCall"));
 																	});
 																});
 															});
 															popover.fail(function(msg) {
 																log.info("User " + msg + " call: " + callId);
 																if ($callPopup.callState != "stopped" && $callPopup.callState != "joined") {
-																	log.trace("<<< User " + msg + ($callPopup.callState ? " just " + $callPopup.callState : "") + " call " + callId + ", deleting it.");
+																	log.trace("<<< User " + msg + ($callPopup.callState ? " just " + $callPopup.callState : "") 
+																				+ " call " + callId + ", deleting it.");
 																	deleteCall(callId);
 																}
 															});
 														}).fail(function(err) {
-															log.error("Failed to get user status: " + currentUserId, err);
-															if (err) {
-																webConferencing.showError(message("errorIncomingCall"), webConferencing.errorText(err));
-															} else {
-																webConferencing.showError(message("errorIncomingCall"), message("errorReadUserStatus"));
-															}
+															var msg = err ? webConferencing.errorText(err) : message("errorReadUserStatus");
+															log.showError("Failed to get user status: " + currentUserId, err, message("errorIncomingCall"), msg);
 														});														
 													}
 												}).fail(function(err) {
-													log.error("Failed to get call info: " + callId, err);
-													if (err) {
-														webConferencing.showError(message("errorIncomingCall"), webConferencing.errorText(err));
-													} else {
-														webConferencing.showError(message("errorIncomingCall"), message("errorReadCall"));
-													}
+													var msg = err ? webConferencing.errorText(err) : message("errorReadCall");
+													log.showError("Failed to get call info: " + callId, err, message("errorIncomingCall"), msg);
 												});
 											} else if (update.callState == "stopped") {
 												log.info("Call stopped remotelly: " + callId);
@@ -600,7 +589,7 @@
 						if (!logged || (now - parseInt(logged) >= 86400000)) {
 							log.warn("WebRTC not supported in this browser: " + navigator.userAgent);
 							try {
-								localStorage.saveItem("exo.webconferencing.webrtc.notSupportedLogged", "" + now); // save as string
+								localStorage.setItem("exo.webconferencing.webrtc.notSupportedLogged", "" + now); // save as string
 							} catch(err) {
 								log.error("Error saving WebRTC notSupportedLogged flag", err);
 							}
@@ -834,15 +823,13 @@
 								// Validation to do not have an ICE server w/o URL
 								if (checkConfError()) {
 									var rtcConfStr = JSON.stringify(rtcConfiguration);
-									//log.trace("Saving RTC configuration: " + rtcConfStr); // TODO comment it
 									postSettings({
 										rtcConfiguration : rtcConfStr
 									}).done(function(savedRtcConfig) {
 										$popup.hide();
 										settings.rtcConfiguration = savedRtcConfig;
 									}).fail(function(err) {
-										log.error("Failed to save admin settings", err);
-										webConferencing.showError(message("admin.errorSavingSettings"), webConferencing.errorText(err));
+										log.showError("Failed to save admin settings", err, message("admin.errorSavingSettings"));
 									});									
 								}
 							}, 200);

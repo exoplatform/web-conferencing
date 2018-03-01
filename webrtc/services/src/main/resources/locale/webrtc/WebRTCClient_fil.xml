@@ -13,15 +13,17 @@
     
     <providerError>Pagkakamali ng WebRTC provider</providerError>
     <providerNotAvailable>Hindi magagamit ang WebRTC provider</providerNotAvailable>
-    <errorAddCall>Hindi masimulan ang tawag dahil sa isang pagkakamali ng server. Pakisubukang muli. Kung nagpapatuloy ang problema, mangyaring makipag-ugnay sa iyong administrator.</errorAddCall>
-    <errorOpeningCall>May naganap na pagkakamali habang binubuksan ang window na tawag. Paki-refresh ang pahina at subukan muli. Kung nagpapatuloy ang pagkakamali, mangyaring makipag-ugnayan sa iyong administrator.</errorOpeningCall>
+    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
+    <callStopped>Call was stopped</callStopped>
+    <errorAddCall>Hindi masimulan ang tawag dahil sa isang pagkakamali ng server</errorAddCall>
+    <errorOpeningCall>May naganap na pagkakamali habang binubuksan ang window na tawag</errorOpeningCall>
     <callWindowNotOpen>Hindi mabuksan ang tawag ng window. Pakiusap suriin kung na-block ito ng iyong browser.</callWindowNotOpen>
     <errorStartingCall>Pagkakamali sa pagsisimula ng tawag</errorStartingCall>
     <errorIncomingCall>Pagkakamali sa paparating na tawag</errorIncomingCall>
     <errorReadUserStatus>Pagkakamali sa pagbasa ng gumagamit ng katunayan na impormasyon mula sa server</errorReadUserStatus>
     <errorReadCall>Pagkakamali sa pagbasa ng impormasyon ng tawag mula sa server</errorReadCall>
-    <errorSubscribeUser>Nabigong magtatag ng channel ng server-sa-browser para sa pakikipag-ugnay sa mga pagbabago ng gumagamit. Pakiusap i-refresh ang pahina at subukan muli. Pakiusap makipag-ugnay sa iyong administrator.</errorSubscribeUser>
-    <errorSubscribeCall>Nabigong matatag na isang channel ng server-sa browser para sa mga update sa tawag. Paki-refresh ang pahina at subukan muli. Kung nagpapatuloy ang problema, manyaring makipag-ugnay sa iyong administrator.</errorSubscribeCall>
+    <errorSubscribeUser>Nabigong magtatag ng channel ng server-sa-browser para sa pakikipag-ugnay sa mga pagbabago ng gumagamit</errorSubscribeUser>
+    <errorSubscribeCall>Nabigong matatag na isang channel ng server-sa browser para sa mga update sa tawag</errorSubscribeCall>
     <errorStartingConnection>Pagkakamali sa pagsisimula ng koneksyon</errorStartingConnection>
     <notSupportedPlatform>Hindi suportadong plataporma</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Ang iyong browser ay hindi nagsusuporta ng mga WebRTC na tawag</yourBrowserNotSupportWebrtc>
