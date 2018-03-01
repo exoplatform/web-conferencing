@@ -347,7 +347,7 @@ if (eXo.webConferencing) {
 										return sendMessage({
 							    		"hello": isOwner ? "__all__" : call.owner.id
 							      }).done(function() {
-							      	log.debug("Sent Hello by " + (isOwner ? "owner" : "participant") + " for " + callId);
+							      	log.debug("Sent Hello (by " + (isOwner ? "owner" : "participant") + ") for " + callId);
 							      }).fail(function(err) {
 											handleConnectionError("Failed to send Hello for " + callId, err);
 										});
@@ -359,16 +359,16 @@ if (eXo.webConferencing) {
 										return sendMessage({
 							    		"bye": isOwner ? "__all__" : call.owner.id
 							      }).done(function() {
-							      	log.debug("Sent Bye by " + (isOwner ? "owner" : "participant") + " for " + callId);
+							      	log.debug("Sent Bye (by " + (isOwner ? "owner" : "participant") + ") for " + callId);
 							      }).fail(function(err) {
-											log.error("Failed to send Bye for " + callId, err);
+											log.error("Failed to send Bye (by " + (isOwner ? "owner" : "participant") + ") for " + callId, err);
 										});
 									};
 									var sendOffer = function(localDescription) {
 										return sendMessage({
 							    		"offer": JSON.stringify(localDescription)
 							      }).done(function() {
-							      	log.debug("Published offer for " + callId + " " + JSON.stringify(localDescription));
+							      	log.debug("Published offer for " + callId + ": " + JSON.stringify(localDescription));
 										}).fail(function(err) {
 											// TODO May be to retry?
 											handleConnectionError("Failed to send offer for " + callId, err);
@@ -378,7 +378,7 @@ if (eXo.webConferencing) {
 										return sendMessage({
 							    		"answer": JSON.stringify(localDescription)
 							      }).done(function() {
-							      	log.debug("Published answer for " + callId + " " + JSON.stringify(localDescription));
+							      	log.debug("Published answer for " + callId + ": " + JSON.stringify(localDescription));
 										}).fail(function(err) {
 											handleConnectionError("Failed to send answer for " + callId, err);
 										});
@@ -387,7 +387,7 @@ if (eXo.webConferencing) {
 										return sendMessage({
 							        "candidate" : candidate
 							      }).done(function() {
-							      	log.debug("Published candidate for " + callId + " " + JSON.stringify(candidate));
+							      	log.debug("Published candidate for " + callId + ": " + JSON.stringify(candidate));
 										}).fail(function(err) {
 											handleConnectionError("Failed to send candidate for " + callId, err);
 										});
@@ -445,21 +445,17 @@ if (eXo.webConferencing) {
 								  	// This will be fired after adding a local media stream and browser readiness
 								  	// Ready to join the call: say hello to each other
 						  			if (isOwner) {
-						  				log.debug("Negotiation needed by owner for " + callId);
+						  				log.debug("Negotiation needed (by owner) for " + callId);
 						  				subscribed.then(function() {
-						  					log.debug("Sending Hello by owner for " + callId);
 							  				sendHello().then(function() {
 							  					// Owner will send the offer when negotiation will be resolved (received Hello from others)
 								  				negotiation.then(function() {
-								  					log.debug("Creating offer for " + callId);
+								  					log.trace("Creating offer for " + callId);
 												    pc.createOffer().then(function(desc) { // sdpConstraints
-												    	log.debug("Setting local description for " + callId);
+												    	log.trace("Setting local description for " + callId);
 												    	pc.setLocalDescription(desc).then(function() {
-												    		log.debug("Sending offer for " + callId);
-												    		sendOffer(pc.localDescription).then(function() {
-												    			log.debug("Sent offer for " + callId);
-												    			// TODO Something else here?
-												    		});
+												    		log.trace("Sending offer for " + callId);
+												    		sendOffer(pc.localDescription); // FYI we may do some extra work in promise.then
 												      }).catch(function(err) {
 												      	handleConnectionError("Failed to set local description for " + callId, err);
 													    });
@@ -522,26 +518,33 @@ if (eXo.webConferencing) {
 										$videos.removeClass("active");
 								  };
 									
+								  // For debug purpose: count candidates to logs readability
+								  var candidateNumb = 0;
+								  
 									// Subscribe to the call updates
 									var listener = webConferencing.onCallUpdate(callId, function(message) {
 										if (message.provider == webrtc.getType()) {
 											if (message.sender != currentUserId) {
 												if (message.candidate) {
 													// ICE candidate of remote party (can happen several times)
-													log.debug("Received candidate for " + callId + ": " + JSON.stringify(message.candidate));
-													if (Object.getOwnPropertyNames(message.candidate).length > 0 || isEdge) {
+													candidateNumb++;
+													var candidateStr = JSON.stringify(message.candidate);
+													log.debug("Received candidate (" + candidateNumb + ") for " + callId + ": " + candidateStr);
+													var hasCandidate = Object.getOwnPropertyNames(message.candidate).length > 0;
+													if (hasCandidate || isEdge) {
 														connection.then(function() {
-															log.debug("Creating candidate for " + callId);
+															log.trace("Creating candidate (" + candidateNumb + ") for " + callId);
 															var candidate = new RTCIceCandidate(message.candidate);
-															log.debug("Adding candidate for " + callId);
+															log.trace("Adding candidate (" + candidateNumb + ") for " + callId);
 															pc.addIceCandidate(candidate).then(function() {
-															  log.debug("Added candidate for " + callId);
+															  log.debug("Added candidate (" + candidateNumb + ") for " + callId);
 															}).catch(function(err) {
 																handleConnectionError("Failed to add candidate for " + callId, err);
 															});														
 														});
-													} else {
-														log.debug("All candidates received for " + callId);
+													}
+													if (!hasCandidate) {
+														log.debug("All candidates (" + candidateNumb + ") received for " + callId);
 													}
 												} else if (message.offer) {
 													log.debug("Received offer for " + callId + ": " + JSON.stringify(message.offer));
@@ -555,21 +558,20 @@ if (eXo.webConferencing) {
 																offer = new RTCSessionDescription(offer);
 															}
 															negotiation.then(function(localStream) {
-																log.debug("Setting remote description (offer) for " + callId);
+																log.trace("Setting remote description (offer) for " + callId);
 																pc.setRemoteDescription(offer).then(function() {
 														      // if we received an offer, we need to answer
 														      if (pc.remoteDescription.type == "offer") {
 														      	// Add local stream for participant after media negotiation (as in samples) 
-														      	log.debug("Adding local stream for " + callId);
+														      	log.debug("Adding local (participant) stream for " + callId);
 														      	pc.addStream(localStream); // XXX It's deprecated way but Chrome works using it
 														      	// Will it be better to do this in onnegotiationneeded event?
-														      	log.debug("Creating answer for " + callId);
+														      	log.trace("Creating answer for " + callId);
 														      	pc.createAnswer().then(function(desc) { // sdpConstraints?
-														      		log.debug("Setting local description for " + callId);
+														      		log.trace("Setting local description for " + callId);
 														      		pc.setLocalDescription(desc).then(function() {
-														      			log.debug("Sending answer for " + callId);
+														      			log.trace("Sending answer for " + callId);
 														      			sendAnswer(pc.localDescription).then(function() {
-														      				log.debug("Sent answer for " + callId);	
 														      				connection.resolve().then(function() {
 														      					// Participant ready to exchange ICE candidates
 																						log.debug("Started exchange network information with peers for " + callId);
@@ -606,9 +608,9 @@ if (eXo.webConferencing) {
 																answer = new RTCSessionDescription(answer);
 															}
 															negotiation.then(function() {
-																log.debug("Setting answer (remote description) for " + callId);
+																log.trace("Setting answer (remote description) for " + callId);
 																pc.setRemoteDescription(answer).then(function() {
-														      log.debug("Apllied answer (remote description) for " + callId);
+														      log.trace("Apllied answer (remote description) for " + callId);
 														      // Resolve connection (network) exchange only from here
 														      connection.resolve().then(function() {
 														      	// Owner ready to exchange ICE candidates
@@ -633,10 +635,10 @@ if (eXo.webConferencing) {
 														// This will works once (for group calls, need re-initialize the process)
 														negotiation.resolve().then(function() {
 															if (isOwner) {
-																log.debug("Started exchange (owner) media information of " + callId);
+																log.debug("Started exchange (owner) media information for " + callId);
 															} else {
 																// This should not happen until group calls will be supported
-																log.warn("Started exchange (NOT owner) media information of " + callId);
+																log.warn("Started exchange (NOT owner) media information for " + callId);
 															}
 														});
 													} else {
@@ -786,10 +788,9 @@ if (eXo.webConferencing) {
 											  //  pc.addTrack(track, localStream);
 											  //});
 										  } else {
-										  	log.debug("Negotiation ready by participant for " + callId);
+										  	log.debug("Negotiation ready (by participant) for " + callId);
 										  	subscribed.then(function() {
 										  		// Participant sends Hello to the other end to initiate a negotiation there
-										  		log.debug("Sending Hello by participant for " + callId);
 											  	sendHello().then(function() {
 									  				// Participant on the other end is ready for negotiation and waits for an offer message
 											  		negotiation.resolve(localStream).then(function() {

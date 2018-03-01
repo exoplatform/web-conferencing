@@ -338,9 +338,13 @@
 								}, 200);
 								button.resolve($button);
 							}).fail(function(err) {
-								var msg = "Error getting context details";
-								log.error(msg, err);
-								button.reject(msg, err);
+								if (err && err.code == "NOT_FOUND_ERROR") {
+									button.reject(err.message);
+								} else {
+									var msg = "Error getting context details";
+									log.error(msg, err);
+									button.reject(msg, err);
+								}
 							});
 						} else {
 							var msg = "Group calls not supported";
@@ -427,8 +431,10 @@
 									$callPopup.callState = state;	
 								}
 								$callPopup.close();
+								return true;
 							}								
 						}
+						return false;
 					};
 					var assignCallButton = function(targetId, callId) {
 						$(".webrtcCallAction").each(function() {
@@ -550,11 +556,16 @@
 													log.showError("Failed to get call info: " + callId, err, message("errorIncomingCall"), msg);
 												});
 											} else if (update.callState == "stopped") {
-												log.info("Call stopped remotelly: " + callId);
 												// Hide accept popover for this call, if any
-												closeCallPopup(callId, update.callState);
+												var hasPopup = closeCallPopup(callId, update.callState);
+												var hasWindow = readCallWindow(callId);
 												unassignCallButton(callId);
 												removeCallWindow(callId);
+												if (hasPopup || hasWindow) {
+													log.info("Call stopped remotelly: " + callId);
+												} else {
+													log.debug("Call stopped remotelly: " + callId);
+												}
 											} 
 											// "call_joined" to use with group calls and close its popup
 											// "call_leaved" to unlock a call button of group call
