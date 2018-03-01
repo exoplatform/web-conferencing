@@ -16,7 +16,20 @@
 	var clientId = "" + getRandomArbitrary(100000, 999998);
 	
 	var errorText = function(err) {
-		return err && err.message ? err.message : "";
+		if (err) {
+			if (err.message) {
+				return err.message;
+			} else if (err.name) {
+				return err.name;
+			} else if (err.toString && typeof err.toString === "function") {
+				try {
+					return err.toString();
+				} catch(e) {
+					// ignore this
+				}
+			}			
+		}
+		return err;
 	};
 	
 	var tryParseJson = function(message) {
@@ -67,6 +80,7 @@
 	 * Spools buffered logs to CometD channel.
 	 */
 	function LogSpooler() {
+		var lastMessage;
 		var buff = [];
 		
 		var flush = function() {
@@ -75,18 +89,21 @@
 					var bucket = buff; 
 					buff = [];
 					// spool in CometD batch
-					cometd.batch(function() {
-						for (var i=0; i<bucket.length; i++) {
-							var msg = bucket[i];
-							//log.trace("Sending remote log: " + JSON.stringify(msg));
-							cometd.remoteCall("/webconferencing/logs", msg, function(response) {
-								var result = tryParseJson(response);
-								if (!response.successful) {
-									log.trace("ERROR: Failed to send log message to remote spooler", cometdError(response));
-								}
-							});
-						}
-					});
+					try {
+						cometd.batch(function() {
+							for (var i=0; i<bucket.length; i++) {
+								var msg = bucket[i];
+								cometd.remoteCall("/webconferencing/logs", msg, function(response) {
+									var result = tryParseJson(response);
+									if (!response.successful) {
+										log.trace("ERROR: Failed to send log message to remote spooler", cometdError(response));
+									}
+								});
+							}
+						});
+					} catch(err) {
+						log.trace("ERROR: Failed to send log messages to remote spooler (in CometD batch of " + bucket.length + " logs)", err);
+					}
 				} else if (buff.length > 100) {
 					log.trace("WARNING: CometD not available. Log cannot be spooled remotely and will be cut to avoid memory leak");
 					buff = buff.slice(20);
@@ -96,18 +113,18 @@
 		
 		var spoolerJob;
 		var activate = function() {
-			if (buff.length > 5) {
+			if (buff.length > 10) {
 				flush();
 			}
 			if (!spoolerJob) {
 				spoolerJob = setInterval(function() { 
 					flush();
-				}, 5000);
+				}, 10000);
 				setTimeout(function() { 
 					clearInterval(spoolerJob);
 					spoolerJob = null;
 					flush();
-				}, 180000);				
+				}, 150000);				
 			}
 		};
 		
@@ -120,8 +137,13 @@
 		$(window).bind("unload", windowListener);
 		
 		this.add = function(msg) {
+			lastMessage = msg;
 			buff.push(msg);
 			activate();
+		};
+		
+		this.getLastMessage = function() {
+			return lastMessage;
 		};
 	}
 	
@@ -174,6 +196,7 @@
 		
 		var toLog = function(level, msg, err, localOnly) {
 			// Log to browser console and remotely when remote service become available.
+			// If err is null it means no error given, otherwise we try extract a message from it 
 			var msgLine = msg;
 			if (err) {
 				msgLine += ". Error: ";
@@ -188,6 +211,8 @@
 					msgLine += (typeof err === "string" ? err : JSON.stringify(err) 
 								+ (err.toString && typeof err.toString === "function" ? "; " + err.toString() : ""));
 				}
+			} else if (err !== null && typeof err !== "undefined") {
+				msgLine += ". Error: '" + err + "'";
 			}
 			var msgDate = new Date().toISOString();
 			if (typeof console !== "undefined" && typeof console.log === "function") {
@@ -216,8 +241,24 @@
 			}
 		};
 		
+		var buildMessageRef = function(msg, user) {
+			return (user ? user.id + "-" : "???-") + clientId + "-" + msg.timestamp;
+		};
+		
 		// It's a logger that will be returned to user code (public methods).
 		function Client() {
+			
+			/**
+			 * Return last message reference in remote log or null if nothing available.
+			 */
+			this.lastMessageRef = function() {
+				var msg = logSpooler.getLastMessage();
+				if (msg && webConferencing) {
+					return buildMessageRef(msg, webConferencing.getUser());
+				}
+				return null;
+			};
+			
 			/**
 			 * Sets text to use as a prefix (e.g. provider prefix).
 			 */
@@ -231,23 +272,6 @@
 			 */
 			this.info = function(message, err) {
 				toLog("info", message, err);
-				return this;
-			};
-			
-			/**
-			 * Add warn level message to user log.
-			 */
-			this.warn = function(message, err) {
-				toLog("warn", message, err);
-				return this;
-			};
-			
-			/**
-			 * Add error level message to user log.
-			 */
-			this.error = function(message, err) {
-				toLog("error", message, err);
-				return this;
 			};
 			
 			/**
@@ -255,7 +279,6 @@
 			 */
 			this.debug = function(message, err) {
 				toLog("debug", message, err);
-				return this;
 			};
 			
 			/**
@@ -263,7 +286,49 @@
 			 */
 			this.trace = function(message, err) {
 				toLog("trace", message, err, true); // traces go to browser console only
-				return this;
+			};
+			
+			/**
+			 * Add warn level message to user log.
+			 */
+			this.warn = function(message, err) {
+				toLog("warn", message, err);
+			};
+			
+			/**
+			 * Add error level message to user log. 
+			 * If after-log callback present and it's a function, then it will be invoked with this message reference.
+			 * A message reference useful to show it to end user and make the message quickly searchable in client logs
+			 * by support/admin person.
+			 */
+			this.error = function(message, err, afterCallback) {
+				toLog("error", message, err);
+				if (typeof err === "function") {
+					afterCallback = err;
+				}
+				var msg = logSpooler.getLastMessage();
+				if (msg && webConferencing && typeof afterCallback === "function") {
+					afterCallback(buildMessageRef(msg, webConferencing.getUser()));
+				}
+			};
+			
+			/**
+			 * Add error level message to user log and show a popup to an user.
+			 * The popup will show given title, message if given or extract it from the error, and logged error reference.
+			 * A message reference useful to show it to end user and make the message quickly searchable in client logs
+			 * by support/admin person.
+			 */
+			this.showError = function(logMessage, err, showTitle, showMessage) {
+				toLog("error", logMessage, err);
+				if (!showMessage && err) {
+					showMessage = errorText(err);
+				}
+				var msgRef;
+				var msg = logSpooler.getLastMessage();
+				if (msg && webConferencing) {
+					msgRef = buildMessageRef(msg, webConferencing.getUser());
+				}
+				showError(showTitle, showMessage, msgRef);
 			};
 		}
 		
@@ -478,7 +543,7 @@
 		return $target.children();
 	};
 	
-	var dialog = function(title, messageText, type) {
+	var dialog = function(title, messageText, type, messageRef) {
 		var loader = $.Deferred();
 		var $dialog = $("#webconferencing-dialog");
 		if ($dialog.length == 0) {
@@ -502,6 +567,13 @@
 			}
 			if (messageText) {
 				appendContent($dialog.find(".contentMessage"), messageText);
+			}
+			var $ref = $dialog.find(".contentReference");
+			if (messageRef) {
+				$ref.text(messageRef); // replace everything 
+				$ref.show();
+			} else {
+				$ref.hide();
 			}
 			var $actions = $dialog.find(".popupActions");
 			var $okButton = $actions.find(".okButton");
@@ -536,8 +608,8 @@
 		return process.promise();
 	};
 	
-	var showError = function(title, text) {
-		return dialog(title, text, "ColorError");
+	var showError = function(title, text, errorRef) {
+		return dialog(title, text, "ColorError", errorRef ? message("errorReference") + errorRef : null);
 	};
 	
 	var showWarn = function(title, text) {
@@ -839,12 +911,12 @@
 					var serverUrl = $chatStatus.data("chat-server-url");
 					if (serverUrl) {
 						url = serverUrl + "/users";
+						currentUser = chatNotification.username;
+						dbName = chatNotification.dbName;
+						token = chatNotification.token;
 					} else {
 						process.reject("Cannot determine Chat server URL"); 
 					}
-					currentUser = chatNotification.username;
-					dbName = chatNotification.dbName;
-					token = chatNotification.token;
 				} else {
 					process.reject("Chat credentials not found");
 				}
@@ -852,7 +924,7 @@
 				process.reject("Chat not found");
 			}
 			
-			if (url && roomId) {
+			if (roomId && url) {
 				serviceGet(url, {
 	        room: roomId,
 	        user: currentUser,
@@ -889,40 +961,38 @@
 				if (!id) {
 					id = chatApplication.targetUser;					
 				}
-				if (!id) {
-					process.reject(null);
+				if (id) {
+					url = chatApplication.jzChatGetRoom;
+					currentUser = chatApplication.username;
+					dbName = chatApplication.dbName;
+					token = chatApplication.token;
 				}
-				url = chatApplication.jzChatGetRoom;
-				currentUser = chatApplication.username;
-				dbName = chatApplication.dbName;
-				token = chatApplication.token;
 			} else if (isEmbedded()) {
 				if (!id) {
 					id = jzGetParam(chatNotification.sessionId + "miniChatRoom");
 					type = jzGetParam(chatNotification.sessionId + "miniChatType");
 				}
-				if (!id) {
-					process.reject(null);
-				}
-				var $chatStatus = $("#chat-status");
-				if ($chatStatus.length > 0) {
-					var serverUrl = $chatStatus.data("chat-server-url");
-					if (serverUrl) {
-						url = serverUrl + "/getRoom";
+				if (id) {
+					var $chatStatus = $("#chat-status");
+					if ($chatStatus.length > 0) {
+						var serverUrl = $chatStatus.data("chat-server-url");
+						if (serverUrl) {
+							url = serverUrl + "/getRoom";
+							currentUser = chatNotification.username;
+							dbName = chatNotification.dbName;
+							token = chatNotification.token;s
+						} else {
+							process.reject("Cannot determine Chat server URL"); 
+						}
 					} else {
-						process.reject("Cannot determine Chat server URL"); 
+						process.reject("Chat credentials not found");
 					}
-					currentUser = chatNotification.username;
-					dbName = chatNotification.dbName;
-					token = chatNotification.token;
-				} else {
-					process.reject("Chat credentials not found");
 				}
 			} else {
 				process.reject("Chat not found");
 			}
 			
-			if (url && id) {
+			if (id && url) {
 				var roomReq = {
 					targetUser: id,
 					user: currentUser,
@@ -943,7 +1013,7 @@
 					process.reject(err, status);
 				});				
 			} else if (process.state() == "pending") {
-				process.reject("Cannot get chat room: prerequisites failed");
+				process.resolve(null);
 			}
 			
 			return process.promise();
@@ -1118,9 +1188,9 @@
 					// 2) if already calling, then need wait for previous call completion and then re-call this method 
 					var prevInitializer = $target.data("callbuttoninit");
 					if (prevInitializer) {
-						log.trace(">>> addCallButton > init WAIT " + contextName + " providers: " + addProviders.length);
+						log.trace(">> addCallButton > init WAIT " + contextName + " providers: " + addProviders.length);
 						prevInitializer.always(function() {
-							log.trace(">>> addCallButton > init RESUMED " + contextName + " providers: " + addProviders.length);
+							log.trace(">> addCallButton > init RESUMED " + contextName + " providers: " + addProviders.length);
 							addCallButton($target, context).done(function($container) {
 								initializer.resolve($container);
 							}).fail(function(err) {
@@ -1129,10 +1199,8 @@
 						});
 					} else {
 						$target.data("callbuttoninit", initializer);
-						//log.trace(">>> addCallButton > init " + contextName + " providers: " + addProviders.length);
 						initializer.always(function() {
 							$target.removeData("callbuttoninit");
-							//log.trace("<<< addCallButton < init " + contextName + " providers: " + addProviders.length);
 						});
 						// Call button placed in a 'container' element for positioning on a page
 						// TODO may be we don't need it since we don't have a default button?
@@ -1170,13 +1238,11 @@
 							} // else, nothing to move at all
 						}
 						function addProviderButton(provider, button) {
-							//log.trace(">>> addCallButton > adding > " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
 							// need do this in a function to keep worker variable in the scope of given button when it will be done 
 							var bworker = $.Deferred();
 							button.done(function($button) {
 								if (hasButton) {
 									// add this button as an item to dropdown list
-									//log.trace(">>> addCallButton > add in dropdown > " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
 									if ($dropdown.length == 0) { // check actual dropdown content right here, not addDropdown
 										$dropdown = $("<ul class='dropdown-menu'></ul>");
 									}
@@ -1186,7 +1252,6 @@
 									$dropdown.append($li);
 								} else {
 									// add as a first (single) button
-									//log.trace(">>> addCallButton > add first & default button > " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
 									if (!$button.hasClass("btn")) {
 										$button.addClass("btn"); // btn btn-primary actionIcon ?
 									}
@@ -1207,10 +1272,10 @@
 										//moveToDefaultButton($button);
 									});
 								}
-								log.trace("<<< addCallButton DONE < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
+								log.trace("<< addCallButton DONE < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
 							});
 							button.fail(function(msg, err) {
-								log.trace("<<< addCallButton CANCELED < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id + ": " + msg);
+								log.trace("<< addCallButton CANCELED < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id + ": " + msg);
 								if (err) {
 									log.error("Failed to add a call button for " + contextName + " by " + context.currentUser.id + ". " + msg + ". " + errorText(err));
 								}
@@ -1222,13 +1287,10 @@
 							workers.push(bworker.promise());
 						}
 						// we have an one button for each provider
-						//log.trace(">>> addCallButton > " + contextName + " for " + context.currentUser.id + " providers: " + addProviders.length);
 						for (var i = 0; i < addProviders.length; i++) {
 							var p = addProviders[i];
-							//log.trace(">>> addCallButton > next provider > " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id + " providers: " + addProviders.length);
 							if (p.isInitialized) {
 								if ($container.data(providerFlag + p.getType())) {
-									//log.trace("<<< addCallButton DONE (already) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
 								} else {
 									// even if adding will fail, we treat it as 'canceled' and mark the provider as added
 									$container.data(providerFlag + p.getType(), true);
@@ -1236,7 +1298,7 @@
 									addProviderButton(p, b);
 								}								
 							} else {
-								log.trace("<<< addCallButton CANCELED (not initialized) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
+								log.trace("<< addCallButton CANCELED (not initialized) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
 							}
 						}
 						if (workers.length > 0) {
@@ -1328,11 +1390,10 @@
 										}).fail(function(err) {
 											log.debug("Error getting Chat room info " + roomName + "/" + roomId + " for chat context", err);
 											data.reject(err);
-											// TODO notify the user?
 										});
 							  	}).fail(function(err) {
 							  		log.debug("Error getting Chat room users " + roomId + " for chat context", err);
-										data.reject("Error reading Chat room users for " + roomId);
+										data.reject(err);
 							  	});
 						  	} else {
 						  		data.reject("Unexpected context chat type: " + chatType + " for " + roomTitle);
@@ -1416,22 +1477,19 @@
 										});
 										initializer.fail(function(err) {
 											if (error) {
-												log.trace("<< initChat ERROR " + context.roomTitle + " for " + currentUser.id, err);
 												log.error("Chat initialization failed in '" + context.roomTitle + "' for " + currentUser.id, err);
 												$roomDetail.removeData("roomcallinitialized");
 											}
 										});
 									} else {
-										log.trace("<< initChat WARN no room found in context");
+										log.trace("<< initChat no room found in context");
 										$roomDetail.removeData("roomcallinitialized");
 									}
 								}).fail(function(err) {
-									log.trace("<< initChat ERROR getting room info from chatServer", err);
 									log.error("Error getting room info from Chat server", err);
 									$roomDetail.removeData("roomcallinitialized");
 								}); 
 							} else {
-								//log.trace("Chat team dropdown not found");
 								$roomDetail.removeData("roomcallinitialized");
 							}
 						}, 1500); // XXX whoIsOnline may run 500-750ms on eXo Tribe
@@ -1465,9 +1523,7 @@
 				var $miniChat = $(".mini-chat").first();
 				var $fullName = $miniChat.find(".fullname");
 				if (chat.isEmbedded() && $fullName.length > 0) {
-					if ($miniChat.data("minichatcallinitialized")) {
-						//log.trace("<< initMiniChat CANCELED < Already initialized [" + $fullName.text().trim() + "] for " + currentUser.id);
-					} else {
+					if (!$miniChat.data("minichatcallinitialized")) {
 						$miniChat.data("minichatcallinitialized", true);
 						var process = $.Deferred();
 						var addMiniChatCallButton = function() {
@@ -1498,7 +1554,6 @@
 											});
 											initializer.fail(function(err) {
 												if (err) {
-													log.trace("<< initMiniChat ERROR [" + context.roomTitle + "] for " + currentUser.id, err);
 													log.error("Mini-chat initialization failed in " + context.roomTitle + " for " + currentUser.id, err);
 													$miniChat.removeData("minichatcallinitialized");												
 												}
@@ -1507,8 +1562,7 @@
 											log.trace("<< initMiniChat WARN no room found in context");
 										}
 									}).fail(function(err) {
-										log.trace("<< initMiniChat ERROR getting room info from chatServer", err);
-										log.error("Error getting room info from Chat server", err);
+										log.error("Error getting room info from Chat server (for mini-chat)", err);
 									});
 								}, 750);
 							} else {
@@ -1589,7 +1643,6 @@
 						return null;
 					}
 					var observer = new MutationObserver(function(mutations) {
-						//log.trace(">>> onTiptipUpdate mutations " + mutations.length);
 						for(var i=0; i<mutations.length; i++) {
 							var m = mutations[i];
 							var tipName;
@@ -1993,7 +2046,6 @@
 		 */
 		this.getCall = function(id) {
 			if (cometd) {
-				//log.trace(">> getCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					command : "get",
@@ -2002,10 +2054,8 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						//log.trace("<< getCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result);
 					} else {
-						//log.trace("<< getCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result);
 					}
 				});
@@ -2021,7 +2071,6 @@
 		 */
 		this.updateCall = function(id, state) {
 			if (cometd) {
-				//log.trace(">> updateCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					command : "update",
@@ -2031,10 +2080,8 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						//log.trace("<< updateCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result);
 					} else {
-						//log.trace("<< updateCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result);
 					}
 				});
@@ -2050,7 +2097,6 @@
 		 */
 		this.deleteCall = function(id) {
 			if (cometd) {
-				//log.trace(">> deleteCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					command : "delete",
@@ -2059,10 +2105,8 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						//log.trace("<< deleteCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result);
 					} else {
-						//log.trace("<< deleteCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result);
 					}
 				});
@@ -2078,7 +2122,6 @@
 		 */
 		this.addCall = function(id, callInfo) {
 			if (cometd) {
-				//log.trace(">> addCall:/webconferencing/calls:" + id + " - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams($.extend(callInfo, {
 					command : "create",
@@ -2087,10 +2130,8 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						//log.trace("<< addCall:/webconferencing/calls:" + id + " - success: " + cometdInfo(response));
 					  process.resolve(result);
 					} else {
-						//log.trace("<< addCall:/webconferencing/calls:" + id + " - failure: " + cometdError(response));
 						process.reject(result);
 					}
 				});
@@ -2103,7 +2144,6 @@
 				
 		this.getUserGroupCalls = function() {
 			if (cometd) {
-				//log.trace(">> getUserGroupCalls:/webconferencing/calls - request published");
 				var process = $.Deferred();
 				var callProps = cometdParams({
 					id : currentUser.id,
@@ -2112,10 +2152,8 @@
 				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
 					var result = tryParseJson(response);
 					if (response.successful) {
-						//log.trace("<< getUserGroupCalls:/webconferencing/calls - success: " + cometdInfo(response));
 					  process.resolve(result);
 					} else {
-						//log.trace("<< getUserGroupCalls:/webconferencing/calls - failure: " + cometdError(response));
 						process.reject(result);
 					}
 				});
@@ -2234,10 +2272,8 @@
 			if (cometd) {
 				cometd.publish("/eXo/Application/WebConferencing/call/" + callId, cometdParams(data), function(publishAck) {
 			    if (publishAck.successful) {
-			    	//log.trace("<< Call update reached the server: " + JSON.stringify(publishAck));
 			    	process.resolve("successful");
 			    } else {
-			    	//log.trace("<< Call update failed to reach the server: " + JSON.stringify(publishAck));
 			    	process.reject(publishAck.failure ? publishAck.failure.reason : publishAck.error);
 			    }
 				});

@@ -189,6 +189,7 @@
 #webconferencing-dialog .popupContent {
 	max-height: 400px;
 	overflow: auto;
+	min-width: 600px;
 }
 
 #webconferencing-dialog .popupIcon, #webconferencing-dialog .popupMessage {
@@ -196,8 +197,27 @@
 	padding-right: 5px;
 }
 
+#webconferencing-dialog .popupIcon {
+	float: left;
+  width: 40px;
+  margin-top: 10px;
+  margin-left: 10px;	
+}
+
+#webconferencing-dialog .popupMessage {
+	width: 90%;
+}
+
+#webconferencing-dialog .contentContainer {
+	/*padding-bottom: 40px;*/
+}
+
 #webconferencing-dialog .title {
 	font-weight: bold;
+}
+
+#webconferencing-dialog .contentReference {
+	opacity: 0.75;
 }
  
 #webconferencing-dialog .uiAction {

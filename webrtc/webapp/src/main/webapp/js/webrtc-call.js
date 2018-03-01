@@ -44,8 +44,9 @@ if (eXo.webConferencing) {
 			return dmsg.replace(/\+/g, " ");
 		}
 
-		function showError(title, message) {
+		function showError(title, message, ref) {
 			$("#webrtc-call-conversation, #webrtc-call-title, #webrtc-call-starting").hide();
+			$("#webrtc-call-container").css("pointer-events", "none");
 			var $error = $("#webrtc-call-error");
 			if ($error.length == 0) {
 				$error = $("<div id='webrtc-call-error'></div>");
@@ -59,17 +60,28 @@ if (eXo.webConferencing) {
 			var $description = $("<div class='error-description'></div>");
 			$description.text(message);
 			$error.append($description);
+			if (ref) {
+				var $ref = $("<div class='error-ref'></div>");
+				$ref.text(webConferencing.message("errorReference") + ref);
+				$error.append($ref);				
+			}
 		}
 		
-		function showStarted(message) {
-			var $starting = $("#webrtc-call-starting");
-			$starting.empty();
-			var $info = $(".startInfo");
-			if ($info.length == 0) {
-				$info = $("<div class='startInfo'></div>");
-				$starting.append($info);
+		function showStopped(message) {
+			$("#webrtc-call-starting, #controls").hide();
+			$("#webrtc-call-container").css("pointer-events", "none");
+			if ($("#webrtc-call-error").length == 0) {
+				// Show the message only if no error shown already
+				var $stopped = $("#webrtc-call-stopped");
+				$stopped.empty();
+				var $info = $(".stopInfo");
+				if ($info.length == 0) {
+					$info = $("<div class='stopInfo'></div>");
+					$stopped.append($info);
+				}
+				$info.text(message);
+				$stopped.show();
 			}
-			$info.text(message);
 		}
 		
 		function objectUrl(obj) {
@@ -87,6 +99,7 @@ if (eXo.webConferencing) {
 		eXo.webConferencing.startCall = function(call) {
 			var process = $.Deferred();
 			$(function() {
+				$("#webrtc-call-container").css("pointer-events", "auto");
 				webConferencing.getProvider("webrtc").done(function(webrtc, initialized) {
 					if (initialized) {
 						if (webrtc.isSupportedPlatform()) {
@@ -129,6 +142,56 @@ if (eXo.webConferencing) {
 								
 								// Page closing should end a call properly
 								var pc;
+								var $outgoingRing;
+								var stopStream = function(stream) {
+									var videoTracks = stream.getVideoTracks();
+									for (var i = 0; i < videoTracks.length; ++i) {
+										videoTracks[i].stop();
+								  }
+									var audioTracks = stream.getAudioTracks();
+									for (var i = 0; i < audioTracks.length; ++i) {
+										audioTracks[i].stop();
+								  }
+								};
+								var stopLocal = function() {
+									if ($outgoingRing) {
+										$outgoingRing.remove();
+									}
+
+									showStopped(webrtc.message("callStopped"));
+									
+									var localStream = localVideo.srcObject;
+									localVideo.srcObject = null;
+									if (localStream) {
+										stopStream(localStream);
+									}
+									
+									if (pc) {
+										try {
+											// TODO in FF it warns:
+											// RTCPeerConnection.getLocalStreams/getRemoteStreams are deprecated. Use RTCPeerConnection.getSenders/getReceivers instead.
+											// But for Chrome it's seems a single working solution
+											var localStreams = pc.getLocalStreams();
+											for (var i = 0; i < localStreams.length; ++i) {
+												stopStream(localStreams[i]);
+										  }
+											var remoteStreams = pc.getRemoteStreams();
+											for (var i = 0; i < remoteStreams.length; ++i) {
+												stopStream(remoteStreams[i]);
+										  }
+										} catch(e) {
+											log.warn("Failed to stop peer streams", e);
+										}
+										try {
+											pc.close();
+										} catch(e) {
+											log.warn("Failed to close peer connection", e);
+										}											
+									}
+									window.removeEventListener("beforeunload", beforeunloadListener);
+									window.removeEventListener("unload", unloadListener);
+								};
+								
 								var stopping = false;
 								var stopCall = function(localOnly) {
 									// TODO Here we also could send 'bye' message - it will work for 'Hang Up' button, 
@@ -140,17 +203,6 @@ if (eXo.webConferencing) {
 													+ "<source src='/webrtc/audio/complete.mp3' type='audio/mpeg'>"  
 													+ "Your browser does not support the audio element.</audio>");
 										$(document.body).append($complete);
-										function stopLocal() {
-											if (pc) {
-												try {
-													pc.close();
-												} catch(e) {
-													log.warn("Failed to close peer connection", e);
-												}											
-											}
-											window.removeEventListener("beforeunload", beforeunloadListener);
-											window.removeEventListener("unload", unloadListener);
-										}
 										if (localOnly) {
 											stopLocal();
 										} else {
@@ -182,20 +234,25 @@ if (eXo.webConferencing) {
 									if (update.eventType == "call_state") {
 										if (update.owner.type == "user") {
 											if (update.callState == "stopped" && update.callId == callId) {
-												if (!stopping) {
-													log.info("Call stopped remotelly: " + update.callId);
-													stopCallWaitClose(true);
-												} // else, call already stopped by this user, but we want keep the window open to report errors 
+												var msg = "Call stopped remotely: " + update.callId;
+												if (stopping) {
+													log.trace(msg);	// it's already logged remotely by this client
+												} else {
+													log.info(msg);
+												}
+												// don't close the window - we let user see that call was stopped (remotely)
+												stopCall(true);
 											}
 										}
 									}
 								}, function(err) {
-									// TODO should we move all further logic to done promise?
 									// Otherwise, in case of error subscribing user updates and remote call stopping
 									// this window will stay open.
-									log.warn("User calls subscription failure: " + callId, err);
-									// we don't reject the progress promise as the call still may run successfully 
-									webConferencing.showWarn(webrtc.message("errorSubscribeUser"), err);
+									log.error("User calls subscription failure: " + callId, err, function(ref) {
+										webConferencing.showError(webrtc.message("errorStartingCall"), 
+													webrtc.message("errorSubscribeUser") + ". " + webrtc.message("refreshTryAgainContactAdmin"), ref);
+									});
+									// we don't reject the progress promise as the call still may run successfully
 								});
 								
 								// WebRTC connection to establish a call connection
@@ -253,18 +310,24 @@ if (eXo.webConferencing) {
 									var negotiation = $.Deferred();
 									var connection = $.Deferred();
 									
-									var showConnectionError = function(err) {
-										showError(webrtc.message("errorStartingConnection"), webConferencing.errorText(err));
+									var handleConnectionError = function(logMessage, err) {
+										log.error(logMessage, err, function(ref) {
+											showError(webrtc.message("errorStartingConnection"), webConferencing.errorText(err), ref);	
+										});
+										// Release a peer connection (and media devices) and delete a call 
+										stopCall();
+										// TODO we also could send a fact of error to other peer(s) to inform them about this peer state,
+										// then others could stop calling (for P2P) or mark a participant disconnected (in group calls).
 									};
 									
 									// Play incoming ringtone for the call owner until complete negotiation
 									if (isOwner) {
-										var $ring = $("<audio loop autoplay style='display: none;'>" 
+										$outgoingRing = $("<audio loop autoplay style='display: none;'>" 
 													+ "<source src='/webrtc/audio/echo.mp3' type='audio/mpeg'>"  
 													+ "Your browser does not support the audio element.</audio>");
-										$(document.body).append($ring);
+										$(document.body).append($outgoingRing);
 										negotiation.then(function() {
-											$ring.remove();
+											$outgoingRing.remove();
 										});
 									}
 									
@@ -286,8 +349,7 @@ if (eXo.webConferencing) {
 							      }).done(function() {
 							      	log.debug("Sent Hello by " + (isOwner ? "owner" : "participant") + " for " + callId);
 							      }).fail(function(err) {
-											log.error("Failed to send Hello for " + callId, err);
-											showConnectionError(err);
+											handleConnectionError("Failed to send Hello for " + callId, err);
 										});
 									};
 									var sendBye = function() {
@@ -308,9 +370,8 @@ if (eXo.webConferencing) {
 							      }).done(function() {
 							      	log.debug("Published offer for " + callId + " " + JSON.stringify(localDescription));
 										}).fail(function(err) {
-											log.error("Failed to send offer for " + callId, err);
 											// TODO May be to retry?
-											showConnectionError(err);
+											handleConnectionError("Failed to send offer for " + callId, err);
 										});
 									};
 									var sendAnswer = function(localDescription) {
@@ -319,8 +380,7 @@ if (eXo.webConferencing) {
 							      }).done(function() {
 							      	log.debug("Published answer for " + callId + " " + JSON.stringify(localDescription));
 										}).fail(function(err) {
-											log.error("Failed to send answer for " + callId, err);
-											showConnectionError(err);
+											handleConnectionError("Failed to send answer for " + callId, err);
 										});
 									};
 									var sendCandidate = function(candidate) {
@@ -329,8 +389,7 @@ if (eXo.webConferencing) {
 							      }).done(function() {
 							      	log.debug("Published candidate for " + callId + " " + JSON.stringify(candidate));
 										}).fail(function(err) {
-											log.error("Failed to send candidate for " + callId, err);
-											showConnectionError(err);
+											handleConnectionError("Failed to send candidate for " + callId, err);
 										});
 									};
 									
@@ -402,12 +461,10 @@ if (eXo.webConferencing) {
 												    			// TODO Something else here?
 												    		});
 												      }).catch(function(err) {
-												      	log.error("Failed to set local description for " + callId, err);
-												      	showConnectionError(err);
+												      	handleConnectionError("Failed to set local description for " + callId, err);
 													    });
 												    }).catch(function(err) {
-												    	log.error("Failed to create an offer for " + callId, err);
-												    	showConnectionError(err);
+												    	handleConnectionError("Failed to create an offer for " + callId, err);
 												    });
 								  				});
 							  				});						  					
@@ -462,7 +519,6 @@ if (eXo.webConferencing) {
 										$miniVideo.removeClass("active");
 										$miniVideo.hide();
 										
-										//
 										$videos.removeClass("active");
 								  };
 									
@@ -481,8 +537,7 @@ if (eXo.webConferencing) {
 															pc.addIceCandidate(candidate).then(function() {
 															  log.debug("Added candidate for " + callId);
 															}).catch(function(err) {
-																log.error("Failed to add candidate for " + callId, err);
-																showConnectionError(err);
+																handleConnectionError("Failed to add candidate for " + callId, err);
 															});														
 														});
 													} else {
@@ -519,28 +574,26 @@ if (eXo.webConferencing) {
 														      					// Participant ready to exchange ICE candidates
 																						log.debug("Started exchange network information with peers for " + callId);
 																					});
-														      			}).catch(function(err) { // error will be logged in sendAnswer()
-														      				showConnectionError(err);
-														      			});
+														      			})/* TODO cleanup: .catch(function(err) { -- already caught in sendAnswer()
+														      				handleConnectionError("Failed to add candidate for " + callId, err);
+														      			});*/
 														      		}).catch(function(err) {
-														      			log.error("Failed to set local description (answer) for " + callId, err);
-															      		showConnectionError(err);
+															      		handleConnectionError("Failed to set local description (answer) for " + callId, err);
 														      		});
 														      	}).catch(function(err) {
-														      		log.error("Failed to create an answer for " + callId, err);
-														      		showConnectionError(err);
+														      		handleConnectionError("Failed to create an answer for " + callId, err);
 														      	});
 														      } else {
-														      	log.error("Remote description type IS NOT 'offer' BUT '" + pc.remoteDescription.type + "'. Call state not defined.");
+														      	// TODO need show something to an user or it's normal behaviour (part of a flow)?
+														      	log.error("Remote description type IS NOT 'offer' BUT '" + pc.remoteDescription.type 
+														      				+ "'. Call state not defined for " + callId);
 														      }
 														    }).catch(function(err) {
-														    	log.error("Failed to set remote description (offer) for " + callId, err);
-														    	showConnectionError(err);
+														    	handleConnectionError("Failed to set remote description (offer) for " + callId, err);
 														    });
 															});
 														} catch(err) {
-															log.error("Error processing offer for " + callId, err);
-															showConnectionError(err);
+															handleConnectionError("Error processing offer for " + callId, err);
 														}
 													}
 												} else if (message.answer) {
@@ -562,13 +615,11 @@ if (eXo.webConferencing) {
 																		log.debug("Started exchange network information with peers for " + callId);
 																	});
 														    }).catch(function(err) {
-														    	log.error("Failed to set answer (remote description) for " + callId, err);
-														    	showConnectionError(err);
+														    	handleConnectionError("Failed to set answer (remote description) for " + callId, err);
 														    });
 															});
 														} catch(err) {
-															log.error("Error processing answer for " + callId, err);
-															showConnectionError(err);
+															handleConnectionError("Error processing answer for " + callId, err);
 														}
 													} else {
 														// FYI this could be OK to receive for group call
@@ -608,10 +659,11 @@ if (eXo.webConferencing) {
 											} // otherwise: skip own update 
 										}
 									}, function(err) {
-										log.error("Call subscribtion failed for " + callId, err);
-										err = webConferencing.errorText(err);
-										process.reject(webrtc.message("errorSubscribeCall") + ". " + err);
-										showError(webrtc.message("errorSubscribeCall"), err);
+										var userMsg = webrtc.message("errorSubscribeCall") + ". " + webrtc.message("refreshTryAgainContactAdmin");
+										log.error("Call subscribtion failed for " + callId, err, function(ref) {
+											showError(webrtc.message("errorStartingCall"), userMsg, ref);	
+										});
+										process.reject(userMsg);
 									}, function() {
 										subscribed.resolve();
 									});
@@ -678,6 +730,7 @@ if (eXo.webConferencing) {
 											video : true
 										}, "Unable read devices, go with default audio and video.");
 									}
+									log.info("Starting call " + callId);
 									inputsReady.done(function(constraints, comment) {
 										log.info("Media constraints: " + JSON.stringify(constraints) + " " + comment);
 										navigator.mediaDevices.getUserMedia(constraints).then(function(localStream) {
@@ -724,7 +777,6 @@ if (eXo.webConferencing) {
 												$muteVideo.toggleClass("on");
 											});
 
-										  log.info("Starting call " + callId);
 										  // add local stream for owner right now
 										  if (isOwner) {
 										  	log.debug("Adding local (owner) stream for " + callId);
@@ -766,50 +818,62 @@ if (eXo.webConferencing) {
 											});
 										}).catch(function(err) {
 											// In case of getting user medias we can face with different errors (on different browsers and its versions)
-											var errMessage = webConferencing.errorText(err);
-											if (!errMessage) {
+											var errMsg = webConferencing.errorText(err);
+											if (!errMsg) {
 												if (err.code && err.PERMISSION_DENIED) {
 													// For older version of Chrome
-													log.error("Failed to get media devices", "PERMISSION_DENIED " + err.code);
-													errMessage = webrtc.message("accessDenied");
+													err = "PERMISSION_DENIED " + err.code;
+													errMsg = webrtc.message("accessDenied");
 												} else {
-													log.error("Failed to get media devices", err);
 													if (err.name && err.name == "PermissionDeniedError") {
 														// Chrome may not provide a message for this error
-														errMessage = webrtc.message("accessDenied");
+														errMsg = webrtc.message("accessDenied");
 													}
 												}
-											} else {
-												log.error("Failed to get media devices", err);
 											}
-											showError(webrtc.message("mediaDevicesError"), errMessage);
+											log.error("Failed to get media devices", err, function(ref) {
+												showError(webrtc.message("mediaDevicesError"), errMsg, ref);												
+											});
+											stopCall();
 										});
 									}).fail(function(err) {
-										log.error("Media devices discovery failed", err);
-										showError(webrtc.message("audioVideoRequired"), webConferencing.errorText(err));
+										log.error("Media devices discovery failed", err, function(ref) {
+											showError(webrtc.message("audioVideoRequired"), webConferencing.errorText(err), ref);
+										});
+										stopCall();
 									});
 									// Resolve this in any case of above media devices discovery result
 									process.resolve("started");
 								} catch(err) {
-									log.error("Failed to create RTC peer connection for " + callId, err);
-									process.reject(err);
-									showError(webrtc.message("connectionFailed"), webConferencing.errorText(err));
+									var userMsg = webrtc.message("connectionFailed") + " (" + webConferencing.errorText(err) + ")" 
+											+ ". " + webrtc.message("refreshTryAgainContactAdmin");
+									log.error("Failed to create RTC peer connection for " + callId, err, function(ref) {
+										showError(webrtc.message("errorStartingCall"), userMsg, ref);
+									});
+									process.reject(userMsg);
 									stopCall();
 								}
 							}
 						} else {
-							log.error("WebRTC call not supported in this browser: " + navigator.userAgent);
-							process.reject(webrtc.message("yourBrowserNotSupportWebrtc"));
-							showError(webrtc.message("notSupportedPlatform"), webrtc.message("yourBrowserNotSupportWebrtc") + ".");
+							var userMsg = webrtc.message("yourBrowserNotSupportWebrtc");
+							log.error("WebRTC call not supported in this browser: " + navigator.userAgent, function(ref) {
+								showError(webrtc.message("notSupportedPlatform"), userMsg + ".", ref);
+							});
+							process.reject(userMsg);
 						}						
 					} else {
-						log.error("Provider not initialized");
-						process.reject(webrtc.message("notInitialized") + ": " + navigator.userAgent);
-						showError(webrtc.message("providerError"), webrtc.message("notInitialized") + ".");
+						var userMsg = webrtc.message("notInitialized");
+						log.error("Provider not initialized", function(ref) {
+							showError(webrtc.message("providerError"), userMsg + ".", ref);
+						});
+						process.reject(userMsg);
 					}
 				}).fail(function(err) {
-					log.error("Provider not available", err);
-					process.reject(webrtc.message("providerNotAvailable") + ". " + webConferencing.errorText(err));
+					var userMsg = webrtc.message("providerNotAvailable") + " (" + webConferencing.errorText(err) + ")";
+					log.error("Provider not available", err, function(ref) {
+						showError(webrtc.message("providerError"), userMsg + ".", ref);
+					});
+					process.reject(userMsg);
 				});
 			});
 			return process.promise();

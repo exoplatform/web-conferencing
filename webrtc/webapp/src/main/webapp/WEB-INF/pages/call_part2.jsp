@@ -75,6 +75,8 @@
 			</div>
 		</div>
 	</div>
+	<div id="webrtc-call-stopped" style="display:none;">
+	</div>
 	<script type="text/javascript" src="/webrtc/js/webrtc-call.js"></script>	
 </body>
 </html>
