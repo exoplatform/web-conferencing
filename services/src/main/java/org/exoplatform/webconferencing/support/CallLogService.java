@@ -26,61 +26,6 @@ package org.exoplatform.webconferencing.support;
  */
 public class CallLogService {
 
-  /**
-   * The Class ManagedCallLog.
-   */
-  class ManagedCallLog extends CallLog {
-
-    /** The consumer id. */
-    private final String consumerId;
-
-    /**
-     * Instantiates a new managed call log.
-     *
-     * @param consumerId the consumer id
-     */
-    ManagedCallLog(String consumerId) {
-      this.consumerId = consumerId;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void info(String msg) {
-      // TODO Auto-generated method stub
-      super.info(msg);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void warn(String msg) {
-      // TODO Auto-generated method stub
-      super.warn(msg);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void error(String msg) {
-      // TODO Auto-generated method stub
-      super.error(msg);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void trace(String msg) {
-      // TODO Auto-generated method stub
-      super.trace(msg);
-    }
-
-  }
-
   /** The log. */
   private final CallLog log = new CallLog();
 
@@ -88,7 +33,6 @@ public class CallLogService {
    * Instantiates a new call log service.
    */
   public CallLogService() {
-    // TODO any?
   }
 
   /**
@@ -97,7 +41,6 @@ public class CallLogService {
    * @return the log
    */
   public CallLog getLog() {
-    // TODO use managed log
     return log;
   }
 

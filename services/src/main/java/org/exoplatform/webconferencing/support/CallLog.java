@@ -18,6 +18,16 @@
  */
 package org.exoplatform.webconferencing.support;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -34,34 +44,43 @@ import org.exoplatform.services.log.Log;
 public class CallLog {
 
   /** The Constant LOG. */
-  private static final Log   LOG                           = ExoLogger.getLogger(CallLog.class);
+  private static final Log   LOG                               = ExoLogger.getLogger(CallLog.class);
 
   /** The Constant TRACE_LEVEL. */
-  public static final String TRACE_LEVEL                   = "trace".intern();
+  public static final String TRACE_LEVEL                       = "trace".intern();
 
   /** The Constant DEBUG_LEVEL. */
-  public static final String DEBUG_LEVEL                   = "debug".intern();
+  public static final String DEBUG_LEVEL                       = "debug".intern();
 
   /** The Constant INFO_LEVEL. */
-  public static final String INFO_LEVEL                    = "info".intern();
+  public static final String INFO_LEVEL                        = "info".intern();
 
   /** The Constant WARN_LEVEL. */
-  public static final String WARN_LEVEL                    = "warn".intern();
+  public static final String WARN_LEVEL                        = "warn".intern();
 
   /** The Constant ERROR_LEVEL. */
-  public static final String ERROR_LEVEL                   = "error".intern();
+  public static final String ERROR_LEVEL                       = "error".intern();
 
   /** The Constant MESSAGE_NO_DATA. */
-  public static final String MESSAGE_NO_DATA               = "<no data>";
+  public static final String MESSAGE_NO_DATA                   = "<no data>";
 
   /** Log message max length. */
-  public static final int    MESSAGE_MAX_LENGTH            = 1024 * 5;
+  public static final int    MESSAGE_MAX_LENGTH                = 1024 * 5;
 
   /** Log message critical length. Values longer of this will be cut by the logger. */
-  public static final int    MESSAGE_CRITICAL_LENGTH       = 1024 * 10;
+  public static final int    MESSAGE_CRITICAL_LENGTH           = 1024 * 10;
 
   /** The Constant MESSAGE_CRITICAL_LENGTH_FINAL. */
-  protected static final int MESSAGE_CRITICAL_LENGTH_FINAL = MESSAGE_CRITICAL_LENGTH + 256;
+  protected static final int MESSAGE_CRITICAL_LENGTH_FINAL     = MESSAGE_CRITICAL_LENGTH + 256;
+
+  /** Maximum messages buffer size after which we can flush it to the logger. */
+  public static final int    MESSAGES_BUFFER_MAX_SIZE          = 50;
+
+  /** Maximum expected age of a message not flushed to the logger. */
+  public static final int    MESSAGES_BUFFER_EXPIRATION_MILLIS = 60000;
+
+  /** How long to wait between checks in flush thread. */
+  public static final int    MESSAGES_BUFFER_WAIT_MILLIS       = 20000;
 
   /**
    * Checks if is message valid. If not valid, a log warn also will be reported about the length.
@@ -104,11 +123,282 @@ public class CallLog {
     return msg;
   }
 
+  abstract class Message implements Comparable<Message> {
+
+    private final LocalDateTime timestamp;
+
+    /**
+     * Instantiates a new message with current time as timestamp.
+     */
+    Message() {
+      timestamp = LocalDateTime.now();
+    }
+
+    /**
+     * Instantiates a new message with given timestamp, if <code>null</code> given then current time will be
+     * used.
+     *
+     * @param timestamp the timestamp
+     */
+    Message(LocalDateTime timestamp) {
+      if (timestamp == null) {
+        timestamp = LocalDateTime.now();
+      }
+      this.timestamp = timestamp;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int compareTo(Message o) {
+      return this.getTimestamp().compareTo(o.getTimestamp());
+    }
+
+    /**
+     * Gets the message timestamp.
+     *
+     * @return the timestamp
+     */
+    LocalDateTime getTimestamp() {
+      return timestamp;
+    }
+
+    /**
+     * Write message to the log.
+     */
+    abstract void log();
+  }
+
+  /**
+   * The log messages buffer.
+   */
+  private final Queue<Message> messages = new ConcurrentLinkedQueue<>();
+
+  /** The flusher for messages queue. */
+  private Map<Boolean, Thread> flusher  = new ConcurrentHashMap<>(1);
+
   /**
    * Instantiates a new call log (for internal use).
    */
   CallLog() {
+    try {
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        public void run() {
+          flushAll();
+        }
+      });
+    } catch (Throwable e) {
+      LOG.warn("Failed to register shutdown hook " + e.getMessage());
+    }
   }
+
+  /**
+   * Info message.
+   *
+   * @param msg the msg
+   */
+  public void info(String msg) {
+    if (LOG.isInfoEnabled()) {
+      messages.add(new Message() {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        void log() {
+          LOG.info(validateFinal(msg));
+        }
+      });
+      flush();
+    }
+  }
+
+  /**
+   * Info message with timestamp.
+   *
+   * @param msg the msg
+   * @param timestamp the timestamp, if <code>null</code> then current time will be used
+   */
+  public void info(String msg, LocalDateTime timestamp) {
+    if (LOG.isInfoEnabled()) {
+      messages.add(new Message(timestamp) {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        void log() {
+          LOG.info(validateFinal(msg));
+        }
+      });
+      flush();
+    }
+  }
+
+  /**
+   * Warn message.
+   *
+   * @param msg the msg
+   */
+  public void warn(String msg) {
+    if (LOG.isWarnEnabled()) {
+      messages.add(new Message() {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        void log() {
+          LOG.warn(validateFinal(msg));
+        }
+      });
+      flush();
+    }
+  }
+
+  /**
+   * Warn message with timestamp.
+   *
+   * @param msg the msg
+   * @param timestamp the timestamp, if <code>null</code> then current time will be used
+   */
+  public void warn(String msg, LocalDateTime timestamp) {
+    if (LOG.isWarnEnabled()) {
+      messages.add(new Message(timestamp) {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        void log() {
+          LOG.warn(validateFinal(msg));
+        }
+      });
+      flush();
+    }
+  }
+
+  /**
+   * Error message.
+   *
+   * @param msg the msg
+   */
+  public void error(String msg) {
+    if (LOG.isErrorEnabled()) {
+      messages.add(new Message() {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        void log() {
+          LOG.error(validateFinal(msg));
+        }
+      });
+      flush();
+    }
+  }
+
+  /**
+   * Error message with timestamp.
+   *
+   * @param msg the msg
+   * @param timestamp the timestamp, if <code>null</code> then current time will be used
+   */
+  public void error(String msg, LocalDateTime timestamp) {
+    if (LOG.isErrorEnabled()) {
+      messages.add(new Message(timestamp) {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        void log() {
+          LOG.error(validateFinal(msg));
+        }
+      });
+      flush();
+    }
+  }
+
+  /**
+   * Debug message.
+   *
+   * @param msg the msg
+   */
+  public void debug(String msg) {
+    if (LOG.isDebugEnabled()) {
+      messages.add(new Message() {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        void log() {
+          LOG.debug(validateFinal(msg));
+        }
+      });
+      flush();
+    }
+  }
+
+  /**
+   * Debug message with timestamp.
+   *
+   * @param msg the msg
+   * @param timestamp the timestamp, if <code>null</code> then current time will be used
+   */
+  public void debug(String msg, LocalDateTime timestamp) {
+    if (LOG.isDebugEnabled()) {
+      messages.add(new Message(timestamp) {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        void log() {
+          LOG.debug(validateFinal(msg));
+        }
+      });
+      flush();
+    }
+  }
+
+  /**
+   * Trace message.
+   *
+   * @param msg the msg
+   */
+  public void trace(String msg) {
+    if (LOG.isTraceEnabled()) {
+      messages.add(new Message() {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        void log() {
+          LOG.trace(validate(msg));
+        }
+      });
+      flush();
+    }
+  }
+
+  /**
+   * Trace message with timestamp.
+   *
+   * @param msg the msg
+   * @param timestamp the timestamp, if <code>null</code> then current time will be used
+   */
+  public void trace(String msg, LocalDateTime timestamp) {
+    if (LOG.isTraceEnabled()) {
+      messages.add(new Message(timestamp) {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        void log() {
+          LOG.trace(validate(msg));
+        }
+      });
+      flush();
+    }
+  }
+
+  // ********** Internals **********
 
   /**
    * Validate final.
@@ -124,58 +414,92 @@ public class CallLog {
   }
 
   /**
-   * Info.
-   *
-   * @param msg the msg
+   * Flush all messages from the buffer (but first sort them in timestamp order). It's thread-safe operation.
    */
-  public void info(String msg) {
-    if (LOG.isInfoEnabled()) {
-      LOG.info(validateFinal(msg));
+  private void flushAll() {
+    // Flush buffer to real log: we take available messages only
+    int buffLen = messages.size();
+    if (buffLen > 0) {
+      List<Message> buff = new ArrayList<>(buffLen);
+      do {
+        Message m = messages.poll(); // this removes the message from the queue
+        if (m != null) {
+          buff.add(m);
+          buffLen--;
+        } else {
+          break;
+        }
+      } while (buffLen > 0);
+      // sort messages (rely on Comparable of Message) and log them
+      buff.stream().sorted().forEach(m -> {
+        m.log();
+      });
     }
   }
 
   /**
-   * Warn.
+   * Check if need wait for messages buffer, or can flush it to server log.
    *
-   * @param msg the msg
+   * @return true, if successful
    */
-  public void warn(String msg) {
-    if (LOG.isWarnEnabled()) {
-      LOG.warn(validateFinal(msg));
+  private boolean waitForMessages() {
+    if (messages.size() > MESSAGES_BUFFER_MAX_SIZE) {
+      // If have more than MESSAGES_BUFFER_MAX_SIZE messages, then can flush
+      return false;
     }
+    Message m = messages.peek();
+    if (m != null && m.getTimestamp()
+                      .isBefore(LocalDateTime.now(ZoneOffset.UTC).minus(MESSAGES_BUFFER_EXPIRATION_MILLIS, ChronoUnit.MILLIS))) {
+      // If first message in the queue is older of MESSAGES_BUFFER_EXPIRATION_MILLIS, then can flush
+      return false;
+    }
+    // Otherwise wait
+    return true;
   }
 
   /**
-   * Error.
+   * Create new flush thread.
    *
-   * @param msg the msg
+   * @return the thread
    */
-  public void error(String msg) {
-    if (LOG.isErrorEnabled()) {
-      LOG.error(validateFinal(msg));
-    }
+  private Thread newFlushThread() {
+    Thread t = new Thread(CallLog.class.getName() + "-flusher") {
+      /**
+       * {@inheritDoc}
+       */
+      @Override
+      public void run() {
+        do {
+          try {
+            Thread.sleep(MESSAGES_BUFFER_WAIT_MILLIS);
+          } catch (InterruptedException e) {
+            LOG.warn("Error sleeping in flusher thread: " + e.getMessage());
+          }
+        } while (waitForMessages());
+        try {
+          flusher.remove(Boolean.TRUE, this);
+          flushAll();
+        } catch (Throwable e) {
+          LOG.error("Error flushing messages to log", e);
+        }
+      }
+    };
+    t.setDaemon(false);
+    t.start();
+    return t;
   }
 
   /**
-   * Debug.
+   * Flush available log messages to server log (messages will be sorted timestamp order).
    *
-   * @param msg the msg
    */
-  public void debug(String msg) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(validateFinal(msg));
-    }
-  }
-
-  /**
-   * Trace.
-   *
-   * @param msg the msg
-   */
-  public void trace(String msg) {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace(validate(msg));
-    }
+  private void flush() {
+    flusher.compute(Boolean.TRUE, (k, t) -> {
+      if (t == null || !t.isAlive()) {
+        return newFlushThread();
+      }
+      return t;
+    });
   }
 
 }
