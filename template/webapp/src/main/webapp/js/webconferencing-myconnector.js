@@ -247,9 +247,16 @@
 							}
 						}).fail(function(err) {
 							// On error, we don't show the button for this context
-							var msg = "Error getting context details";
-							log.error(msg, err);
-							button.reject(msg, err);
+							if (err && err.code == "NOT_FOUND_ERROR") {
+								// If target not found, for any reason, we don't need tell it's an error - just no button for the target
+								button.reject(err.message);
+							} else {
+								// For other failures we seems met an error (server or network) and send it as a second parameter, 
+								// thus the core add-on will be able recognize it and do accordingly (at least log to server log)
+								var msg = "Error getting context details";
+								log.error(msg, err);
+								button.reject(msg, err);
+							}
 						});
 					} else {
 						// If current user has no My Connector IM - we don't show the button to him

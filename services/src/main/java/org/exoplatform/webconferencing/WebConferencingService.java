@@ -53,6 +53,7 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
+import org.exoplatform.services.organization.UserStatus;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.model.Profile;
@@ -322,47 +323,50 @@ public class WebConferencingService implements Startable {
   public UserInfo getUserInfo(String id) throws IdentityStateException {
     User user;
     try {
-      user = organization.getUserHandler().findUserByName(id);
+      user = organization.getUserHandler().findUserByName(id, UserStatus.ANY);
     } catch (Exception e) {
       throw new IdentityStateException("Error finding user in organization service", e);
     }
     if (user != null) {
-      Identity userIdentity = socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME, id, true);
-      if (userIdentity != null) {
-        Profile socialProfile = userIdentity.getProfile();
-        @SuppressWarnings("unchecked")
-        List<Map<String, String>> ims = (List<Map<String, String>>) socialProfile.getProperty(Profile.CONTACT_IMS);
-        UserInfo info = new UserInfo(user.getUserName(), user.getFirstName(), user.getLastName());
-        if (ims != null) {
-          for (Map<String, String> m : ims) {
-            String imType = m.get("key");
-            String imId = m.get("value");
-            if (imId != null && imId.length() > 0) {
-              CallProvider provider = getProvider(imType);
-              // Here we take in account that provider may change its supported types in runtime
-              if (provider != null && provider.isActive() && provider.isSupportedType(imType)) {
-                try {
-                  IMInfo im = provider.getIMInfo(imId);
-                  if (im != null) {
-                    info.addImAccount(im);
-                  } // otherwise provider doesn't have an IM type at all
-                } catch (CallProviderException e) {
-                  LOG.warn(e.getMessage());
+      // Check if user not disabled
+      if (user.isEnabled()) {
+        Identity userIdentity = socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME, id, true);
+        if (userIdentity != null) {
+          Profile socialProfile = userIdentity.getProfile();
+          @SuppressWarnings("unchecked")
+          List<Map<String, String>> ims = (List<Map<String, String>>) socialProfile.getProperty(Profile.CONTACT_IMS);
+          UserInfo info = new UserInfo(user.getUserName(), user.getFirstName(), user.getLastName());
+          if (ims != null) {
+            for (Map<String, String> m : ims) {
+              String imType = m.get("key");
+              String imId = m.get("value");
+              if (imId != null && imId.length() > 0) {
+                CallProvider provider = getProvider(imType);
+                // Here we take in account that provider may change its supported types in runtime
+                if (provider != null && provider.isActive() && provider.isSupportedType(imType)) {
+                  try {
+                    IMInfo im = provider.getIMInfo(imId);
+                    if (im != null) {
+                      info.addImAccount(im);
+                    } // otherwise provider doesn't have an IM type at all
+                  } catch (CallProviderException e) {
+                    LOG.warn(e.getMessage());
+                  }
                 }
               }
             }
           }
+          info.setAvatarLink(socialProfile.getAvatarUrl());
+          info.setProfileLink(LinkProvider.getUserProfileUri(id));
+          return info;
+        } else {
+          LOG.warn("Social identity not found for " + user.getUserName() + " (" + user.getFirstName() + " " + user.getLastName()
+              + ")");
         }
-        info.setAvatarLink(socialProfile.getAvatarUrl());
-        info.setProfileLink(LinkProvider.getUserProfileUri(id));
-        return info;
-      } else {
-        // TODO exception here?
-        LOG.warn("Social identity not found for " + user.getUserName() + " (" + user.getFirstName() + " " + user.getLastName()
-            + ")");
+      } else if (LOG.isDebugEnabled()) {
+        LOG.debug("Ignore disabled user (treat as not found): " + id);
       }
     } else {
-      // exception here?
       LOG.warn("User not found: " + id);
     }
     return null;

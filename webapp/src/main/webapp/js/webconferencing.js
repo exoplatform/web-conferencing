@@ -1353,6 +1353,7 @@
 					
 					// It is a logic used in Chat, so reuse it here:
 					var roomName = roomTitle.toLowerCase().split(" ").join("_");
+					var details = null;
 					var context = {
 						currentUser : currentUser,
 						roomId : roomId,
@@ -1366,48 +1367,51 @@
 						isAndroid : isAndroid,
 						isWindowsMobile : isWindowsMobile,
 						details : function() {
-							var data = $.Deferred();
-						  if (isGroup) {
-						  	if (isSpace) {
-						  		var spaceId = roomName; // XXX no other way within Chat
-							  	getSpaceInfoReq(spaceId).done(function(space) { // TODO use getSpaceInfo() for caching spaces
-							  		data.resolve(space);
-							  	}).fail(function(err) {
-							  		log.debug("Error getting space info " + spaceId + " for chat context", err);
+							if (!details) {
+								var data = $.Deferred();
+								details = data.promise();
+								if (isGroup) {
+									if (isSpace) {
+							  		var spaceId = roomName; // XXX no other way within Chat
+								  	getSpaceInfoReq(spaceId).done(function(space) {
+								  		data.resolve(space);
+								  	}).fail(function(err) {
+								  		log.trace("Error getting space info " + spaceId + " for chat context", err);
+								  		data.reject(err);
+								  	});
+									} else if (isRoom) {
+										chat.getUsers(roomId).done(function(users) {
+							  			var unames = [];
+							  			for (var i=0; i<users.length; i++) {
+							  				var u = users[i];
+							  				if (u && u.name && u.name != "null") {
+							  					unames.push(u.name);
+							  				}
+							  			}
+							  			getRoomInfoReq(roomId, roomTitle, unames).done(function(info) {
+							  				data.resolve(info);												
+							  			}).fail(function(err) {
+							  				log.trace("Error getting Chat room info " + roomName + "/" + roomId + " for chat context", err);
+							  				data.reject(err);
+							  			});
+								  	}).fail(function(err) {
+								  		log.trace("Error getting Chat room users " + roomId + " for chat context", err);
+											data.reject("Error reading Chat room users for " + roomId);
+								  	});
+							  	} else {
+							  		data.reject("Unexpected context chat type: " + chatType + " for " + roomTitle);
+							  	}
+								} else {
+									// roomId is an user name for P2P chats
+									getUserInfoReq(roomId).done(function(user) {
+										data.resolve(user);												
+									}).fail(function(err) {
+										log.trace("Error getting user info " + roomId + " for chat context", err);
 										data.reject(err);
 									});
-						  	} else if (isRoom) {
-						  		chat.getUsers(roomId).done(function(users) {
-							  		var unames = [];
-										for (var i=0; i<users.length; i++) {
-											var u = users[i];
-											if (u && u.name && u.name != "null") {
-												unames.push(u.name);
-											}
-										}
-										getRoomInfoReq(roomId, roomTitle, unames).done(function(info) {
-											data.resolve(info);												
-										}).fail(function(err) {
-											log.debug("Error getting Chat room info " + roomName + "/" + roomId + " for chat context", err);
-											data.reject(err);
-										});
-							  	}).fail(function(err) {
-							  		log.debug("Error getting Chat room users " + roomId + " for chat context", err);
-										data.reject(err);
-							  	});
-						  	} else {
-						  		data.reject("Unexpected context chat type: " + chatType + " for " + roomTitle);
-						  	}
-							} else {
-								// roomId is an user name for P2P chats
-								getUserInfoReq(roomId).done(function(user) {
-									data.resolve(user);												
-								}).fail(function(err) {
-									log.debug("Error getting user info " + roomId + " for chat context", err);
-									data.reject(err);
-								});
+								}
 							}
-							return data.promise();
+							return details;
 						}
 					};
 					process.resolve(context);
@@ -1586,6 +1590,7 @@
 		};
 
 		var userContext = function(userId) {
+			var user = null;
 			var context = {
 				currentUser : currentUser,
 				userId : userId,
@@ -1597,10 +1602,12 @@
 				isAndroid : isAndroid,
 				isWindowsMobile : isWindowsMobile,
 				details : function() {
-					var user = getUserInfoReq(userId);
-					user.fail(function(err) {
-						log.debug("Error getting user info " + userId + " for user context", err);
-					});
+					if (!user) {
+						user = getUserInfoReq(userId);
+						user.fail(function(err) {
+							log.trace("Error getting user info " + userId + " for user context", err);
+						});
+					}
 					return user;
 				}
 			};
@@ -1721,6 +1728,7 @@
 		};
 		
 		var spaceContext = function(spaceId) {
+			var space = null;
 			var context = {
 				currentUser : currentUser,
 				spaceId : spaceId,
@@ -1732,10 +1740,12 @@
 				isAndroid : isAndroid,
 				isWindowsMobile : isWindowsMobile,
 				details : function() {
-					var space = getSpaceInfoReq(spaceId); // TODO use getSpaceInfo() for caching spaces
-			  	space.fail(function(err) {
-			  		log.debug("Error getting space info " + spaceId + " for space context", err);
-					});
+					if (!space) {
+						space = getSpaceInfoReq(spaceId);
+				  	space.fail(function(err) {
+				  		log.trace("Error getting space info " + spaceId + " for space context", err);
+						});	
+					}
 					return space;
 				}
 			};
