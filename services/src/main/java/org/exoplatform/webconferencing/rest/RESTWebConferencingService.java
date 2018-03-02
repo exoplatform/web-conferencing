@@ -22,7 +22,9 @@ import java.util.Set;
 
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -112,6 +114,55 @@ public class RESTWebConferencingService implements ResourceContainer {
         return Response.serverError()
                        .cacheControl(cacheControl)
                        .entity(ErrorInfo.serverError("Error reading provider configuration"))
+                       .build();
+      }
+    } else {
+      return Response.status(Status.UNAUTHORIZED)
+                     .cacheControl(cacheControl)
+                     .entity(ErrorInfo.accessError("Unauthorized user"))
+                     .build();
+    }
+  }
+
+  /**
+   * Post provider config.
+   *
+   * @param uriInfo the uri info
+   * @param request the request
+   * @param type the type
+   * @param active the active
+   * @return the response
+   */
+  @POST
+  @RolesAllowed("administrators")
+  @Path("/provider/{type}/configuration")
+  public Response postProviderConfig(@Context UriInfo uriInfo,
+                                     @Context HttpServletRequest request,
+                                     @PathParam("type") String type,
+                                     @FormParam("active") String active) {
+    ConversationState convo = ConversationState.getCurrent();
+    if (convo != null) {
+      String currentUserName = convo.getIdentity().getUserId();
+      try {
+        CallProviderConfiguration conf = webConferencing.getProviderConfiguration(type, request.getLocale());
+        if (conf != null) {
+          boolean activeVal = Boolean.valueOf(active);
+          if (activeVal != conf.isActive()) {
+            conf.setActive(activeVal);
+            webConferencing.saveProviderConfiguration(conf);
+          }
+          return Response.ok().cacheControl(cacheControl).entity(conf).build();
+        } else {
+          return Response.status(Status.NOT_FOUND)
+                         .cacheControl(cacheControl)
+                         .entity(ErrorInfo.notFoundError("Provider or configuration not found"))
+                         .build();
+        }
+      } catch (Throwable e) {
+        LOG.error("Error saving provider configuration for '" + type + "' by '" + currentUserName + "'", e);
+        return Response.serverError()
+                       .cacheControl(cacheControl)
+                       .entity(ErrorInfo.serverError("Error saving provider configuration"))
                        .build();
       }
     } else {
