@@ -5,6 +5,7 @@
     <ok>Ok</ok>
     <cancel>Abbrechen</cancel>
     
-    <notConfigured>not configured</notConfigured>
+    <notConfigured>nicht konfiguriert</notConfigured>
+    <errorReference>Error reference:</errorReference>
   </webconferencing>
 </bundle>

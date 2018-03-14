@@ -8,39 +8,39 @@
     <incomingCall>Incoming call</incomingCall>
     <answer>Відповідь</answer>
     <decline>Відхилити</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <callStartTip>Натисніть кнопку, щоб почати відео-дзвінок</callStartTip>
+    <callRunningTip>Цей заклик вже йде. Натисніть кнопку, щоб показати вікно виклику.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
+    <providerError>Помилка постачальника в webrtc</providerError>
+    <providerNotAvailable>Постачальник webrtc не доступний</providerNotAvailable>
     <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>Call was stopped</callStopped>
-    <errorAddCall>The call could not be started due to a server error</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
+    <callStopped>The call was stopped</callStopped>
+    <errorAddCall>Виклик не може бути запущено з-за помилки сервера. Будь ласка, спробуйте знову. Якщо проблема не вирішена, будь ласка, зверніться до адміністратора.</errorAddCall>
+    <errorOpeningCall>Сталася помилка при відкритті вікна виклику. Будь ласка, поновіть сторінку і спробуйте знову. Якщо помилка повториться-зверніться до адміністратора.</errorOpeningCall>
+    <callWindowNotOpen>Вікно не може бути відкритий. Будь ласка, перевірте, якщо він був заблокований вашим браузером.</callWindowNotOpen>
     <errorStartingCall>Error starting call</errorStartingCall>
     <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
+    <errorReadUserStatus>Помилка читання інформації про стан користувача з сервера</errorReadUserStatus>
     <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <errorSubscribeUser>Не вдалося створити сервер-браузер канал для розповсюдження оновлень користувачів. Будь ласка, поновіть сторінку і спробуйте знову. Якщо проблема не вирішена, будь ласка, зверніться до адміністратора.</errorSubscribeUser>
+    <errorSubscribeCall>Не вдалося створити сервер-браузер канал для оновлення виклику. Будь ласка, поновіть сторінку і спробуйте знову. Якщо проблема не вирішена, будь ласка, зверніться до адміністратора.</errorSubscribeCall>
+    <errorStartingConnection>Починаючи помилка підключення</errorStartingConnection>
+    <notSupportedPlatform>Непідтримувана Платформа</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Ваш браузер не підтримує технологію webrtc дзвінків</yourBrowserNotSupportWebrtc>
+    <notInitialized>На базі webrtc відео роз'єм заклик не був правильно ініціалізований. Будь ласка, закрийте це вікно і повторіть спробу.</notInitialized>
+    <connectionFailed>Підключення не вдалося</connectionFailed>
+    <audioVideoRequired>Мікрофон та/або камеру необхідно подзвонити</audioVideoRequired>
+    <mediaDevicesError>Помилка доступу до камери чи мікрофона</mediaDevicesError>
+    <accessDenied>Не вдалося відкрити пристрій засобів інформації з-за доступу або помилка доступу. Переконайтеся, що пристрій підключено і не використовується іншим додатком.</accessDenied>
+    <noAudioFound>Мікрофон не був виявлений</noAudioFound>
+    <butVideoFound>але був знайдений фотоапарат</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>Неправильні налаштування</wrongSettings>
+      <serverUrlMandatory>Сервер URL-адреса не може бути порожнім</serverUrlMandatory>
+      <usernameMandatory>Ім'я користувача може бути порожнім</usernameMandatory>
+      <credentialMandatory>Пароль не може бути порожнім</credentialMandatory>
+      <errorSavingSettings>Збереження налаштувань помилка</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

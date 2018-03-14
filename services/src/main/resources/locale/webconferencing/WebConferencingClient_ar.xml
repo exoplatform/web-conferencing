@@ -6,5 +6,6 @@
     <cancel>الغاء</cancel>
     
     <notConfigured>لم يتم تشكيله</notConfigured>
+    <errorReference>مرجع الخطأ:</errorReference>
   </webconferencing>
 </bundle>

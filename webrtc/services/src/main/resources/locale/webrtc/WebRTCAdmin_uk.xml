@@ -3,26 +3,26 @@
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
-      <title>WebRTC settings</title>
-      <servers>STUN / TURN servers</servers>
-      <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
-      <url>URL</url>
-      <serverUrl>Server URL...</serverUrl>
-      <credentials>Credentials</credentials>
+      <title>WebRTC налаштування</title>
+      <servers>STUN / TURN сервери</servers>
+      <serversTip>STUN / TURN сервери гарантують, що виклики в веб-конференціях працюватимуть належним чином через мережеві маршрутизатори. Ми наполегливо рекомендуємо встановити свій власний сервер TURN, щоб контролювати безпеку ваших повідомлень та забезпечити максимальну доступність.</serversTip>
+      <url>URL-адреса</url>
+      <serverUrl>URL-адреса сервера...</serverUrl>
+      <credentials>Облікові дані</credentials>
       <username>Ім’я користувача</username>
-      <credential>Credential</credential>
+      <credential>Обліковий запис</credential>
       <save>Зберегти</save>
       <cancel>Скасувати</cancel>
       
       <!-- Confirmation dialog -->
-      <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
+      <confirmServerRemoval>Видалити ICE Сервер?</confirmServerRemoval>
+      <serverRemoveText>Ви впевнені, що хочете видалити конфігурацію цього сервера?</serverRemoveText>
       <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
-      <errorDiagnostic>Error Diagnostics</errorDiagnostic>
-      <enableLogCollection>Enable client-side log collection</enableLogCollection>
-      <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
+      <errorDiagnostic>Діагностика помилок</errorDiagnostic>
+      <enableLogCollection>Ввімкнути збір клієнтських логів</enableLogCollection>
+      <logCollectionInfo>Цей параметр дозволить відстежувати інформацію від клієнта в логах сервера, щоб допомогти діагностувати проблеми з'єднання WebRTC. Використовуйте з обережністю, оскільки цей режим може призвести до серйозного навантаження на мережу вашої системи.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

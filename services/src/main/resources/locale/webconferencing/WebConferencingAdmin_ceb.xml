@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <webconferencing>
+    <admin>
+      <page>Ang web conferencing</page>
+      <title>Ang Pagdumala sa Web Conferencing</title>
+      <info>Ang web conferencing kay pwede pagdumalaan sa laen-laeng mga tighatag. Kung nanginahanglan kag tighatag pwede nimo siya sugtan og imo lang i-configure ang mga setting.</info>
+      <provider>Tighatag</provider>
+      <description>Deskripsiyon</description>
+      <active>Aktibo</active>
+      <actions>Mga aksyon</actions>
+    </admin>
+  </webconferencing>
+</bundle>

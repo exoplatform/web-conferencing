@@ -13,6 +13,8 @@
     
     <providerError>crwdns6858685:0crwdne6858685:0</providerError>
     <providerNotAvailable>crwdns6858686:0crwdne6858686:0</providerNotAvailable>
+    <refreshTryAgainContactAdmin>crwdns6858946:0crwdne6858946:0</refreshTryAgainContactAdmin>
+    <callStopped>crwdns6858947:0crwdne6858947:0</callStopped>
     <errorAddCall>crwdns6858687:0crwdne6858687:0</errorAddCall>
     <errorOpeningCall>crwdns6858689:0crwdne6858689:0</errorOpeningCall>
     <callWindowNotOpen>crwdns6858690:0crwdne6858690:0</callWindowNotOpen>

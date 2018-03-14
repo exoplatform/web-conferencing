@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <webconferencing>
+    <admin>
+      <page>Ang Conferencing sa Web</page>
+      <title>Ang Administrasyon ng Web Conferencing</title>
+      <info>Ang Web Conferencing ay maaaring pamahalaan ng ibat-ibang mga provider. Pwede kang magpagana ng provider at i-configure ang mga setting.</info>
+      <provider>Ang Provider o Tagapagtustos</provider>
+      <description>Ang Deskripsyon</description>
+      <active>Aktibo</active>
+      <actions>Ang mga aksyon</actions>
+    </admin>
+  </webconferencing>
+</bundle>

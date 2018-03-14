@@ -12,18 +12,18 @@
     <callRunningTip>المكالمة جارية بالفعل. اضغط لاظهار نافذة المكالمة.</callRunningTip>
     
     <providerError>خطأ في موفر WebRTC</providerError>
-    <providerNotAvailable>موفر WebRTC غير متوفر</providerNotAvailable> 
-    <refreshTryAgainContactAdmin>الرجاء تحديث الصفحة وحاول مرة أخرى. إذا استمر الخطأ، الرجاء الاتصال بالمسؤول المعني بالأمرمع مرجع الخطأ هذا</refreshTryAgainContactAdmin>
-    <callStopped>Call was stopped</callStopped>
-    <errorAddCall>تعذر بدء المكالمة نظراً لاستمرار خطأ على الخادم.</errorAddCall>
-    <errorOpeningCall>حدث خطأ أثناء فتح صفحة المكالمة.</errorOpeningCall>
+    <providerNotAvailable>موفر WebRTC غير متوفر</providerNotAvailable>
+    <refreshTryAgainContactAdmin>الرجاء تحديث الصفحة و المحاولة مرة أخرى. إذا استمر الخطأ، الرجاء الاتصال بالمسؤول مع مرجع الخطأ هذا.</refreshTryAgainContactAdmin>
+    <callStopped>تم إيقاف المكالمة</callStopped>
+    <errorAddCall>تعذر بدء المكالمة نظراً لوجود خطأ على الخادم</errorAddCall>
+    <errorOpeningCall>حدث خطأ أثناء فتح صفحة المكالمة. الرجاء تحديث الصفحة وحاول مرة أخرى. إذا استمر الخطأ، الرجاء الاتصال بالمسؤول.</errorOpeningCall>
     <callWindowNotOpen>تعذر فتح نافذة الاتصال. الرجاء التحقق إذا كان تم حظره بواسطة المستعرض الخاص بك.</callWindowNotOpen>
     <errorStartingCall>خطأ في بدء تشغيل الاتصال</errorStartingCall>
     <errorIncomingCall>خطأ المكالمات الواردة</errorIncomingCall>
     <errorReadUserStatus>حدث خطأ أثناء قراءة معلومات حالة المستخدم من الخادم</errorReadUserStatus>
     <errorReadCall>حدث خطأ أثناء قراءة معلومات الاتصال من الخادم</errorReadCall>
-    <errorSubscribeUser>خطأ في تحديثات اشتراك المستخدم.</errorSubscribeUser>
-    <errorSubscribeCall>خطأ في تحديثات إشتراك الإتصال.</errorSubscribeCall>
+    <errorSubscribeUser>خطأ في إنشاء قناة من الخادم إلى المتصفح لتوصيل تحديثات المستخدمين</errorSubscribeUser>
+    <errorSubscribeCall>خطأ في إنشاء قناة من الخادم إلى المتصفح لتحديثات المكالمات</errorSubscribeCall>
     <errorStartingConnection>حدث خطأ أثناء بدء الاتصال</errorStartingConnection>
     <notSupportedPlatform>نظام أساسي غير مدعوم</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>المتصفح الخاص بك لا يدعم المكالمات WebRTC</yourBrowserNotSupportWebrtc>

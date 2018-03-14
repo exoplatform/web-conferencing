@@ -2,9 +2,10 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>OK</ok>
+    <ok>Ok</ok>
     <cancel>Kanselahin</cancel>
     
-    <notConfigured>not configured</notConfigured>
+    <notConfigured>hindi nai-configure</notConfigured>
+    <errorReference>Ang reperensiya ng error:</errorReference>
   </webconferencing>
 </bundle>

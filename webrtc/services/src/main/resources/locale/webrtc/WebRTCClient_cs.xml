@@ -2,45 +2,45 @@
 <bundle>
   <webrtc>
     <call>Hovor</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <callingYou>vás volá...</callingYou>
+    <callWith>Hovor s</callWith>
+    <callTo>Zavolat</callTo>
+    <incomingCall>Příchozí hovor</incomingCall>
     <answer>Odpověď</answer>
     <decline>Odmítnout</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <callStartTip>Klikněte k zahájení videohovoru</callStartTip>
+    <callRunningTip>Tento hovor již probíhá. Kliknutím zobrazíte okno hovoru.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
+    <providerError>Chyba poskytovatele WebRTC</providerError>
+    <providerNotAvailable>Poskytovatel WebRTC není k dispozici</providerNotAvailable>
     <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>Call was stopped</callStopped>
-    <errorAddCall>The call could not be started due to a server error</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <callStopped>The call was stopped</callStopped>
+    <errorAddCall>Hovor nelze spustit kvůli chybě serveru. Zkuste to znovu. Pokud problém přetrvá, obraťte se na správce.</errorAddCall>
+    <errorOpeningCall>Při otevírání okna hovoru došlo k chybě. Obnovte stránku a zkuste to znovu. Pokud chyba přetrvá, obraťte se na správce.</errorOpeningCall>
+    <callWindowNotOpen>Okno hovoru nemohlo být otevřeno. Zkontrolujte, zda bylo zablokováno prohlížečem.</callWindowNotOpen>
+    <errorStartingCall>Chyba při zahájení hovoru</errorStartingCall>
+    <errorIncomingCall>Chyba příchozího hovoru</errorIncomingCall>
+    <errorReadUserStatus>Chyba při načítání informací o stavu uživatele ze serveru</errorReadUserStatus>
+    <errorReadCall>Chyba při načítání informací o volání ze serveru</errorReadCall>
+    <errorSubscribeUser>Nepodařilo se vytvořit kanál serveru pro prohlížeč pro aktualizaci komunikace s uživateli. Obnovte stránku a zkuste to znovu. Pokud problém přetrvá, obraťte se na správce.</errorSubscribeUser>
+    <errorSubscribeCall>Nepodařilo se vytvořit kanál serveru pro prohlížeč pro aktualizace hovorů. Obnovte stránku a zkuste to znovu. Pokud problém přetrvá, obraťte se na správce.</errorSubscribeCall>
+    <errorStartingConnection>Chyba při zahájení připojení</errorStartingConnection>
+    <notSupportedPlatform>Nepodporovaná platforma</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Váš prohlížeč nepodporuje volání WebRTC</yourBrowserNotSupportWebrtc>
+    <notInitialized>Připojení videohovoru WebRTC nebylo správně inicializováno. Zavřete toto okno a zkuste to znovu.</notInitialized>
+    <connectionFailed>Připojení selhalo</connectionFailed>
+    <audioVideoRequired>Pro uskutečnění hovoru je vyžadován mikrofon a/nebo kamera</audioVideoRequired>
+    <mediaDevicesError>Chyba při přístupu ke kameře nebo mikrofonu</mediaDevicesError>
+    <accessDenied>Nelze otevřít mediální zařízení kvůli chybě přístupu nebo oprávnění. Ujistěte se, že je vaše zařízení připojeno a není používáno jinou aplikací.</accessDenied>
+    <noAudioFound>Nebyl zjištěn žádný mikrofon</noAudioFound>
+    <butVideoFound>ale byla nalezena kamera</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>Chybné nastavení</wrongSettings>
+      <serverUrlMandatory>Adresa URL serveru nesmí být prázdná</serverUrlMandatory>
+      <usernameMandatory>Uživatelské jméno nesmí být prázdné</usernameMandatory>
+      <credentialMandatory>Heslo nemůže být prázdné</credentialMandatory>
+      <errorSavingSettings>Chyba při ukládání nastavení</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

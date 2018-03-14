@@ -5,6 +5,7 @@
     <ok>Гаразд</ok>
     <cancel>Скасувати</cancel>
     
-    <notConfigured>not configured</notConfigured>
+    <notConfigured>не налаштовано</notConfigured>
+    <errorReference>Посилання на помилку:</errorReference>
   </webconferencing>
 </bundle>

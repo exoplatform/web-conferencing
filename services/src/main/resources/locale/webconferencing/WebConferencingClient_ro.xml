@@ -5,6 +5,7 @@
     <ok>Ok</ok>
     <cancel>Renunță</cancel>
     
-    <notConfigured>not configured</notConfigured>
+    <notConfigured>neconfigurat</notConfigured>
+    <errorReference>Referință eroare:</errorReference>
   </webconferencing>
 </bundle>

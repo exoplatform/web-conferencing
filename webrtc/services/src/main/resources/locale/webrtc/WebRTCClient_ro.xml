@@ -2,45 +2,45 @@
 <bundle>
   <webrtc>
     <call>Apel</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <callingYou>te sună...</callingYou>
+    <callWith>Apelați cu</callWith>
+    <callTo>Apelează</callTo>
+    <incomingCall>Apel primit</incomingCall>
     <answer>Răspuns</answer>
     <decline>Refuză</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <callStartTip>Atinge pentru a începe un apel video</callStartTip>
+    <callRunningTip>Acest apel este deja în curs de desfăşurare. Faceţi clic pe pentru a afişa fereastra de apel.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
-    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>Call was stopped</callStopped>
-    <errorAddCall>The call could not be started due to a server error</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <providerError>Eroare la furnizorul WebRTC</providerError>
+    <providerNotAvailable>Furnizorul de WebRTC nu este disponibil</providerNotAvailable>
+    <refreshTryAgainContactAdmin>Reîncărcați pagina și încercați din nou. Dacă eroarea persistă contactați administratorul cu această referință de eroare.</refreshTryAgainContactAdmin>
+    <callStopped>Apelul a fost oprit</callStopped>
+    <errorAddCall>Apelul nu a putut începe din cauza unei eroare la server. Încercați din nou. Dacă problema persistă, contactați-vă administratorul.</errorAddCall>
+    <errorOpeningCall>A apărut o eroare la deschiderea ferestrei de apel. Reîmpropătați pagina și încercați din nou. Dacă problema persistă, contactați-vă administratorul.</errorOpeningCall>
+    <callWindowNotOpen>Fereastra de apel nu a putut fi deschisă. Vă rugăm verificați daca este blocat de browserul dumneavoastră.</callWindowNotOpen>
+    <errorStartingCall>Eroare la începerea apelului</errorStartingCall>
+    <errorIncomingCall>Eroare la apel</errorIncomingCall>
+    <errorReadUserStatus>Eroare la citirea informației statusului utilizatorului de la server</errorReadUserStatus>
+    <errorReadCall>Eroare la citirea informației apelului de la server</errorReadCall>
+    <errorSubscribeUser>Eroare în stabilirea unui canal server-la-browser pentru comunicarea actualizărilor utilizatorului. Vă rugăm reîmprospătați pagina și reîncercați din nou. Dacă problema persistă, contactați-vă administratorul.</errorSubscribeUser>
+    <errorSubscribeCall>Eroare în stabilirea unui canal server-la-browser pentru actualizările apelului. Vă rugăm reîmprospătați pagina și reîncercați din nou. Dacă problema persistă, contactați-vă administratorul.</errorSubscribeCall>
+    <errorStartingConnection>Eroare în iniţierea conexiunii</errorStartingConnection>
+    <notSupportedPlatform>Format neacceptat</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Browserul dumneavoastră nu suportă apeluri WebRTC</yourBrowserNotSupportWebrtc>
+    <notInitialized>Conectorul apelului video WebRTC nu a fost inițializat cu succes. Vă rugăm închideți fereastra și reîncercați.</notInitialized>
+    <connectionFailed>Conexiunea a eşuat</connectionFailed>
+    <audioVideoRequired>Un microfon sau/și o cameră este necesară pentru a face un apel</audioVideoRequired>
+    <mediaDevicesError>Eroare la accesarea camerei sau microfonului</mediaDevicesError>
+    <accessDenied>Nu s-a putut deschide device-ul media din cauza unei erori de acces sau de permisiune. Aveți grijă ca device-ul să fie conectat și să nu fie folosit de altă aplicație.</accessDenied>
+    <noAudioFound>Niciun microfon detectat</noAudioFound>
+    <butVideoFound>dar o cameră a fost detectată</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>Setări greșite</wrongSettings>
+      <serverUrlMandatory>URL-ul serverului nu poate fi gol</serverUrlMandatory>
+      <usernameMandatory>Numele de utilizator nu poate fi gol</usernameMandatory>
+      <credentialMandatory>Parola nu poate fi lăsată necompletată</credentialMandatory>
+      <errorSavingSettings>Eroare la salvarea setărilor</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

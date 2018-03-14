@@ -2,9 +2,9 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
+      <page>Elektronisch vergaderen</page>
+      <title>Administratie van elektronisch vergaderen</title>
+      <info>'Elektonisch vergaderen' kan door verschillende providers worden afgehandeld. U kunt de provider die u nodig hebt inschakelen en de instellingen configureren.</info>
       <provider>Provider</provider>
       <description>Beschrijving</description>
       <active>Actieve</active>

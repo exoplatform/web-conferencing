@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Call</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <call>Zəng</call>
+    <callingYou>sizə zəng edir...</callingYou>
+    <callWith>Zəng ilə</callWith>
+    <callTo>Zəng üçün</callTo>
+    <incomingCall>Gələn zəng</incomingCall>
     <answer>Cavab</answer>
-    <decline>Decline</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <decline>Rədd et</decline>
+    <callStartTip>Klik edərək video zəngi başladın</callStartTip>
+    <callRunningTip>Bu zəng artıq davam edir. Klik edərək zəng pəncərəsini açın.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
+    <providerError>WebRTC provayder səhvi</providerError>
+    <providerNotAvailable>WebRTC provayderi mümkün deyil</providerNotAvailable>
     <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>Call was stopped</callStopped>
+    <callStopped>The call was stopped</callStopped>
     <errorAddCall>The call could not be started due to a server error</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
+    <errorOpeningCall>Zəng pəncərəsini açarkən problem baş verdi. Zəhmət olmasa səhifəni təzələyin və yenidən cəhd edin. Əgər problem davam edərsə, zəhmət olmasa inzibatçınızla əlaqə saxlayın.</errorOpeningCall>
+    <callWindowNotOpen>Zəng pəncərəsi açıla bilmir. Zəhmət olmasa brauzeriniz tərəfindən bloklanmasını yoxlayın.</callWindowNotOpen>
+    <errorStartingCall>Zəng başlayarkən səhv baş verdi</errorStartingCall>
+    <errorIncomingCall>Gələn zəngdə səhv baş verdi</errorIncomingCall>
+    <errorReadUserStatus>İstifadəçinin status məlumatları oxunarkən serverdə xəta baş verdi</errorReadUserStatus>
+    <errorReadCall>Zəng məlumatlarını oxuyarkən serverdə səhv baş verdi</errorReadCall>
     <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
     <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <errorStartingConnection>Qoşulma başlayarkən səhv baş verdi</errorStartingConnection>
+    <notSupportedPlatform>Dəstəklənməyən platforma</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Sizin brauzeriniz WebRTC zənglərini dəstəkləmir</yourBrowserNotSupportWebrtc>
+    <notInitialized>WebRTC video zəng birləşdiricisi düzgün şəkildə başlamadı. Zəhmət olmasa pəncərəni bağlayın və yenidən cəhd edin.</notInitialized>
+    <connectionFailed>Qoşulmada xəta</connectionFailed>
+    <audioVideoRequired>Mikrafon və/və ya kamera zəng etmək üçün vacibdir</audioVideoRequired>
+    <mediaDevicesError>Kamera və ya mikrafona qoşulma zamanı səhv baş verdi</mediaDevicesError>
+    <accessDenied>Media qurğusu qoşulma icazəsi olmadığından açılmadı. Zəhmət olmasa qurğunuzun qoşulduğuna və başqa bir program tərəfindən istifadə olunmadığına əmin olun.</accessDenied>
+    <noAudioFound>Mikrafon aşkar olunmadı</noAudioFound>
+    <butVideoFound>kamera tapılmadı</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>Yanlış tənzimləmələr</wrongSettings>
+      <serverUrlMandatory>Server URL boş ola bilməz</serverUrlMandatory>
+      <usernameMandatory>İstifadəçi adı boş ola bilməz</usernameMandatory>
+      <credentialMandatory>Şifrə boş ola bilməz</credentialMandatory>
+      <errorSavingSettings>Tənzimləmələrin saxlanması zamanı səhv baş veri</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

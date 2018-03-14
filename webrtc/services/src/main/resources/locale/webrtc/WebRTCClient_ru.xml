@@ -2,45 +2,45 @@
 <bundle>
   <webrtc>
     <call>Вызов</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <callingYou>вызывает Вас...</callingYou>
+    <callWith>Вызов с использованием</callWith>
+    <callTo>Позвонить</callTo>
+    <incomingCall>Входящий вызов</incomingCall>
     <answer>Ответить</answer>
     <decline>Отклонить</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <callStartTip>Нажмите, чтобы начать видеозвонок</callStartTip>
+    <callRunningTip>Этот вызов уже выполняется. Нажмите, чтобы показать окно звонка.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
+    <providerError>Ошибка поставщика WebRTC</providerError>
+    <providerNotAvailable>WebRTC поставщик не доступен</providerNotAvailable>
     <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>Call was stopped</callStopped>
-    <errorAddCall>The call could not be started due to a server error</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <callStopped>The call was stopped</callStopped>
+    <errorAddCall>Вызов не может быть установлен из-за ошибки сервера. Пожалуйста, попробуйте еще раз. Если проблема повторится, обратитесь к администратору.</errorAddCall>
+    <errorOpeningCall>Произошла ошибка при открытии окна вызова. Пожалуйста, обновите страницу и повторите попытку. Если ошибка повторится, обратитесь к администратору.</errorOpeningCall>
+    <callWindowNotOpen>Окно вызова не может быть открыто. Пожалуйста, проверьте, может оно заблокировано Вашим браузером.</callWindowNotOpen>
+    <errorStartingCall>Ошибка вызова</errorStartingCall>
+    <errorIncomingCall>Ошибка входящего вызова</errorIncomingCall>
+    <errorReadUserStatus>Ошибка при чтении состояния пользователя с сервера</errorReadUserStatus>
+    <errorReadCall>Ошибка при чтении сведения о вызове с сервера</errorReadCall>
+    <errorSubscribeUser>Не удалось создать канал сервера в браузере для информирования об обновлениях. Пожалуйста, обновите страницу и повторите попытку. Если проблема повторится, обратитесь к администратору.</errorSubscribeUser>
+    <errorSubscribeCall>Не удалось создать канал сервера в браузере для обновлении информации о вызове. Пожалуйста, обновите страницу и повторите попытку. Если проблема повторится, обратитесь к администратору.</errorSubscribeCall>
+    <errorStartingConnection>Ошибка при соединении</errorStartingConnection>
+    <notSupportedPlatform>Неподдерживаемая платформа</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Ваш браузер не поддерживает технологию WebRTC</yourBrowserNotSupportWebrtc>
+    <notInitialized>Видео звонок WebRTC не был правильно инициализирован. Пожалуйста закройте это окно и повторите попытку.</notInitialized>
+    <connectionFailed>Сбой подключения</connectionFailed>
+    <audioVideoRequired>Микрофон или камера требуются для вызова</audioVideoRequired>
+    <mediaDevicesError>Ошибка при доступе к камере или микрофону</mediaDevicesError>
+    <accessDenied>Не удалось открыть медиаустройство из-за ошибки доступа или разрешения. Убедитесь, что устройство подключено и не используется другим приложением.</accessDenied>
+    <noAudioFound>Микрофон не найден</noAudioFound>
+    <butVideoFound>но камера была найдена</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>Неверные настройки</wrongSettings>
+      <serverUrlMandatory>URL-адрес не может быть пустым</serverUrlMandatory>
+      <usernameMandatory>Имя пользователя не может быть пустым</usernameMandatory>
+      <credentialMandatory>Пароль не может быть пустым</credentialMandatory>
+      <errorSavingSettings>Ошибка сохранения настроек</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

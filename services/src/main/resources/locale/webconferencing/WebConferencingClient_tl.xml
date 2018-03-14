@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <!-- Messages and UI texts for client parts -->
+  <webconferencing>
+    <ok>OK</ok>
+    <cancel>Kanselahin</cancel>
+    
+    <notConfigured>hindi nai-configure</notConfigured>
+    <errorReference>Ang referensya ng error:</errorReference>
+  </webconferencing>
+</bundle>

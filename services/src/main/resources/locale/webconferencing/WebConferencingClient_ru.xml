@@ -5,6 +5,7 @@
     <ok>ОК</ok>
     <cancel>Отмена</cancel>
     
-    <notConfigured>not configured</notConfigured>
+    <notConfigured>не настроено</notConfigured>
+    <errorReference>Error reference:</errorReference>
   </webconferencing>
 </bundle>

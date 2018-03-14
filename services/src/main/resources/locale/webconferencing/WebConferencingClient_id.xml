@@ -6,5 +6,6 @@
     <cancel>Membatalkan</cancel>
     
     <notConfigured>tidak di konfigurasi</notConfigured>
+    <errorReference>Referensi kesalahan:</errorReference>
   </webconferencing>
 </bundle>
