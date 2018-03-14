@@ -2,45 +2,45 @@
 <bundle>
   <webrtc>
     <call>Oproep</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <callingYou>is u aan het bellen ...</callingYou>
+    <callWith>Bel met</callWith>
+    <callTo>Bel naar</callTo>
+    <incomingCall>Inkomende oproep</incomingCall>
     <answer>antwoord</answer>
     <decline>Daling van de</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <callStartTip>Klik om een ​​video-oproep te starten</callStartTip>
+    <callRunningTip>Deze oproep is al bezig. Klik om het gespreksvenster weer te geven.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
+    <providerError>WebRTC-provider-fout</providerError>
+    <providerNotAvailable>WebRTC-provider niet beschikbaar</providerNotAvailable>
     <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>Call was stopped</callStopped>
-    <errorAddCall>The call could not be started due to a server error</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <callStopped>The call was stopped</callStopped>
+    <errorAddCall>De oproep kan niet worden gestart vanwege een serverfout. Probeer het opnieuw. Neem contact op met uw beheerder als het probleem aanhoudt.</errorAddCall>
+    <errorOpeningCall>Er is een fout opgetreden tijdens het openen van het gespreksvenster. Vernieuw de pagina en probeer het opnieuw. Neem contact op met uw beheerder als de fout aanhoudt.</errorOpeningCall>
+    <callWindowNotOpen>Oproepvenster kan niet worden geopend. Controleer of het werd geblokkeerd door uw browser.</callWindowNotOpen>
+    <errorStartingCall>Fout bij het starten van het gesprek</errorStartingCall>
+    <errorIncomingCall>Fout bij inkomende oproep</errorIncomingCall>
+    <errorReadUserStatus>Fout bij het lezen van gebruikersstatusinformatie van de server</errorReadUserStatus>
+    <errorReadCall>Fout bij het lezen van oproepinformatie van de server</errorReadCall>
+    <errorSubscribeUser>De oprichting van een server-naar-browser-kanaal om updates van de gebruiker te communiceren, is mislukt. Vernieuw de pagina en probeer het opnieuw. Als het probleem aanhoudt, neem dan contact op met uw beheerder.</errorSubscribeUser>
+    <errorSubscribeCall>De oprichting van een server-naar-browser-kanaal voor oproepupdates, is mislukt. Vernieuw de pagina en probeer het opnieuw. Als het probleem aanhoudt, neem dan contact op met uw beheerder.</errorSubscribeCall>
+    <errorStartingConnection>Fout bij het starten van de verbinding</errorStartingConnection>
+    <notSupportedPlatform>Niet-ondersteund platform</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Uw browser ondersteunt geen WebRTC-oproepen</yourBrowserNotSupportWebrtc>
+    <notInitialized>De WebRTC-videotelefoonconnector werd niet correct geïnitialiseerd. Sluit dit venster en probeer het opnieuw.</notInitialized>
+    <connectionFailed>Verbinden mislukt</connectionFailed>
+    <audioVideoRequired>Er is een microfoon en/of een camera nodig om te kunnen bellen</audioVideoRequired>
+    <mediaDevicesError>Fout bij toegang tot de camera of microfoon</mediaDevicesError>
+    <accessDenied>Kon het media-apparaat niet openen vanwege een toegangs- of toestemmingsfout. Zorg ervoor dat uw apparaat is verbonden en niet wordt gebruikt door een andere toepassing.</accessDenied>
+    <noAudioFound>Er werd geen microfoon gedetecteerd</noAudioFound>
+    <butVideoFound>maar er is een camera gevonden</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>Verkeerde instellingen</wrongSettings>
+      <serverUrlMandatory>Server-URL mag niet leeg zijn</serverUrlMandatory>
+      <usernameMandatory>Gebruikersnaam mag niet leeg zijn</usernameMandatory>
+      <credentialMandatory>Wachtwoord mag niet leeg zijn</credentialMandatory>
+      <errorSavingSettings>Fout bij opslaan van instellingen</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

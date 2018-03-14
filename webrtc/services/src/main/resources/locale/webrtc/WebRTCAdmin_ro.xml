@@ -3,26 +3,26 @@
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
-      <title>WebRTC settings</title>
-      <servers>STUN / TURN servers</servers>
-      <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
+      <title>Setări WebRTC</title>
+      <servers>Serverele STUN / TURN</servers>
+      <serversTip>Serverele STUN/TURN sunt necesare pentru a asigura că apelurile de conferință web merg bine peste rutărele rețelei. Vă recomandăm să vă setați serverul dumneavoastră privat TURN pentru a fi în controlul securității comunicațiilor dumneavoastră și de a asigura disponibilitate maximă.</serversTip>
       <url>URL</url>
-      <serverUrl>Server URL...</serverUrl>
-      <credentials>Credentials</credentials>
+      <serverUrl>URL-ul serverului...</serverUrl>
+      <credentials>Date de autentificare</credentials>
       <username>Nume de utilizator</username>
-      <credential>Credential</credential>
+      <credential>Acreditare</credential>
       <save>Salvaţi</save>
       <cancel>Renunță</cancel>
       
       <!-- Confirmation dialog -->
-      <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
+      <confirmServerRemoval>Ștergeți serverul ICE?</confirmServerRemoval>
+      <serverRemoveText>Sunteți sigur că vreți să ștergeți configurația serverului acesta?</serverRemoveText>
       <remove>Elimină</remove>
       
       <!-- Error Diagnostics -->
-      <errorDiagnostic>Error Diagnostics</errorDiagnostic>
-      <enableLogCollection>Enable client-side log collection</enableLogCollection>
-      <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
+      <errorDiagnostic>Diagnosticare erori</errorDiagnostic>
+      <enableLogCollection>Activează colectarea jurnalelor pe partea client</enableLogCollection>
+      <logCollectionInfo>Acest steag va colecta informațiile de la client în jurnalele serverului pentru a depana erorile de conectivitate WebRTC. Folosiți cu grijă, acest mod este verbos și poate cauza suprasolicitarea rețelei.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

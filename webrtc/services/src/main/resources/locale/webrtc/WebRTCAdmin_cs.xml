@@ -3,26 +3,26 @@
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
-      <title>WebRTC settings</title>
-      <servers>STUN / TURN servers</servers>
-      <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
+      <title>Nastavení WebRTC</title>
+      <servers>Servery STUN/TURN</servers>
+      <serversTip>Servery STUN/TURN jsou nezbytné k zajištění správné funkce webových konferenčních hovorů přes síťové routery. Důrazně doporučujeme nastavit si vlastní soukromý server TURN, abyste měli přehled o bezpečnosti vaší komunikace a zajistili maximální dostupnost.</serversTip>
       <url>ADRESA URL</url>
-      <serverUrl>Server URL...</serverUrl>
-      <credentials>Credentials</credentials>
+      <serverUrl>URL serveru...</serverUrl>
+      <credentials>Pověření</credentials>
       <username>Uživatelské jméno</username>
-      <credential>Credential</credential>
+      <credential>Pověření</credential>
       <save>Uložit</save>
       <cancel>Zrušit</cancel>
       
       <!-- Confirmation dialog -->
-      <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
+      <confirmServerRemoval>Odstranit server ICE?</confirmServerRemoval>
+      <serverRemoveText>Opravdu chcete smazat toto nastavení serveru?</serverRemoveText>
       <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
-      <errorDiagnostic>Error Diagnostics</errorDiagnostic>
-      <enableLogCollection>Enable client-side log collection</enableLogCollection>
-      <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
+      <errorDiagnostic>Diagnostika chyb</errorDiagnostic>
+      <enableLogCollection>Povolit shromažďování protokolů na straně klienta</enableLogCollection>
+      <logCollectionInfo>Tento indikátor bude protokolovat informace od klienta v protokolech serveru k vyřešení potíží s připojením WebRTC. Používejte jej s nejvyšší opatrností, tento režim je podrobný a může způsobit značné režijní náklady na síť.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

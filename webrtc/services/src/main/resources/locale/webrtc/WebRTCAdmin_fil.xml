@@ -3,26 +3,26 @@
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
-      <title>WebRTC settings</title>
-      <servers>STUN / TURN servers</servers>
-      <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
+      <title>Mga setting ng WebRTC</title>
+      <servers>STUN / TRUN na mga server</servers>
+      <serversTip>Ang STUN/TURN na mga server ay kinakailangan para siguraduhin ang web conferencing na mga tawag ay gumagana ng maayos sa kabuuan ng mga access network router. Lubos naming inirerekumenda na i-set up ang iyong pribadong TURN server para panatilihing nakakontrol sa seguridad ng iyong mga kumonikasyon at matiyak ang pinakamataas na accessibility.</serversTip>
       <url>URL</url>
-      <serverUrl>Server URL...</serverUrl>
-      <credentials>Credentials</credentials>
+      <serverUrl>URL ng Server...</serverUrl>
+      <credentials>Mga Credential</credentials>
       <username>Ang Username</username>
       <credential>Credential</credential>
       <save>Seyb</save>
       <cancel>Kanselahin</cancel>
       
       <!-- Confirmation dialog -->
-      <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
+      <confirmServerRemoval>Tanggalin ang ICE Server?</confirmServerRemoval>
+      <serverRemoveText>Sigurado ka bang gusto mong tanggalin ang server configuration na ito?</serverRemoveText>
       <remove>Tanggalin</remove>
       
       <!-- Error Diagnostics -->
-      <errorDiagnostic>Error Diagnostics</errorDiagnostic>
-      <enableLogCollection>Enable client-side log collection</enableLogCollection>
-      <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
+      <errorDiagnostic>Mga Diagnostic ng Mali</errorDiagnostic>
+      <enableLogCollection>Paganahin ang client-side na koleksyon ng log</enableLogCollection>
+      <logCollectionInfo>Maglo-log ng impormasyon mula sa kliyente sa mga server log upang mag-troubleshoot ng WebRTC connectivity na isyu. Maingat na gamitin, ang mode na tio ay masalita at maaaring magdulot ng makabuluhang network overhead.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

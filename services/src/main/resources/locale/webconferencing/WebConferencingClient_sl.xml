@@ -6,5 +6,6 @@
     <cancel>Prekliči</cancel>
     
     <notConfigured>ni nastavljen</notConfigured>
+    <errorReference>Error reference:</errorReference>
   </webconferencing>
 </bundle>

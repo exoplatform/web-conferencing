@@ -2,45 +2,45 @@
 <bundle>
   <webrtc>
     <call>Trucada</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <callingYou>l'està trucant...</callingYou>
+    <callWith>Trucar amb</callWith>
+    <callTo>Trucar a</callTo>
+    <incomingCall>Trucada entrant</incomingCall>
     <answer>Resposta</answer>
     <decline>Rebutja</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <callStartTip>Faci clic per iniciar una videotrucada</callStartTip>
+    <callRunningTip>Aquesta trucada ja està en progrés. Faci clic per mostrar la finestra de trucada.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
-    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>Call was stopped</callStopped>
-    <errorAddCall>The call could not be started due to a server error</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <providerError>Error del proveïdor WebRTC</providerError>
+    <providerNotAvailable>El proveïdor WebRTC no està disponible</providerNotAvailable>
+    <refreshTryAgainContactAdmin>Si us plau, actualitza la pàgina i torna-hi a provar. Si continua l'error, contacteu amb l'administrador amb aquesta referència d'error.</refreshTryAgainContactAdmin>
+    <callStopped>La trucada s'ha aturat</callStopped>
+    <errorAddCall>No s'ha pogut iniciar la trucada a causa d'un error del servidor. Si us plau, torni-ho a provar. Si el problema persisteix, posi's en contacte amb el seu administrador.</errorAddCall>
+    <errorOpeningCall>S'ha produït un error mentre s'obria la finestra de trucades. Si us plau, actualitzi la pàgina i torni-ho a provar. Si l'error persisteix, posi's en contacte amb el seu administrador.</errorOpeningCall>
+    <callWindowNotOpen>No s'ha pogut obrir la finestra de trucada. Si us plau, comprovi si ha sigut bloquejada pel seu navegador.</callWindowNotOpen>
+    <errorStartingCall>Error iniciant la trucada</errorStartingCall>
+    <errorIncomingCall>Error de trucada entrant</errorIncomingCall>
+    <errorReadUserStatus>Error llegint la informació de l'estatus de l'usuari del servidor</errorReadUserStatus>
+    <errorReadCall>S'ha produït un error llegint la informació de la trucada del servidor</errorReadCall>
+    <errorSubscribeUser>No s'ha pogut establir un canal servidor-a-navegador per comunicar les actualitzacions dels usuaris. Si us plau, actualitzi la pàgina i torni-ho a provar. Si el problema persisteix, posi's en contacte amb el seu administrador.</errorSubscribeUser>
+    <errorSubscribeCall>No s'ha pogut establir un canal servidor-a-navegador per a les actualitzacions de trucades. Actualitzi la pàgina i torni-ho a provar. Si el problema persisteix, posi's en contacte amb el seu administrador.</errorSubscribeCall>
+    <errorStartingConnection>Error iniciant la connexió</errorStartingConnection>
+    <notSupportedPlatform>Plataforma no compatible</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>El seu navegador no admet trucades WebRTC</yourBrowserNotSupportWebrtc>
+    <notInitialized>El connector de trucades de vídeo WebRTC no s'ha iniciat correctament. Si us plau, tanqui aquesta finestra i torni-ho a provar.</notInitialized>
+    <connectionFailed>Error de connexió</connectionFailed>
+    <audioVideoRequired>Es requereix un micròfon i/o una càmera per fer una trucada</audioVideoRequired>
+    <mediaDevicesError>S'ha produït un error en accedir a la càmera o al micròfon</mediaDevicesError>
+    <accessDenied>No s'ha pogut obrir el dispositiu multimèdia a causa d'un error d'accés o de permís. Asseguri's que el vostre dispositiu estigui connectat i no l'estigui utilitzant una altra aplicació.</accessDenied>
+    <noAudioFound>No s'ha detectat cap micròfon</noAudioFound>
+    <butVideoFound>però s'ha trobat una càmera</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>Configuració incorrecta</wrongSettings>
+      <serverUrlMandatory>La URL del servidor no pot estar buida</serverUrlMandatory>
+      <usernameMandatory>El nom d'usuari no pot estar buit</usernameMandatory>
+      <credentialMandatory>La contrasenya no pot estar buida</credentialMandatory>
+      <errorSavingSettings>Error en desar la configuració</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

@@ -14,16 +14,16 @@
     <providerError>Napačen WebRTC ponudnik</providerError>
     <providerNotAvailable>WebRTC ponudnika ni na voljo</providerNotAvailable>
     <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>Call was stopped</callStopped>
-    <errorAddCall>Klica ni mogoče zagnati zaradi napake strežnika</errorAddCall>
-    <errorOpeningCall>Pri odpiranju okna klica je prišlo do napake</errorOpeningCall>
+    <callStopped>The call was stopped</callStopped>
+    <errorAddCall>Klica ni mogoče zagnati zaradi napake strežnika. Prosimo, poskusite znova. Če se težava ponavlja, se obrnite na skrbnika.</errorAddCall>
+    <errorOpeningCall>Pri odpiranju okna klica je prišlo do napake. Osvežite stran in poskusite znova. Če se napaka ponavlja, se obrnite na skrbnika.</errorOpeningCall>
     <callWindowNotOpen>Okna klica ni bilo mogoče odpreti. Prosimo preverite, ali ga je blokiral vaš brskalnik.</callWindowNotOpen>
     <errorStartingCall>Napaka pri zagonu klica</errorStartingCall>
     <errorIncomingCall>Napaka dohodnega klica</errorIncomingCall>
     <errorReadUserStatus>Napaka pri branju informacije o statusu uporabnika s strežnika</errorReadUserStatus>
     <errorReadCall>Napaka pri branju informacije o klicu s strežnika</errorReadCall>
-    <errorSubscribeUser>Neuspešna vzpostavitev kanala strežnik-brskalnik za posodobitve uporabnikov</errorSubscribeUser>
-    <errorSubscribeCall>Neuspešna vzpostavitev kanala strežnik-brskalnik za posodobitve klicev</errorSubscribeCall>
+    <errorSubscribeUser>Neuspešna vzpostavitev kanala strežnik-brskalnik za posodobitve uporabnikov. Osvežite stran in poskusite znova. Če se težava ponavlja, se obrnite na skrbnika.</errorSubscribeUser>
+    <errorSubscribeCall>Neuspešna vzpostavitev kanala strežnik-brskalnik za posodobitve klicev. Osvežite stran in poskusite znova. Če se težava ponavlja, se obrnite na skrbnika.</errorSubscribeCall>
     <errorStartingConnection>Napaka pri vzpostavitvi povezave</errorStartingConnection>
     <notSupportedPlatform>Nepodprta platforma</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Vaš brskalnik ne podpira WebRTC klicev</yourBrowserNotSupportWebrtc>

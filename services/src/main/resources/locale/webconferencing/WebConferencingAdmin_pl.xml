@@ -2,10 +2,10 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
-      <provider>Provider</provider>
+      <page>Konferencja internetowa</page>
+      <title>Administrowanie konferencjami internetowymi</title>
+      <info>Konferencje internetowe mogą być obsługiwane przez różnych dostawców. Można włączyć potrzebnego dostawcę i skonfigurować ustawienia.</info>
+      <provider>Dostawca</provider>
       <description>Opis</description>
       <active>Aktywny</active>
       <actions>Działania</actions>

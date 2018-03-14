@@ -2,10 +2,10 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
-      <provider>Provider</provider>
+      <page>Веб-Конференції</page>
+      <title>Адміністрування Веб-Конференцій</title>
+      <info>Веб-конференції можуть надаватися різними постачальниками. Ви можете ввімкнути потрібного постачальника та налаштувати параметри.</info>
+      <provider>Постачальник</provider>
       <description>Опис</description>
       <active>Активні</active>
       <actions>Дії</actions>

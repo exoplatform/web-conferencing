@@ -2,45 +2,45 @@
 <bundle>
   <webrtc>
     <call>Çağrı</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <callingYou>{0} seni arıyor...</callingYou>
+    <callWith>Çağrıyı şununla yap</callWith>
+    <callTo>#'yı ara</callTo>
+    <incomingCall>Gelen çağrı</incomingCall>
     <answer>Cevap</answer>
     <decline>Düşüş</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <callStartTip>Video aramasını başlatmak için tıklayın</callStartTip>
+    <callRunningTip>Bu arama işlemi zaten devam ediyor. Arama penceresini göstermek için tıklayın.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
+    <providerError>WebRTC sağlayıcı hatası</providerError>
+    <providerNotAvailable>WebRTC sağlayıcı mevcut değil</providerNotAvailable>
     <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>Call was stopped</callStopped>
-    <errorAddCall>The call could not be started due to a server error</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <callStopped>The call was stopped</callStopped>
+    <errorAddCall>Sunucu hatasından dolayı arama başlatılamadı. Lütfen yeniden deneyiniz. Eğer sorun devam ederse, lütfen yöneticinize başvurun.</errorAddCall>
+    <errorOpeningCall>Arama penceresini açarken bir hata oluştu. Lütfen sayfayı yenileyin ve yeniden deneyin. Eğer sorun devam ederse, lütfen yöneticinize başvurun.</errorOpeningCall>
+    <callWindowNotOpen>Arama penceresi açılamadı. Lütfen tarayıcınız tarafından engellenmiş olup olmadığına bakın.</callWindowNotOpen>
+    <errorStartingCall>Çağrı başlatma hatası</errorStartingCall>
+    <errorIncomingCall>Gelen arama hatası</errorIncomingCall>
+    <errorReadUserStatus>Sunucudan kullanıcı durumu bilgileri okunurken hata oluştu</errorReadUserStatus>
+    <errorReadCall>Sunucudan çağrı bilgisini okuma hatası</errorReadCall>
+    <errorSubscribeUser>Kullanıcı güncellemelerini iletmek için bir sunucu-tarayıcı kanalı oluşturulamadı. Lütfen sayfayı yenileyin ve tekrar deneyin. Sorun devam ederse, lütfen yöneticinize başvurun.</errorSubscribeUser>
+    <errorSubscribeCall>Arama güncellemeleri için bir sunucu-tarayıcı kanalı oluşturulamadı. Lütfen sayfayı yenileyin ve tekrar deneyin. Sorun devam ederse, lütfen yöneticinize başvurun.</errorSubscribeCall>
+    <errorStartingConnection>Görüşme başlatma hatası</errorStartingConnection>
+    <notSupportedPlatform>Desteklenmeyen platform</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>İnternet tarayıcınız WebRTC aramlarını desteklemiyor</yourBrowserNotSupportWebrtc>
+    <notInitialized>WebRTC video arama bağlayıcı düzgün başlatılamadı. Lütfen bu pencereyi kapayın ve yeniden deneyin.</notInitialized>
+    <connectionFailed>Bağlantı başarısız</connectionFailed>
+    <audioVideoRequired>Arama yapmak için bir mikrofon ve/veya kamera gereklidir</audioVideoRequired>
+    <mediaDevicesError>Kameraya ve mikrofona erişim hatası</mediaDevicesError>
+    <accessDenied>Bir erişim veya izin hatası nedeniyle medya cihazı açılamadı. Cihazınıza bağlı olduğundan ve başka bir uygulama tarafından kullanılmadığından emin olun.</accessDenied>
+    <noAudioFound>Mikrofon algılanamadı</noAudioFound>
+    <butVideoFound>fakat bir kamera bulundu</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>Yanlış ayarlar</wrongSettings>
+      <serverUrlMandatory>Sunucu URL'si boş bırakılamaz</serverUrlMandatory>
+      <usernameMandatory>Kullanıcı adı boş bırakılamaz</usernameMandatory>
+      <credentialMandatory>Şifre boş bırakılamaz</credentialMandatory>
+      <errorSavingSettings>Ayarları kaydetme hatası</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

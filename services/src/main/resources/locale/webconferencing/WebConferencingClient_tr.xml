@@ -5,6 +5,7 @@
     <ok>Tamam</ok>
     <cancel>İptal</cancel>
     
-    <notConfigured>not configured</notConfigured>
+    <notConfigured>ayarlanmamış</notConfigured>
+    <errorReference>Error reference:</errorReference>
   </webconferencing>
 </bundle>

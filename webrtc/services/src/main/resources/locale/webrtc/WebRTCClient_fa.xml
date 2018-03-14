@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Call</call>
+    <call>تماس</call>
     <callingYou>is calling you...</callingYou>
     <callWith>Call with</callWith>
     <callTo>Call to</callTo>
     <incomingCall>Incoming call</incomingCall>
-    <answer>Answer</answer>
-    <decline>Decline</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <answer>پاسخ</answer>
+    <decline>کاهش</decline>
+    <callStartTip>کلیک کنید برای شروع یک تماس تصویری</callStartTip>
+    <callRunningTip>این تماس در حال حاضر در حال پیشرفت است. کلیک کنید به تماس نشان می دهد.</callRunningTip>
     
     <providerError>WebRTC provider error</providerError>
     <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
     <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>Call was stopped</callStopped>
-    <errorAddCall>The call could not be started due to a server error</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
+    <callStopped>The call was stopped</callStopped>
+    <errorAddCall>این تماس می تواند آغاز شود به دلیل یک خطای سرور. لطفا دوباره سعی کنید. اگر مشکل همچنان ادامه دارد, لطفا با مدیر سیستم تماس بگیرید.</errorAddCall>
+    <errorOpeningCall>یک خطا رخ داده است در حالی که باز کردن پنجره تماس. لطفا صفحه را تازه کنید و دوباره سعی کنید. اگر خطا همچنان ادامه دارد, لطفا با مدیر سیستم تماس بگیرید.</errorOpeningCall>
+    <callWindowNotOpen>تماس پنجره می تواند باز نمی شود. لطفا چک کنید اگر آن مسدود شده بود توسط مرورگر خود را.</callWindowNotOpen>
+    <errorStartingCall>خطا در شروع تماس</errorStartingCall>
+    <errorIncomingCall>تماس های دریافتی خطا</errorIncomingCall>
+    <errorReadUserStatus>خطا در خواندن وضعیت کاربر اطلاعات از سرور</errorReadUserStatus>
+    <errorReadCall>خطا در خواندن اطلاعات تماس از سرور</errorReadCall>
+    <errorSubscribeUser>موفق به ایجاد یک سرور به مرورگر کانال برای برقراری ارتباط کاربر به روز رسانی. لطفا صفحه را تازه کنید و دوباره سعی کنید. اگر مشکل همچنان ادامه دارد, لطفا با مدیر سیستم تماس بگیرید.</errorSubscribeUser>
+    <errorSubscribeCall>موفق به ایجاد یک سرور به مرورگر کانال برای تماس با به روز رسانی. لطفا صفحه را تازه کنید و دوباره سعی کنید. اگر مشکل همچنان ادامه دارد, لطفا با مدیر سیستم تماس بگیرید.</errorSubscribeCall>
+    <errorStartingConnection>خطا در شروع ارتباط</errorStartingConnection>
+    <notSupportedPlatform>پلت فرم پشتیبانی نشده</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
     <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <connectionFailed>ارتباط موفق</connectionFailed>
+    <audioVideoRequired>یک میکروفون و یا دوربین های مورد نیاز برای قرار دادن یک تماس</audioVideoRequired>
+    <mediaDevicesError>خطا در دسترسی به دوربین یا میکروفون</mediaDevicesError>
+    <accessDenied>نمی تواند باز کردن دستگاه رسانه با توجه به دسترسی یا اجازه خطا. مطمئن شوید که دستگاه شما متصل است و نه در حال استفاده توسط برنامه های دیگر.</accessDenied>
+    <noAudioFound>بدون میکروفون شناسایی شد</noAudioFound>
+    <butVideoFound>اما یک دوربین پیدا شد</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>تنظیمات اشتباه</wrongSettings>
+      <serverUrlMandatory>آدرس سرور نمی تواند خالی باشد</serverUrlMandatory>
+      <usernameMandatory>نام کاربری نمی تواند خالی باشد</usernameMandatory>
+      <credentialMandatory>رمز عبور نمی تواند خالی باشد</credentialMandatory>
+      <errorSavingSettings>خطا در ذخیره تنظیمات</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

@@ -13,17 +13,17 @@
     
     <providerError>Erreur du connecteur WebRTC</providerError>
     <providerNotAvailable>Connecteur WebRTC non disponible</providerNotAvailable>
-    <refreshTryAgainContactAdmin>Veuillez recharger la page et réessayer. Si le problème persiste, veuillez contacter votre administrateur.</refreshTryAgainContactAdmin>
-    <callStopped>Call was stopped</callStopped>
-    <errorAddCall>Cet appel n'a pas pu démarrer en raison d'une erreur de persistance sur le serveur</errorAddCall>
-    <errorOpeningCall>Une erreur est survenue à l'ouverture de la fenêtre d'appel</errorOpeningCall>
+    <refreshTryAgainContactAdmin>Veuillez rafraîchir la page et reessayer. Si le problème persiste, veuillez contacter votre administrateur et indiquez lui ce code d’erreur.</refreshTryAgainContactAdmin>
+    <callStopped>L’appel a été interrompu</callStopped>
+    <errorAddCall>L’appel n'a pas pu démarrer en raison d'une erreur sur le serveur</errorAddCall>
+    <errorOpeningCall>Une erreur est survenue à l'ouverture de la fenêtre d'appel. Veuillez recharger la page et réessayer. Si le problème persiste, veuillez contacter votre administrateur.</errorOpeningCall>
     <callWindowNotOpen>La fenêtre d'appel n'a pas pu s'ouvrir. Veuillez vérifier qu'elle n'ait pas été bloquée par votre navigateur.</callWindowNotOpen>
     <errorStartingCall>Erreur au démarrage de l'appel</errorStartingCall>
     <errorIncomingCall>Erreur d'appel entrant</errorIncomingCall>
     <errorReadUserStatus>Erreur à la lecture de l'état de l'utilisateur sur le serveur</errorReadUserStatus>
     <errorReadCall>Erreur à la lecture des informations de l'appel sur le serveur</errorReadCall>
-    <errorSubscribeUser>Impossible d'établir le canal de communication des mises à jour utilisateur entre le serveur et votre navigateur</errorSubscribeUser>
-    <errorSubscribeCall>Impossible d'établir le canal de communication des mises à jour d'appel entre le serveur et votre navigateur</errorSubscribeCall>
+    <errorSubscribeUser>Impossible d'établir le canal de communication du serveur vers le navigateur pour les événements utilisateur</errorSubscribeUser>
+    <errorSubscribeCall>Impossible d'établir le canal de communication du serveur vers le navigateur pour les événements d’appel</errorSubscribeCall>
     <errorStartingConnection>Erreur au démarrage de la connexion</errorStartingConnection>
     <notSupportedPlatform>Plateforme non supportée</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Votre navigateur ne supporte pas les appels WebRTC</yourBrowserNotSupportWebrtc>

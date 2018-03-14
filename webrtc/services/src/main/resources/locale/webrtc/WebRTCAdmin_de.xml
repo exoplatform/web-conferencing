@@ -3,26 +3,26 @@
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
-      <title>WebRTC settings</title>
-      <servers>STUN / TURN servers</servers>
-      <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
+      <title>WebRTC-Einstellungen</title>
+      <servers>STUN/TURN-Server</servers>
+      <serversTip>STUN/TURN-Server sind erforderlich, um sicherzustellen, dass Webkonferenzanrufe über Netzwerkrouter hinweg einwandfrei funktionieren. Wir empfehlen Ihnen dringend, einen eigenen privaten TURN-Server einzurichten, um die Sicherheit Ihrer Kommunikation zu gewährleisten und eine maximale Verfügbarkeit zu gewährleisten.</serversTip>
       <url>URL</url>
-      <serverUrl>Server URL...</serverUrl>
-      <credentials>Credentials</credentials>
+      <serverUrl>Server-URL...</serverUrl>
+      <credentials>Referenzen</credentials>
       <username>Benutzername</username>
-      <credential>Credential</credential>
+      <credential>Referenz</credential>
       <save>Speichern</save>
       <cancel>Abbrechen</cancel>
       
       <!-- Confirmation dialog -->
-      <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
+      <confirmServerRemoval>ICE-Server entfernen?</confirmServerRemoval>
+      <serverRemoveText>Sind Sie sicher, dass Sie diese Serverkonfiguration entfernen möchten?</serverRemoveText>
       <remove>Entfernen</remove>
       
       <!-- Error Diagnostics -->
-      <errorDiagnostic>Error Diagnostics</errorDiagnostic>
-      <enableLogCollection>Enable client-side log collection</enableLogCollection>
-      <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
+      <errorDiagnostic>Fehlerdiagnose</errorDiagnostic>
+      <enableLogCollection>Client-seitige Log-Sammlung aktivieren</enableLogCollection>
+      <logCollectionInfo>Dieses Flag wird Informationen vom Client in den Serverprotokollen protokollieren, um Probleme mit der WebRTC-Konnektivität zu beheben. Umsichtig verwenden, da dieser Modus ist langatmig ist und einen erheblichen Netzwerk-Overhead verursachen kann.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

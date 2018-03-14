@@ -2,13 +2,13 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
-      <provider>Provider</provider>
+      <page>Web Konfrans</page>
+      <title>İnzibatçının Web Konfransı</title>
+      <info>Web Konfrans müxtəlif provayderlər tərəfindən idarə oluna bilər. Sizə lazım olan provayderi aktiv etmək üçün tənzimləmələri konfuqrasiya edə bilərsiniz.</info>
+      <provider>Provayder</provider>
       <description>Açıqlama</description>
-      <active>Active</active>
-      <actions>Actions</actions>
+      <active>Aktiv</active>
+      <actions>Fəaliyyətlər</actions>
     </admin>
   </webconferencing>
 </bundle>

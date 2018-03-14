@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <!-- Messages for Platform menu and view settings -->
+  <UIBasicProfile>
+    <label>
+      <myconnector>Aking tawag</myconnector>
+    </label>
+  </UIBasicProfile>
+  <UIEditUserProfileForm>
+    <label>
+      <myconnector>Aking tawag</myconnector>
+    </label>
+  </UIEditUserProfileForm>
+  <!-- Messages for Platform add-on -->
+</bundle>

@@ -2,10 +2,10 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
-      <provider>Provider</provider>
+      <page>Conferència web</page>
+      <title>Administració de conferències web</title>
+      <info>Les conferències web les poden gestionar diferents proveïdors. Vostè pot habilitar el proveïdor que necessiti i configurar els paràmetres.</info>
+      <provider>Proveïdor</provider>
       <description>Descripció</description>
       <active>Actiu</active>
       <actions>Accions</actions>

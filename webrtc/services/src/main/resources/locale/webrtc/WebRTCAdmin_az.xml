@@ -3,26 +3,27 @@
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
-      <title>WebRTC settings</title>
-      <servers>STUN / TURN servers</servers>
-      <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
+      <title>WebRTC tənzimləmələri</title>
+      <servers>STUN / TURN serverləri</servers>
+      <serversTip>STUN/TURN  serverlərin web konferans zənglərinin şəbəkə marşrutları arasında düzgün işləməsini təmin etmək üçün tələb olunur. Biz rabitənin təhlükəsizliyinə nəzarəti saxlamaq və maksimal mövcudluğunu təmin etmək üçün siə özəl TURN serverinizi qurmağı təklif edirik.</serversTip>
       <url>URL</url>
       <serverUrl>Server URL...</serverUrl>
-      <credentials>Credentials</credentials>
-      <username>Username</username>
-      <credential>Credential</credential>
-      <save>Save</save>
+      <credentials>Səlahiyyətlər</credentials>
+      <username>İstifadəçi Adı</username>
+      <credential>Səlahiyyət</credential>
+      <save>Saxla</save>
       <cancel>Ləğv Et</cancel>
       
       <!-- Confirmation dialog -->
-      <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
+      <confirmServerRemoval>ICE serverini silirsən?</confirmServerRemoval>
+      <serverRemoveText>Siz server konfuqrasiyasını silmək istəyirsinizmi?</serverRemoveText>
       <remove>Sil</remove>
       
       <!-- Error Diagnostics -->
-      <errorDiagnostic>Error Diagnostics</errorDiagnostic>
-      <enableLogCollection>Enable client-side log collection</enableLogCollection>
-      <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
+      <errorDiagnostic>Səhvlərin Diaqnostikası</errorDiagnostic>
+      <enableLogCollection>Müştəri günlükləri aktiv et</enableLogCollection>
+      <logCollectionInfo>Bu bayraq WebRTC bağlantısı problemini aradan qaldırmaq üçün müştəridən server günlüklərində olan məlumatları əldə edəcəkdir. Bunu diqqətlə istifadə edin ki, bu rejimin nətic
+sində, ağır şəbəkə yükü yaranmasın.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>
