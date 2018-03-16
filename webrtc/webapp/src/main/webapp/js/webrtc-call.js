@@ -383,13 +383,13 @@ if (eXo.webConferencing) {
 											handleConnectionError("Failed to send answer for " + callId, err);
 										});
 									};
-									var sendCandidate = function(candidate) {
+									var sendCandidate = function(candidate, number) {
 										return sendMessage({
 							        "candidate" : candidate
 							      }).done(function() {
-							      	log.debug("Published candidate for " + callId + ": " + JSON.stringify(candidate));
+							      	log.debug("Published candidate (" + number + ") for " + callId + ": " + JSON.stringify(candidate));
 										}).fail(function(err) {
-											handleConnectionError("Failed to send candidate for " + callId, err);
+											handleConnectionError("Failed to send candidate (" + number + ") for " + callId, err);
 										});
 									};
 									
@@ -414,17 +414,20 @@ if (eXo.webConferencing) {
 									};
 									
 									// Add peer listeners for connection flow
+									// For debug purpose: count local candidates to logs readability
+								  var localCandidateCnt = 0;
 									pc.onicecandidate = function (event) {
 										// This will happen when browser will be ready to exchange peers setup
-										log.debug("ICE candidate ready for " + callId);
+										var candidateNumb = ++localCandidateCnt;
+										log.debug("ICE candidate (" + candidateNumb + ") ready for " + callId);
 										connection.then(function() {
 									    if (event.candidate) {
-									    	sendCandidate(event.candidate);
+									    	sendCandidate(event.candidate, candidateNumb);
 									    } else {
 									      // else All ICE candidates have been sent. ICE gathering has finished.
 									    	// Send empty candidate as a sign of finished ICE gathering.
-									    	sendCandidate({}).done(function() {
-									    		log.debug("All ICE candidates have been sent");
+									    	sendCandidate({}, candidateNumb).done(function() {
+									    		log.debug("All ICE candidates (" + candidateNumb + ") have been sent");
 									    	});
 									    }
 										});
@@ -518,16 +521,15 @@ if (eXo.webConferencing) {
 										$videos.removeClass("active");
 								  };
 									
-								  // For debug purpose: count candidates to logs readability
-								  var candidateNumb = 0;
-								  
+								  // For debug purpose: count remote candidates to logs readability
+								  var remoteCandidateCnt = 0;
 									// Subscribe to the call updates
 									var listener = webConferencing.onCallUpdate(callId, function(message) {
 										if (message.provider == webrtc.getType()) {
 											if (message.sender != currentUserId) {
 												if (message.candidate) {
 													// ICE candidate of remote party (can happen several times)
-													candidateNumb++;
+													var candidateNumb = ++remoteCandidateCnt;
 													var candidateStr = JSON.stringify(message.candidate);
 													log.debug("Received candidate (" + candidateNumb + ") for " + callId + ": " + candidateStr);
 													var hasCandidate = Object.getOwnPropertyNames(message.candidate).length > 0;
@@ -544,7 +546,7 @@ if (eXo.webConferencing) {
 														});
 													}
 													if (!hasCandidate) {
-														log.debug("All candidates (" + candidateNumb + ") received for " + callId);
+														log.info("Call connected (received " + candidateNumb + " ICE candidates): " + callId);
 													}
 												} else if (message.offer) {
 													log.debug("Received offer for " + callId + ": " + JSON.stringify(message.offer));
@@ -801,10 +803,12 @@ if (eXo.webConferencing) {
 										  }
 											// if user had saved audio/video disabled, mute them accordingly
 											if (getPreference("audio.disable") == "true") {
+												log.info("Apply user preference: audio disabled");
 												enableAudio(false);
 												$muteAudio.addClass("on");
 											}
 											if (getPreference("video.disable") == "true") {
+												log.info("Apply user preference: video disabled");
 												enableVideo(false);
 												$muteVideo.addClass("on");
 											}

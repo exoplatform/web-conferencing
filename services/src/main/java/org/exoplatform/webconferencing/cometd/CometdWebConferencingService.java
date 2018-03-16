@@ -772,7 +772,9 @@ public class CometdWebConferencingService implements Startable {
               }
             });
           } else {
-            LOG.warn("Call context not found for " + callId);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Call context not found for " + callId);
+            }
           }
         }
       }
