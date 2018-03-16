@@ -282,6 +282,7 @@
 								}
 								$button.click(function() {
 									openCallWindow(callId, function(callWindow) {
+										log.info("Call creating: " + callId + " target: " + target.title);
 										// Open a window for a new call
 										var link = callLink(callId);
 										var callWindowId;
@@ -300,13 +301,13 @@
 											participants : [context.currentUser.id, target.id].join(";") // eXo user ids separated by ';' !
 										};
 										webConferencing.addCall(callId, callInfo).done(function(call) {
-											log.info("Call created: " + callId + " target: " + target.title);
+											log.info("Call created: " + callId);
 											// Tell the window to start the call  
 											onCallWindowReady(callWindow).done(function() {
-												log.debug("Call page open: " + callId + " target: " + target.title);
+												log.debug("Call page open: " + callId);
 												callWindow.document.title = message("callTo") + " " + target.title;
 												callWindow.eXo.webConferencing.startCall(call).done(function(state) {
-													log.info("Call " + state + ": " + callId + " target: " + target.title);
+													log.info("Call " + state + ": " + callId);
 													setButtonCall($button, callId); // should be removed on stop/leaved event in init()
 													if (callWindowId) {
 														saveCallWindow(callId, callWindowId);

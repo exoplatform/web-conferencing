@@ -65,7 +65,7 @@ public class CallLog {
   public static final String MESSAGE_NO_DATA                   = "<no data>";
 
   /** Log message max length. */
-  public static final int    MESSAGE_MAX_LENGTH                = 1024 * 5;
+  public static final int    MESSAGE_MAX_LENGTH                = 1024 * 8;
 
   /** Log message critical length. Values longer of this will be cut by the logger. */
   public static final int    MESSAGE_CRITICAL_LENGTH           = 1024 * 10;
@@ -83,16 +83,6 @@ public class CallLog {
   public static final int    MESSAGES_BUFFER_WAIT_MILLIS       = 20000;
 
   /**
-   * Checks if is message valid. If not valid, a log warn also will be reported about the length.
-   *
-   * @param msg the msg
-   * @return true, if is valid
-   */
-  public static boolean isSafe(String msg) {
-    return msg == null || msg.length() <= MESSAGE_MAX_LENGTH;
-  }
-
-  /**
    * Validate a message by cutting it if it is longer of {@value #MESSAGE_CRITICAL_LENGTH} bytes.
    *
    * @param msg the msg
@@ -102,9 +92,9 @@ public class CallLog {
     if (msg == null || msg.length() == 0) {
       return MESSAGE_NO_DATA; // we accept empty data
     }
-    if (isSafe(msg)) {
-      if (msg != null && msg.length() > MESSAGE_CRITICAL_LENGTH) {
-        LOG.warn(new StringBuilder("Cut loo long message: '").append(msg.substring(0, 64))
+    if (msg.length() > MESSAGE_MAX_LENGTH) {
+      if (msg.length() > MESSAGE_CRITICAL_LENGTH) {
+        LOG.warn(new StringBuilder("Cut too long message: '").append(msg.substring(0, 64))
                                                              .append("...'. It's recommended to use log messages not longer of ")
                                                              .append(MESSAGE_MAX_LENGTH)
                                                              .append(" chars. All messages longer of ")
@@ -112,13 +102,13 @@ public class CallLog {
                                                              .append(" will be cut.")
                                                              .toString());
         return new StringBuilder(msg.substring(0, MESSAGE_CRITICAL_LENGTH)).append("...").toString();
+      } else {
+        LOG.warn(new StringBuilder("Message: '").append(msg.substring(0, 64))
+                 .append("...' exceeds recommended length of ")
+                 .append(MESSAGE_MAX_LENGTH)
+                 .append(" chars. Avoid using longer messages due to possible performance impact.")
+                 .toString());
       }
-    } else {
-      LOG.warn(new StringBuilder("Message: '").append(msg.substring(0, 64))
-                                              .append("...' exceeds recommeded length of ")
-                                              .append(MESSAGE_MAX_LENGTH)
-                                              .append(" chars. Avoid using longer messages due to possible performance impact.")
-                                              .toString());
     }
     return msg;
   }
@@ -370,7 +360,7 @@ public class CallLog {
          */
         @Override
         void log() {
-          LOG.trace(validate(msg));
+          LOG.trace(validateFinal(msg));
         }
       });
       flush();
@@ -391,7 +381,7 @@ public class CallLog {
          */
         @Override
         void log() {
-          LOG.trace(validate(msg));
+          LOG.trace(validateFinal(msg));
         }
       });
       flush();
