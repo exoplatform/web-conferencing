@@ -120,7 +120,7 @@
 							webConferencing.deleteCall(callId).done(function() {
 								log.info("Deleted call: " + callId);
 							}).fail(function(err) {
-								if (err && (err.code == "NOT_FOUND_ERROR" || (typeof(status) == "number" && status == 404))) {
+								if (err && err.code == "NOT_FOUND_ERROR") {
 									// already deleted
 									log.debug("Call not found: " + callId);
 								} else {
