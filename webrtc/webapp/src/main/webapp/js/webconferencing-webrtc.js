@@ -365,21 +365,67 @@
 				return button.promise();
 			};
 			
-			var acceptCallPopover = function(callerLink, callerAvatar, callerMessage, playRingtone) {
-				log.trace(">> acceptCallPopover '" + callerMessage + "' caler:" + callerLink + " avatar:" + callerAvatar);
+			var ringtonePlayedKey = function(callId) {
+				return "exo.webconferencing.webrtc.ringtonePlayed:" + callId;
+			};
+			var saveRingtonePlayed = function(callId, value) {
+				try {
+					localStorage.setItem(ringtonePlayedKey(callId), "" + value); // value can be boolean
+				} catch(err) {
+					log.error("Error saving call ringtone status for " + callId, err);
+				}
+			};
+			var isRingtonePlayed = function(callId) {
+				return localStorage.getItem(ringtonePlayedKey(callId));
+			};
+			var removeRingtonePlayed = function(callId) {
+				localStorage.removeItem(ringtonePlayedKey(callId));
+			};
+			
+			var acceptCallPopover = function(callId, callerLink, callerAvatar, callerMessage, playRingtone) {
 				var process = $.Deferred();
 				var $call = $(".incomingCall");
+				$call.find(".avatar a").attr("href", callerLink);
+				$call.find(".avatar img").attr("src", callerAvatar);
+				$call.find(".messageText").text(callerMessage);
+				var $ring;
 				$call = $.extend($call, {
+					callId : callId, 
 					close : function() {
 						$call.hide();
 						if (process.state() == "pending") {
 							process.reject("closed");
 						}
+					},
+					playRingtone : function() {
+						if (!$ring) {
+							$ring = $("<audio loop autoplay style='display: none;'>" // controls 
+										+ "<source src='/webrtc/audio/line.mp3' type='audio/mpeg'>"  
+										+ "Your browser does not support the audio element.</audio>");
+							$(document.body).append($ring);
+							saveRingtonePlayed(callId, true);
+							process.always(function() {
+								// Stop incoming ringing on dialog completion
+								$call.stopRingtone();
+							});
+							process.fail(function() {
+								var $cancel = $("<audio autoplay style='display: none;'>" // controls 
+											+ "<source src='/webrtc/audio/manner_cancel.mp3' type='audio/mpeg'>"  
+											+ "Your browser does not support the audio element.</audio>");
+								$(document.body).append($cancel);
+								setTimeout(function() {
+									$cancel.remove();
+								}, 3000);
+							});						
+						}
+					},
+					stopRingtone : function() {
+						removeRingtonePlayed(callId);
+						if ($ring) {
+							$ring.remove();
+						}
 					}
 				});
-				$call.find(".avatar a").attr("href", callerLink);
-				$call.find(".avatar img").attr("src", callerAvatar);
-				$call.find(".messageText").text(callerMessage);
 				$call.find(".uiIconClose").click(function () {
 					$call.close();
 				});
@@ -393,28 +439,8 @@
 				});
 				process.notify($call);
 				
-				if (playRingtone) {
-					// Start ringing incoming sound only if requested (depends on user status)
-					var $ring = $("<audio loop autoplay style='display: none;'>" // controls 
-								+ "<source src='/webrtc/audio/line.mp3' type='audio/mpeg'>"  
-								+ "Your browser does not support the audio element.</audio>");
-					$(document.body).append($ring);
-					process.fail(function() {
-						var $cancel = $("<audio autoplay style='display: none;'>" // controls 
-									+ "<source src='/webrtc/audio/manner_cancel.mp3' type='audio/mpeg'>"  
-									+ "Your browser does not support the audio element.</audio>");
-						$(document.body).append($cancel);
-						setTimeout(function() {
-							$cancel.remove();
-						}, 3000);
-					});
-					process.always(function() {
-						// Stop incoming ringing on dialog completion
-						$ring.remove();
-					});					
-				}
-				
 				$call.show();
+				
 				return process.promise();
 			};
 			
@@ -424,6 +450,12 @@
 				if (self.isSupportedPlatform()) {
 					var currentUserId = webConferencing.getUser().id;
 					var $callPopup;
+					window.addEventListener("beforeunload", function() {
+						// we want cleanup the storage from call ring status if have an one
+						if ($callPopup) {
+							$callPopup.stopRingtone();
+						}
+					});
 					var closeCallPopup = function(callId, state) {
 						if ($callPopup && $callPopup.callId && $callPopup.callId == callId) {
 							if ($callPopup.is(":visible")) {
@@ -467,10 +499,9 @@
 									if (update.owner.type == "user") {
 										var lastCallId = lastUpdate ? lastUpdate.callId : null;
 										var lastCallState = lastUpdate ? lastUpdate.callState : null;
-										if (callId == lastCallId && update.callState == lastCallState) {
+										if ((update.callState == "started" || update.callState == "stopped") && callId == lastCallId && update.callState == lastCallState) {
 											log.trace("<<< XXX User call state updated skipped as duplicated: " + JSON.stringify(update));
 										} else {
-											log.trace(">>> User call state updated: " + JSON.stringify(update));
 											if (lastUpdateReset) {
 												clearTimeout(lastUpdateReset);
 											}
@@ -481,7 +512,6 @@
 											if (update.callState == "started") {
 												log.info("Incoming call: " + callId);
 												webConferencing.getCall(callId).done(function(call) {
-													log.trace(">>> Got registered " + callId);
 													var callWindow;
 													var callWindowId = readCallWindow(callId);
 													if (callWindowId) {
@@ -503,11 +533,16 @@
 														var callerRoom = callerId;
 														call.title = call.owner.title; // for callee the call title is a caller name
 														webConferencing.getUserStatus(currentUserId).done(function(user) {
-															var popover = acceptCallPopover(callerLink, callerAvatar, callerMessage, !user || user.status == "available" || user.status == "away");
+															// Find if we need/can play a ringtone
+															var visible = document.visibilityState ? document.visibilityState == "visible" : true;
+															var playRing = !user || user.status == "available" || user.status == "away";
+															var popover = acceptCallPopover(callId, callerLink, callerAvatar, callerMessage);
 															popover.progress(function($call) {
 																$callPopup = $call;
-																$callPopup.callId = callId;
 																$callPopup.callState = update.callState;
+																if (playRing && visible) {
+																	$callPopup.playRingtone();
+																}
 															}); 
 															popover.done(function(msg) {
 																log.info("User " + msg + " call: " + callId);
@@ -547,6 +582,15 @@
 																	deleteCall(callId);
 																}
 															});
+															if (!visible && playRing) {
+																// If not visible but need to play a ring - wait for other clients that could play and if none then play here
+																// We wait for random timeout to let an one be first (w/ higher probability)
+																setTimeout(function() {
+																	if ($callPopup && $callPopup.callId == callId && !isRingtonePlayed(callId)) {
+																		$callPopup.playRingtone();
+																	}
+																}, 2500 + webConferencing.getRandom(1, 1000));
+															}
 														}).fail(function(err) {
 															var msg = err ? webConferencing.errorText(err) : message("errorReadUserStatus");
 															log.showError("Failed to get user status: " + currentUserId, err, message("errorIncomingCall"), msg);
@@ -567,9 +611,7 @@
 												} else {
 													log.debug("Call stopped remotelly: " + callId);
 												}
-											} 
-											// "call_joined" to use with group calls and close its popup
-											// "call_leaved" to unlock a call button of group call
+											}
 										}
 									} else {
 										log.warn("Group calls not supported: " + callId);
@@ -581,7 +623,7 @@
 										closeCallPopup(update.callId, "joined");
 									}
 								} else if (update.eventType == "call_leaved") {
-									// TODO not used
+									// not used
 								} else if (update.eventType == "retry") {
 									log.trace("<<< Retry for user updates");
 								} else {
