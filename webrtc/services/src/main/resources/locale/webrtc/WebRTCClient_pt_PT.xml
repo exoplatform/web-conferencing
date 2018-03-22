@@ -13,8 +13,8 @@
     
     <providerError>Erro de fornecedor Vídeo Chamada Web</providerError>
     <providerNotAvailable>Operador de Vídeo Chamada Web não disponível</providerNotAvailable>
-    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>The call was stopped</callStopped>
+    <refreshTryAgainContactAdmin>Por favor atualize a página e tente novamente. Se o erro persistir, contacte o administrador de sistemas com esta mensagem de erro.</refreshTryAgainContactAdmin>
+    <callStopped>A chamada foi interrompida</callStopped>
     <errorAddCall>A ligação não pode ser iniciada devido a um erro no servidor. Por favor, tente novamente. Se o problema persistir, contacte o administrador.</errorAddCall>
     <errorOpeningCall>Ocorreu um erro ao abrir a janela de chamada. Por favor, atualize a página e tente novamente. Se o erro persistir, contacte o administrador.</errorOpeningCall>
     <callWindowNotOpen>Janela de chamada não pode ser aberta. Por favor verifique se o browser está a bloquear pop-ups.</callWindowNotOpen>

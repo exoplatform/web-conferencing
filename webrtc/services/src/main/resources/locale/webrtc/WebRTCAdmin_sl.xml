@@ -4,8 +4,8 @@
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
       <title>WebRTC nastavitve</title>
-      <servers>STUN / TURN servers</servers>
-      <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
+      <servers>STUN/TURN strežniki</servers>
+      <serversTip>STUN/TURN strežniki morajo zagotoviti, da bodo klici spletne konference prek omrežnih usmerjevalnikov delovali pravilno. Priporočamo, da si za ohranjanje nadzora nad varnostjo vaše komunikacije in zagotovitev največje možne razpoložljivosti postavite svoj zasebni TURN strežnik.</serversTip>
       <url>URL</url>
       <serverUrl>URL strežnika...</serverUrl>
       <credentials>Poverilnice</credentials>
@@ -15,14 +15,14 @@
       <cancel>Prekliči</cancel>
       
       <!-- Confirmation dialog -->
-      <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
+      <confirmServerRemoval>Odstranimo ICE strežnik?</confirmServerRemoval>
+      <serverRemoveText>Ali ste prepričani, da želite odstraniti konfiguracijio tega strežnika?</serverRemoveText>
       <remove>Odstrani</remove>
       
       <!-- Error Diagnostics -->
-      <errorDiagnostic>Error Diagnostics</errorDiagnostic>
-      <enableLogCollection>Enable client-side log collection</enableLogCollection>
-      <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
+      <errorDiagnostic>Diagnostika napak</errorDiagnostic>
+      <enableLogCollection>Omogočitev dnevnika na strani odjemalca</enableLogCollection>
+      <logCollectionInfo>Ta označba bo omogočila vpisovanje informacije s strani odjamalca v dnevnik strežnika, z namenom odpravljanja povezljivostnih težav pri WebRTC. Uporabljajte previdno, beleženje je podrobno in lahko povzroči precej režijskega prometa v omrežju.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

@@ -3,7 +3,7 @@
   <webrtc>
     <call>Вызов</call>
     <callingYou>вызывает Вас...</callingYou>
-    <callWith>Вызов с использованием</callWith>
+    <callWith>Вызов с</callWith>
     <callTo>Позвонить</callTo>
     <incomingCall>Входящий вызов</incomingCall>
     <answer>Ответить</answer>
@@ -13,17 +13,17 @@
     
     <providerError>Ошибка поставщика WebRTC</providerError>
     <providerNotAvailable>WebRTC поставщик не доступен</providerNotAvailable>
-    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>The call was stopped</callStopped>
-    <errorAddCall>Вызов не может быть установлен из-за ошибки сервера. Пожалуйста, попробуйте еще раз. Если проблема повторится, обратитесь к администратору.</errorAddCall>
+    <refreshTryAgainContactAdmin>Пожалуйста, обновите страницу и повторите попытку. Если ошибка повторится, обратитесь к администратору с указанием этой ошибки.</refreshTryAgainContactAdmin>
+    <callStopped>Звонок завершен</callStopped>
+    <errorAddCall>Вызов не может быть начат из-за ошибки сервера</errorAddCall>
     <errorOpeningCall>Произошла ошибка при открытии окна вызова. Пожалуйста, обновите страницу и повторите попытку. Если ошибка повторится, обратитесь к администратору.</errorOpeningCall>
     <callWindowNotOpen>Окно вызова не может быть открыто. Пожалуйста, проверьте, может оно заблокировано Вашим браузером.</callWindowNotOpen>
-    <errorStartingCall>Ошибка вызова</errorStartingCall>
+    <errorStartingCall>Ошибка начала вызова</errorStartingCall>
     <errorIncomingCall>Ошибка входящего вызова</errorIncomingCall>
     <errorReadUserStatus>Ошибка при чтении состояния пользователя с сервера</errorReadUserStatus>
     <errorReadCall>Ошибка при чтении сведения о вызове с сервера</errorReadCall>
-    <errorSubscribeUser>Не удалось создать канал сервера в браузере для информирования об обновлениях. Пожалуйста, обновите страницу и повторите попытку. Если проблема повторится, обратитесь к администратору.</errorSubscribeUser>
-    <errorSubscribeCall>Не удалось создать канал сервера в браузере для обновлении информации о вызове. Пожалуйста, обновите страницу и повторите попытку. Если проблема повторится, обратитесь к администратору.</errorSubscribeCall>
+    <errorSubscribeUser>Не удалось создать канал связи с сервером для получения информации пользователя</errorSubscribeUser>
+    <errorSubscribeCall>Не удалось создать канал связи с сервером для обновлении информации о вызове</errorSubscribeCall>
     <errorStartingConnection>Ошибка при соединении</errorStartingConnection>
     <notSupportedPlatform>Неподдерживаемая платформа</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Ваш браузер не поддерживает технологию WebRTC</yourBrowserNotSupportWebrtc>
@@ -37,7 +37,7 @@
     
     <admin>
       <wrongSettings>Неверные настройки</wrongSettings>
-      <serverUrlMandatory>URL-адрес не может быть пустым</serverUrlMandatory>
+      <serverUrlMandatory>URL-адрес сервера не может быть пустым</serverUrlMandatory>
       <usernameMandatory>Имя пользователя не может быть пустым</usernameMandatory>
       <credentialMandatory>Пароль не может быть пустым</credentialMandatory>
       <errorSavingSettings>Ошибка сохранения настроек</errorSavingSettings>
