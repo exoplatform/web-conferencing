@@ -233,7 +233,7 @@
 								});
 								// Assign target ID to the button for later use on started event in init()
 								$button.data("targetid", target.id);
-								// Resolve with our button
+								// Resolve with our button - return jQuery object here, so it will be appended to Call Button UI in the Platform
 								button.resolve($button);
 							} else {
 								// If not users compatible with My Connector IM type found, we reject, thus don't show the button for this context

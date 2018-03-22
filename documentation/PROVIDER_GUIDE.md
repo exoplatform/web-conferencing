@@ -1,16 +1,25 @@
 eXo Web Conferencing: Connector Development Guide
 =========================================
 
-eXo Web Conferencing provides a service provider interface (SPI) for building Connectors for plugging third party video calling service providers inside the eXo Platform interface. Connectors may be added programmatically in the form of eXo Platform extensions. Any connector will consist of server code and Javascript with user interface parts for running actual call. This guide contains quick tutorial with a code how to start create a custom Connector and add a call button to eXo Platform add using the SPI of Web Conferencing.
+eXo Web Conferencing provides a service provider interface (SPI) for building Connectors for plugging third party video calling service providers inside the eXo Platform interface. A call connector it is a portal extensions installed in eXo Platform. Any connector consists of server code and client app with user interface parts for running actual calls. This guide contains quick tutorial with a code how to start creating a custom Connector and add a call button to eXo Platform using the SPI of Web Conferencing.
 
 Getting started
 ===============
 
-Web Conferencing will adds a Call Button to users, spaces and chat rooms in eXo Platform. But connector should provide a markup of this Call Button  and don't need to care about how and where the button will appear. But connector should handle click for its button and then open a call interface to an user.
+When running, the Web Conferencing adds a Call Button of each available connector to users, spaces and chat rooms in eXo Platform. But connector should provide an implementation of this Call Button, including its markup in HTML, CSS styles and action handlers. It's not required for connector to care how and where the button will appear - this will be done by the core functionality of Web Conferencing add-on. Instead connector handles user clicks for its button, may change its style to reflect the call state and finally provide a call interface to an user. It's depends on a call provider how a call will appear to an user: in a new window or embeded to the current page. 
 
-In this tutorial we assume that you've already created a provider extension, configured it and start code the logic. TBD Show config here also?
+Additionally the Web Conferencing core offers an API to help maintaining conversation state and exchange call information between all clients of call participants. This API may work as a scaffolding for a new connector implementation and it covers following things: 
+* Context information (call provider, user status, current user, space, chat room) - required to find call type (group or one-on-one) and its participants, other contextual data
+* Call settings and state storage in eXo Platform database - if call provider requires external maintenance of conversation state (started, stopped etc) and participants, it can be saved in the database and accessed by all parties of the call
+* Publishing user and call updates to all paprties - can be useful for notifying incoming/started or stopped call, joined/leaved participant; it's also possible to exchange call data (can be connectivity and media settings, chatting or files exchange or any other information related to a call)
+* Log runtime information to eXo Platform log - it's Javascript logger that prints trace/debug/info/warn/error messages to the browser console and optionally can swap these logs to the server log file
+* Adding connector settings in Administrator menu - allows to add an optional button to Web Conferencing administrator page for invoking a connector settings form
+* Utility methods such as opening a new window for a call, showing messages and notices on the Platform page, finding user IM account etc.
 
-If need more details there is a technical architecture where [provider development] described in advance.
+In this tutorial we assume that you've already created and configured a portal extension for your provider and starting to implement the logic. 
+TBD Show config here also?
+
+For more details refer to the architecture document where [connector development] described in advance.
 
 Java API
 ========
