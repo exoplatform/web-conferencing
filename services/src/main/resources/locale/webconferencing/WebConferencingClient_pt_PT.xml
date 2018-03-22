@@ -6,6 +6,6 @@
     <cancel>Cancelar</cancel>
     
     <notConfigured>não configurado</notConfigured>
-    <errorReference>Error reference:</errorReference>
+    <errorReference>Mensagem de erro:</errorReference>
   </webconferencing>
 </bundle>

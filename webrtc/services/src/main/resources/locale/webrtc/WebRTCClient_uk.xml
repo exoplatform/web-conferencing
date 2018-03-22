@@ -2,45 +2,45 @@
 <bundle>
   <webrtc>
     <call>Дзвінок</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <callingYou>викликає вас...</callingYou>
+    <callWith>Дзвінок з</callWith>
+    <callTo>Подзвонити</callTo>
+    <incomingCall>Вхідний дзвінок</incomingCall>
     <answer>Відповідь</answer>
     <decline>Відхилити</decline>
-    <callStartTip>Натисніть кнопку, щоб почати відео-дзвінок</callStartTip>
-    <callRunningTip>Цей заклик вже йде. Натисніть кнопку, щоб показати вікно виклику.</callRunningTip>
+    <callStartTip>Натисніть, щоб почати відео-дзвінок</callStartTip>
+    <callRunningTip>Цей дзвінок вже виконується. Натисніть, щоб показати вікно дзвінка.</callRunningTip>
     
-    <providerError>Помилка постачальника в webrtc</providerError>
-    <providerNotAvailable>Постачальник webrtc не доступний</providerNotAvailable>
-    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>The call was stopped</callStopped>
-    <errorAddCall>Виклик не може бути запущено з-за помилки сервера. Будь ласка, спробуйте знову. Якщо проблема не вирішена, будь ласка, зверніться до адміністратора.</errorAddCall>
-    <errorOpeningCall>Сталася помилка при відкритті вікна виклику. Будь ласка, поновіть сторінку і спробуйте знову. Якщо помилка повториться-зверніться до адміністратора.</errorOpeningCall>
-    <callWindowNotOpen>Вікно не може бути відкритий. Будь ласка, перевірте, якщо він був заблокований вашим браузером.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Помилка читання інформації про стан користувача з сервера</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Не вдалося створити сервер-браузер канал для розповсюдження оновлень користувачів. Будь ласка, поновіть сторінку і спробуйте знову. Якщо проблема не вирішена, будь ласка, зверніться до адміністратора.</errorSubscribeUser>
-    <errorSubscribeCall>Не вдалося створити сервер-браузер канал для оновлення виклику. Будь ласка, поновіть сторінку і спробуйте знову. Якщо проблема не вирішена, будь ласка, зверніться до адміністратора.</errorSubscribeCall>
-    <errorStartingConnection>Починаючи помилка підключення</errorStartingConnection>
-    <notSupportedPlatform>Непідтримувана Платформа</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Ваш браузер не підтримує технологію webrtc дзвінків</yourBrowserNotSupportWebrtc>
-    <notInitialized>На базі webrtc відео роз'єм заклик не був правильно ініціалізований. Будь ласка, закрийте це вікно і повторіть спробу.</notInitialized>
-    <connectionFailed>Підключення не вдалося</connectionFailed>
-    <audioVideoRequired>Мікрофон та/або камеру необхідно подзвонити</audioVideoRequired>
+    <providerError>Помилка постачальника WebRTC</providerError>
+    <providerNotAvailable>Постачальник WebRTC не досяжний</providerNotAvailable>
+    <refreshTryAgainContactAdmin>Будь ласка, оновіть сторінку та повторіть спробу. Якщо помилка залишається, зв'яжіться зі своїм адміністратором з посиланням на цю помилку.</refreshTryAgainContactAdmin>
+    <callStopped>Дзвінок було зупинено</callStopped>
+    <errorAddCall>Виклик не може бути початий через помилку сервера</errorAddCall>
+    <errorOpeningCall>Виникла помилка при відкритті вікна виклику. Будь ласка, оновіть сторінку та повторіть спробу. Якщо помилка не зникне, зв'яжіться зі своїм адміністратором.</errorOpeningCall>
+    <callWindowNotOpen>Вікно виклику не може бути відкрите. Будь ласка, перевірте, можливо воно заблоковане вашим браузером.</callWindowNotOpen>
+    <errorStartingCall>Помилка початку виклику</errorStartingCall>
+    <errorIncomingCall>Помилка вхідного дзвінка</errorIncomingCall>
+    <errorReadUserStatus>Помилка отримання інформації про статус користувача з сервера</errorReadUserStatus>
+    <errorReadCall>Помилка отримання інформації про виклик із сервера</errorReadCall>
+    <errorSubscribeUser>Не вдалося встановити канал зв'язку з сервером для отримання інформації користувача</errorSubscribeUser>
+    <errorSubscribeCall>Не вдалося встановити канал зв'язу з сервером для отримання інформації про дзвінок</errorSubscribeCall>
+    <errorStartingConnection>Помилка встановлення з'єднання</errorStartingConnection>
+    <notSupportedPlatform>Платформа не підтримується</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Ваш переглядач не підтримує технологію WebRTC викликів</yourBrowserNotSupportWebrtc>
+    <notInitialized>Постачальник відео-дзвінків WebRTC був неправильно ініціалізований. Закрийте це вікно та повторіть спробу.</notInitialized>
+    <connectionFailed>Не вдалося підключити</connectionFailed>
+    <audioVideoRequired>Для здійснення дзвінка потрібен мікрофон та/або камера</audioVideoRequired>
     <mediaDevicesError>Помилка доступу до камери чи мікрофона</mediaDevicesError>
-    <accessDenied>Не вдалося відкрити пристрій засобів інформації з-за доступу або помилка доступу. Переконайтеся, що пристрій підключено і не використовується іншим додатком.</accessDenied>
-    <noAudioFound>Мікрофон не був виявлений</noAudioFound>
-    <butVideoFound>але був знайдений фотоапарат</butVideoFound>
+    <accessDenied>Не вдається відкрити медіа-пристрій через помилку доступу або дозволу. Переконайтеся, що пристрій підключено та не використовується іншим додатком.</accessDenied>
+    <noAudioFound>Мікрофон не знайдено</noAudioFound>
+    <butVideoFound>але була знайдена камера</butVideoFound>
     
     <admin>
-      <wrongSettings>Неправильні налаштування</wrongSettings>
-      <serverUrlMandatory>Сервер URL-адреса не може бути порожнім</serverUrlMandatory>
-      <usernameMandatory>Ім'я користувача може бути порожнім</usernameMandatory>
+      <wrongSettings>Невірні налаштування</wrongSettings>
+      <serverUrlMandatory>URL-адреса серверу не може бути порожнім</serverUrlMandatory>
+      <usernameMandatory>Ім'я користувача не може бути порожнім</usernameMandatory>
       <credentialMandatory>Пароль не може бути порожнім</credentialMandatory>
-      <errorSavingSettings>Збереження налаштувань помилка</errorSavingSettings>
+      <errorSavingSettings>Помилка збереження налаштувань</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>
