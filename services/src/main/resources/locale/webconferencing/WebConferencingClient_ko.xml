@@ -2,10 +2,10 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>V redu</ok>
-    <cancel>Prekliči</cancel>
+    <ok>OK</ok>
+    <cancel>Cancel</cancel>
     
-    <notConfigured>ni nastavljen</notConfigured>
-    <errorReference>Sklic na napako:</errorReference>
+    <notConfigured>not configured</notConfigured>
+    <errorReference>Error reference:</errorReference>
   </webconferencing>
 </bundle>

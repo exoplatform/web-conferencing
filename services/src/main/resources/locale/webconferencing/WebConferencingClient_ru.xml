@@ -6,6 +6,6 @@
     <cancel>Отмена</cancel>
     
     <notConfigured>не настроено</notConfigured>
-    <errorReference>Error reference:</errorReference>
+    <errorReference>Ссылка на ошибку:</errorReference>
   </webconferencing>
 </bundle>
