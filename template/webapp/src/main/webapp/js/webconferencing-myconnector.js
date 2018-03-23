@@ -516,6 +516,30 @@
 				return process.promise();
 			};
 			
+
+			/**
+	     * OPTIONAL method. If implemented, it will cause showing a settings button in Web Conferencing Administration page 
+	     * and when button clicked this method will be invoked. In this method you can show a popup to an admin user 
+	     * with provider specific settings.
+	     */
+	    this.showSettings = function() {
+				// load HTML with settings
+				var $popup = $("#myconnector-settings-popup");
+				if ($popup.length == 0) {
+					$popup = $("<div class='uiPopupWrapper' id='myconnector-settings-popup' style='display: none;'><div>");
+					$(document.body).append($popup);
+				}
+				$popup.load("/myconnector/settings", function(content, textStatus) {
+					if (textStatus == "success" || textStatus == "notmodified") {
+					  var $settings = $popup.find(".settingsForm");
+	          // TODO fill settings form and handle its changes to update the settings on the server (e.g. by using your provider REST service)
+	          // .....
+	          // Show the settings popup when ready
+	          $popup.show();
+	        } // otherwise it's error
+	      });
+	    };
+			
 			// ****** Custom methods required by the connector itself or dependent on it modules ******
 			
 			/**

@@ -609,7 +609,7 @@
 	};
 	
 	var showError = function(title, text, errorRef) {
-		return dialog(title, text, "ColorError", errorRef ? message("errorReference") + errorRef : null);
+		return dialog(title, text, "ColorError", errorRef ? message("errorReference") + " " + errorRef : null);
 	};
 	
 	var showWarn = function(title, text) {
