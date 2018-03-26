@@ -16,7 +16,7 @@ Thechnically, the Web Conferencing add-on it is a [portal extension](https://doc
 Web Conferencing Core
 -----------
 
-Web Conferencing core adds a Call Button to users, spaces and chat rooms in eXo Platform. Call Button can be used respectively to place a 1:1 call or start or join a group call. As the core offers a call button integration in to user interface of the platform, a connector implementation doesn't need to care about such aspects as finding a place in the UI, dealing with other connectors buttons alignement. Instead a connector need provide a markup of its call button that will be added and action handlers for it. A contract between the core and connector prescribed in Connector SPI which defines integration points and a way of connector registration in the system.
+Web Conferencing core adds a Call Button to users, spaces and chat rooms in eXo Platform. Call Button can be used respectively to place a 1:1 call or start or join a group call. As the core offers a call button integration to user interface of the platform, a connector implementation doesn't need to care about such aspects as finding a place in the UI, dealing with other buttons alignement. Instead, a connector provides a markup of its call button and action handlers for it. A contract between Web Conferencing core and connector prescribed in Connector SPI which defines integration points and a way of connector registration in the system.
 
 Additionally core offers an API to help build a call conversation, maintain its state and exchange information between all participants. This API may work as a scaffolding for a new connector implementation and it covers following functionality: 
 * Context information (call provider, user status, current user, space, chat room) - required to find call type (group or one-on-one) and its participants, other contextual data
@@ -26,17 +26,17 @@ Additionally core offers an API to help build a call conversation, maintain its 
 * Adding connector settings in Administrator menu - allows to add an optional button to Web Conferencing administrator page for invoking a connector settings form
 * Utility methods such as opening a new window for a call, showing messages and notices on the Platform page, finding user IM account etc.
 
-Use of both Connector SPI and common API will be overviewed below in 'Creating a connector' section.
+Both Connector SPI and common API will be overviewed below in 'Creating a connector' section.
 
 Call Connectors
 -----------
 
-Connector SPI requires a connector to register itself as a provider plugin(s) in Web Confrencing component in eXo container. This plugin implements server-side logic of provider activation and configuration. Next, a provider needs to be loaded and initialized in the Platform UI - this can be done by a portlet that will run for each page and initialize the provider for an user. At this stage provider may load its resources, call external services or make user authorization to get prepared for future calls (incoming and outgoing).
+Connector SPI requires a connector to register itself as a plugin(s) in Web Confrencing component in eXo container. This plugin implements server-side logic of call provider activation and configuration. Next, a provider needs to be loaded and initialized in the Platform UI - this can be done by a portlet that will run for each page and initialize the provider for an user. At this stage provider may load its resources, call external services or make user authorization to get prepared for future calls (incoming and outgoing).
 
 Connector extension consists of _services JAR_ and _web application WAR_. Services JAR contains Java implemenation of the SPI and related resources for supported providers. Web app WAR contains configurations, portlets and servlets (if required) for UI with Javascript client module that implements the SPI for supported providers types. 
 
-Where available, a call provider implements incoming call via its library or external services. But it's also possible to implement incoming logic using Web Conferencing core API. In this case need register a listener for user notification channel and provide an action when incoming call will start to show a notification and offer functionality of accepting or declining the call by an user.
-If call needs exchange extra data, such as communication establishment or network settings of the peers, it's possible to use a call channel from the Web Conferencing core API.
+Where available, a call provider implements incoming call via its library or external services. But it's also possible to implement incoming logic using Web Conferencing core API. In this case need register a listener for user notification channel and provide an action when incoming call will start, show a notification and offer functionality of accepting or declining the call by an user.
+If call needs exchange extra data, such as communication establishment or network settings of the peers, use a call channel from the Web Conferencing core API.
 Each connector presented in the Platform can be enabled or disabled by an administrator. If a connector needs additional global settings, then it is possible to provide Settings user interface which will appear for platform administrators.
 If connector has a need of instant messenger (IM) account, which will be used to sign-in an user to external service or software, then the connector can register such IM type and optionally provide an UI for its settings per user and for the platform administrators where applicable. 
 
@@ -51,7 +51,7 @@ Web Conferencing at client-side consists of core Javascript module `webConferenc
 
 Below a diagram of Web Conferencing architecture. TBD
 
-![Web Conferencing architecture](https://raw.github.com/exo-addons/web-conferencing/tree/develop/architecture.png) 
+![Web Conferencing architecture](/documentation/images/architecture.png) 
 
 Conventions
 -----------
@@ -755,7 +755,7 @@ Each registered call provider will appear in Web Conferencing Administration pag
 
 If call provider has settings that should be configured by a Platform administrator, then it may add them to the Administration page by implementing `showSettings()` method in its Javascript module as show above in 'Implementing Javascript SPI' section. If this method found, then a settings button will be show for this provider in Administration page and when the button clicked this method will be invoked. Provider is responsible for showing its settings UI, editing and persisting them.
 
-![Administration page](/images/adminPage.png)
+![Administration page](/documentation/images/adminPage.png)
 
 Common API
 ===========
@@ -812,7 +812,7 @@ Methods of `webConferencing` module:
   * `addCall(id, callInfo)` - create a new call by ID and call object
   * `getUserGroupCalls()` - return all groups call current user had joinedm including started and stopped
   * `getUserStatus(id)` - return user status in eXo Platform by its ID, this data will be read from `RESTUserService` of the Platform, the response object has `status` field
-* Subscription methods that use callback(s): `onUpdate` will be called on new data in the cahnnel, `onError` if subscription error happens, `onReady` when successfully subscribed
+* Subscription methods that use callback(s): `onUpdate` will be called on new data in the channel, `onError` if subscription error happen, `onReady` when successfully subscribed
   * `onUserUpdate(userId, onUpdate, onError, onReady)` - subscribe to user channel for its call updates (started-incoming, stopped etc) 
   * `onCallUpdate(callId, onUpdate, onError, onReady)` - subscribe to a particular call channel for its updates (receive any data related the call: connectivity, media or user information)
 * Subscription (publishing) methods that use promise: when data published a promise will be resolved, if failed then promise rejected with an error
@@ -855,7 +855,7 @@ And server log will contains this:
 
 As seen, server log date later a bit after the actual message, it's because of logs caching, but the message contain client timestamp which is exactly the same in browser and server. There is also a client ID `393215` which uniquely identify a Javascript core module loaded and all its provider instances. And in the server log this ID prepended with a eXo user name for better clarity.
 
-If your provider will open a new window/tab for actual call, then you may need distingush logs reported by your provider module and a call page module. Client IDs already will differ for both modules, but often we need a better, human readable, marker. For this purpose each logger can be customized for its prefix. In example below, we create a logger for call window:
+If your provider will open a new window/tab for actual call, then you may need distinguish logs reported by your provider module and a call page module. Client IDs already will differ for both modules, but often we need a better, human readable, marker. For this purpose each logger can be customized with a prefix. In example below, we create a logger for call window:
 
 ```javascript
   var log = webConferencing.getLog("myconnector").prefix("call");
@@ -906,7 +906,7 @@ When an error happens you may want to inform user about it. Often we don't need 
 
 This code will show following popup to an user:
 
-![Error popup for user](/images/logShowError.png)
+![Error popup for user](/documentation/images/logShowError.png)
 
 This message contains an error reference: `peter-673034-2018-03-23T09:02:07.801Z`. This reference, we show to an user, is build from current user name, Web Conferencing client ID and appended timestamp. All this data will be printed to the logger, making finding of technical message straightforward.
 
