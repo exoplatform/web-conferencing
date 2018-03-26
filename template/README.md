@@ -1,4 +1,4 @@
-# eXo Web Conferencing :: Connector Template
+# eXo Web Conferencing: Connector Template
 
 eXo Web Conferencing addon is pluggable and virtually can manage any web conferencing provider. Each connector should implement a Connector SPI (Service Provider Interface) which consists of Java and Javascript parts. Connector provider code organzied such way that offers maximum freedom to developers for implementing a call provider functions on top of Web Confrencing core [architecture](/documentation/ARCHITECTURE.md).
 
