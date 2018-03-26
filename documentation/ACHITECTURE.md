@@ -35,12 +35,13 @@ Connector SPI requires a connector to register itself as a plugin(s) in Web Conf
 
 Connector extension consists of _services JAR_ and _web application WAR_. Services JAR contains Java implemenation of the SPI and related resources for supported providers. Web app WAR contains configurations, portlets and servlets (if required) for UI with Javascript client module that implements the SPI for supported providers types. 
 
-Where available, a call provider implements incoming call via its library or external services. But it's also possible to implement incoming logic using Web Conferencing core API. In this case need register a listener for user notification channel and provide an action when incoming call will start, show a notification and offer functionality of accepting or declining the call by an user.
+Where available, a call provider implements incoming call via its library or external services. But it's also possible to implement incoming logic using Web Conferencing core API. In this case, in a connector Javascript module, need register a listener for user notification channel and provide an action when incoming call will start, then show a notification and offer functionality of accepting or declining calls by an user.
 If call needs exchange extra data, such as communication establishment or network settings of the peers, use a call channel from the Web Conferencing core API.
-Each connector presented in the Platform can be enabled or disabled by an administrator. If a connector needs additional global settings, then it is possible to provide Settings user interface which will appear for platform administrators.
+Both user and call channels can be used by server and client code to exchange data.
+Each connector presented in the Platform can be enabled or disabled by an administrator. If a connector needs additional global settings, then it is possible to provide a settings user interface which will appear for platform administrators.
 If connector has a need of instant messenger (IM) account, which will be used to sign-in an user to external service or software, then the connector can register such IM type and optionally provide an UI for its settings per user and for the platform administrators where applicable. 
 
-To bootstrat the development there is a [template connector](/template): it is a sample project with a structure that already follows the conventions and has SPI stubs implemented for a provider features. In the template code you may find use of many features that Web Conferencing core API offers.
+To bootstrat the development there is a [template connector](/template): it is a sample project with a structure that already follows the conventions and Connector SPI implemented for a provider features. In the template code you may find use of many features that Web Conferencing core API offers.
 
 Architecture
 ============
@@ -49,7 +50,7 @@ Server-side part of Web Conferencing consists of a eXo container component `WebC
 
 Web Conferencing at client-side consists of core Javascript module `webConferencing` that should be used for call providers registration in Platform UI. The core module also exposes an API for gettings contextual information (current user, space, chat room) and calling REST and CometD services of Web Conferencing. This way a connector developer doesn't need directly access the web services of the core, but use Javascript methods instead and concentrate on its provider logic.
 
-Below a diagram of Web Conferencing architecture. TBD
+Below a diagram of Web Conferencing architecture.
 
 ![Web Conferencing architecture](/documentation/images/architecture.png) 
 
@@ -58,7 +59,7 @@ Conventions
 
 **Web Conferencing core**
 
-Web Conferencing core it is a registry of all call connectors in the system. It offers a common API for maintaining call state, settings and links with a space/room in Platform database; it also has methods for listening on calls and getting users, spaces and chat room entities suitable for use with calls. Core also has REST and CometD services for accessing its data from external clients. There is a remote logger CometD channel for spooling client logs to the server log file.
+Web Conferencing core it is a registry of all call connectors in the system. Additionally it offers a common API for maintaining call state, settings and links with a space/room in Platform database; it also has methods for listening on calls and getting users, spaces and chat room entities suitable for use with calls. Core also has REST and CometD services for accessing its data from external clients. There is a remote logger CometD channel for spooling client logs to the server log file.
 
 **Connector SPI**
 
