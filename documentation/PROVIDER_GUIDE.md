@@ -215,7 +215,7 @@ Then you need register this Javascript module in portal as described [here](/doc
 Running All Together
 =========
 
-First, ensure that Web Conferencing add-on already installed (it is a part of Enterprise packaging, but may not exist in Community bersion). 
+First, ensure that Web Conferencing add-on already installed (it is a part of Enterprise packaging, but may not exist in Community version). 
 Run command in root folder of the server:
 ```
   ./addon install exo-web-conferencing
