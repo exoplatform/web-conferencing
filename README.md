@@ -17,5 +17,5 @@ For Skype connector refer to this [project](https://github.com/exo-addons/skype)
 
 ## Developing a new connector
 
-It's possible to create new connectors for Web Conferencing. There is a service provider interface (SPI) for building connectors for plugging third party video calling service providers inside the eXo Platform.
+It's possible to create new connectors for Web Conferencing. There is a service provider interface (SPI) for building connectors for plugging third party video calling service providers inside the eXo Platform. Add-on also offers a [template project](/template) to bootrap a new connector creation and show where to implement the SPI parts.
 Developers can get started from [provider developer guide](/documentation/PROVIDER_GUIDE.md) to create a call connector for Web Conferencing and refer to [architecture](/documentation/ARCHITECTURE.md) for technical details. 
