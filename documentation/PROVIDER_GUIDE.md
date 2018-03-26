@@ -16,7 +16,7 @@ For more details and configuration refer to the architecture document where [con
 Create Connector Project
 ========
 
-A quickest way to start a new connector project - make a copy of [template](/template) project. It already contains a Maven modules with Web Conferencing dependencies and packaging. Make a copy of this folder to your new location and change its names in source files and configuration, rename respectively package, class names and variables in the code. Go to the sources and fill with a logic for your connector. If need, add required third-party libraries to the Maven dependencies and assembly of the packaging. Finally build the project and use its packaging artifact as a connector extension. You may copy JAR files to libraries of your Platform server and copy WAR to webapp folder. Alternatively, you may use [eXo Add-ons manager](https://docs.exoplatform.org/public/index.jsp?topic=%2FPLF50%2FPLFAdminGuide.AddonsManagement.html) _install_ command in _offline_ mode and modify it's local catalog to use your local packaging (find add-ons manager catalog in `/addons/catalogs` folder of your server).
+A quickest way to start a new connector project - make a copy of [template](/template) project. It already contains a Maven modules with Web Conferencing dependencies and packaging. Make a copy of this folder to your new location and change its names in source files and configuration, rename respectively package, class names and variables in the code. Go to the sources and fill with a logic for your connector. If need, add required third-party libraries to the Maven dependencies and assembly of the packaging. Finally build the project and use its packaging artifact as a connector extension.
 
 
 Implement Java SPI
