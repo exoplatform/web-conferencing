@@ -1,4 +1,4 @@
-eXo Web Conferencing: Connector Development Guide.md
+eXo Web Conferencing: Connector Development Guide
 =========================================
 
 eXo Web Conferencing provides a service provider interface (SPI) for building connectors for plugging third party video calling service providers inside the eXo Platform interface. This guide contains quick tutorial with a code snippets to show how to start creating a custom connector and add a call button to eXo Platform using Connector SPI.
