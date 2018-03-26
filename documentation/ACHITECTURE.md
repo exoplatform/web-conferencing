@@ -378,7 +378,7 @@ At a next step, create a portlet that will load and initialize the provider in P
   }
 ```
 
-Finally configure call provider and its portlet as described in 'Provider configuration' section. The provider class as a plugin of `WebConferencingService` and portlet via plugin of `AddOnService` (also need configure it in `WEB-INF/portlet.xml` of the extension WAR).
+Finally configure call provider and its portlet as described in [configuration](#provider-configuration) section. The provider class as a plugin of `WebConferencingService` and portlet via plugin of `AddOnService` (also need configure it in `WEB-INF/portlet.xml` of the extension WAR).
 
 If you build a call page outside Platform portal, then you will need to create a servlet/JSP, or use similar technology, for your page and initialize core `webConferencing` Javascript module (see in Common API below), configure your connector module and register your provider in the core as it is shown in the portlet code above. In a [template connector](/template) you can find call _servlet_ and _call.jsp_ where this done.
 
@@ -564,12 +564,10 @@ It is an example how a connector module code could look (simplified Template con
                         // ...
                       });
                     } else {
-                      log.error("Failed to get call info: " + callId, err);
-                      webConferencing.showError("Joining call error", webConferencing.errorText(err));
+                      log.showError("Failed to get call info: " + callId, err);
                     }
                   } else {
-                    log.error("Failed to get call info: " + callId);
-                    webConferencing.showError("Joining call error", "Error read call information from the server");
+                    log.showError("Failed to get call info: " + callId, "Error read call information from the server");
                   }
                 });
               });
@@ -807,7 +805,7 @@ Methods of `webConferencing` module:
   * `getBaseUrl()` - base portal URL useful for buidling REST service URLs
   * `initRequest(request)` - initialize jQuery Ajax request object within unificated done/fail arguments order: data, jqXHR status, jQuery text status or error, jqXHR object)
   * `addProvider(provider)` - register a new provider object (requirements see in 'Implementing Javascript SPI' section), this call provider will be initialized, if the core itself initialized (otherwise initialization will be postponed to init() call of the core module)
-  * `findProvider(type)` - lookups for a provider registration in the core by its type name, will return a provider object if it was registered (no matter was it configured, initialized or not)
+  * `findProvider(type)` - lookups for a provider registration in the core by its type name, will return a provider object if it was registered (no matter was it configured, initialized or not). Lookup will be done among all registered providers by their supported types.
 * Asynchronous methods that return a [promise](http://api.jquery.com/deferred.promise/) when resolved (with result object) or failed (with error object):
   * `getProvider(type)` - returns a promise that will be resolved with a provider found by given type name, the promise will be only resolved if provider successfully initialized, otherwise it will be in failed state with an message describing a problem. Second parameter of the resolved promise is a boolean flag: will be `true` if the provider has `init()` method and it was called successfully or it is without such method; flag will be `false` if provider's `init()` failed or provider not activated by administrator.
   * `getCall(id)` - read call object from server storage by its ID
