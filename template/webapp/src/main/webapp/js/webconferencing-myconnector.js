@@ -74,7 +74,7 @@
 			 *             will provide an object with call information. In general it is a serialized to JSON 
 			 *             Java class, extended from IdentityInfo - consult related classes for full set of available bean fields.
 			 *             
-			 * Thus method returns a jQuery promise. When it resolved (done) it should offer a jQuery element of a button(s) container.
+			 * This method returns a jQuery promise. When it resolved (done) it should offer a jQuery element of a button(s) container.
 			 * When rejected (failed), need return an error description text (it may be shown directly to an user), the connector
 			 * will not be added to the call button and user will not see it.
 			 */

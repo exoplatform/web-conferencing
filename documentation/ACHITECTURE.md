@@ -40,7 +40,7 @@ If call needs exchange extra data, such as communication establishment or networ
 Each connector presented in the Platform can be enabled or disabled by an administrator. If a connector needs additional global settings, then it is possible to provide Settings user interface which will appear for platform administrators.
 If connector has a need of instant messenger (IM) account, which will be used to sign-in an user to external service or software, then the connector can register such IM type and optionally provide an UI for its settings per user and for the platform administrators where applicable. 
 
-To bootstrat the development there is a [template connector](https://github.com/exo-addons/web-conferencing/tree/develop/template): it is a sample project with a structure that already follows the conventions and has SPI stubs implemented for a provider features. In the template code you may find use of many features that Web Conferencing core API offers.
+To bootstrat the development there is a [template connector](/template): it is a sample project with a structure that already follows the conventions and has SPI stubs implemented for a provider features. In the template code you may find use of many features that Web Conferencing core API offers.
 
 Architecture
 ============
@@ -62,41 +62,43 @@ Web Conferencing core it is a registry of all call connectors in the system. It 
 
 **Connector SPI**
 
-A service provider interface for implementing call connectors to plug into Web Conferencing core. This SPI consists of provider configuration for registration and Java and Javascript implementaions of provider logic. As connector may offer a support for several call providers (usually similar or of several calling methods: e.g. VoiP and landline but by single service), the SPI should be implemented by each provider of the connector. Then these providers will be managed separatelly and Platform administrator will be able activate them independetly.
+A service provider interface for implementing call connectors to plug into Web Conferencing core. This SPI consists of provider configuration for registration and Java and Javascript implementaions of provider logic. As connector may offer a support for several call providers (usually similar or of several calling methods: e.g. VoiP and landline but by single service), the SPI should be implemented by each provider of the connector. Then these providers will be managed separatelly and Platform administrator will be able activate them independently.
 
 **Call connector**
 
-Connector it is a portal extension, it's a package of single or several call providers implementations with its configurations and resources (specific server services, storages, state support, UI and internationalization messages). Portal extension allows simply install and uninstall the connector in Platform server. Connector extension should be installed together with Web Conferencing add-on. Connector dependencies (Java libraries) should be outside the extension WAR file and be deployed directly to _libraries_ folder of the Platform server (this will be done by installation via eXo Add-ons Manager or extension installer script).
+Connector it is a portal extension, it's a package of single or several call providers with its configuration and resources (specific server services, storages, state support, UI and internationalization messages). Portal extension mechanism allows simply install and uninstall the connector in Platform server. Connector extension should be installed together with Web Conferencing add-on. Connector dependencies (Java libraries) should be outside the extension WAR file and be deployed directly to _libraries_ folder of the Platform server (this will be done during installation by eXo Add-ons Manager or extension installer script).
 
 **Call provider**
 
-A call provider should conform the Connector SPI to be registred, loaded and successfully initialized within Web Conferencing. Each provider should extend `CallProvider` class and implements its abstract methods. Here can be initiated other works related to the provider, like initialize from configuration or saved settings, save specific settings and do other preprartions before starting to server users.
+A call provider should conform the Connector SPI to be registered, loaded and successfully initialized within Web Conferencing features in eXo Platform. Each provider should extend `CallProvider` class and implements its abstract methods. Here can be initiated other works related to the provider, like initialize from configuration or saved settings, preconfigure specific settings and do other preparations before starting serve users.
 
 **Provider ID**
 
-Call providers are identified by an ID. This ID used to look up a provider both in Java and Javascript APIs. Create provider ID using following rules:
+Call providers are identified by an ID. It is a _string_ value. This ID used to look up a provider both in Java and Javascript APIs. Create provider ID using following rules:
 * ANSI characters without spaces and punctuation - it should be a single word (e.g. _skype_ or _my\_call_),
 * lowercase - don't use character in upper case.
 
 **Provider title**
 
-Provider needs a human readable name which will distunguish it among others. It will appear in administrative screen and may be used for regular users. Often it based on a service or software name providing video calls support.
+Provider needs a human readable name which will well distunguish it among others. It will appear in administrative screen and may be used for regular users. Often it based on a service or software name providing video calls support.
 
 **Provider configuration**
 
-A call provider may need an extra settings that will let users connect a right server or local app. While it's optional, each provider that needs such settings adds them in the connector extension and then this provider plugin will load in runtime and use for a work. Component plugin configiration should be done in XML following eXo Container [configuration](https://docs.exoplatform.org/public/topic/PLF50/PLFAdminGuide.Configuration.html) scheme.
+A call provider may need an extra settings that will let users connect a right server or local app. While it's optional, each provider that needs such settings should add them in the connector extension and then the provider will load them in runtime and use for a work. Component plugin configiration should be done in XML by following eXo Container [configuration](https://docs.exoplatform.org/public/topic/PLF50/PLFAdminGuide.Configuration.html) scheme.
 
 Creating a connector
 ========
 
-Web Conferencing designed so to allow maxium freedom to its connectors for implementing UI and logic parts. As shown above the core of Web Conferencing only cares about placing call buttons of its connectors in eXo Platform interface and provides an API for common operations that may be needed to make calls. Such aspects as markup, styles and logic that handles them are fully managed by a connector and call providers that it offer. While connector can be registred in the system via declarative XML configuration, in runtime it relies on object instances offered by the connector to the core.
+Web Conferencing designed so, to allow maximum freedom to its connectors for implementing UI and logic parts. As shown above the core of Web Conferencing only covers placing call buttons of its connectors in eXo Platform interface and also provides an API for common operations that may be needed for making calls. Such aspects as UI markup with styles and logic that handles them are fully managed by a connector and call providers that it offer. While provider can be registred in the system via declarative XML configuration, in runtime it relies on object instances offered by the connector to the core.
 
-A call connector, being a portal extension, registers a plugin of the core component `WebConferencingService`. Provider should be configured in the connector extension and extend `CallProvider` class. It is a programmatic entry point on the server-side for each provider. To make the provider work need implement required parts of the Java API and provide a configuration.
+A call connector, being a portal extension, registers a plugin of the core component `WebConferencingService`. Provider should be configured in the connector extension and extend `CallProvider` class. It is a programmatic entry point on the server-side for each provider. To make the provider work need implement required parts of the Connector SPI (Java and Javascript parts) and provide a configuration to load it in running Platform server.
+
+A [template connector](/template) project already contains Maven modules with Web Conferencing dependencies and packaging. Copy template sub-folder to your new location and change its name to your connector name in source files and configuration, rename respectively package, class names and variables in the code. Complete the sources with a logic to work with your connector services. Add required third-party libraries to the Maven dependencies and assembly of the packaging. Then build the connector and use its packaging artifact as a connector extension.
 
 Extension configuration
 -------------
 
-Connector extension should depend on Web Conferencing extension in its `PortalContainerConfig` settings. The web app WAR needs following configuration in `META-INF/exo-conf/configuration.xml` file: use `PortalContainerDefinitionChange$AddDependenciesAfter` type to add itself as a dependency to the Web Conferencing (MyConnector from the template project here):
+Connector extension should depend on Web Conferencing extension in its `PortalContainerConfig` settings. The web app WAR needs following configuration in `META-INF/exo-conf/configuration.xml` file: use `PortalContainerDefinitionChange$AddDependenciesAfter` type to add the extension itself as a dependency to the Web Conferencing (_MyConnector_ from the template project here):
 
 ```xml
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -140,12 +142,12 @@ The web app WAR configuration contains:
 * web app descriptor (web.xml) with proper `display-name` (as WAR name) and other [portal settings](https://docs.exoplatform.org/PLF50/PLFDevGuide.eXoAdd-ons.PortalExtension.Howto.html) (follow the template extension),
 * components configuration in `WEB-INF/conf/myconnector/configuration.xml`, what includes connector as plugin of `WebConferencingService` and other required container components and plugins.
 
-If the configuration requires in-place values (such as host name, authentication keys etc), these values can be [variablized](https://docs.exoplatform.org/PLF50/Kernel.ContainerConfiguration.VariableSyntaxes.html) in XML configuration of the connector and then provided in _configuration.properties_ or/and via JVM parameters of the Platform server.
+If the configuration requires external values (such as host name, authentication keys etc), these values can be [variablized](https://docs.exoplatform.org/PLF50/Kernel.ContainerConfiguration.VariableSyntaxes.html) in XML configuration of the connector and then provided in _configuration.properties_ or/and via JVM parameters of the Platform server.
 
 Provider configuration
 ----------
 
-Provider plugin for `WebConferencingService` configuration defines its specific settings:
+Provider plugin for `WebConferencingService` configuration defines its specific settings (settings below only for an example, your connector will have own ones):
 
 ```xml
   <!-- Portal extension configuration for YOUR PROVIDER NAME -->
@@ -177,7 +179,7 @@ webconferencing.myconnector.clientId=myClientId
 webconferencing.myconnector.serviceUrl=https://mycall.acme.com/myconnector
 ```
 
-The provider portlet (it will load provider in Platform UI) should present on each portal page, thus we load it to the toolbar using `AddOnService` component:
+The provider portlet (it will load provider into Platform UI) should present on each portal page, thus we load it to the Platform toolbar using `AddOnService` component:
 ```xml
   <!-- Add My Connector portlet to portal pages with a toolbar -->
   <external-component-plugins>
@@ -214,10 +216,12 @@ The provider portlet (it will load provider in Platform UI) should present on ea
   </external-component-plugins>
 ```
 
+Note, that here we assume that `MyConnectorPortlet` properly configured as a [portelt for eXo Platiorm](https://docs.exoplatform.org/PLF50/PLFDevGuide.DevelopingApplications.DevelopingPortlet.html). 
+
 Implementing Java SPI
 -----------
 
-Java SPI is mandatory part of any connector provider. By extending `CallProvider` abstratc class and implementing required method your create a new provider and then plug it to the Web Conferencing via configiration as described above. 
+Java SPI is a mandatory part of any connector provider. By extending `CallProvider` abstratc class and implementing required method your create a new provider and then plug it to the Web Conferencing via configiration as described above. 
 
 Template project contains `MyConnectorProvider` class which shows how to implement a sample "mycall" provider. This class goal is to load configuration, define provider type name and title with all supported types, register IM type in Social's user profile. 
 
@@ -317,7 +321,7 @@ public class MyConnectorProvider extends CallProvider {
 }
 ```
 
-Next step it's create a portlet that will load and initialize the provider in Platform UI.
+At a next step, create a portlet that will load and initialize the provider in Platform UI.
 
 ```java
   /**
@@ -373,14 +377,14 @@ Next step it's create a portlet that will load and initialize the provider in Pl
   }
 ```
 
-Finally register call provider and its portlet as show above in 'Provider configuration' section. The provider class as a plugin of `WebConferencingService` and portlet via plugin of `AddOnService`.
+Finally configure call provider and its portlet as described in 'Provider configuration' section. The provider class as a plugin of `WebConferencingService` and portlet via plugin of `AddOnService` (also need configure it in `WEB-INF/portlet.xml` of the extension WAR).
 
-If you build a call page outside Platform portal, then you will need to create a servlet/JSP or use similar technology for your page and initialize core `webConferencing` Javascript module (see in Common API below), configure your connector module and register your provider in the core as it is shown in the portlet code above. In a [template connector](/template) you can find call servlet and call.jsp where this done.
+If you build a call page outside Platform portal, then you will need to create a servlet/JSP, or use similar technology, for your page and initialize core `webConferencing` Javascript module (see in Common API below), configure your connector module and register your provider in the core as it is shown in the portlet code above. In a [template connector](/template) you can find call _servlet_ and _call.jsp_ where this done.
 
 Implementing Javascript SPI
 --------------------
 
-Web Conferencing core has Javascript module `webConferencing` for integration in user interface of eXo Platform. A connector's module should depend on the core and register the provider in it. The dependency can be defined via connector extension's `gatein-resources.xml`:
+Web Conferencing core has Javascript module `webConferencing`, it is required for integration in user interface of eXo Platform. A connector's module should depend on the core and register the provider in it. The dependency can be defined via connector extension's `gatein-resources.xml`:
 
 ```xml
   <module>
@@ -399,17 +403,17 @@ Web Conferencing core has Javascript module `webConferencing` for integration in
   </module>
 ```
 
-In Web Conferencing API most of methods return [jQuery Promise](http://api.jquery.com/deferred.promise/) object which can be used for callbacks registration for waiting an asynchronous operation. 
+In Web Conferencing API most of methods return a [promise](http://api.jquery.com/deferred.promise/) object which can be used for callbacks registration for waiting an asynchronous operation completion. 
 
 Provider object *must* implement following SPI methods:
  * getType() - required, a major call type name
- * getSupportedTypes() - required, all supported call types
+ * getSupportedTypes() - required, all supported call types (at least a major type here)
  * getTitle() - required, human-readable title for UI
- * callButton(context) - required, provider should offer an implementation of a Call button and call invoker in it, it returns a promise, it should be resolved with a JQuery element of a button(s) container. 
+ * callButton(context) - required, provider should offer an implementation of a Call button and call invoker in it, it returns a promise, it should be resolved with a JQuery element of a button container. 
  
  A provider *may* support following SPI methods:
-* init() - if available, it will be called when web conferencing user will be initialized, this method returns a promise, when resolved it means provider successfully initialized and can be used by Web Conferencing core. It's optional method, but very handy to complete a provider initialization after the core will be loaded.
-* showSettings() - if available, it will cause showing a settings button in Web Conferencing Administration page and when button clicked this method will be invoked to show an UI with settings. It's up to the UI how the settings will be read, filled and saved for the provider.  
+* init() - if available, it will be called when eXo user will be initialized, this method returns a promise, when resolved it means provider successfully initialized and can be used by Web Conferencing core. It's optional method, but very handy for doing provider initialization after the core will be loaded.
+* showSettings() - if available, it will cause showing a settings button for this provider in Web Conferencing Administration page and when button clicked this method will be invoked to show an UI with settings. It's up to the provider how its settings will be read, filled and saved.  
 
 It is an example how a connector module code could look (simplified Template connector for My Call sample), follow comments in the code to see the logic of implementing Connector SPI:
 
@@ -464,7 +468,7 @@ It is an example how a connector module code could look (simplified Template con
      *             will provide an object with call information. In general it is a serialized to JSON 
      *             Java class, extended from IdentityInfo - consult related classes for full set of available bean fields.
      *             
-     * Thus method returns a jQuery promise. When it resolved (done) it should offer a jQuery element of a button(s) container.
+     * This method returns a jQuery promise. When it resolved (done) it should offer a jQuery element of a button(s) container.
      * When rejected (failed), need return an error description text (it may be shown directly to an user), the connector
      * will not be added to the call button and user will not see it.
      */
@@ -721,8 +725,6 @@ It is an example how a connector module code could look (simplified Template con
 })($, webConferencing);
 ```
 
-A [_template_ connector](https://github.com/exo-addons/cloud-drive-extension/tree/master/connectors/template) project already contains Maven modules with Web Conferencing dependencies and packaging. Copy template sub-folder to your new location and change its name to your connector name in source files and configuration, rename respectively package, class names and variables in the code. Complete the sources with a logic to work with your connector services. Add required third-party libraries to the Maven dependencies and assembly of the packaging. Then build the connector and use its packaging artifact as a connector extension.
-
 Implementing CSS
 --------------------
 
@@ -765,7 +767,7 @@ Web Conferencing API designed to help build new connectors for making calls. Its
 Java API
 -------------------
 
-All classes availabe in `org.exoplatform.webconferencing` package are designed to be reused by call providers. A main one, it's `WebConferencingService` a component registered in eXo container, a connector code can depend on it and use for building a custom solutions. But in most of cases it's not required. Even an advanced connector may work without directly using this service as most of its methods are exposed to Javascript SPI/API and can be used directly from client side. 
+All classes availabe in `org.exoplatform.webconferencing` package are designed to be used by call providers. A main one, it's `WebConferencingService` a component registered in eXo container, a connector code can depend on it and use for building a custom solutions. But in most of cases it's not required. Even an advanced connector may work without directly using this service as most of its methods are exposed to Javascript SPI/API and can be used directly from client side. 
 
 Below a brief overview of `WebConferencingService`:
 * Maintaining calls in Platform database: 
@@ -791,34 +793,35 @@ Further details of classes used by the service you may find in source code and J
 Javascript API
 -------------------
 
-Core Javascript module `webConferencing` contains set of helpful functions for buidling call providers. It includes methods for core initialization and accessing server-side storage to save and maintain a call state and exchange related information. There are also several utility methods for accessing context, showing messages to users and log technical information.
+Core Javascript module `webConferencing` contains set of helpful functions for buidling call providers. It includes methods for core initialization and accessing server-side storage to save and maintaining call state and exchange related information. There are also several utility methods for accessing context, showing messages to users and log technical information.
 
 Methods of `webConferencing` module:
 
-* Synchronous methods:
-  * `init(user, context)` - core initialization used internally by `WebConferencingPortlet` when loaded the module, it needs user object (`UserInfo` serialized to JSON) and context (`ContextInfo` in JSON). Usually a connector doesn't need invoke this method as it's already done by the core portlet. When this method invoked it will initialize all already registered providers. Others will be initialized when added.
+* Initialization and context methods (synchronous):
+  * `init(user, context)` - core initialization used internally by `WebConferencingPortlet` when loading the module, it needs user object (`UserInfo` serialized to JSON) and context (`ContextInfo` in JSON). Usually a connector doesn't need invoke this method as it's already done by the core portlet. When this method invoked it will initialize all already registered providers. Others will be initialized when added
   * `update()` - update Platform UI with Web Conferencing features (call buttons etc). This method should be invoked after adding a call provider. But it will does nothing until the core initialzied (via init())
-  * `getUser()` - returns currently initialized user (by init() method) or nothing if not initialized yet 
+  * `getUser()` - returns currently initialized user (by init() method) or nothing if not initialized yet
   * `getCurrentSpaceId()` - returns current space pretty name if page shows a space
   * `getCurrentRoomTitle` - returns current chat room title if page runs in Chat app
   * `getBaseUrl()` - base portal URL useful for buidling REST service URLs
-  * `addProvider(provider)` - register a new provider object (requirements see in 'Implementing Javascript SPI' section), this call provider will be initialized, if the core itself initialized (otherwise initialization will be postponed to init() call on the core)
+  * `initRequest(request)` - initialize jQuery Ajax request object within unificated done/fail arguments order: data, jqXHR status, jQuery text status or error, jqXHR object)
+  * `addProvider(provider)` - register a new provider object (requirements see in 'Implementing Javascript SPI' section), this call provider will be initialized, if the core itself initialized (otherwise initialization will be postponed to init() call of the core module)
   * `findProvider(type)` - lookups for a provider registration in the core by its type name, will return a provider object if it was registered (no matter was it configured, initialized or not)
 * Asynchronous methods that return a [promise](http://api.jquery.com/deferred.promise/) when resolved (with result object) or failed (with error object):
-  * `getProvider(type)` - returns a promise that will be resolved with a provider found by given type name, the promise will be only resolved if provider successfully initialized, otherwise it will be in failed state with an message describing a problem. Second parameter of the resolved promise is a boolean flag: will be `true` if the provider has `init()` method and it was called successfully or it is without such method; will be `false` if provider's `init()` failed or provider not activated by administrator.
+  * `getProvider(type)` - returns a promise that will be resolved with a provider found by given type name, the promise will be only resolved if provider successfully initialized, otherwise it will be in failed state with an message describing a problem. Second parameter of the resolved promise is a boolean flag: will be `true` if the provider has `init()` method and it was called successfully or it is without such method; flag will be `false` if provider's `init()` failed or provider not activated by administrator.
   * `getCall(id)` - read call object from server storage by its ID
   * `updateUserCall(id, state)` - update current user call by its ID with given status (one of 'started', 'stopped' or 'joined', 'leaved' by the user)
   * `deleteCall(id)` - delete call by its ID
   * `addCall(id, callInfo)` - create a new call by ID and call object
-  * `getUserGroupCalls()` - return all groups call current user had joinedm including started and stopped
+  * `getUserGroupCalls()` - return all groups call current user had joined, including started and stopped ones
   * `getUserStatus(id)` - return user status in eXo Platform by its ID, this data will be read from `RESTUserService` of the Platform, the response object has `status` field
-* Subscription methods that use callback(s): `onUpdate` will be called on new data in the channel, `onError` if subscription error happen, `onReady` when successfully subscribed
+* Subscription methods that use callback(s): `onUpdate` will be called on a new data published in the channel, `onError` if subscription error happen, `onReady` when successfully subscribed:
   * `onUserUpdate(userId, onUpdate, onError, onReady)` - subscribe to user channel for its call updates (started-incoming, stopped etc) 
   * `onCallUpdate(callId, onUpdate, onError, onReady)` - subscribe to a particular call channel for its updates (receive any data related the call: connectivity, media or user information)
-* Subscription (publishing) methods that use promise: when data published a promise will be resolved, if failed then promise rejected with an error
+* Subscription (publishing) methods that use promise: when data published a promise will be resolved, if failed then promise rejected with an error:
   * `toCallUpdate(callId, data)` - publish data to a aprticular call channel (use this method to send call related data to other peers, for reading use `onCallUpdate()`)
-* Utility methods:
-  * `showCallPopup(url, name)` - a helper to show a new browser page as popup (not a new tab) with width of 80% of the screen available dimensions and with given window name (can be used  latef for focusing a window)
+* Utility methods (synchronous):
+  * `showCallPopup(url, name)` - a helper to show a new browser page as a popup window (not a new tab) with width of 80% of the screen available dimensions and with given window name (can be used  latef for focusing a window)
   * `imAccount(user, type)` - a helper to find in user object an IM ofr given type name
   * `getLog()` - return logger that can spool messages to server log file (for details see 'Remote log' section below)
   * `showInfo(title, text)`, `showConfirm(title, text)`, `showWarn(title, text)`,  `showError(title, text, errorRef)` - show a popup to user with title and text. For error it also can show a error reference (see also 'Remote log' section below)
@@ -827,7 +830,7 @@ Methods of `webConferencing` module:
 Remote logger
 ===========
 
-While establishing a call between peers it may be useful to collect related information and, especially errors, that happen at client side (in Javascript). Web Conferencing core module has a tool that gives a simple way to log messages at different levels in client browser console and optionaly it allows to spool these logs to a Platfrom server log. These logs will have a predefined format and all reported as `CallLog` logger messages. At the same time it's possible to customize message prefix to keep it unique to a some call provider or its instance (e.g. a call window).
+While establishing a call between peers it may be useful to collect related information and, especially, errors that happen at client side (in Javascript). Web Conferencing core module has a tool that gives a simple way to log messages at different levels in client browser console and, optionaly, it allows to spool these logs to a Platfrom server log. These logs will have a predefined format and all reported as `CallLog` logger messages at the server side. At the same time it's possible to customize message prefix to keep it unique to a some call provider or its instance (e.g. a call window).
 
 Web Conferencing logger supports following log levels: _info_, _warn_, _error_, _debug_ and _trace_. Take in account that _trace_ messages will not be send to server log even if remote logger enabled.
 
@@ -855,7 +858,7 @@ And server log will contains this:
 
 As seen, server log date later a bit after the actual message, it's because of logs caching, but the message contain client timestamp which is exactly the same in browser and server. There is also a client ID `393215` which uniquely identify a Javascript core module loaded and all its provider instances. And in the server log this ID prepended with a eXo user name for better clarity.
 
-If your provider will open a new window/tab for actual call, then you may need distinguish logs reported by your provider module and a call page module. Client IDs already will differ for both modules, but often we need a better, human readable, marker. For this purpose each logger can be customized with a prefix. In example below, we create a logger for call window:
+If your provider will open a new window/tab for actual call, then you may need distinguish logs reported by your provider module on Platform page and a call page module. Client IDs already will differ for both modules, but often we need a better, human readable, marker. For this purpose each logger can be customized with a prefix. In example below, we create a logger for call window:
 
 ```javascript
   var log = webConferencing.getLog("myconnector").prefix("call");
@@ -879,12 +882,12 @@ And its server version:
 Enable remote logger
 -------------
 
-Spooling logs to a server log is disabled by default. If a call provider requires this feature, then it should be enabled at Java SPI level. In a provider class, that extends `CallProvider`, need implement `isLogEnabled()` method that will find is remote logs spooling enbaled or disabled for this provider.  It's recommended to keep this settings interactive and let Platform administrators to enable or disable remote logs as this feature may be resource consumable and may affect production system. Persist this flag in a database or eXo's `SettingService` and reuse after server restart in the provider class. A good place for this flag in UI is in a provider settings form that can be added to Web Conferencing administrator page. 
+Spooling logs to a server log is disabled by default. If a call provider requires this feature, then it should be enabled at Java SPI level. In a provider class, that extends `CallProvider`, need implement `isLogEnabled()` method that will find is remote logs spooling enabled or disabled for this provider.  It's recommended to keep this settings interactive and let Platform administrators to enable or disable remote logs, as this feature may be resource consumable and may affect production system. Persist this flag in a database or eXo's `SettingService` and reuse after server restart in the provider class. A good place for this flag in UI is in a provider settings form that can be added to Web Conferencing administrator page. 
 
 Showing errors to users
 -------------
 
-When an error happens you may want to inform user about it. Often we don't need to show technical details to end-users - it may be not efficient and even confusing. But what is important, it's build a reference between a message user sees and a report to administrators or support and the actual (technical) error that occured. For this purpose Web Conferencing core introduces set `showError()` method in its logger API. Note that __logger supports only reporting and showing of errors__ (will have error level in the log). Find details in the code comments below:
+When an error happens you may want to inform user about it. Often we don't need to show technical details to end-users - it may be not efficient and even confusing. But what is important, it's build a reference between a message user sees and a report to administrators or support and a actual (technical) error that occured. For this purpose Web Conferencing core introduces `showError()` method in its logger API. Note that __logger supports only reporting and showing of errors__ (messages will have _error_ level in the log). Find details in the code comments below:
 
 ```javascript
   try {
@@ -922,7 +925,7 @@ Platform server log will contain this:
   2018-03-23 11:02:23,838 | ERROR | [myconnector] peter-673034 Message to log. Error: Call failure exception -- 2018-03-23T09:02:07.801Z [o.e.webconferencing.support.CallLog<org.exoplatform.webconferencing.support.CallLog-flusher>]
 ```
 
-In a case if you build an own UI and cannot use the predefined popup (e.g. on a brand styled call page), then logger API offers another method to find logged error reference and use it in user messages or for other provider needs. You can log error and get the logged error reference in a call-back function as shown below:
+In a case if you build an own UI and cannot use the predefined popup (e.g. on a brand styled call page), then logger API offers another method to find a reference of just logged error and use it in user messages or for other provider needs. You can log error and get the logged error reference in a call-back function as shown below:
 
 ```javascript
   log.error("Message to log", err, function(errRef) {
@@ -930,6 +933,8 @@ In a case if you build an own UI and cannot use the predefined popup (e.g. on a 
     showMyCustomError("Error title", "Error message for user", errRef);
   });
 ```
+
+
 
 
 
