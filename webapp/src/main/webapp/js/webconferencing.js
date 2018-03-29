@@ -980,7 +980,7 @@
 							url = serverUrl + "/getRoom";
 							currentUser = chatNotification.username;
 							dbName = chatNotification.dbName;
-							token = chatNotification.token;s
+							token = chatNotification.token;
 						} else {
 							process.reject("Cannot determine Chat server URL"); 
 						}
