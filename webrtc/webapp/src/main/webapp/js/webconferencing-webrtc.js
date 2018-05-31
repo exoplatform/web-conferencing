@@ -575,8 +575,8 @@
 																});
 															});
 															popover.fail(function(msg) {
-																log.info("User " + msg + " call: " + callId);
 																if ($callPopup.callState != "stopped" && $callPopup.callState != "joined") {
+																	log.info("User " + msg + " call: " + callId);
 																	log.trace("<<< User " + msg + ($callPopup.callState ? " just " + $callPopup.callState : "") 
 																				+ " call " + callId + ", deleting it.");
 																	deleteCall(callId);
@@ -618,7 +618,6 @@
 									}
 								} else if (update.eventType == "call_joined") {
 									// If user has incoming popup open for this call (several user's windows/clients), then close it
-									log.debug("User call joined: " + update.callId);
 									if (currentUserId == update.part.id) {
 										closeCallPopup(update.callId, "joined");
 									}
