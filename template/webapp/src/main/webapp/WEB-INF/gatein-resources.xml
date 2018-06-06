@@ -23,7 +23,7 @@
   xsi:schemaLocation="http://www.gatein.org/xml/ns/gatein_resources_1_3 http://www.gatein.org/xml/ns/gatein_resources_1_3"
   xmlns="http://www.gatein.org/xml/ns/gatein_resources_1_3">
 
- <!-- CSS for MyConnector Calls support in Platform -->
+  <!-- CSS for MyConnector Calls support in Platform -->
   <portlet-skin>
     <application-name>myconnector</application-name>
     <portlet-name>MyConnectorPortlet</portlet-name>

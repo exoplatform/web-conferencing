@@ -609,7 +609,7 @@
 	};
 	
 	var showError = function(title, text, errorRef) {
-		return dialog(title, text, "ColorError", errorRef ? message("errorReference") + errorRef : null);
+		return dialog(title, text, "ColorError", errorRef ? message("errorReference") + " " + errorRef : null);
 	};
 	
 	var showWarn = function(title, text) {
@@ -1940,7 +1940,6 @@
 			//
 			// A provider may support following of API methods:
 			// * init() - will be called when web conferencing user will be initialized in this.init(), this method returns a promise
-			// * getDescription() - human-readable description for UI (use it if description from server configuration isn't enough)
 			
 			// TODO avoid duplicates, use map like?
 			if (provider.getSupportedTypes && provider.hasOwnProperty("getSupportedTypes") && provider.getTitle && provider.hasOwnProperty("getTitle")) {

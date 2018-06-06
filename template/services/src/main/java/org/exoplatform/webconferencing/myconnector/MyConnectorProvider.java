@@ -54,6 +54,9 @@ public class MyConnectorProvider extends CallProvider {
   /** The Constant VERSION. */
   public static final String VERSION         = "1.0.0";
 
+  /**
+   * Settings for My Call provider.
+   */
   public class MySettings extends Settings {
 
     /**
@@ -85,7 +88,7 @@ public class MyConnectorProvider extends CallProvider {
   }
 
   /**
-   * The Class MyConnectorIMInfo.
+   * IM info for user profile.
    */
   public class MyConnectorIMInfo extends IMInfo {
 
@@ -112,7 +115,7 @@ public class MyConnectorProvider extends CallProvider {
   protected final String url;
 
   /**
-   * Instantiates a new My Conenctor provider.
+   * Instantiates a new My Call provider.
    *
    * @param profileSettings the profile settings
    * @param params the params (from configuration.xml)
