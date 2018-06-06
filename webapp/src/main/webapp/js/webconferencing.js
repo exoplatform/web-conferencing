@@ -980,7 +980,7 @@
 							url = serverUrl + "/getRoom";
 							currentUser = chatNotification.username;
 							dbName = chatNotification.dbName;
-							token = chatNotification.token;s
+							token = chatNotification.token;
 						} else {
 							process.reject("Cannot determine Chat server URL"); 
 						}
@@ -1188,7 +1188,6 @@
 					// 2) if already calling, then need wait for previous call completion and then re-call this method 
 					var prevInitializer = $target.data("callbuttoninit");
 					if (prevInitializer) {
-						log.trace(">> addCallButton > init WAIT " + contextName + " providers: " + addProviders.length);
 						prevInitializer.always(function() {
 							log.trace(">> addCallButton > init RESUMED " + contextName + " providers: " + addProviders.length);
 							addCallButton($target, context).done(function($container) {
@@ -1272,10 +1271,8 @@
 										//moveToDefaultButton($button);
 									});
 								}
-								log.trace("<< addCallButton DONE < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id);
 							});
 							button.fail(function(msg, err) {
-								log.trace("<< addCallButton CANCELED < " + contextName + "(" + provider.getTitle() + ") for " + context.currentUser.id + ": " + msg);
 								if (err) {
 									log.error("Failed to add a call button for " + contextName + " by " + context.currentUser.id + ". " + msg + ". " + errorText(err));
 								}
@@ -1297,8 +1294,6 @@
 									var b = p.callButton(context);
 									addProviderButton(p, b);
 								}								
-							} else {
-								log.trace("<< addCallButton CANCELED (not initialized) < " + contextName + "(" + p.getTitle() + ") for " + context.currentUser.id);
 							}
 						}
 						if (workers.length > 0) {
@@ -1438,7 +1433,6 @@
 				var $chat = $("#chat-application");
 				// chatApplication is global on chat app page
 				if (chat.isApplication() && $chat.length > 0) {
-					log.trace(">> initChat for " + chatApplication.username);
 					var $roomDetail = $chat.find("#room-detail");
 					var addRoomButtton = function() {
 						$roomDetail.find(".callButtonContainerWrapper").hide(); // hide immediately
@@ -1477,7 +1471,6 @@
 											$container.find(".callButton").first().addClass("chatCall");
 											$container.find(".dropdown-menu").addClass("pull-right");
 											$wrapper.show();
-											log.trace("<< initChat DONE " + context.roomTitle + " for " + currentUser.id);
 										});
 										initializer.fail(function(err) {
 											if (error) {
@@ -1486,7 +1479,7 @@
 											}
 										});
 									} else {
-										log.trace("<< initChat no room found in context");
+										log.trace("<< initChat WARN no room found in context");
 										$roomDetail.removeData("roomcallinitialized");
 									}
 								}).fail(function(err) {
@@ -1532,7 +1525,6 @@
 						var process = $.Deferred();
 						var addMiniChatCallButton = function() {
 							var roomTitle = $fullName.text().trim();
-							log.trace(">> initMiniChat [" + roomTitle + "] for " + currentUser.id);
 							var $titleBar = $miniChat.find(".title-right");
 							if ($titleBar.length > 0 && roomTitle.length > 0) {
 								var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
@@ -1554,7 +1546,6 @@
 												$container.find(".dropdown-toggle").removeClass("btn").addClass("btn-mini");
 												$container.find(".dropdown-menu").addClass("pull-right");
 												$titleBar.prepend($wrapper);
-												log.trace("<< initMiniChat DONE [" + context.roomTitle + "] for " + currentUser.id);
 											});
 											initializer.fail(function(err) {
 												if (err) {
@@ -1677,7 +1668,6 @@
 				$container.find(".callButton").first().addClass("popoverCall");
 				// XXX workaround to avoid first-child happen on call button in the popover
 				$container.prepend($("<div class='btn' style='display: none;'></div>"));
-				log.trace("<< addPopoverButton DONE " + contextId(context) + " for " + currentUser.id);
 			});
 			initializer.fail(function(err) {
 				if (err) {
@@ -1722,7 +1712,6 @@
 				}
 				addCallButton($callButtons, userContext(userId)).done(function($container) {
 					$container.addClass("pull-left");
-					log.trace("<< initUsers profile DONE " + userId + " for " + currentUser.id);
 				});
 			}
 		};
@@ -1771,8 +1760,6 @@
 						$spaceAction.find(".callButtonContainer").empty();
 						addPopoverButton($spaceAction, spaceContext(spaceId));
 					}
-				} else {
-					log.trace("<< initSpacePopups WARN popover profileName link not found");
 				}
 			});
 		};
@@ -1793,7 +1780,6 @@
 						var $button = $container.find(".callButton");
 						var $first = $button.first();
 						$first.addClass("spaceCall");
-						log.trace("<< initSpace DONE " + currentSpaceId + " for " + currentUser.id);
 					});
 					initializer.fail(function(err) {
 						if (err) {
@@ -2345,6 +2331,7 @@
 			return new Logger().get(); // default logger: without prefix and remote not enabled  
 		};
 		
+		this.getRandom = getRandomArbitrary;
 		this.message = message;
 		this.showWarn = showWarn;
 		this.noticeWarn = noticeWarn;
