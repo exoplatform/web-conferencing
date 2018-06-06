@@ -8,10 +8,10 @@ Introduction
 ===============
 
 Web Conferencing consists of two main parts: 
-* a core that add call buttons in Platform pages, offers common API and registration of call connectors build using Connector SPI
+* a core that adds call buttons in Platform pages, offers common API and registration of call connectors build using Connector SPI
 * set of call Connectors, each of them is implementing the SPI and handles actual calls (including UI, user actions, presense etc)
 
-Thechnically, the Web Conferencing add-on it is a [portal extension](https://docs.exoplatform.org/PLF50/PLFDevGuide.eXoAdd-ons.PortalExtension.html) that offers a core functionality and a SPI for call connectors integration in eXo Platform apps. A call connector itself, it is an another portal extension that depends on the Web Conferencing. Both extensions should be installed to a Platform server for successful work. 
+Technically, the Web Conferencing add-on is a [portal extension](https://docs.exoplatform.org/PLF50/PLFDevGuide.eXoAdd-ons.PortalExtension.html) that offers a core functionality and a SPI for call connectors integration in eXo Platform apps. A call connector itself, it is an another portal extension that depends on the Web Conferencing. Both extensions should be installed to a Platform server for successful work. 
 
 Web Conferencing Core
 -----------
@@ -143,7 +143,7 @@ The web app WAR configuration contains:
 * web app descriptor (web.xml) with proper `display-name` (as WAR name) and other [portal settings](https://docs.exoplatform.org/PLF50/PLFDevGuide.eXoAdd-ons.PortalExtension.Howto.html) (follow the template extension),
 * components configuration in `WEB-INF/conf/myconnector/configuration.xml`, what includes connector as plugin of `WebConferencingService` and other required container components and plugins.
 
-If the configuration requires external values (such as host name, authentication keys etc), these values can be [variablized](https://docs.exoplatform.org/PLF50/Kernel.ContainerConfiguration.VariableSyntaxes.html) in XML configuration of the connector and then provided in _configuration.properties_ or/and via JVM parameters of the Platform server.
+If the configuration requires external values (such as host name, authentication keys etc), these values can be [variablized](https://docs.exoplatform.org/PLF50/Kernel.ContainerConfiguration.VariableSyntaxes.html) in XML configuration of the connector and then provided in _exo.properties_ or/and via JVM parameters of the Platform server.
 
 Provider configuration
 ----------
@@ -171,7 +171,7 @@ Provider plugin for `WebConferencingService` configuration defines its specific 
   </external-component-plugins>
 ```
 
-For the above configuration we may set following settings in _configuration.properties_:
+For the above configuration we may set following settings in _exo.properties_:
 
 ```
 ######### My Connector ###########
@@ -222,7 +222,7 @@ Note, that here we assume that `MyConnectorPortlet` properly configured as a [po
 Implementing Java SPI
 -----------
 
-Java SPI is a mandatory part of any connector provider. By extending `CallProvider` abstratc class and implementing required method your create a new provider and then plug it to the Web Conferencing via configiration as described above. 
+Java SPI is a mandatory part of any connector provider. By extending `CallProvider` abstract class and implementing required method your create a new provider and then plug it to the Web Conferencing via configiration as described above. 
 
 Template project contains `MyConnectorProvider` class which shows how to implement a sample "mycall" provider. This class goal is to load configuration, define provider type name and title with all supported types, register IM type in Social's user profile. 
 
