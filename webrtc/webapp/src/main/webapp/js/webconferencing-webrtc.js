@@ -135,7 +135,7 @@
 			};
 
 			var joinedCall = function(callId) {
-				return webConferencing.updateUserCall(callId, "joined").done(function() {
+				return webConferencing.updateCall(callId, "joined").done(function() {
 					log.info("Call joined: " + callId);
 				}).fail(function(err) {
 					log.error("Error joining call: " + callId, err);
@@ -144,7 +144,7 @@
 			this.joinedCall = joinedCall;
 			
 			var leavedCall = function(callId) {
-				return webConferencing.updateUserCall(callId, "leaved").done(function() {
+				return webConferencing.updateCall(callId, "leaved").done(function() {
 					log.info("Call leaved: " + callId);
 				}).fail(function(err) {
 					log.error("Error leaving call: " + callId, err);

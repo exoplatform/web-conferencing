@@ -24,6 +24,7 @@ import java.net.URLEncoder;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -73,7 +74,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
 
-import com.ibm.icu.util.Calendar;
 
 /**
  * Created by The eXo Platform SAS.

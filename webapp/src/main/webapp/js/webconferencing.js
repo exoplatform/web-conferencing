@@ -2160,10 +2160,11 @@
 			}
 		};
 		
+		/* TODO Deprecated since 1.1.1, use updateCall() instead. */
 		this.updateUserCall = function(id, state) {
 			if (cometd) {
 				// It's the same channel to call in CometD
-				return this.updateCall(id, state);
+				return self.updateCall(id, state);
 			} else {
 				log.trace("User call update requires CometD. Was call: " + id);
 				return $.Deferred().reject("CometD required").promise();
