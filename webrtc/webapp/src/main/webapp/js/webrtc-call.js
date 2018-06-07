@@ -444,40 +444,60 @@ if (eXo.webConferencing) {
 								  	sdpConstraints = {}; // XXX in fact even undefined doesn't fit, need call without a parameter
 								  }
 							  	// let the 'negotiationneeded' event trigger offer generation
+									var canNegotiate = true;
 								  pc.onnegotiationneeded = function () {
-								  	// This will be fired after adding a local media stream and browser readiness
-								  	// Ready to join the call: say hello to each other
-						  			if (isOwner) {
-						  				log.debug("Negotiation needed (by owner) for " + callId);
-						  				subscribed.then(function() {
-							  				sendHello().then(function() {
-							  					// Owner will send the offer when negotiation will be resolved (received Hello from others)
-								  				negotiation.then(function() {
-								  					log.trace("Creating offer for " + callId);
-												    pc.createOffer().then(function(desc) { // sdpConstraints
-												    	log.trace("Setting local description for " + callId);
-												    	pc.setLocalDescription(desc).then(function() {
-												    		log.trace("Sending offer for " + callId);
-												    		sendOffer(pc.localDescription); // FYI we may do some extra work in promise.then
-												      }).catch(function(err) {
-												      	handleConnectionError("Failed to set local description for " + callId, err);
+								  	// XXX Jun 4 2018: it's a workaround for Chrome (v66+) which produces several onnegotiationneeded events for single 
+								  	// added stream (seems an event per a track in the stream):
+								  	// See https://bugs.chromium.org/p/chromium/issues/detail?id=740501
+								  	// TODO we also would postpone next event handling until the current one will be done and release it in always() 
+								  	// handlers below, but this way we need implement 1) real reetrancy locking in JS 2) adapt RTC flow to apply several
+								  	// offers/answers durinbg a single call.
+								  	if (canNegotiate) {
+								  		canNegotiate = false;
+								  		// This will be fired after adding a local media stream and browser readiness
+									  	// Ready to join the call: say hello to each other
+								  		log.debug("Negotiation starting (by " + (isOwner ? "owner" : "participant") + ") for " + callId);
+									  	subscribed.then(function() {
+									  		sendHello().then(function() {
+									  			if (isOwner) {
+									  				// Hello sent by the owner will not be answered by anyone, but it may be used by the server-side and for logging purposes
+								  					// Owner will send the offer when negotiation will be resolved (received Hello from others)
+									  				negotiation.then(function() {
+									  					log.trace("Creating offer for " + callId);
+													    pc.createOffer().then(function(desc) { // sdpConstraints
+													    	log.trace("Setting local description for " + callId);
+													    	pc.setLocalDescription(desc).then(function() {
+													    		log.trace("Sending offer for " + callId);
+													    		sendOffer(pc.localDescription).always(function() {
+													    			canNegotiate = true;
+													    		});
+													      }).catch(function(err) {
+													      	handleConnectionError("Failed to set local description for " + callId, err);
+														    });
+													    }).catch(function(err) {
+													    	handleConnectionError("Failed to create an offer for " + callId, err);
 													    });
-												    }).catch(function(err) {
-												    	handleConnectionError("Failed to create an offer for " + callId, err);
-												    });
-								  				});
-							  				});						  					
-						  				});
-								  	} else {
-								  		log.trace("Negotiation needed by NOT owner for " + callId);
-								  	}
+									  				});
+											  	} else {
+											  		// TODO do we need to re-run the participant part of negotiation here if some stream added/removed?
+											  		// Participant sends Hello to the other end to initiate a negotiation there,
+									  				// a peer (owner) on the other end is ready for negotiation and waits for an offer message.
+											  		negotiation.resolve().then(function() {
+															log.debug("Started exchange (participant) media information for " + callId);
+														}).always(function() {
+															canNegotiate = true;
+										    		});
+											  	}
+									  		});
+									  	});
+								  	} // skip otherwise the event
 								  };			  	
 								  // once remote stream arrives, show it in the remote video element
 								  // TODO it's modern way of WebRTC stream addition, but it doesn't work in Chrome
-								  /*pc.ontrack = function(event) {
-								  	log.trace(">>> onTrack for " + callId + " > " + new Date().toLocaleString());
-								  	$remoteVideo.get(0).srcObject = event.streams[0];
-								  };*/
+								  //pc.ontrack = function(event) {
+								  //	log.trace(">> ontrack for " + callId);
+								  	//$remoteVideo.get(0).srcObject = event.streams[0];
+								  //};
 									pc.onaddstream = function (event) { 
 										// Remote video added: switch local to a mini and show the remote as main
 										log.debug("Added stream for " + callId);
@@ -563,11 +583,7 @@ if (eXo.webConferencing) {
 																log.trace("Setting remote description (offer) for " + callId);
 																pc.setRemoteDescription(offer).then(function() {
 														      // if we received an offer, we need to answer
-														      if (pc.remoteDescription.type == "offer") {
-														      	// Add local stream for participant after media negotiation (as in samples) 
-														      	log.debug("Adding local (participant) stream for " + callId);
-														      	pc.addStream(localStream); // XXX It's deprecated way but Chrome works using it
-														      	// Will it be better to do this in onnegotiationneeded event?
+														      if (pc.remoteDescription.type == "offer") {	
 														      	log.trace("Creating answer for " + callId);
 														      	pc.createAnswer().then(function(desc) { // sdpConstraints?
 														      		log.trace("Setting local description for " + callId);
@@ -578,9 +594,7 @@ if (eXo.webConferencing) {
 														      					// Participant ready to exchange ICE candidates
 																						log.debug("Started exchange network information with peers for " + callId);
 																					});
-														      			})/* TODO cleanup: .catch(function(err) { -- already caught in sendAnswer()
-														      				handleConnectionError("Failed to add candidate for " + callId, err);
-														      			});*/
+														      			});
 														      		}).catch(function(err) {
 															      		handleConnectionError("Failed to set local description (answer) for " + callId, err);
 														      		});
@@ -634,13 +648,13 @@ if (eXo.webConferencing) {
 													log.debug("Received Hello for " + callId + ": " + JSON.stringify(message.hello));
 													if (message.hello == currentUserId) {
 														// We assume it's a hello to the call owner: start sending offer and candidates
-														// This will works once (for group calls, need re-initialize the process)
+														// This will work once (for group calls, need re-initialize the process)
 														negotiation.resolve().then(function() {
 															if (isOwner) {
 																log.debug("Started exchange (owner) media information for " + callId);
 															} else {
 																// This should not happen until group calls will be supported
-																log.warn("Started exchange (NOT owner) media information for " + callId);
+																log.warn("Started exchange (participant) media information for " + callId);
 															}
 														});
 													} else {
@@ -780,27 +794,13 @@ if (eXo.webConferencing) {
 												savePreference("video.disable", new String(!enableVideo()));
 												$muteVideo.toggleClass("on");
 											});
-
-										  // add local stream for owner right now
-										  if (isOwner) {
-										  	log.debug("Adding local (owner) stream for " + callId);
-											  pc.addStream(localStream); 
-											  // XXX It's deprecated way but Chrome works using it
-											  //localStream.getTracks().forEach(function(track) {
-											  //  pc.addTrack(track, localStream);
-											  //});
-										  } else {
-										  	log.debug("Negotiation ready (by participant) for " + callId);
-										  	subscribed.then(function() {
-										  		// Participant sends Hello to the other end to initiate a negotiation there
-											  	sendHello().then(function() {
-									  				// Participant on the other end is ready for negotiation and waits for an offer message
-											  		negotiation.resolve(localStream).then(function() {
-															log.debug("Started exchange (participant) media information for " + callId);
-														});
-									  			});
-										  	});
-										  }
+										  // add local stream right now
+											log.debug("Adding local (" + (isOwner ? "owner" : "participant") + ") stream for " + callId);
+										  pc.addStream(localStream); // this will cause onnegotiationneeded event
+										  // XXX It's deprecated way but Chrome (prior ~ v66) works using it
+										  //localStream.getTracks().forEach(function(track) {
+										  //  pc.addTrack(track, localStream);
+										  //});
 											// if user had saved audio/video disabled, mute them accordingly
 											if (getPreference("audio.disable") == "true") {
 												log.info("Apply user preference: audio disabled");

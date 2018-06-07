@@ -39,7 +39,7 @@
     <name>webrtcAdapter</name>
     <load-group>webConferencingWebrtcGRP</load-group>
     <script>
-      <path>/js/adapter-5.0.4.js</path>
+      <path>/js/adapter-6.2.1.js</path>
     </script>
   </module>
   <module>

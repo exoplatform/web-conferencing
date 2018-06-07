@@ -933,7 +933,7 @@ public class CometdWebConferencingService implements Startable {
       if (LOG.isDebugEnabled()) {
         String callId = callId(callType, callInfo);
         // Should log this to a dedicated diagnostic log!
-        LOG.debug("Call published in " + message.getChannel() + " by " + message.get("sender") + " callId: " + callId + " data: "
+        LOG.debug("Call published in " + message.getChannel() + " by " + message.getClientId() + " callId: " + callId + " data: "
             + message.getJSON());
       }
     }
