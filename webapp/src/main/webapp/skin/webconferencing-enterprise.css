@@ -28,25 +28,3 @@
 	border: solid 1px transparent !important;
 	box-shadow: none !important;
 }
-
-.callButton.chatCall, .callButton.chatCall ~ .dropdown-toggle {
-	padding-top: 4px; 
-	padding-bottom: 4px;
-    background: none;
-    border: 1px solid #fff !important;
-    color: #fff;
-    border-radius: 0;
-}
-
-.callButton.chatCall {
-	padding-left: 15px;
-	padding-right: 15px;
-}
-
-.callButton.chatCall [class*="Icon"], 
-.callButton.chatCall ~ .dropdown-toggle .uiIconArrowDown:before, 
-.callButton.miniChatCall ~ .dropdown-toggle .uiIconArrowDown:before,
-.callButton.chatCall:active, 
-.callButton.chatCall:focus {
-	color: #fff
-}

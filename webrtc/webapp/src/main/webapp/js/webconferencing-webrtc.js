@@ -251,7 +251,7 @@
 									callId = "p/" + partsAsc.join("@");
 								}
 								var $button = $("<a title='" + message("callStartTip") + "'"
-											+ " class='webrtcCallAction' data-placement='top' data-toggle='tooltip'>"
+											+ " class='webrtcCallAction' data-placement='bottom' data-toggle='tooltip'>"
 											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + message("call") + "</span></a>");
 								if (readCallWindow(callId)) {
