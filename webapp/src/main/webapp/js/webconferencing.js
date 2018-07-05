@@ -1447,6 +1447,8 @@
 							});
 						}
 					});
+				} else {
+          document.addEventListener('exo-chat-settings-loaded', initChat);
 				}
 			});
 		};
@@ -1506,7 +1508,9 @@
 		          addMiniChatCallButton();
 		        });
 					};
-				}
+				} else {
+          document.addEventListener('exo-chat-settings-loaded', initMiniChat);
+        }
 			});
 		};
 
