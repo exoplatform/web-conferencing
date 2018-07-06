@@ -60,26 +60,10 @@ public class WebrtcProviderPortlet extends GenericPortlet {
    * {@inheritDoc}
    */
   @Override
-  public void init() throws PortletException {
-    super.init();
-
-    ExoContainer container = ExoContainerContext.getCurrentContainer();
-    this.webConferencing = container.getComponentInstanceOfType(WebConferencingService.class);
-    try {
-      this.provider = (WebrtcProvider) webConferencing.getProvider(WebrtcProvider.WEBRTC_TYPE);
-    } catch (ClassCastException e) {
-      LOG.error("Provider " + WebrtcProvider.WEBRTC_TYPE + " isn't an instance of " + WebrtcProvider.class.getName(), e);
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
   protected void doView(final RenderRequest request, final RenderResponse response) throws PortletException, IOException {
-    if (this.provider != null) {
+    if (this.getProvider() != null) {
       try {
-        Settings settings = provider.settings()
+        Settings settings = getProvider().settings()
                                     .callUri(buildUrl(request.getScheme(),
                                                       request.getServerName(),
                                                       request.getServerPort(),
@@ -103,5 +87,19 @@ public class WebrtcProviderPortlet extends GenericPortlet {
         LOG.error("Error processing WebRTC call portlet for user " + request.getRemoteUser(), e);
       }
     }
+  }
+
+  private WebrtcProvider getProvider() {
+    if(this.provider == null) {
+      ExoContainer container = ExoContainerContext.getCurrentContainer();
+      this.webConferencing = container.getComponentInstanceOfType(WebConferencingService.class);
+      try {
+        this.provider = (WebrtcProvider) webConferencing.getProvider(WebrtcProvider.WEBRTC_TYPE);
+      } catch (ClassCastException e) {
+        LOG.error("Provider " + WebrtcProvider.WEBRTC_TYPE + " isn't an instance of " + WebrtcProvider.class.getName(), e);
+      }
+    }
+
+    return this.provider;
   }
 }
