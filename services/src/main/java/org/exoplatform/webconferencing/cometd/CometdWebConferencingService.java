@@ -78,6 +78,7 @@ import org.exoplatform.services.jcr.ext.common.SessionProvider;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityConstants;
@@ -932,7 +933,7 @@ public class CometdWebConferencingService implements Startable {
       if (LOG.isDebugEnabled()) {
         String callId = callId(callType, callInfo);
         // Should log this to a dedicated diagnostic log!
-        LOG.debug("Call published in " + message.getChannel() + " by " + message.get("sender") + " callId: " + callId + " data: "
+        LOG.debug("Call published in " + message.getChannel() + " by " + message.getClientId() + " callId: " + callId + " data: "
             + message.getJSON());
       }
     }
@@ -987,6 +988,18 @@ public class CometdWebConferencingService implements Startable {
                 SessionProviderService sessionProviders = exoContainer.getComponentInstanceOfType(SessionProviderService.class);
                 WebConferencingService webConferencing = exoContainer.getComponentInstanceOfType(WebConferencingService.class);
                 Identity userIdentity = identityRegistry.getIdentity(currentUserId);
+                if (userIdentity == null) {
+                  // We create user identity by authenticator, but not register it in the registry
+                  try {
+                    Authenticator authenticator = exoContainer.getComponentInstanceOfType(Authenticator.class);
+                    if (LOG.isDebugEnabled()) {
+                      LOG.debug("User identity not registered, trying to create it for: " + currentUserId);
+                    }
+                    userIdentity = authenticator.createIdentity(currentUserId);
+                  } catch (Exception e) {
+                    LOG.warn("Failed to create user identity: " + currentUserId, e);
+                  }
+                }
                 if (userIdentity != null) {
                   ConversationState contextState = ConversationState.getCurrent();
                   SessionProvider contextProvider = sessionProviders.getSessionProvider(null);

@@ -38,9 +38,9 @@ import org.exoplatform.webui.application.WebuiRequestContext;
 
 /**
  * My Connector provider portlet should be added to the portal pages (configuration.xml) where we need add the
- * connector to Web Conferencing call buttons.
- * This portlet loads Javascript module of this connector and register it in the Web
- * Conferencing client. By doing this we add the connector to call buttons on the page. And this connector
+ * provider to Web Conferencing call buttons.
+ * This portlet loads Javascript module of this connector and register its provider(s) in the Web
+ * Conferencing core. By doing this we add the connector to call buttons on the page. And this connector
  * script should implement call button element and logic on clicking it.
  * 
  * Created by The eXo Platform SAS.
@@ -65,7 +65,7 @@ public class MyConnectorPortlet extends GenericPortlet {
   @Override
   public void init() throws PortletException {
     super.init();
-
+    // Get eXo container and Web Conferencing service once per portlet initialization
     ExoContainer container = ExoContainerContext.getCurrentContainer();
     this.webConferencing = container.getComponentInstanceOfType(WebConferencingService.class);
     try {
@@ -82,18 +82,18 @@ public class MyConnectorPortlet extends GenericPortlet {
   protected void doView(final RenderRequest request, final RenderResponse response) throws PortletException, IOException {
     if (this.provider != null) {
       try {
+        // If we have settings to send to a client side
         String settingsJson = asJSON(provider.getSettings());
-
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
         // first load Web Conferencing itself,
         js.require("SHARED/webConferencing", "webConferencing")
           // load our connector module to myProvider variable
           .require("SHARED/webConferencing_myconnector", "myProvider")
-          // check if the variable contains an object to ensure the connector was loaded successfully
+          // check if the variable contains an object to ensure the provider was loaded successfully
           .addScripts("if (myProvider) { "
-              // optionally configure the connector with settings (from the server-side)
+              // optionally configure the provider with settings (from the server-side)
               + "myProvider.configure(" + settingsJson + "); "
-              // then add an instance of the connector as a provider to the Web Conferencing client
+              // then add an instance of the provider to the Web Conferencing client
               + "webConferencing.addProvider(myProvider); "
               // and force Web Conferencing client update (to update call buttons and related stuff)
               + "webConferencing.update(); " + "}");

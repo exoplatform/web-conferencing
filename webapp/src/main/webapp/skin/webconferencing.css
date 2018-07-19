@@ -35,11 +35,10 @@
  
 .callButtonContainer {
 	position: relative;
-	display: inline-block;
+	display: inline-flex;
 	vertical-align: middle;
 	white-space: nowrap;
-  display: inline-flex;
-  min-height: 30px;
+	min-height: 30px;
 }
 
 .mini-chat .callButtonContainer {
@@ -48,9 +47,9 @@
 
 .callButtonContainer .btn {
 	min-width: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .callButtonContainer .btn > * {
@@ -60,7 +59,7 @@
 .callButton.preferred {
 	margin-right: 0px;
 	padding-right: 15px;
-    padding-left: 15px;
+	padding-left: 15px;
 	border-radius: 3px 0 0 3px;
 }
 
@@ -82,22 +81,6 @@
 	vertical-align: text-bottom;
 }
 
-.mini-chat .uiActionWithLabel.miniChatCall {
-	min-height: 27px;
-}
-
-.mini-chat .uiActionWithLabel.miniChatCall i, .mini-chat .uiActionWithLabel.miniChatCall:hover i {
-	top: 5px;
-	font-size: 18px;
-	padding-left: 2px;
-	padding-right: 2px;
-	color:#ffffff;
-}
-
-.callButton.preferred.miniChatCall ~ .dropdown-toggle {
-	padding-left: 2px;
-}
-
 #tiptip_content .connectAction .callButton {
 	text-align: left;
 }
@@ -111,7 +94,7 @@
 
 .callButtonContainerWrapper {
 	margin-top: 15px;
-  margin-right: 10px;
+	margin-right: 10px;
 }
 
 .callButtonContainer .tooltip {
@@ -123,16 +106,10 @@
 }
 
 /***** Transparent styles (for space avatar and mini-chat, the transparentButton class will be triggered by Javascript) *******/
-.transparentButton, .miniChatCall, .miniChatCall ~ .dropdown-toggle {
+.transparentButton {
 	background: transparent;
 	border: solid 1px transparent;
 	box-shadow: none;
-}
-
-.uiActionWithLabel.miniChatCall:hover:active, .uiActionWithLabel.miniChatCall:hover:focus {
-	background: transparent !important;
-	border: solid 1px transparent !important;
-	box-shadow: none !important;
 }
 
 /***** Disabled styles *******/

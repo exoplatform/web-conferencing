@@ -135,7 +135,7 @@
 			};
 
 			var joinedCall = function(callId) {
-				return webConferencing.updateUserCall(callId, "joined").done(function() {
+				return webConferencing.updateCall(callId, "joined").done(function() {
 					log.info("Call joined: " + callId);
 				}).fail(function(err) {
 					log.error("Error joining call: " + callId, err);
@@ -144,7 +144,7 @@
 			this.joinedCall = joinedCall;
 			
 			var leavedCall = function(callId) {
-				return webConferencing.updateUserCall(callId, "leaved").done(function() {
+				return webConferencing.updateCall(callId, "leaved").done(function() {
 					log.info("Call leaved: " + callId);
 				}).fail(function(err) {
 					log.error("Error leaving call: " + callId, err);
@@ -251,7 +251,7 @@
 									callId = "p/" + partsAsc.join("@");
 								}
 								var $button = $("<a title='" + message("callStartTip") + "'"
-											+ " class='webrtcCallAction' data-placement='top' data-toggle='tooltip'>"
+											+ " class='webrtcCallAction' data-placement='bottom' data-toggle='tooltip'>"
 											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + message("call") + "</span></a>");
 								if (readCallWindow(callId)) {
@@ -575,8 +575,8 @@
 																});
 															});
 															popover.fail(function(msg) {
-																log.info("User " + msg + " call: " + callId);
 																if ($callPopup.callState != "stopped" && $callPopup.callState != "joined") {
+																	log.info("User " + msg + " call: " + callId);
 																	log.trace("<<< User " + msg + ($callPopup.callState ? " just " + $callPopup.callState : "") 
 																				+ " call " + callId + ", deleting it.");
 																	deleteCall(callId);
@@ -618,7 +618,6 @@
 									}
 								} else if (update.eventType == "call_joined") {
 									// If user has incoming popup open for this call (several user's windows/clients), then close it
-									log.debug("User call joined: " + update.callId);
 									if (currentUserId == update.part.id) {
 										closeCallPopup(update.callId, "joined");
 									}

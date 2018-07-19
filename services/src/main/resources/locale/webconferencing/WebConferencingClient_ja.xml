@@ -2,10 +2,10 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>Ok</ok>
+    <ok>OK</ok>
     <cancel>キャンセル</cancel>
     
     <notConfigured>未設定</notConfigured>
-    <errorReference>Error reference:</errorReference>
+    <errorReference>エラーの参照:</errorReference>
   </webconferencing>
 </bundle>

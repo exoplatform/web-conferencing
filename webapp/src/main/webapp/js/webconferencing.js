@@ -609,7 +609,7 @@
 	};
 	
 	var showError = function(title, text, errorRef) {
-		return dialog(title, text, "ColorError", errorRef ? message("errorReference") + errorRef : null);
+		return dialog(title, text, "ColorError", errorRef ? message("errorReference") + " " + errorRef : null);
 	};
 	
 	var showWarn = function(title, text) {
@@ -872,62 +872,35 @@
 	function Chat() {
 		
 		var isApplication = function() {
-			return typeof chatApplication === "object" && chatApplication;
+			return eXo && eXo.chat && eXo.chat.userSettings && typeof eXo.chat.userSettings === "object" && $("#chat-application").length;
 		};
 		this.isApplication = isApplication;
 		
 		var isEmbedded = function() {
-			return typeof chatNotification === "object" && chatNotification && !isApplication();
+			return eXo && eXo.chat && eXo.chat.userSettings && typeof eXo.chat.userSettings === "object" && $("#chatApplicationNotification").length;;
 		};
 		this.isEmbedded = isEmbedded;
 		
 		this.currentRoomId = function() {
-			if (isApplication()) {
-				return chatApplication.targetUser;					
-			} else {
-				// TODO for mini chat we can find a room user via getRoom(id) but it will be in a promise
-			}
+			return eXo.chat.selectedContact ? eXo.chat.selectedContact.user : null;
 		};
 		
 		this.getUsers = function(roomId) {
 			var process = $.Deferred(); 
 
-			var url, currentUser, dbName, token;
+			var url, dbName, token;
 			
-			if (isApplication()) {
-				if (!roomId) {
-					roomId = chatApplication.targetUser;					
-				}
-				url = chatApplication.jzUsers;
-				currentUser = chatApplication.username;
-				dbName = chatApplication.dbName;
-				token = chatApplication.token;
-			} else if (isEmbedded()) {
-				if (!roomId) {
-					roomId = jzGetParam(chatNotification.sessionId + "miniChatRoom");
-				}
-				var $chatStatus = $("#chat-status");
-				if ($chatStatus.length > 0) {
-					var serverUrl = $chatStatus.data("chat-server-url");
-					if (serverUrl) {
-						url = serverUrl + "/users";
-						currentUser = chatNotification.username;
-						dbName = chatNotification.dbName;
-						token = chatNotification.token;
-					} else {
-						process.reject("Cannot determine Chat server URL"); 
-					}
-				} else {
-					process.reject("Chat credentials not found");
-				}
-			} else {
-				process.reject("Chat not found");
-			}
-			
+      if (!roomId) {
+        roomId = this.currentRoomId();
+      }
+      url = eXo.chat.constants.CHAT_SERVER_API + 'users';
+      dbName = eXo.chat.userSettings.dbName;
+      token = eXo.chat.userSettings.token;
+
 			if (roomId && url) {
 				serviceGet(url, {
 	        room: roomId,
-	        user: currentUser,
+	        user: eXo.env.portal.userName,
 	        dbName: dbName
 	      }, {
 	        "Authorization": "Bearer " + token
@@ -955,47 +928,18 @@
 		this.getRoom = function(id, type) {
 			var process = $.Deferred(); 
 
-			var url, currentUser, dbName, token;
+			var url, dbName, token;
 			
-			if (isApplication()) {
-				if (!id) {
-					id = chatApplication.targetUser;					
-				}
-				if (id) {
-					url = chatApplication.jzChatGetRoom;
-					currentUser = chatApplication.username;
-					dbName = chatApplication.dbName;
-					token = chatApplication.token;
-				}
-			} else if (isEmbedded()) {
-				if (!id) {
-					id = jzGetParam(chatNotification.sessionId + "miniChatRoom");
-					type = jzGetParam(chatNotification.sessionId + "miniChatType");
-				}
-				if (id) {
-					var $chatStatus = $("#chat-status");
-					if ($chatStatus.length > 0) {
-						var serverUrl = $chatStatus.data("chat-server-url");
-						if (serverUrl) {
-							url = serverUrl + "/getRoom";
-							currentUser = chatNotification.username;
-							dbName = chatNotification.dbName;
-							token = chatNotification.token;
-						} else {
-							process.reject("Cannot determine Chat server URL"); 
-						}
-					} else {
-						process.reject("Chat credentials not found");
-					}
-				}
-			} else {
-				process.reject("Chat not found");
-			}
-			
-			if (id && url) {
+      if (!id) {
+        id = eXo.chat.selectedContact.user;         
+      }
+      if (id) {
+        type = eXo.chat.selectedContact.type;
+        dbName = eXo.chat.userSettings.dbName;
+        token = eXo.chat.userSettings.token;
 				var roomReq = {
 					targetUser: id,
-					user: currentUser,
+					user: eXo.env.portal.userName,
 					dbName: dbName,
 					withDetail: true,
 					isAdmin : false
@@ -1005,7 +949,7 @@
 				if (typeof type == "string") {
 					roomReq.type = type;
 				}
-				serviceGet(url, roomReq, {
+				serviceGet(eXo.chat.constants.CHAT_SERVER_API + 'getRoom', roomReq, {
 				  "Authorization": "Bearer " + token
 				}).done(function(room) {
 					process.resolve(room);
@@ -1336,92 +1280,88 @@
 		 */
 		var getChatContext = function() {
 			var process = $.Deferred();
-			chat.getRoom().done(function(room) {
-				if (room) {
-					var roomId = room.user;
-					var roomTitle = room.fullName;
-					
-					var isSpace = room.type == "s"; // roomId && roomId.startsWith("space-");
-					var isRoom =  room.type == "t"; // roomId && roomId.startsWith("team-");
-					var isGroup = isSpace || isRoom;
-					var isUser = !isGroup && room.type == "u";
-					
-					// It is a logic used in Chat, so reuse it here:
-					var roomName = roomTitle.toLowerCase().split(" ").join("_");
-					var details = null;
-					var context = {
-						currentUser : currentUser,
-						roomId : roomId,
-						roomName : roomName, // has no sense for team rooms, but for spaces it's pretty_name
-						roomTitle : roomTitle,
-						isGroup : isGroup,
-						isSpace : isSpace,
-						isRoom : isRoom,
-						isUser : isUser,
-						isIOS : isIOS,
-						isAndroid : isAndroid,
-						isWindowsMobile : isWindowsMobile,
-						details : function() {
-							if (!details) {
-								var data = $.Deferred();
-								details = data.promise();
-								if (isGroup) {
-									if (isSpace) {
-							  		var spaceId = roomName; // XXX no other way within Chat
-								  	getSpaceInfoReq(spaceId).done(function(space) {
-								  		data.resolve(space);
-								  	}).fail(function(err) {
-								  		log.trace("Error getting space info " + spaceId + " for chat context", err);
-								  		data.reject(err);
-								  	});
-									} else if (isRoom) {
-										chat.getUsers(roomId).done(function(users) {
-							  			var unames = [];
-							  			for (var i=0; i<users.length; i++) {
-							  				var u = users[i];
-							  				if (u && u.name && u.name != "null") {
-							  					unames.push(u.name);
-							  				}
-							  			}
-							  			getRoomInfoReq(roomId, roomTitle, unames).done(function(info) {
-							  				data.resolve(info);												
-							  			}).fail(function(err) {
-							  				log.trace("Error getting Chat room info " + roomName + "/" + roomId + " for chat context", err);
-							  				data.reject(err);
-							  			});
-								  	}).fail(function(err) {
-								  		log.trace("Error getting Chat room users " + roomId + " for chat context", err);
-											data.reject("Error reading Chat room users for " + roomId);
-								  	});
-							  	} else {
-							  		data.reject("Unexpected context chat type: " + chatType + " for " + roomTitle);
-							  	}
-								} else {
-									// roomId is an user name for P2P chats
-									getUserInfoReq(roomId).done(function(user) {
-										data.resolve(user);												
-									}).fail(function(err) {
-										log.trace("Error getting user info " + roomId + " for chat context", err);
-										data.reject(err);
-									});
-								}
+			if (eXo.chat.selectedContact) {
+				var roomId = eXo.chat.selectedContact.user;
+				var roomTitle = eXo.chat.selectedContact.fullName;
+				
+				var isSpace = eXo.chat.selectedContact.type == "s"; // roomId && roomId.startsWith("space-");
+				var isRoom =  eXo.chat.selectedContact.type == "t"; // roomId && roomId.startsWith("team-");
+				var isGroup = isSpace || isRoom;
+				var isUser = !isGroup && eXo.chat.selectedContact.type == "u";
+				
+				// It is a logic used in Chat, so reuse it here:
+				var roomName = roomTitle.toLowerCase().split(" ").join("_");
+				var details = null;
+				var context = {
+					currentUser : currentUser,
+					roomId : roomId,
+					roomName : roomName, // has no sense for team rooms, but for spaces it's pretty_name
+					roomTitle : roomTitle,
+					isGroup : isGroup,
+					isSpace : isSpace,
+					isRoom : isRoom,
+					isUser : isUser,
+					isIOS : isIOS,
+					isAndroid : isAndroid,
+					isWindowsMobile : isWindowsMobile,
+					details : function() {
+						if (!details) {
+							var data = $.Deferred();
+							details = data.promise();
+							if (isGroup) {
+								if (isSpace) {
+						  		var spaceId = roomName; // XXX no other way within Chat
+							  	getSpaceInfoReq(spaceId).done(function(space) {
+							  		data.resolve(space);
+							  	}).fail(function(err) {
+							  		log.trace("Error getting space info " + spaceId + " for chat context", err);
+							  		data.reject(err);
+							  	});
+								} else if (isRoom) {
+									chat.getUsers(roomId).done(function(users) {
+						  			var unames = [];
+						  			for (var i=0; i<users.length; i++) {
+						  				var u = users[i];
+						  				if (u && u.name && u.name != "null") {
+						  					unames.push(u.name);
+						  				}
+						  			}
+						  			getRoomInfoReq(roomId, roomTitle, unames).done(function(info) {
+						  				data.resolve(info);												
+						  			}).fail(function(err) {
+						  				log.trace("Error getting Chat room info " + roomName + "/" + roomId + " for chat context", err);
+						  				data.reject(err);
+						  			});
+							  	}).fail(function(err) {
+							  		log.trace("Error getting Chat room users " + roomId + " for chat context", err);
+										data.reject("Error reading Chat room users for " + roomId);
+							  	});
+						  	} else {
+						  		data.reject("Unexpected context chat type: " + chatType + " for " + roomTitle);
+						  	}
+							} else {
+								// roomId is an user name for P2P chats
+								getUserInfoReq(roomId).done(function(user) {
+									data.resolve(user);												
+								}).fail(function(err) {
+									log.trace("Error getting user info " + roomId + " for chat context", err);
+									data.reject(err);
+								});
 							}
-							return details;
 						}
-					};
-					process.resolve(context);
-				} else {
-					// If no room, then resolve with 'empty' context 
-					process.resolve({
-						currentUser : currentUser,
-						isIOS : isIOS,
-						isAndroid : isAndroid,
-						isWindowsMobile : isWindowsMobile
-					});
-				}
-			}).fail(function(err) {
-				process.reject(err);
-			});
+						return details;
+					}
+				};
+				process.resolve(context);
+			} else {
+				// If no room, then resolve with 'empty' context 
+				process.resolve({
+					currentUser : currentUser,
+					isIOS : isIOS,
+					isAndroid : isAndroid,
+					isWindowsMobile : isWindowsMobile
+				});
+			}
 			return process.promise();
 		};
 		
@@ -1431,64 +1371,60 @@
 		var initChat = function() {
 			$(function() {
 				var $chat = $("#chat-application");
-				// chatApplication is global on chat app page
 				if (chat.isApplication() && $chat.length > 0) {
 					var $roomDetail = $chat.find("#room-detail");
+          document.addEventListener(eXo.chat.constants.EVENT_ROOM_SELECTION_CHANGED, function() {
+            $roomDetail = $chat.find("#room-detail");
+            var $wrapper = $(".callButtonContainerWrapper");
+            $wrapper = $(".callButtonContainerWrapper");
+            $wrapper.hide(); // hide immediately
+            $wrapper.html('');
+            $roomDetail.removeData("roomcallinitialized");
+          });
 					var addRoomButtton = function() {
 						$roomDetail.find(".callButtonContainerWrapper").hide(); // hide immediately
 						setTimeout(function() {
-							var $teamDropdown = $roomDetail.find(".chat-team-button-dropdown");
-							if ($teamDropdown.length > 0) {
-								var $wrapper = $roomDetail.find(".callButtonContainerWrapper");
-								if ($wrapper.length > 0) {
-									$wrapper.empty();
+							var $wrapper = $(".callButtonContainerWrapper");
+							getChatContext().done(function(context) {
+								if (context.isSpace) {
+									// When in Chat app we set current space ID from the current room.
+									// It may be used by the provider module by calling webConferencing.getCurrentSpaceId()
+									// XXX here we use the same technique as in chat.js's loadRoom(), 
+									// here space pretty name is an ID
+									currentRoomTitle = context.roomTitle;
+									currentSpaceId = context.roomName;
+								} else if (context.isRoom) {
+									currentRoomTitle = context.roomTitle;
+									currentSpaceId = null;
+								} else if (context.isUser) {
+									currentRoomTitle = context.roomTitle;
+									currentSpaceId = null;
 								} else {
-									$wrapper = $("<div class='callButtonContainerWrapper pull-right' style='display: none;'></div>");
-									$teamDropdown.after($wrapper);
+									// It's no chat room found
+									currentRoomTitle = null;
+									currentSpaceId = null;
 								}
-								getChatContext().done(function(context) {
-									if (context.isSpace) {
-										// When in Chat app we set current space ID from the current room.
-										// It may be used by the provider module by calling webConferencing.getCurrentSpaceId()
-										// XXX here we use the same technique as in chat.js's loadRoom(), 
-										// here space pretty name is an ID
-										currentRoomTitle = context.roomTitle;
-										currentSpaceId = context.roomName;
-									} else if (context.isRoom) {
-										currentRoomTitle = context.roomTitle;
-										currentSpaceId = null;
-									} else if (context.isUser) {
-										currentRoomTitle = context.roomTitle;
-										currentSpaceId = null;
-									} else {
-										// It's no chat room found
-										currentRoomTitle = null;
-										currentSpaceId = null;
-									}
-									if (context.roomId) {
-										var initializer = addCallButton($wrapper, context);
-										initializer.done(function($container) {
-											$container.find(".callButton").first().addClass("chatCall");
-											$container.find(".dropdown-menu").addClass("pull-right");
-											$wrapper.show();
-										});
-										initializer.fail(function(err) {
-											if (error) {
-												log.error("Chat initialization failed in '" + context.roomTitle + "' for " + currentUser.id, err);
-												$roomDetail.removeData("roomcallinitialized");
-											}
-										});
-									} else {
-										log.trace("<< initChat WARN no room found in context");
-										$roomDetail.removeData("roomcallinitialized");
-									}
-								}).fail(function(err) {
-									log.error("Error getting room info from Chat server", err);
+								if (context.roomId) {
+									var initializer = addCallButton($wrapper, context);
+									initializer.done(function($container) {
+										$container.find(".callButton").first().addClass("chatCall");
+										$container.find(".dropdown-menu").addClass("pull-right");
+										$wrapper.show();
+									});
+									initializer.fail(function(err) {
+										if (err) {
+											log.error("Chat initialization failed in '" + context.roomTitle + "' for " + currentUser.id, err);
+											$roomDetail.removeData("roomcallinitialized");
+										}
+									});
+								} else {
+									log.trace("<< initChat WARN no room found in context");
 									$roomDetail.removeData("roomcallinitialized");
-								}); 
-							} else {
+								}
+							}).fail(function(err) {
+								log.error("Error getting room info from Chat server", err);
 								$roomDetail.removeData("roomcallinitialized");
-							}
+							}); 
 						}, 1500); // XXX whoIsOnline may run 500-750ms on eXo Tribe
 					};
 					
@@ -1511,6 +1447,8 @@
 							});
 						}
 					});
+				} else {
+          document.addEventListener('exo-chat-settings-loaded', initChat);
 				}
 			});
 		};
@@ -1518,24 +1456,21 @@
 		var initMiniChat = function() {
 			$(function() {
 				var $miniChat = $(".mini-chat").first();
-				var $fullName = $miniChat.find(".fullname");
-				if (chat.isEmbedded() && $fullName.length > 0) {
+				if (chat.isEmbedded()) {
 					if (!$miniChat.data("minichatcallinitialized")) {
 						$miniChat.data("minichatcallinitialized", true);
 						var process = $.Deferred();
 						var addMiniChatCallButton = function() {
-							var roomTitle = $fullName.text().trim();
+							var roomTitle = eXo.chat.selectedContact.fullName;
+							var $miniChat = $(".mini-chat").first();
 							var $titleBar = $miniChat.find(".title-right");
 							if ($titleBar.length > 0 && roomTitle.length > 0) {
 								var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
-								$wrapper.children().remove(); // clean the previous state, if have one
 								// Wait a bit for completing Chat workers
 								setTimeout(function() {
 									getChatContext().done(function(context) {
 										if (context.roomId) {
-											if ($wrapper.length == 0) {
-												$wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");											
-											}
+		                  $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
 											var initializer = addCallButton($wrapper, context);
 											initializer.done(function($container) {
 												var $first = $container.find(".callButton").first();
@@ -1564,19 +1499,18 @@
 								log.trace("<< initMiniChat CANCELED mini-chat not found or empty");
 							}
 						};
-						// run DOM listener to know when mini chat will be completed (by notif.js script)
-						var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
-						var observer = new MutationObserver(function(mutations) {
-							addMiniChatCallButton();
-						});
-						observer.observe($fullName.get(0), {
-							subtree : false,
-							childList : true,
-							attributes : false,
-							characterData : false
-						});
+		        document.addEventListener(eXo.chat.constants.EVENT_ROOM_SELECTION_CHANGED, function() {
+		          var $miniChat = $(".mini-chat").first();
+		          var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
+		          $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
+		          $wrapper = $(".callButtonContainerMiniWrapper");
+		          $wrapper.html('');
+		          addMiniChatCallButton();
+		        });
 					};
-				}
+				} else {
+          document.addEventListener('exo-chat-settings-loaded', initMiniChat);
+        }
 			});
 		};
 
@@ -1940,7 +1874,6 @@
 			//
 			// A provider may support following of API methods:
 			// * init() - will be called when web conferencing user will be initialized in this.init(), this method returns a promise
-			// * getDescription() - human-readable description for UI (use it if description from server configuration isn't enough)
 			
 			// TODO avoid duplicates, use map like?
 			if (provider.getSupportedTypes && provider.hasOwnProperty("getSupportedTypes") && provider.getTitle && provider.hasOwnProperty("getTitle")) {
@@ -2160,10 +2093,11 @@
 			}
 		};
 		
+		/* TODO Deprecated since 1.1.1, use updateCall() instead. */
 		this.updateUserCall = function(id, state) {
 			if (cometd) {
 				// It's the same channel to call in CometD
-				return this.updateCall(id, state);
+				return self.updateCall(id, state);
 			} else {
 				log.trace("User call update requires CometD. Was call: " + id);
 				return $.Deferred().reject("CometD required").promise();
