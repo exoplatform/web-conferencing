@@ -25,5 +25,5 @@
   xmlns="http://www.exoplatform.org/xml/ns/kernel_1_3.xsd">
   
   <!-- WebRTC configuration -->
-  <import>war:/conf/webrtc/configuration.xml</import>
+  <import profiles="all">war:/conf/webrtc/configuration.xml</import>
 </configuration>
