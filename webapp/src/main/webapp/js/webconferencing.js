@@ -1524,47 +1524,54 @@
 						$miniChat.data("minichatcallinitialized", true);
 						var process = $.Deferred();
 						var addMiniChatCallButton = function() {
-							var roomTitle = $fullName.text().trim();
-							var $titleBar = $miniChat.find(".title-right");
-							if ($titleBar.length > 0 && roomTitle.length > 0) {
-								var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
-								$wrapper.children().remove(); // clean the previous state, if have one
-								// Wait a bit for completing Chat workers
-								setTimeout(function() {
-									getChatContext().done(function(context) {
-										if (context.roomId) {
-											if ($wrapper.length == 0) {
-												$wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");											
-											}
-											var initializer = addCallButton($wrapper, context);
-											initializer.done(function($container) {
-												var $first = $container.find(".callButton").first();
-												$first.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
-												$first.children(".callTitle").remove();
-												$first.children(".uiIconLightGray").add($container.find(".dropdown-toggle > .uiIconLightGray"))
-														.removeClass("uiIconLightGray").addClass("uiIconWhite");
-												$container.find(".dropdown-toggle").removeClass("btn").addClass("btn-mini");
-												$container.find(".dropdown-menu").addClass("pull-right");
-												$titleBar.prepend($wrapper);
-											});
-											initializer.fail(function(err) {
-												if (err) {
-													log.error("Mini-chat initialization failed in " + context.roomTitle + " for " + currentUser.id, err);
-													$miniChat.removeData("minichatcallinitialized");												
-												}
-											});
-										} else {
-											log.trace("<< initMiniChat WARN no room found in context");
+                        // Wait a bit for completing Chat scripts
+ 						setTimeout(function() {
+ 								var roomTitle = $fullName.text().trim();
+ 								var $titleBar = $miniChat.find(".title-right");
+ 								if ($titleBar.length > 0 && roomTitle.length > 0) {
+ 									// Check room title to ensure it's not already initialized:
+ 									// It's actual for cases when page loads with already open mini-chat (since PLF 5.0.2)
+ 									// and so addMiniChatCallButton() called directly and then the chat script sets a room title 
+ 									// and fires the DOM listener (see MutationObserver below), which call addMiniChatCallButton() again.
+ 									if (roomTitle != $miniChat.data("minichatcalltitle")) {
+ 										$miniChat.data("minichatcalltitle", roomTitle);
+ 										var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
+ 										$wrapper.children().remove(); // clean the previous state, if have one
+ 										if ($wrapper.length == 0) {
+ 											$wrapper = $("<div class='callButtonContainerMiniWrapper pull-left' style='display: inline-block;'></div>");
 										}
-									}).fail(function(err) {
-										log.error("Error getting room info from Chat server (for mini-chat)", err);
-									});
-								}, 750);
-							} else {
-								log.trace("<< initMiniChat CANCELED mini-chat not found or empty");
-							}
+									getChatContext().done(function(context) {
+ 											if (context.roomId) {
+ 												addCallButton($wrapper, context).done(function($container) {
+ 													var $first = $container.find(".callButton").first();
+ 													$first.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
+ 													$first.children(".callTitle").remove();
+ 													$first.children(".uiIconLightGray").add($container.find(".dropdown-toggle > .uiIconLightGray"))
+ 															.removeClass("uiIconLightGray").addClass("uiIconWhite");
+ 													$container.find(".dropdown-toggle").removeClass("btn").addClass("btn-mini");
+ 													$container.find(".dropdown-menu").addClass("pull-right");
+ 													$titleBar.prepend($wrapper);
+ 												}).fail(function(err) {
+ 													if (err) {
+ 														log.error("Mini-chat initialization failed in " + context.roomTitle + " for " + currentUser.id, err);
+ 														$miniChat.removeData("minichatcallinitialized");
+ 														$miniChat.removeData("minichatcalltitle")
+ 													}
+ 												});
+ 											} else {
+ 												log.trace("<< initMiniChat WARN no room found in context");
+ 											}
+ 										}).fail(function(err) {
+ 											log.error("Error getting room info from Chat server (for mini-chat)", err);
+ 											$miniChat.removeData("minichatcallinitialized");
+ 											$miniChat.removeData("minichatcalltitle")
+ 										});
+ 									} // else, assume mini-chat already initialized
+ 								} // else, nothing to initialize
+ 							}, 750);
 						};
-						// run DOM listener to know when mini chat will be completed (by notif.js script)
+						// run DOM listener to initialize mini chat when it will be completed (by notif.js script) 
+ 						// for cases of opening a chat on already loaded page (incl. switching rooms)
 						var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
 						var observer = new MutationObserver(function(mutations) {
 							addMiniChatCallButton();
@@ -1575,6 +1582,8 @@
 							attributes : false,
 							characterData : false
 						});
+						// initialize for cases of (re)loading page with already open mini chat - method logic will decide to init or not
+ 						addMiniChatCallButton();
 					};
 				}
 			});
