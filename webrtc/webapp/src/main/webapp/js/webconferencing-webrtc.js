@@ -830,9 +830,27 @@
 							//activate tooltip for added servers
 							$ices.find("[data-toggle='tooltip']").tooltip();
 						}
-						$.each(rtcConfiguration.iceServers, function(si, ices) {
-							addIceServer(ices);
-						});
+
+						if (rtcConfiguration.iceServers.length > 0) {
+							$iceServers.find('.noServer').remove();
+							$.each(rtcConfiguration.iceServers, function(si, ices) {
+								addIceServer(ices);
+							});
+						} else {
+							var $noServer = $iceServers.find('.noServer');
+							$noServer.on('click', '.uiIconPlus', function() {
+								$noServer.remove();
+								var newIces = {
+									enabled : true,
+									urls : [ "" ]
+								};
+								addIceServer(newIces); // add in DOM
+								// add in RTC config
+								rtcConfiguration.iceServers.push(newIces);
+								$settings.scrollTop(90);
+							}).show();
+						}
+
 						// Error diagnostic checkbox
 						var $diagnosticEnabler = $settings.find(".diagnostic-errors input[type='checkbox']");
 						if (rtcConfiguration.logEnabled) {
