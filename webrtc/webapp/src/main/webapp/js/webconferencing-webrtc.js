@@ -772,47 +772,42 @@
 							var $credential = $credentials.find("input[name='credential']");
 							$enabler.change(function() {
 								if ($enabler.prop("checked") && !$credentials.is(":visible")) {
-									if (ices.username) {
+
+									if (!$username.val() && ices.username) {
 										$username.val(ices.username);
-									} else {
-										ices.username = null;
-										$username.val("");
 									}
-									if (ices.credential) {
+
+									if (!$credential.val() && ices.credential) {
 										$credential.val(ices.credential);
-									} else {
-										ices.credential = null;
-										$credential.val("");
 									}
-									if (!$credentials.data("initialized")) {
-										$credentials.data("initialized", true);
-										$username.add($credential).on("input", function() {
-											inputWrongMark($(this));
-										});
-										$username.change(function() {
-											inputWrongMark($username);
-											var val = $username.val();
-											if (val) {
-												ices.username = val;
-											} else {
-												ices.username = $username;
-											}
-										});
-										$credential.change(function() {
-											inputWrongMark($credential);
-											var val = $credential.val();
-											if (val) {
-												ices.credential = val;
-											} else {
-												ices.credential = $credential;
-											}
-										});
-									}
+
+									$username.add($credential).on("input", function() {
+										inputWrongMark($(this));
+									});
+									$username.change(function() {
+										inputWrongMark($username);
+										var val = $username.val();
+										if (val) {
+											ices.username = val;
+										} else {
+											ices.username = $username;
+										}
+									});
+									$credential.change(function() {
+										inputWrongMark($credential);
+										var val = $credential.val();
+										if (val) {
+											ices.credential = val;
+										} else {
+											ices.credential = $credential;
+										}
+									});
+
 									$credentials.show();
 								} else {
 									$credentials.hide();
-									$username.val("");
-									$credential.val("");
+									$username.off('change');
+									$credential.off('change');
 									ices.username = null;
 									ices.credential = null;
 								}
