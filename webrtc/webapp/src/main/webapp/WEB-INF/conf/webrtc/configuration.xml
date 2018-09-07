@@ -45,17 +45,28 @@
         <object-param>
           <name>rtc-configuration</name>
           <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$RTCConfiguration">
-            <!-- Here we set default (out of the box) settings that can be changed in Admin UI -->
-            <!-- field name="bundlePolicy">
+            <!-- 
+              bundlePolicy parameter possible values : [ balanced | max-compat | max-bundle ] (default: balanced)
+              more details : https://www.w3.org/TR/webrtc/#dom-rtcbundlepolicy
+              -->
+            <field name="bundlePolicy">
               <string>balanced</string>
             </field>
+            <!-- 
+              iceCandidatePoolSize parameter (default: 0)
+              more details : https://www.w3.org/TR/webrtc/#dom-rtcconfiguration-icecandidatepoolsize
+              -->
             <field name="iceCandidatePoolSize">
               <int>0</int>
             </field>
+            <!-- 
+              iceTransportPolicy parameter possible values : [ all | relay ] (default: all)
+              more details : https://www.w3.org/TR/webrtc/#dom-rtcicetransportpolicy
+              -->
             <field name="iceTransportPolicy">
-              <string>all</string>
+              <string>${webconferencing.webrtc.iceTransportPolicy:all}</string>
             </field>
-            <field name="certificates">
+            <!-- field name="certificates">
               <collection type="java.util.ArrayList">
                 <value>
                   <object type="org.exoplatform.webconferencing.webrtc.WebrtcProvider$RTCCertificate">
