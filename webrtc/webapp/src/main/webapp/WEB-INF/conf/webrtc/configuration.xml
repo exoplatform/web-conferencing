@@ -50,14 +50,14 @@
               more details : https://www.w3.org/TR/webrtc/#dom-rtcbundlepolicy
               -->
             <field name="bundlePolicy">
-              <string>balanced</string>
+              <string>${webconferencing.webrtc.bundlePolicy:balanced}</string>
             </field>
             <!-- 
               iceCandidatePoolSize parameter (default: 0)
               more details : https://www.w3.org/TR/webrtc/#dom-rtcconfiguration-icecandidatepoolsize
               -->
             <field name="iceCandidatePoolSize">
-              <int>0</int>
+              <int>${webconferencing.webrtc.iceCandidatePoolSize:0}</int>
             </field>
             <!-- 
               iceTransportPolicy parameter possible values : [ all | relay ] (default: all)
