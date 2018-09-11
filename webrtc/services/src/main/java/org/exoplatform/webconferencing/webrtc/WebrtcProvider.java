@@ -469,7 +469,7 @@ public class WebrtcProvider extends CallProvider {
     // Log warning if default (aka public) ICE servers in use
     for (ICEServer ices : this.rtcConfiguration.getIceServers()) {
       if (ices.isEnabled() && ices.isDefault()) {
-        LOG.warn("Default eXo ICE servers will be used for WebRTC calls: " + ices.getUrls().toString()
+        LOG.info("Default eXo ICE servers will be used for WebRTC calls: " + ices.getUrls().toString()
             + ". You can configure your own set of servers and disable the default one.");
       }
     }
