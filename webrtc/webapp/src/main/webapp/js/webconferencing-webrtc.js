@@ -667,6 +667,7 @@
 					if (textStatus == "success" || textStatus == "notmodified") {
 						var $settings = $popup.find(".settingsForm");
 						var $iceServers = $settings.find(".iceServers");
+						var $noServer = $iceServers.find('.noServer');
 						var $serverTemplate = $iceServers.find(".iceServer");
 						// copy ICE servers from the working settings and use them for updates
 						// Deep copy of the settings.rtcConfiguration as a working copy for the form 
@@ -727,10 +728,6 @@
 										rtcConfiguration.iceServers.push(newIces);
 										$settings.scrollTop(90);
 									});
-									if ($iceServers.find(".iceServer").length == 1) { // 1 is for template
-										// Remove trash on first server
-										$urlGroup.find("i.uiIconTrash").remove();
-									}
 								}
 								var $url = $urlGroup.find("input[name='url']");
 								$url.val(url);
@@ -757,6 +754,10 @@
 									rtcConfiguration.iceServers = rtcConfiguration.iceServers.filter(function(nextIces) {
 										return ices !== nextIces;
 									});
+									if (rtcConfiguration.iceServers.length == 0) {
+										$iceServers.find('.noServer').show();
+										$settings.find('.no-server-warning').show();
+									}
 									$dialog.hide();
 								});
 								$dialog.find("a.uiIconClose, .cancelButton").click(function(){
@@ -825,9 +826,30 @@
 							//activate tooltip for added servers
 							$ices.find("[data-toggle='tooltip']").tooltip();
 						}
-						$.each(rtcConfiguration.iceServers, function(si, ices) {
-							addIceServer(ices);
+
+						$noServer.on('click', '.uiIconPlus', function() {
+							$noServer.hide();
+							$settings.find('.no-server-warning').hide();
+							var newIces = {
+								enabled : true,
+								urls : [ "" ]
+							};
+							addIceServer(newIces); // add in DOM
+							// add in RTC config
+							rtcConfiguration.iceServers.push(newIces);
+							$settings.scrollTop(90);
 						});
+
+						if (rtcConfiguration.iceServers.length > 0) {
+							$noServer.hide();
+							$settings.find('.no-server-warning').hide();
+							$.each(rtcConfiguration.iceServers, function(si, ices) {
+								addIceServer(ices);
+							});
+						} else {
+							$noServer.show();
+						}
+
 						// Error diagnostic checkbox
 						var $diagnosticEnabler = $settings.find(".diagnostic-errors input[type='checkbox']");
 						if (rtcConfiguration.logEnabled) {

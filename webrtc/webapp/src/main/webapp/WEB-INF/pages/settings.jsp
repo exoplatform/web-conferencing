@@ -14,20 +14,27 @@
 		<i class="uiIconError"></i><span class="errorMessage"></span>
 	</div>
 
+	<div class="alert alert-warning no-server-warning">
+		${messages["webrtc.admin.serversTip"]}
+	</div>
+
 	<div class="popupContent">
 		<p class="title">${messages["webrtc.admin.servers"]}&nbsp;&nbsp;<i class="uiIconInformation uiIconBlue" data-placement="top"
 				data-toggle="tooltip" title="${messages["webrtc.admin.serversTip"]}"></i>
 		</p>
 
 		<div class="iceServers">
+			<div class="noServer" style="display: none">
+				<span>${messages["webrtc.admin.noServer"]}</span>&nbsp;&nbsp;&nbsp;<i class="uiIconPlus uiIconLightGray" data-placement="top" data-toggle="tooltip" title="${messages["webrtc.admin.addNewServer"]}"></i>
+			</div>
 			<div class="control-group iceServer" style="display: none;">
 				<label class="control-label" for="url">${messages["webrtc.admin.url"]} :</label>
 				<div class="urlsGroup">
 					<div class="control-group urlGroup">
 						<input name="url" placeholder="${messages["webrtc.admin.serverUrl"]}" type="text" />
 						<div class="actions-container">
-							<i class="uiIconTrash uiIconLightGray" data-placement="top" data-toggle="tooltip" title="Remove server"></i> <i
-								class="uiIconPlus uiIconLightGray" data-placement="top" data-toggle="tooltip" title="Add a new server"></i>
+							<i class="uiIconTrash uiIconLightGray" data-placement="top" data-toggle="tooltip" title="${messages["webrtc.admin.removeServer"]}"></i> <i
+								class="uiIconPlus uiIconLightGray" data-placement="top" data-toggle="tooltip" title="${messages["webrtc.admin.addNewServer"]}"></i>
 						</div>
 					</div>
 					<div class="credentialsGroup">

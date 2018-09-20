@@ -90,7 +90,7 @@
 	padding: 0 30px;
 }
 
-.iceServer {
+.iceServer, .noServer {
 	display: flex;
 	margin-bottom: 20px;
 }
@@ -175,6 +175,12 @@
 .settingsForm .alert {
 	position: fixed;
 	top: 12px;
+}
+
+.settingsForm .alert.no-server-warning {
+	position: static;
+	transform: none;
+	margin: 0 30px;
 }
 
 /* Settings form END */
