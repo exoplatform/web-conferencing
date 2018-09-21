@@ -13,6 +13,10 @@
       <credential>Acreditare</credential>
       <save>Salvaţi</save>
       <cancel>Renunță</cancel>
+
+      <noServer>No server available, please add your first one</noServer>
+      <addNewServer>Add a new server</addNewServer>
+      <removeServer>Remove server</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Ștergeți serverul ICE?</confirmServerRemoval>

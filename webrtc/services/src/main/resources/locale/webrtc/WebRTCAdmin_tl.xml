@@ -13,6 +13,10 @@
       <credential>Kredensyal</credential>
       <save>I-save</save>
       <cancel>Kanselahin</cancel>
+
+      <noServer>No server available, please add your first one</noServer>
+      <addNewServer>Add a new server</addNewServer>
+      <removeServer>Remove server</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Tanggaling ang ICE Server?</confirmServerRemoval>

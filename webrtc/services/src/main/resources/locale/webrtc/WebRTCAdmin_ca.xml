@@ -13,6 +13,10 @@
       <credential>Credencial</credential>
       <save>Desa</save>
       <cancel>Cancel·la</cancel>
+
+      <noServer>No server available, please add your first one</noServer>
+      <addNewServer>Add a new server</addNewServer>
+      <removeServer>Remove server</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Vol eliminar el servidor ICE?</confirmServerRemoval>
