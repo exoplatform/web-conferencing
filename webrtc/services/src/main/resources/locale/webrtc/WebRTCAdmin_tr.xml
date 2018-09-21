@@ -13,6 +13,10 @@
       <credential>Kimlik Bilgileri</credential>
       <save>Save</save>
       <cancel>İptal</cancel>
+
+      <noServer>No server available, please add your first one</noServer>
+      <addNewServer>Add a new server</addNewServer>
+      <removeServer>Remove server</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>ICE Sunucusu Kaldırılsın mı?</confirmServerRemoval>

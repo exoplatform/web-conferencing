@@ -13,6 +13,10 @@
       <credential>crwdns6858722:0crwdne6858722:0</credential>
       <save>crwdns6858723:0crwdne6858723:0</save>
       <cancel>crwdns6858724:0crwdne6858724:0</cancel>
+
+      <noServer>crwdns6869041:0crwdne6869041:0</noServer>
+      <addNewServer>crwdns6869042:0crwdne6869042:0</addNewServer>
+      <removeServer>crwdns6869043:0crwdne6869043:0</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>crwdns6858725:0crwdne6858725:0</confirmServerRemoval>

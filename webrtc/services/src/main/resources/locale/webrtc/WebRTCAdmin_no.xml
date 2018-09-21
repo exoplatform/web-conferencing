@@ -13,6 +13,10 @@
       <credential>Credential</credential>
       <save>Lagre</save>
       <cancel>Avbryt</cancel>
+
+      <noServer>No server available, please add your first one</noServer>
+      <addNewServer>Add a new server</addNewServer>
+      <removeServer>Remove server</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
