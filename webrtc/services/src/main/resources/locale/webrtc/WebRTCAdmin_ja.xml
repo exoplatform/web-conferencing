@@ -14,9 +14,9 @@
       <save>保存</save>
       <cancel>キャンセル</cancel>
 
-      <noServer>No server available, please add your first one</noServer>
-      <addNewServer>Add a new server</addNewServer>
-      <removeServer>Remove server</removeServer>
+      <noServer>利用可能なサーバーが存在しません。まずは追加してください。</noServer>
+      <addNewServer>新規サーバーを追加</addNewServer>
+      <removeServer>サーバーを削除</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>ICE サーバーを削除しますか?</confirmServerRemoval>

@@ -14,9 +14,9 @@
       <save>حفظ</save>
       <cancel>الغاء</cancel>
 
-      <noServer>No server available, please add your first one</noServer>
-      <addNewServer>Add a new server</addNewServer>
-      <removeServer>Remove server</removeServer>
+      <noServer>لا يوجد خادم متوفر، يرجى إضافة الخادم الأول الخاص بك</noServer>
+      <addNewServer>إضافة خادم جديد</addNewServer>
+      <removeServer>إزالة الخادم</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>إزالة الخادم ICE ؟</confirmServerRemoval>
