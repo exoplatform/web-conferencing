@@ -3,6 +3,10 @@
  */
 (function($, cCometD) {
 	"use strict";
+
+	// ******** Constants *******
+	var EVENT_ROOM_SELECTION_CHANGED = 'exo-chat-selected-contact-changed';
+	var CHAT_SERVER_API = '/chatServer/';
 	
 	// ******** Utils ********
 
@@ -893,7 +897,7 @@
       if (!roomId) {
         roomId = this.currentRoomId();
       }
-      url = eXo.chat.constants.CHAT_SERVER_API + 'users';
+      url = CHAT_SERVER_API + 'users';
       dbName = eXo.chat.userSettings.dbName;
       token = eXo.chat.userSettings.token;
 
@@ -949,7 +953,7 @@
 				if (typeof type == "string") {
 					roomReq.type = type;
 				}
-				serviceGet(eXo.chat.constants.CHAT_SERVER_API + 'getRoom', roomReq, {
+				serviceGet(CHAT_SERVER_API + 'getRoom', roomReq, {
 				  "Authorization": "Bearer " + token
 				}).done(function(room) {
 					process.resolve(room);
@@ -1373,7 +1377,7 @@
 				var $chat = $("#chat-application");
 				if (chat.isApplication() && $chat.length > 0) {
 					var $roomDetail = $chat.find("#room-detail");
-          document.addEventListener(eXo.chat.constants.EVENT_ROOM_SELECTION_CHANGED, function() {
+          document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function() {
             $roomDetail = $chat.find("#room-detail");
             var $wrapper = $(".callButtonContainerWrapper");
             $wrapper = $(".callButtonContainerWrapper");
@@ -1499,7 +1503,7 @@
 								log.trace("<< initMiniChat CANCELED mini-chat not found or empty");
 							}
 						};
-		        document.addEventListener(eXo.chat.constants.EVENT_ROOM_SELECTION_CHANGED, function() {
+		        document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function() {
 		          var $miniChat = $(".mini-chat").first();
 		          var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
 		          $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
