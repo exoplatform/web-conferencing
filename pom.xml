@@ -31,7 +31,7 @@
   <artifactId>web-conferencing</artifactId>
   <version>1.3.x-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>eXo Web Conferencing</name>
+  <name>eXo Add-on:: eXo Web Conferencing</name>
   <description>eXo Web Conferencing portal extension</description>
   
   <modules>
