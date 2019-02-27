@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <webrtc>
+    <call>Call</call>
+    <callingYou>يتصل بك...</callingYou>
+    <callWith>الاتصال مع</callWith>
+    <callTo>إتصال إلى</callTo>
+    <incomingCall>مكالمة واردة</incomingCall>
+    <answer>Answer</answer>
+    <decline>Decline</decline>
+    <callStartTip>إضغط فوق بدء مكالمة فيديو</callStartTip>
+    <callRunningTip>المكالمة جارية بالفعل. اضغط لاظهار نافذة المكالمة.</callRunningTip>
+    
+    <providerError>خطأ في موفر WebRTC</providerError>
+    <providerNotAvailable>موفر WebRTC غير متوفر</providerNotAvailable>
+    <refreshTryAgainContactAdmin>الرجاء تحديث الصفحة و المحاولة مرة أخرى. إذا استمر الخطأ، الرجاء الاتصال بالمسؤول مع مرجع الخطأ هذا.</refreshTryAgainContactAdmin>
+    <callStopped>تم إيقاف المكالمة</callStopped>
+    <errorAddCall>تعذر بدء المكالمة نظراً لوجود خطأ على الخادم</errorAddCall>
+    <errorOpeningCall>حدث خطأ أثناء فتح صفحة المكالمة. الرجاء تحديث الصفحة وحاول مرة أخرى. إذا استمر الخطأ، الرجاء الاتصال بالمسؤول.</errorOpeningCall>
+    <callWindowNotOpen>تعذر فتح نافذة الاتصال. الرجاء التحقق إذا كان تم حظره بواسطة المستعرض الخاص بك.</callWindowNotOpen>
+    <errorStartingCall>خطأ في بدء تشغيل الاتصال</errorStartingCall>
+    <errorIncomingCall>خطأ المكالمات الواردة</errorIncomingCall>
+    <errorReadUserStatus>حدث خطأ أثناء قراءة معلومات حالة المستخدم من الخادم</errorReadUserStatus>
+    <errorReadCall>حدث خطأ أثناء قراءة معلومات الاتصال من الخادم</errorReadCall>
+    <errorSubscribeUser>خطأ في إنشاء قناة من الخادم إلى المتصفح لتوصيل تحديثات المستخدمين</errorSubscribeUser>
+    <errorSubscribeCall>خطأ في إنشاء قناة من الخادم إلى المتصفح لتحديثات المكالمات</errorSubscribeCall>
+    <errorStartingConnection>حدث خطأ أثناء بدء الاتصال</errorStartingConnection>
+    <notSupportedPlatform>نظام أساسي غير مدعوم</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>المتصفح الخاص بك لا يدعم المكالمات WebRTC</yourBrowserNotSupportWebrtc>
+    <notInitialized>لم يتم تهيئة أو خطأ في التهيئة. الرجاء إغلاق هذا الإطار ثم حاول مرة أخرى.</notInitialized>
+    <connectionFailed>فشل في الاتصال</connectionFailed>
+    <audioVideoRequired>ميكروفون و/أو كاميرا مطلوبة لإجراء مكالمة</audioVideoRequired>
+    <mediaDevicesError>خطأ في الوصول إلى الكاميرا أو الميكروفون</mediaDevicesError>
+    <accessDenied>لا يمكن فتح الجهاز الإعلامي بسبب خطأ في إذن الوصول إلى خطأ أخر. تأكد من توصيل الجهاز و أن يكون غير مستخدم من قبل تطبيق آخر.</accessDenied>
+    <noAudioFound>لم يتم العثور على ميكروفون</noAudioFound>
+    <butVideoFound>ولكن تم العثور على كاميرا</butVideoFound>
+    
+    <admin>
+      <wrongSettings>إعدادات خاطئة</wrongSettings>
+      <serverUrlMandatory>لا يمكن أن يكون رابط الخادم فارغا</serverUrlMandatory>
+      <usernameMandatory>لا يمكن ترك اسم المستخدم فارغا</usernameMandatory>
+      <credentialMandatory>كلمة المرور لا يمكن أن تكون فارغة</credentialMandatory>
+      <errorSavingSettings>حدث خطأ أثناء حفظ الإعدادات</errorSavingSettings>
+    </admin>
+  </webrtc>
+</bundle>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <webrtc>
+    <admin>
+      <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
+      <title>إعدادات WEBRTC</title>
+      <servers>تشغيل / إيقاف الخادم</servers>
+      <serversTip>تشغيل / إيقاف الخادم مطلوبون لضمان إتصالات عقد المؤتمرات على الويب  ستعمل بشكل صحيح عبر أجهزة توجيه شبكة الاتصال. نحن نوصي بشدة إعداد الخادم الخاص بك بدوره خاصة الاحتفاظ بالسيطرة على الأمن للاتصالات الخاصة بك، وضمان توافر الحد الأقصى.</serversTip>
+      <url>URL</url>
+      <serverUrl>رابط الخادم...</serverUrl>
+      <credentials>بيانات الاعتماد</credentials>
+      <username>Username</username>
+      <credential>بيانات الاعتماد</credential>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
+
+      <noServer>لا يوجد خادم متوفر، يرجى إضافة الخادم الأول الخاص بك</noServer>
+      <addNewServer>إضافة خادم جديد</addNewServer>
+      <removeServer>إزالة الخادم</removeServer>
+      
+      <!-- Confirmation dialog -->
+      <confirmServerRemoval>إزالة الخادم ICE ؟</confirmServerRemoval>
+      <serverRemoveText>هل أنت متأكد من أنك تريد إزالة تكوين هذا الخادم ؟</serverRemoveText>
+      <remove>Remove</remove>
+      
+      <!-- Error Diagnostics -->
+      <errorDiagnostic>تشخيص الخطأ</errorDiagnostic>
+      <enableLogCollection>تمكين مجموعة سجل العميل</enableLogCollection>
+      <logCollectionInfo>سيتم تسجيل معلومات هذا العلم من العميل في سجلات الخادم لاستكشاف الأخطاء وإصلاح مشكلة اتصال Webrtc. استخدام بعناية، وهذا الوضع هو مطول وقد يسبب الحمل نفقات عامة.</logCollectionInfo>
+    </admin>
+  </webrtc>
+</bundle>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <webconferencing>
+    <admin>
+      <page>عقد المؤتمرات على الويب</page>
+      <title>إدارة محتوى مؤتمرات الويب</title>
+      <info>عقد المؤتمرات على الويب يمكن أن تعالج عن طريق عدة مزودي خدمات. يمكنك تفعيل مزود الخدمات الذي تحتاجه وتهيئة الإعدادات.</info>
+      <provider>مزود الخدمة</provider>
+      <description>Description</description>
+      <active>Active</active>
+      <actions>Actions</actions>
+    </admin>
+  </webconferencing>
+</bundle>

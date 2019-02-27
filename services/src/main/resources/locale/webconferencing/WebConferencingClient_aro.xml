@@ -5,7 +5,7 @@
     <ok>OK</ok>
     <cancel>Cancel</cancel>
     
-    <notConfigured>não configurado</notConfigured>
-    <errorReference>Mensagem de erro:</errorReference>
+    <notConfigured>لم يتم تشكيله</notConfigured>
+    <errorReference>مرجع الخطأ:</errorReference>
   </webconferencing>
 </bundle>
