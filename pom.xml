@@ -29,7 +29,7 @@
   
   <groupId>org.exoplatform.addons.web-conferencing</groupId>
   <artifactId>web-conferencing</artifactId>
-  <version>1.2.2</version>
+  <version>1.2.x-acc210-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>eXo Web Conferencing</name>
   <description>eXo Web Conferencing portal extension</description>
