@@ -14,9 +14,9 @@
       <save>Shrani</save>
       <cancel>Prekliči</cancel>
 
-      <noServer>No server available, please add your first one</noServer>
-      <addNewServer>Add a new server</addNewServer>
-      <removeServer>Remove server</removeServer>
+      <noServer>Ni strežnikov na razpolago, prosim, dodaj prvega.</noServer>
+      <addNewServer>Dodaj nov strežnik</addNewServer>
+      <removeServer>Odstrani strežnik</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Odstranimo ICE strežnik?</confirmServerRemoval>

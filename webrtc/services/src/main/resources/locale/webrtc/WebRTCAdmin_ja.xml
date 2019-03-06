@@ -9,7 +9,7 @@
       <url>URL</url>
       <serverUrl>サーバー URL...</serverUrl>
       <credentials>認証情報</credentials>
-      <username>ユーザ名</username>
+      <username>ユーザー名</username>
       <credential>認証情報</credential>
       <save>保存</save>
       <cancel>キャンセル</cancel>
