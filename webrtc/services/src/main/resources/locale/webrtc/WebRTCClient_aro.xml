@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Call</call>
+    <call>مكالمة</call>
     <callingYou>يتصل بك...</callingYou>
     <callWith>الاتصال مع</callWith>
     <callTo>إتصال إلى</callTo>
     <incomingCall>مكالمة واردة</incomingCall>
-    <answer>Answer</answer>
-    <decline>Decline</decline>
+    <answer>إجابة</answer>
+    <decline>خفض</decline>
     <callStartTip>إضغط فوق بدء مكالمة فيديو</callStartTip>
     <callRunningTip>المكالمة جارية بالفعل. اضغط لاظهار نافذة المكالمة.</callRunningTip>
     
