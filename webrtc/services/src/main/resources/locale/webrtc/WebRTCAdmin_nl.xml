@@ -14,9 +14,9 @@
       <save>Opslaan</save>
       <cancel>Annuleren</cancel>
 
-      <noServer>No server available, please add your first one</noServer>
-      <addNewServer>Add a new server</addNewServer>
-      <removeServer>Remove server</removeServer>
+      <noServer>Geen server beschikbaar, voeg uw eerste toe</noServer>
+      <addNewServer>Een nieuwe server toevoegen</addNewServer>
+      <removeServer>Server verwijderen</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>ICE-server verwijderen?</confirmServerRemoval>

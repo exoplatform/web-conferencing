@@ -14,9 +14,9 @@
       <save>Desa</save>
       <cancel>Cancel·la</cancel>
 
-      <noServer>No server available, please add your first one</noServer>
-      <addNewServer>Add a new server</addNewServer>
-      <removeServer>Remove server</removeServer>
+      <noServer>No hi ha cap servidor disponible; afegeix-hi el primer</noServer>
+      <addNewServer>Afegeix un servidor nou</addNewServer>
+      <removeServer>Elimina servidor</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Vol eliminar el servidor ICE?</confirmServerRemoval>

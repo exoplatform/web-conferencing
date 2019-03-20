@@ -13,8 +13,8 @@
     
     <providerError>Chyba poskytovatele WebRTC</providerError>
     <providerNotAvailable>Poskytovatel WebRTC není k dispozici</providerNotAvailable>
-    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>The call was stopped</callStopped>
+    <refreshTryAgainContactAdmin>Obnovte stránku a zkuste to znovu. Pokud chyba přetrvává, obraťte se na správce s touto chybou.</refreshTryAgainContactAdmin>
+    <callStopped>Hovor byl zastaven</callStopped>
     <errorAddCall>Hovor nelze spustit kvůli chybě serveru. Zkuste to znovu. Pokud problém přetrvá, obraťte se na správce.</errorAddCall>
     <errorOpeningCall>Při otevírání okna hovoru došlo k chybě. Obnovte stránku a zkuste to znovu. Pokud chyba přetrvá, obraťte se na správce.</errorOpeningCall>
     <callWindowNotOpen>Okno hovoru nemohlo být otevřeno. Zkontrolujte, zda bylo zablokováno prohlížečem.</callWindowNotOpen>

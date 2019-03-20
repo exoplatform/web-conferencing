@@ -14,9 +14,9 @@
       <save>Salva</save>
       <cancel>Annulla</cancel>
 
-      <noServer>No server available, please add your first one</noServer>
-      <addNewServer>Add a new server</addNewServer>
-      <removeServer>Remove server</removeServer>
+      <noServer>Nessun server disponibile, per favore aggiungi il primo</noServer>
+      <addNewServer>Aggiungi un nuovo server</addNewServer>
+      <removeServer>Rimuovi server</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Rimuovere il server ICE?</confirmServerRemoval>

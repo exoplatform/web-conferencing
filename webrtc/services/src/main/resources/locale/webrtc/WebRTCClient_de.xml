@@ -13,8 +13,8 @@
     
     <providerError>WebRTC-Providerfehler</providerError>
     <providerNotAvailable>WebRTC-Provider nicht verfügbar</providerNotAvailable>
-    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>The call was stopped</callStopped>
+    <refreshTryAgainContactAdmin>Bitte aktualisieren Sie die Seite und versuchen Sie es erneut. Wenn der Fehler weiterhin besteht, wenden Sie sich bitte an Ihren Administrator.</refreshTryAgainContactAdmin>
+    <callStopped>Der Anruf wurde gestoppt</callStopped>
     <errorAddCall>Der Aufruf konnte aufgrund eines Serverfehlers nicht gestartet werden. Bitte versuchen Sie es erneut. Wenn das Problem weiterhin besteht, wenden Sie sich bitte an Ihren Administrator.</errorAddCall>
     <errorOpeningCall>Beim Öffnen des Aufruffensters ist ein Fehler aufgetreten. Bitte aktualisieren Sie die Seite und versuchen Sie es erneut. Wenn der Fehler weiterhin besteht, wenden Sie sich bitte an Ihren Administrator.</errorOpeningCall>
     <callWindowNotOpen>Das Anruffenster konnte nicht geöffnet werden. Bitte prüfen Sie, ob Ihr Browser diese Funktion blockiert hat.</callWindowNotOpen>

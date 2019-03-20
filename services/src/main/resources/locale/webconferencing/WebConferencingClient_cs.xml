@@ -6,6 +6,6 @@
     <cancel>Zrušit</cancel>
     
     <notConfigured>nenastaveno</notConfigured>
-    <errorReference>Error reference:</errorReference>
+    <errorReference>Odkaz na chybu:</errorReference>
   </webconferencing>
 </bundle>

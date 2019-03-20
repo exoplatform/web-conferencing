@@ -6,6 +6,6 @@
     <cancel>İptal</cancel>
     
     <notConfigured>ayarlanmamış</notConfigured>
-    <errorReference>Error reference:</errorReference>
+    <errorReference>Hata referansı:</errorReference>
   </webconferencing>
 </bundle>

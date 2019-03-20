@@ -14,9 +14,9 @@
       <save>Uložit</save>
       <cancel>Zrušit</cancel>
 
-      <noServer>No server available, please add your first one</noServer>
-      <addNewServer>Add a new server</addNewServer>
-      <removeServer>Remove server</removeServer>
+      <noServer>Není k dispozici žádný server, přidejte první server</noServer>
+      <addNewServer>Přidat nový server</addNewServer>
+      <removeServer>Odstranit server</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Odstranit server ICE?</confirmServerRemoval>

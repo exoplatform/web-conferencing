@@ -11,12 +11,12 @@
       <credentials>Kimlik Bilgileri</credentials>
       <username>Kullanıcı Adı</username>
       <credential>Kimlik Bilgileri</credential>
-      <save>Save</save>
+      <save>Kaydet</save>
       <cancel>İptal</cancel>
 
-      <noServer>No server available, please add your first one</noServer>
-      <addNewServer>Add a new server</addNewServer>
-      <removeServer>Remove server</removeServer>
+      <noServer>Kullanılabilir sunucu yok, lütfen ilk sunucunuzu ekleyin</noServer>
+      <addNewServer>Yeni bir sunucu ekle</addNewServer>
+      <removeServer>Sunucuyu kaldır</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>ICE Sunucusu Kaldırılsın mı?</confirmServerRemoval>

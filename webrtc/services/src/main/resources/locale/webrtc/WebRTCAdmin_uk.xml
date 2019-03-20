@@ -14,9 +14,9 @@
       <save>Зберегти</save>
       <cancel>Скасувати</cancel>
 
-      <noServer>No server available, please add your first one</noServer>
-      <addNewServer>Add a new server</addNewServer>
-      <removeServer>Remove server</removeServer>
+      <noServer>Немає доступного сервера, додайте свій перший</noServer>
+      <addNewServer>Додати новий сервер</addNewServer>
+      <removeServer>Видалити сервер</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Видалити ICE Сервер?</confirmServerRemoval>
