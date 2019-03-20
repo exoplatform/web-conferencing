@@ -96,13 +96,6 @@
       </dependency>
       <!-- for tests -->
       <dependency>
-        <groupId>org.exoplatform</groupId>
-        <artifactId>exo-jcr-services</artifactId>
-        <version>${org.exoplatform.platform.version}</version>
-        <type>jar</type>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
