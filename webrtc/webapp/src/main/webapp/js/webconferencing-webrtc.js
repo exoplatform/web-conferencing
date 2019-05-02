@@ -386,7 +386,9 @@
 				var process = $.Deferred();
 				var $call = $(".incomingCall");
 				$call.find(".avatar a").attr("href", callerLink);
-				$call.find(".avatar img").attr("src", callerAvatar);
+				if(callerAvatar !== null) {
+					$call.find(".avatar img").attr("src", callerAvatar);
+				}
 				$call.find(".messageText").text(callerMessage);
 				var $ring;
 				$call = $.extend($call, {
