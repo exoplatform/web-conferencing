@@ -24,7 +24,7 @@
   <parent>
     <groupId>org.exoplatform.addons.web-conferencing</groupId>
     <artifactId>web-conferencing</artifactId>
-    <version>1.3.1</version>
+    <version>1.3.x-acc222-SNAPSHOT</version>
   </parent>
   
   <artifactId>web-conferencing-packaging</artifactId>
