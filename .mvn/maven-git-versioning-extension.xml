@@ -1,0 +1,17 @@
+<gitVersioning>
+  <branch>
+    <pattern><![CDATA[^(?!feature/).*$]]></pattern>
+    <versionFormat>${version}</versionFormat>
+  </branch>
+  <branch>
+    <pattern><![CDATA[feature/(?<feature>.+)]]></pattern>
+    <versionFormat>${version.release}-${feature}-SNAPSHOT</versionFormat>
+    <property>
+      <pattern>org.exoplatform.platform.version</pattern>
+      <value>
+        <pattern><![CDATA[(?<propertyVersion>.+?)(-SNAPSHOT)]]></pattern>
+        <format>${propertyVersion}-${feature}-SNAPSHOT</format>
+      </value>
+    </property>
+  </branch>
+</gitVersioning>
