@@ -45,10 +45,6 @@ import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.component.ComponentPlugin;
-import org.exoplatform.services.cms.drives.ManageDriveService;
-import org.exoplatform.services.jcr.RepositoryService;
-import org.exoplatform.services.jcr.ext.app.SessionProviderService;
-import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -186,23 +182,11 @@ public class WebConferencingService implements Startable {
   /** The Constant LOG. */
   protected static final Log                         LOG                 = ExoLogger.getLogger(WebConferencingService.class);
 
-  /** The jcr service. */
-  protected final RepositoryService                  jcrService;
-
-  /** The session providers. */
-  protected final SessionProviderService             sessionProviders;
-
-  /** The hierarchy owner. */
-  protected final NodeHierarchyCreator               hierarchyCreator;
-
   /** The organization. */
   protected final OrganizationService                organization;
 
   /** The social identity manager. */
   protected final IdentityManager                    socialIdentityManager;
-
-  /** The drive service. */
-  protected final ManageDriveService                 driveService;
 
   /** The listener service. */
   protected final ListenerService                    listenerService;
@@ -280,33 +264,21 @@ public class WebConferencingService implements Startable {
   /**
    * Instantiates a new web conferencing service.
    *
-   * @param jcrService the jcr service
-   * @param sessionProviders the session providers
-   * @param hierarchyCreator the hierarchy creator
    * @param organization the organization
    * @param socialIdentityManager the social identity manager
-   * @param driveService the drive service
    * @param listenerService the listener service
    * @param settingService the setting service
    * @param callStorage the call storage
    * @param participantsStorage the participants storage
    */
-  public WebConferencingService(RepositoryService jcrService,
-                                SessionProviderService sessionProviders,
-                                NodeHierarchyCreator hierarchyCreator,
-                                OrganizationService organization,
+  public WebConferencingService(OrganizationService organization,
                                 IdentityManager socialIdentityManager,
-                                ManageDriveService driveService,
                                 ListenerService listenerService,
                                 SettingService settingService,
                                 CallDAO callStorage,
                                 ParticipantDAO participantsStorage) {
-    this.jcrService = jcrService;
-    this.sessionProviders = sessionProviders;
-    this.hierarchyCreator = hierarchyCreator;
     this.organization = organization;
     this.socialIdentityManager = socialIdentityManager;
-    this.driveService = driveService;
     this.listenerService = listenerService;
     this.settingService = settingService;
     this.callStorage = callStorage;
@@ -1175,8 +1147,7 @@ public class WebConferencingService implements Startable {
    */
   @Override
   public void start() {
-    // XXX SpaceService done in c****y way and we need reference it after the container start only, otherwise
-    // it will fail the whole server start due to not found JCR service
+    // XXX we need reference SpaceService after the container start only, otherwise the servr startup fails
     this.spaceService = ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(SpaceService.class);
 
     // For a case when calls was active and server stopped, then calls wasn't marked as Stopped and need
