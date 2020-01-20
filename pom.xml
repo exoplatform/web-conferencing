@@ -29,7 +29,7 @@
   
   <groupId>org.exoplatform.addons.web-conferencing</groupId>
   <artifactId>web-conferencing</artifactId>
-  <version>1.4.x-SNAPSHOT</version>
+  <version>1.4.1-RC01</version>
   <packaging>pom</packaging>
   <name>eXo Add-on:: eXo Web Conferencing</name>
   <description>eXo Web Conferencing portal extension</description>
@@ -44,7 +44,7 @@
   <scm>
     <connection>scm:git:git://github.com/exoplatform/web-conferencing.git</connection>
     <developerConnection>scm:git:git@github.com:exoplatform/web-conferencing.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>1.4.1-RC01</tag>
     <url>https://github.com/exoplatform/web-conferencing</url>
   </scm>
   
