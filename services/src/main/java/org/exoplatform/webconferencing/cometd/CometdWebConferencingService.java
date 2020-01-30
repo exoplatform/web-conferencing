@@ -73,8 +73,6 @@ import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.component.RequestLifeCycle;
-import org.exoplatform.services.jcr.ext.app.SessionProviderService;
-import org.exoplatform.services.jcr.ext.common.SessionProvider;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
@@ -188,9 +186,6 @@ public class CometdWebConferencingService implements Startable {
 
   /** The organization. */
   protected final OrganizationService    organization;
-
-  /** The session providers. */
-  protected final SessionProviderService sessionProviders;
 
   /** The identity registry. */
   protected final IdentityRegistry       identityRegistry;
@@ -985,7 +980,6 @@ public class CometdWebConferencingService implements Startable {
                 // We rely on EXoContinuationBayeux.EXoSecurityPolicy for user security here (exoId above)
                 // Use services acquired from context container.
                 IdentityRegistry identityRegistry = exoContainer.getComponentInstanceOfType(IdentityRegistry.class);
-                SessionProviderService sessionProviders = exoContainer.getComponentInstanceOfType(SessionProviderService.class);
                 WebConferencingService webConferencing = exoContainer.getComponentInstanceOfType(WebConferencingService.class);
                 Identity userIdentity = identityRegistry.getIdentity(currentUserId);
                 if (userIdentity == null) {
@@ -1002,14 +996,11 @@ public class CometdWebConferencingService implements Startable {
                 }
                 if (userIdentity != null) {
                   ConversationState contextState = ConversationState.getCurrent();
-                  SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
                   try {
                     // User context (2)
                     ConversationState convState = new ConversationState(userIdentity);
                     convState.setAttribute(ConversationState.SUBJECT, userIdentity.getSubject());
                     ConversationState.setCurrent(convState);
-                    SessionProvider userProvider = new SessionProvider(convState);
-                    sessionProviders.setSessionProvider(null, userProvider);
                     // Process the request
                     String id = asString(arguments.get("id"));
                     if (isValidId(id)) {
@@ -1124,7 +1115,6 @@ public class CometdWebConferencingService implements Startable {
                   } finally {
                     // Restore context (2)
                     ConversationState.setCurrent(contextState);
-                    sessionProviders.setSessionProvider(null, contextProvider);
                   }
                 } else {
                   LOG.warn("User identity not found " + currentUserId + " for remote call of " + CALLS_CHANNEL_NAME);
@@ -1284,20 +1274,17 @@ public class CometdWebConferencingService implements Startable {
   /**
    * Instantiates a new CometD interaction service for WebConferencing.
    *
-   * @param sessionProviders the session providers
    * @param identityRegistry the identity registry
    * @param organization the organization
    * @param webConferencing the web conferencing
    * @param exoBayeux the exo bayeux
    * @param callLogs the call logs
    */
-  public CometdWebConferencingService(SessionProviderService sessionProviders,
-                                      IdentityRegistry identityRegistry,
+  public CometdWebConferencingService(IdentityRegistry identityRegistry,
                                       OrganizationService organization,
                                       WebConferencingService webConferencing,
                                       EXoContinuationBayeux exoBayeux,
                                       CallLogService callLogs) {
-    this.sessionProviders = sessionProviders;
     this.identityRegistry = identityRegistry;
     this.organization = organization;
     this.webConferencing = webConferencing;

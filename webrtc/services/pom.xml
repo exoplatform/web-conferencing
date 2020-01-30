@@ -42,9 +42,8 @@
     </dependency>
     <!-- Others third party -->
     <dependency>
-      <groupId>javax.jcr</groupId>
-      <artifactId>jcr</artifactId>
-      <type>jar</type>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -59,7 +58,7 @@
       <type>jar</type>
       <scope>provided</scope>
     </dependency>
-    <!-- Portal & ECMS & Social -->
+    <!-- Portal & Social -->
     <!-- Commons component depends on Hibernate, it depends on Jackson JSON lib which we DON'T need -->
     <!-- dependency>
       <groupId>org.exoplatform.commons</groupId>
@@ -69,16 +68,6 @@
     <dependency>
       <groupId>org.exoplatform.commons</groupId>
       <artifactId>commons-webui-ext</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.exoplatform.ecms</groupId>
-      <artifactId>ecms-core-webui-explorer</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.exoplatform.ecms</groupId>
-      <artifactId>ecms-core-webui</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
