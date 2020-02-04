@@ -57,8 +57,8 @@
     <!-- **************************************** -->
     <!-- Dependencies versions                    -->
     <!-- **************************************** -->
-    <org.exoplatform.depmgt.version>16.x-SNAPSHOT</org.exoplatform.depmgt.version>
-    <org.exoplatform.platform.version>5.3.x-SNAPSHOT</org.exoplatform.platform.version>
+    <org.exoplatform.depmgt.version>16.1</org.exoplatform.depmgt.version>
+    <org.exoplatform.platform.version>5.3.1</org.exoplatform.platform.version>
     <!-- for tests -->
     <junit.version>4.12</junit.version>
   </properties>
