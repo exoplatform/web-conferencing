@@ -27,23 +27,8 @@
   <portlet-skin>
     <application-name>webconferencing</application-name>
     <portlet-name>WebConferencingPortlet</portlet-name>
-    <skin-name>Default</skin-name>
-    <css-path>/skin/webconferencing-default.css</css-path>
-    <overwrite>true</overwrite>
-  </portlet-skin>
-  <portlet-skin>
-    <application-name>webconferencing</application-name>
-    <portlet-name>WebConferencingPortlet</portlet-name>
     <skin-name>Enterprise</skin-name>
     <css-path>/skin/webconferencing-enterprise.css</css-path>
-    <overwrite>true</overwrite>
-  </portlet-skin>
-  
-  <portlet-skin>
-    <application-name>webconferencing</application-name>
-    <portlet-name>WebConferencingAdminPortlet</portlet-name>
-    <skin-name>Default</skin-name>
-    <css-path>/skin/webconferencing-admin-default.css</css-path>
     <overwrite>true</overwrite>
   </portlet-skin>
   <portlet-skin>
