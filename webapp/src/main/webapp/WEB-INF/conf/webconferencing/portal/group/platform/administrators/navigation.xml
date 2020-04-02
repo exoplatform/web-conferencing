@@ -29,7 +29,6 @@
       <uri>webconferencing</uri>
       <name>webconferencing</name>
       <label>#{webconferencing.admin.page}</label>
-      <visibility>HIDDEN</visibility>
       <page-reference>group::/platform/administrators::webconferencing</page-reference>
     </node>
   </page-nodes>
