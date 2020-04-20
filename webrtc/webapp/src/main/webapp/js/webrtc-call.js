@@ -553,20 +553,37 @@ if (eXo.webConferencing) {
 													var candidateStr = JSON.stringify(message.candidate);
 													log.debug("Received candidate (" + candidateNumb + ") for " + callId + ": " + candidateStr);
 													var hasCandidate = Object.getOwnPropertyNames(message.candidate).length > 0;
-													if (hasCandidate || isEdge) {
+													if (hasCandidate) { // Apr 14, 2020 removed: || isEdge
 														connection.then(function() {
 															log.trace("Creating candidate (" + candidateNumb + ") for " + callId);
-															var candidate = new RTCIceCandidate(message.candidate);
+															var candidate;
+															// Check if the end of a generation of candidates indicated:
+															// https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/icecandidate_event
+															// When an ICE negotiation session runs out of candidates to propose for a given RTCIceTransport, 
+															// it has completed gathering for a generation of candidates. 
+															// That this has occurred is indicated by an icecandidate event whose candidate string is empty ("").
+															// Peter's note: But this empty string will be send only by Firefox as for Apr 14, 2020. Tested on FF 75, Chrome 81, Edge 44/18.
+															// And Edge (44/18) will fail if add such candidate - we need add null instead, see below.
+															// We send all candidates to the peers and *here* we make a decision:
+															if (isEdge && typeof(message.candidate.candidate) === "string" && message.candidate.candidate.length === 0) {
+															  // XXX MS Edge with Adapter.js requires special way of end-of-candidates informing 
+															  // https://stackoverflow.com/questions/57340034/webrtc-adapter-js-giving-addremotecandidate-error-while-connecting-audio-call
+															  // https://stackoverflow.com/questions/51641174/how-do-i-indicate-the-end-of-remote-candidates
+															  candidate = new RTCIceCandidate(null);
+															} else {
+															  // In other cases we let the browser to handle the candidate AS IS
+															  candidate = new RTCIceCandidate(message.candidate);															  
+															}
 															log.trace("Adding candidate (" + candidateNumb + ") for " + callId);
 															pc.addIceCandidate(candidate).then(function() {
 															  log.debug("Added candidate (" + candidateNumb + ") for " + callId);
 															}).catch(function(err) {
-																handleConnectionError("Failed to add candidate for " + callId, err);
+																handleConnectionError("Failed to add candidate (" + candidateNumb + ") for " + callId, err);
 															});														
 														});
 													}
 													if (!hasCandidate) {
-														log.info("Call connected (received " + candidateNumb + " ICE candidates): " + callId);
+														log.info("Call connected (added " + (candidateNumb - 1) + " ICE candidates): " + callId);
 													}
 												} else if (message.offer) {
 													log.debug("Received offer for " + callId + ": " + JSON.stringify(message.offer));
