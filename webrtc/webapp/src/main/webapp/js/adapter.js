@@ -1,5 +1,6 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.adapter = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 /*
+ *  Version 7.5.1 (latest tag as for Apr 22 2020)
  *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
  *
  *  Use of this source code is governed by a BSD-style license
@@ -910,6 +911,8 @@ function shimPeerConnection(window) {
     return;
   }
 
+  var addIceCandidateNullSupported = window.RTCPeerConnection.prototype.addIceCandidate.length === 0;
+
   // shim implicit creation of RTCSessionDescription/RTCIceCandidate
   if (browserDetails.version < 53) {
     ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate'].forEach(function (method) {
@@ -925,7 +928,7 @@ function shimPeerConnection(window) {
   // support for addIceCandidate(null or undefined)
   var nativeAddIceCandidate = window.RTCPeerConnection.prototype.addIceCandidate;
   window.RTCPeerConnection.prototype.addIceCandidate = function addIceCandidate() {
-    if (!arguments[0]) {
+    if (!addIceCandidateNullSupported && !arguments[0]) {
       if (arguments[1]) {
         arguments[1].apply(null);
       }
@@ -2316,20 +2319,27 @@ function shimLocalStreamsAPI(window) {
     };
 
     window.RTCPeerConnection.prototype.addTrack = function addTrack(track) {
-      var stream = arguments[1];
-      if (stream) {
-        if (!this._localStreams) {
-          this._localStreams = [stream];
-        } else if (!this._localStreams.includes(stream)) {
-          this._localStreams.push(stream);
-        }
+      var _this2 = this;
+
+      for (var _len = arguments.length, streams = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        streams[_key - 1] = arguments[_key];
+      }
+
+      if (streams) {
+        streams.forEach(function (stream) {
+          if (!_this2._localStreams) {
+            _this2._localStreams = [stream];
+          } else if (!_this2._localStreams.includes(stream)) {
+            _this2._localStreams.push(stream);
+          }
+        });
       }
       return _addTrack.apply(this, arguments);
     };
   }
   if (!('removeStream' in window.RTCPeerConnection.prototype)) {
     window.RTCPeerConnection.prototype.removeStream = function removeStream(stream) {
-      var _this2 = this;
+      var _this3 = this;
 
       if (!this._localStreams) {
         this._localStreams = [];
@@ -2342,7 +2352,7 @@ function shimLocalStreamsAPI(window) {
       var tracks = stream.getTracks();
       this.getSenders().forEach(function (sender) {
         if (tracks.includes(sender.track)) {
-          _this2.removeTrack(sender);
+          _this3.removeTrack(sender);
         }
       });
     };
@@ -2364,7 +2374,7 @@ function shimRemoteStreamsAPI(window) {
         return this._onaddstream;
       },
       set: function set(f) {
-        var _this3 = this;
+        var _this4 = this;
 
         if (this._onaddstream) {
           this.removeEventListener('addstream', this._onaddstream);
@@ -2373,16 +2383,16 @@ function shimRemoteStreamsAPI(window) {
         this.addEventListener('addstream', this._onaddstream = f);
         this.addEventListener('track', this._onaddstreampoly = function (e) {
           e.streams.forEach(function (stream) {
-            if (!_this3._remoteStreams) {
-              _this3._remoteStreams = [];
+            if (!_this4._remoteStreams) {
+              _this4._remoteStreams = [];
             }
-            if (_this3._remoteStreams.includes(stream)) {
+            if (_this4._remoteStreams.includes(stream)) {
               return;
             }
-            _this3._remoteStreams.push(stream);
+            _this4._remoteStreams.push(stream);
             var event = new Event('addstream');
             event.stream = stream;
-            _this3.dispatchEvent(event);
+            _this4.dispatchEvent(event);
           });
         });
       }

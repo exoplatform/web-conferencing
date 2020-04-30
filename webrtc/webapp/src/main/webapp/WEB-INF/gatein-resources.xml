@@ -35,13 +35,13 @@
     <overwrite>true</overwrite>
   </portlet-skin -->
   
-  <module>
+  <!-- module>
     <name>webrtcAdapter</name>
     <load-group>webConferencingWebrtcGRP</load-group>
     <script>
       <path>/js/adapter-7.4.0.js</path>
     </script>
-  </module>
+  </module -->
   <module>
     <name>webConferencing_webrtc</name>
     <load-group>webConferencingWebrtcGRP</load-group>
@@ -54,9 +54,9 @@
     <depends>
       <module>webConferencing</module>
     </depends>
-    <depends>
+    <!-- depends>
       <module>webrtcAdapter</module>
-    </depends>
+    </depends -->
   </module>
   
   <!-- portlet>

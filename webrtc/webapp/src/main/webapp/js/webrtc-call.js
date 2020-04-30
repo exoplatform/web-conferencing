@@ -269,31 +269,37 @@ if (eXo.webConferencing) {
 									if (rtcConfig.iceCandidatePoolSize <= 0) {
 										delete rtcConfig.iceCandidatePoolSize;
 									}
+									if (rtcConfig.logEnabled !== undefined) {
+                    delete rtcConfig.logEnabled;
+                  }
 									if (isEdge) {
-										// XXX Edge doesn't support STUN yet? Only TURN will work.
-										// https://msdn.microsoft.com/en-us/library/mt502501(v=vs.85).aspx
-										var onlyTurn = [];
+									  // XXX Apr22 2020: The Edge browser does not support TCP and TLS TURN - we skip it
+									  // https://documentation.avaya.com/bundle/AdministratorGuideforAvayaEquinoxManagement_r91/page/Configuring_WebRTC_Calls_for_Edge_Browser.html
+                    // But STUN actually supported as for this date.
+									  var validServers = [];
 										for (var i=0; i<rtcConfig.iceServers.length; i++) {
 											var server = rtcConfig.iceServers[i];
-											var newUrls = [];
+											var validUrls = [];
 											for (var ui=0; ui<server.urls.length; ui++) {
 												var url = server.urls[ui];
-												if (url.startsWith("turn")) {
-													// use it
-													newUrls.push(url);
+												if (!url.startsWith("turns")) {
+												  validUrls.push(url);
+												} else {
+												  log.warn("Skipped ICE server URL for Edge browser: " + url);
 												}
 											}
-											if (newUrls.length > 0) {
-												server.urls = newUrls;
-												onlyTurn.push(server);
+											if (validUrls.length > 0) {
+												server.urls = validUrls;
+												validServers.push(server);
 											}
 										}
-										rtcConfig.iceServers = onlyTurn;
+										rtcConfig.iceServers = validServers;
 									}
-									// Also clean not actually meaningful fields
+									// Also clean not actually meaningful fields (remove our own fields)
 									for (var i=0; i<rtcConfig.iceServers.length; i++) {
 										var server = rtcConfig.iceServers[i];
 										delete server.enabled;
+										delete server["default"];
 										// username and credential can be empty strings
 										if (typeof server.username != "string") {
 											delete server.username;
@@ -553,7 +559,7 @@ if (eXo.webConferencing) {
 													var candidateStr = JSON.stringify(message.candidate);
 													log.debug("Received candidate (" + candidateNumb + ") for " + callId + ": " + candidateStr);
 													var hasCandidate = Object.getOwnPropertyNames(message.candidate).length > 0;
-													if (hasCandidate) { // Apr 14, 2020 removed: || isEdge
+													if (hasCandidate) {
 														connection.then(function() {
 															log.trace("Creating candidate (" + candidateNumb + ") for " + callId);
 															var candidate;
@@ -566,7 +572,7 @@ if (eXo.webConferencing) {
 															// And Edge (44/18) will fail if add such candidate - we need add null instead, see below.
 															// We send all candidates to the peers and *here* we make a decision:
 															if (isEdge && typeof(message.candidate.candidate) === "string" && message.candidate.candidate.length === 0) {
-															  // XXX MS Edge with Adapter.js requires special way of end-of-candidates informing 
+															  // XXX MS Edge requires special way of end-of-candidates informing 
 															  // https://stackoverflow.com/questions/57340034/webrtc-adapter-js-giving-addremotecandidate-error-while-connecting-audio-call
 															  // https://stackoverflow.com/questions/51641174/how-do-i-indicate-the-end-of-remote-candidates
 															  candidate = new RTCIceCandidate(null);
