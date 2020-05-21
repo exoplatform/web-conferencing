@@ -81,6 +81,9 @@
     <depends>
       <module>webConferencingJqueryPnotify</module>
     </depends>
+    <depends>
+      <module>extensionRegistry</module>
+    </depends>
   </module>
   <module>
     <name>webConferencingPortlet</name>

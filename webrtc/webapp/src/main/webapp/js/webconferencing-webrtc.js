@@ -201,7 +201,7 @@
 				}
 				return process.promise();
 			};
-			
+
 			var setButtonCall = function($button, callId) {
 				$button.data("callid", callId);
 				$button.attr("title", message("callRunningTip"));
@@ -488,6 +488,7 @@
 					// On portal pages we support incoming calls
 					var lastUpdate = null; // XXX it's temp workaround
 					var lastUpdateReset;
+
 					if (window.location.pathname.startsWith("/portal/")) {
 						// Move incomingCall element to root of the document to do not be affected by parent CSS
 						$(document.body).append($(".incomingCall"));

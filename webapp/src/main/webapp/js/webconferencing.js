@@ -1235,8 +1235,7 @@
 						for (var i = 0; i < addProviders.length; i++) {
 							var p = addProviders[i];
 							if (p.isInitialized) {
-								if ($container.data(providerFlag + p.getType())) {
-								} else {
+								if (!$container.data(providerFlag + p.getType())) {
 									// even if adding will fail, we treat it as 'canceled' and mark the provider as added
 									$container.data(providerFlag + p.getType(), true);
 									var b = p.callButton(context);
@@ -1564,7 +1563,7 @@
 				if (listeners && listeners.length > 0) {
 					listeners.push(listener);
 				} else {
-					var listeners = [ listener ];
+				  listeners = [ listener ];
 					$tiptip.data("callbuttoninit", listeners);
 					// run DOM listener to know when popovr will be updated with actual (context) content
 					// we catch '#tiptip_content #tipName node addition
@@ -1641,19 +1640,38 @@
 
 			// single user profile;
 			var $userProfileMenu = $(".uiProfileMenu:first");
-			var userId = $userProfileMenu.find(".profileMenuNavHeader h3").data("userid");
-			if (userId != currentUser.id) {
-				var $userActions = $userProfileMenu.find(".profileMenuApps");
-				var $callButtons = $userActions.find(".userMenuCallButtons");
-				if ($callButtons.length == 0) {
-					$callButtons = $("<li></li>").appendTo($userActions).addClass("userMenuCallButtons");
-				}
-				addCallButton($callButtons, userContext(userId)).done(function($container) {
-					$container.addClass("pull-left");
-				});
+			var userId = eXo.env.portal.profileOwner;
+
+			var $userActions = $userProfileMenu.find(".profileMenuApps");
+			if (!$userActions.length) {
+			  $userActions = $('<ul class="hidden"></ul>');
 			}
+      var $callButtons = $userActions.find(".userMenuCallButtons");
+      if ($callButtons.length == 0) {
+        $callButtons = $("<li></li>").appendTo($userActions).addClass("userMenuCallButtons");
+      }
+      addCallButton($callButtons, userContext(userId)).done(function($container) {
+        $container.addClass("pull-left");
+        $callButtons.find(".callButtonContainer").each((index, callButton) => {
+          const text = $(callButton).text();
+          const icon = $(callButton).find('.uiIcon').attr('class');
+          if (text || icon) {
+            const profileExtensionAction = {
+              title: text,
+              icon: icon,
+              order: 20,
+              enabled: profile => profile && profile.enabled && !profile.deleted,
+              click: (profile) => {
+                $(callButton).find('.btn').trigger('click');
+              },
+            };
+            extensionRegistry.registerExtension('profile-extension', 'action', profileExtensionAction);
+            document.dispatchEvent(new CustomEvent('profile-extension-updated', { detail: profileExtensionAction}));
+          }
+        });
+      });
 		};
-		
+
 		var spaceContext = function(spaceId) {
 			var space = null;
 			var context = {
