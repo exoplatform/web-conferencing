@@ -57,8 +57,8 @@
     <!-- **************************************** -->
     <!-- Dependencies versions                    -->
     <!-- **************************************** -->
-    <org.exoplatform.ecms.version>6.0.x-SNAPSHOT</org.exoplatform.ecms.version>
-    <org.exoplatform.social.version>6.0.x-SNAPSHOT</org.exoplatform.social.version>
+    <org.exoplatform.ecms.version>6.0.0-M35</org.exoplatform.ecms.version>
+    <org.exoplatform.social.version>6.0.0-M35</org.exoplatform.social.version>
     <!-- for tests -->
     <junit.version>4.12</junit.version>
   </properties>
