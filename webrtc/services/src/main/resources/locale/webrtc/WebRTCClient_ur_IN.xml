@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Call</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <call>کال</call>
+    <callingYou>آپ کو بلا رہا ہے ...</callingYou>
+    <callWith>کے ساتھ کال کریں</callWith>
+    <callTo>کے لئے کال کریں</callTo>
+    <incomingCall>آنے والی کال</incomingCall>
     <answer>جواب</answer>
     <decline>زوال</decline>
-    <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <callStartTip>ویڈیو کال شروع کرنے کے لئے کلک کریں</callStartTip>
+    <callRunningTip>یہ کال پہلے ہی پیش رفت میں ہے. کال ونڈو کو دکھانے کے لئے کلک کریں.</callRunningTip>
     
-    <providerError>WebRTC provider error</providerError>
-    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
-    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>The call was stopped</callStopped>
-    <errorAddCall>The call could not be started due to a server error</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
-    <errorStartingConnection>Error starting connection</errorStartingConnection>
-    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
-    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
-    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
-    <butVideoFound>but a camera was found</butVideoFound>
+    <providerError>WebRTC فراہم کرنے والے غلطی</providerError>
+    <providerNotAvailable>WebRTC فراہم کنندہ دستیاب نہیں ہے</providerNotAvailable>
+    <refreshTryAgainContactAdmin>صفحہ کو تازہ کریں اور دوبارہ کوشش کریں. اگر یہ نقص برقرار رہے تو اپنے منتظم سے اس بارے میں رابطہ کریں.</refreshTryAgainContactAdmin>
+    <callStopped>کال بند ہو گئی</callStopped>
+    <errorAddCall>سرور کی خرابی کی وجہ سے کال شروع نہیں کیا جا سکا</errorAddCall>
+    <errorOpeningCall>کال ونڈو کھولنے پر ایک خرابی واقع ہوئی. صفحہ کو تازہ کریں اور دوبارہ کوشش کریں. اگر یہ امنقص برقرار رہے تو اپنے منتظم سے رابطہ کریں.</errorOpeningCall>
+    <callWindowNotOpen>کال ونڈو کھول نہیں کی جا سکتی. براہ کرم چیک کریں کہ اگر یہ آپ کے براؤزر کی طرف سے روک دیا گیا تھا.</callWindowNotOpen>
+    <errorStartingCall>کال شروع کرنے میں خرابی</errorStartingCall>
+    <errorIncomingCall>آنے والے کال کی خرابی</errorIncomingCall>
+    <errorReadUserStatus>سرور سے صارف کی حالت معلومات پڑھنے میں خرابی</errorReadUserStatus>
+    <errorReadCall>سرور سے کال کی معلومات پڑھنے میں خرابی</errorReadCall>
+    <errorSubscribeUser>صارف کے اپ ڈیٹس کو مواصلات کیلئے سرور سے براؤزر چینل قائم کرنے میں ناکام رہا</errorSubscribeUser>
+    <errorSubscribeCall>کال اپ ڈیٹس کیلئے سرور براؤزر چینل قائم کرنے میں ناکام</errorSubscribeCall>
+    <errorStartingConnection>کنکشن شروع کرنے میں خرابی</errorStartingConnection>
+    <notSupportedPlatform>غیر معاون پلیٹ فارم؛</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>آپ کا براؤزر WebRTC کالز کی حمایت نہیں کرتا</yourBrowserNotSupportWebrtc>
+    <notInitialized>WebRTC ویڈیو کال کنیکٹر کو مناسب طریقے سے شروع نہیں کیا گیا تھا. براہ مہربانی اس ونڈو کو بند کریں اور دوبارہ کوشش کریں.</notInitialized>
+    <connectionFailed>کیکنشن ناکام</connectionFailed>
+    <audioVideoRequired>ایک مائکروفون اور / یا کیمرے  کی ضرورت ہے کال کرنے کیلئے</audioVideoRequired>
+    <mediaDevicesError>کیمرے یا مائکروفون تک پہنچنے میں خرابی</mediaDevicesError>
+    <accessDenied>رسائی یا اجازت کی غلطی کی وجہ سے میڈیا آلہ کھول نہیں سکا. اس بات کو یقینی بنائیں کہ آپ کا آلہ منسلک ہے اور کسی دوسرے ایپلی کیشن کے ذریعہ استعمال نہیں کیا جا رہا ہے</accessDenied>
+    <noAudioFound>کوئی مائکروفون نہیں ملا</noAudioFound>
+    <butVideoFound>لیکن ایک کیمرے دیکھا گیا تھا</butVideoFound>
     
     <admin>
-      <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
-      <errorSavingSettings>Error saving settings</errorSavingSettings>
+      <wrongSettings>غلط ترتیبات</wrongSettings>
+      <serverUrlMandatory>سرور URL خالی نہیں ہوسکتا ہے</serverUrlMandatory>
+      <usernameMandatory>صارف نام خالی نہیں ہوسکتا</usernameMandatory>
+      <credentialMandatory>پاس ورڈ خالی نہیں ہوسکتا ہے</credentialMandatory>
+      <errorSavingSettings>ترتیبات محفوظ کرنے میں خرابی</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>

@@ -15,15 +15,15 @@
     <providerNotAvailable>WebRTC provayderi mümkün deyil</providerNotAvailable>
     <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
     <callStopped>The call was stopped</callStopped>
-    <errorAddCall>The call could not be started due to a server error</errorAddCall>
+    <errorAddCall>Bu zəng server xətasına görə başlamadı. Zəhmət olmasa təkrar cəhd edin, əgər problem davam edərsə, zəhmət olmasa inzibatçınızla əlaqə saxlayın.</errorAddCall>
     <errorOpeningCall>Zəng pəncərəsini açarkən problem baş verdi. Zəhmət olmasa səhifəni təzələyin və yenidən cəhd edin. Əgər problem davam edərsə, zəhmət olmasa inzibatçınızla əlaqə saxlayın.</errorOpeningCall>
     <callWindowNotOpen>Zəng pəncərəsi açıla bilmir. Zəhmət olmasa brauzeriniz tərəfindən bloklanmasını yoxlayın.</callWindowNotOpen>
     <errorStartingCall>Zəng başlayarkən səhv baş verdi</errorStartingCall>
     <errorIncomingCall>Gələn zəngdə səhv baş verdi</errorIncomingCall>
     <errorReadUserStatus>İstifadəçinin status məlumatları oxunarkən serverdə xəta baş verdi</errorReadUserStatus>
     <errorReadCall>Zəng məlumatlarını oxuyarkən serverdə səhv baş verdi</errorReadCall>
-    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
-    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
+    <errorSubscribeUser>İstifadəçinin komnukasiya yeniləmələri aparılarkən server və brauzer arasında yaranan əlaqə zamanı xəta baş verdi. Zəhmət olmasa səhifəni yeniləyin və yenidən cəhd edin. Əgər problem davm edərsə, inzibatçınızla əlaqə saxlayın.</errorSubscribeUser>
+    <errorSubscribeCall>Zəng yeniləmələri aparılarkən server ilə brauzer arasında yaranan əlaqə zamanı xəta baş verdi. Zəhmət olmasa səhifəni yeniləyin və yenidən cəhd edin. Əgər problem davm edərsə, inzibatçınızla əlaqə saxlayın.</errorSubscribeCall>
     <errorStartingConnection>Qoşulma başlayarkən səhv baş verdi</errorStartingConnection>
     <notSupportedPlatform>Dəstəklənməyən platforma</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Sizin brauzeriniz WebRTC zənglərini dəstəkləmir</yourBrowserNotSupportWebrtc>

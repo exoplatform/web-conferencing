@@ -3,14 +3,14 @@
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
-      <title>WebRTC settings</title>
-      <servers>STUN / TURN servers</servers>
-      <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
+      <title>Tetapan webrtc</title>
+      <servers>STUN / TURN server</servers>
+      <serversTip>Server STUN / TURN diharuskan untuk memastikan bahwa panggilan web conferencing akan bekerja dengan baik di seluruh router jaringan. Kami sangat menyarankan untuk menyiapkan server TURN pribadi Anda sendiri untuk tetap mengontrol keamanan komunikasi Anda dan memastikan ketersediaan maksimal.</serversTip>
       <url>URL</url>
       <serverUrl>Server URL...</serverUrl>
-      <credentials>Credentials</credentials>
-      <username>Username</username>
-      <credential>Credential</credential>
+      <credentials>Kredensial</credentials>
+      <username>Nama pengguna</username>
+      <credential>Kelayakan</credential>
       <save>Simpan</save>
       <cancel>Batal</cancel>
 
@@ -19,14 +19,14 @@
       <removeServer>Remove server</removeServer>
       
       <!-- Confirmation dialog -->
-      <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
-      <remove>Remove</remove>
+      <confirmServerRemoval>Keluarkan ICE Server?</confirmServerRemoval>
+      <serverRemoveText>Adakah anda pasti mahu mengalih keluar konfigurasi pelayan ini?</serverRemoveText>
+      <remove>Keluarkan</remove>
       
       <!-- Error Diagnostics -->
-      <errorDiagnostic>Error Diagnostics</errorDiagnostic>
-      <enableLogCollection>Enable client-side log collection</enableLogCollection>
-      <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
+      <errorDiagnostic>Ralat Diagnostik</errorDiagnostic>
+      <enableLogCollection>Dayakan koleksi log pelanggan-pelanggan</enableLogCollection>
+      <logCollectionInfo>Bendera ini akan log maklumat dari para pelanggan dalam log server untuk menyelesaikan isu sambungan WebRTC. Gunakan dengan hati-hati, mod ini bersifat kasar dan boleh menyebabkan overhead rangkaian yang ketara.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

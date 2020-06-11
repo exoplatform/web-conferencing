@@ -5,7 +5,7 @@
     <ok>تایید</ok>
     <cancel>انصراف</cancel>
     
-    <notConfigured>not configured</notConfigured>
-    <errorReference>Error reference:</errorReference>
+    <notConfigured>هنوز تنظیم نشده است</notConfigured>
+    <errorReference>منبع خطا:</errorReference>
   </webconferencing>
 </bundle>

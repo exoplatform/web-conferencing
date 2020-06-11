@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
       <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
-      <remove>Remove</remove>
+      <remove>Ta bort</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Error Diagnostics</errorDiagnostic>

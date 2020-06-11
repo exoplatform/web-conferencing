@@ -3,10 +3,10 @@
   <webconferencing>
     <admin>
       <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
+      <title>Pentakbiran Persidangan Web</title>
+      <info>Persidangan Web boleh dikendalikan oleh pembekal yang berbeza. Anda boleh mendayakan pembekal yang anda perlukan dan mengkonfigurasi tetapan.</info>
       <provider>Provider</provider>
-      <description>Description</description>
+      <description>Keterangan</description>
       <active>Active</active>
       <actions>Actions</actions>
     </admin>

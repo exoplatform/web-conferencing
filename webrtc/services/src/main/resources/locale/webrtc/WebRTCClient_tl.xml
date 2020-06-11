@@ -14,7 +14,7 @@
     <providerError>Pagkakamali sa pagkakaloob ng WebRTC</providerError>
     <providerNotAvailable>Hindi magagamit ang tagapagbigay ng WebRTC</providerNotAvailable>
     <refreshTryAgainContactAdmin>Mangyaring i-refresh ang pahina at subukan muli. Kung nagpatuloy ang pagkakamali, mangyaring makipag-ugnay sa iyong administrator gamit ang reperensya na pagkakamali na ito.</refreshTryAgainContactAdmin>
-    <callStopped>The call was stopped</callStopped>
+    <callStopped>Ang tawag ay tumigil</callStopped>
     <errorAddCall>Ang tawag ay hindi makapagsimula dahil sa isang pagkakamali sa server</errorAddCall>
     <errorOpeningCall>May naganap na pagkakamali habang binubuksan ang window ng tawag. Mangyaring i-refresh ang pahina at subukan muli. Kung nagpatuloy ang pagkakamali, mangyaring makipag-ugnay sa iyong administrator.</errorOpeningCall>
     <callWindowNotOpen>Ang window ng tawag ay hindi mabubuksan. Mangyaring suriin kung na-block ito ng iyong browser.</callWindowNotOpen>

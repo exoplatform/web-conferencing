@@ -4,7 +4,7 @@
     <call>通話</call>
     <callingYou>is calling you...</callingYou>
     <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
+    <callTo>打電話給</callTo>
     <incomingCall>Incoming call</incomingCall>
     <answer>答案</answer>
     <decline>拒絕</decline>
@@ -28,7 +28,7 @@
     <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
     <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
     <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
-    <connectionFailed>Connection failed</connectionFailed>
+    <connectionFailed>練線失敗</connectionFailed>
     <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
     <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
     <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
@@ -37,9 +37,9 @@
     
     <admin>
       <wrongSettings>Wrong settings</wrongSettings>
-      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
-      <usernameMandatory>Username cannot be empty</usernameMandatory>
-      <credentialMandatory>Password cannot be empty</credentialMandatory>
+      <serverUrlMandatory>主機網址不能空白</serverUrlMandatory>
+      <usernameMandatory>使用者名稱不能空白</usernameMandatory>
+      <credentialMandatory>密碼不能空白</credentialMandatory>
       <errorSavingSettings>Error saving settings</errorSavingSettings>
     </admin>
   </webrtc>

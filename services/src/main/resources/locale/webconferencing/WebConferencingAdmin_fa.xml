@@ -2,10 +2,10 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
-      <provider>Provider</provider>
+      <page>ویدئو کنفرانس</page>
+      <title>مدیریت کنفرانس تحت وب</title>
+      <info>کنفرانس تحت وب قابل استفاده توسط تأمین‌کنندگان متفاوت است. شما می‌توانید تأمین‌کننده مورد نیاز را فعال کرده و تنظیمات را انجام دهید.</info>
+      <provider>سرویس دهنده</provider>
       <description>شرح</description>
       <active>فعال</active>
       <actions>اقدامات</actions>

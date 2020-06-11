@@ -3,14 +3,14 @@
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
-      <title>WebRTC settings</title>
-      <servers>STUN / TURN servers</servers>
-      <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
+      <title>WebRTC ترتیبات</title>
+      <servers>STUN / TURN سرورز</servers>
+      <serversTip>STUN / TURN سرورز کو یہ یقینی بنانا ہے کہ ویب کانفرنسنگ کال نیٹ ورک کے روٹروں میں مناسب طریقے سے کام کرے. ہم آپ کے اپنے نجی TURN سرور کو ترتیب دیتے ہیں کہ آپ کے مواصلات کی سیکورٹی پر کنٹرول رکھنے اور زیادہ سے زیادہ دستیابی کو یقینی بنانے کے لئے انتہائی سفارش کریں.</serversTip>
       <url>یو آر ایل</url>
-      <serverUrl>Server URL...</serverUrl>
-      <credentials>Credentials</credentials>
+      <serverUrl>پیش کار URL...</serverUrl>
+      <credentials>اعتبار</credentials>
       <username>صارف کا نام</username>
-      <credential>Credential</credential>
+      <credential>اعتبار</credential>
       <save>محفوظ کریں</save>
       <cancel>منسوخ</cancel>
 
@@ -19,14 +19,14 @@
       <removeServer>Remove server</removeServer>
       
       <!-- Confirmation dialog -->
-      <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
+      <confirmServerRemoval>ICE سرور کو ہٹا دیں؟</confirmServerRemoval>
+      <serverRemoveText>کیا آپ واقعی اس سرور ترتیب کو ہٹانا چاہتے ہیں؟</serverRemoveText>
       <remove>ہٹاؤ</remove>
       
       <!-- Error Diagnostics -->
-      <errorDiagnostic>Error Diagnostics</errorDiagnostic>
-      <enableLogCollection>Enable client-side log collection</enableLogCollection>
-      <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
+      <errorDiagnostic>غلطی تشخیص</errorDiagnostic>
+      <enableLogCollection>وصول كار سائڈ لاگ مجموعہ کو فعال کریں</enableLogCollection>
+      <logCollectionInfo>WebRTC کنیکٹوٹی مسئلہ کو حل کرنے کے لئے یہ پرچم سرور لاگ ان میں کلائنٹ سے معلومات لاگ ان کرے گا. احتیاط سے استعمال کریں، یہ موڈ verbose ہے اور اس وجہ سے نیٹورک اوپر جا سکتا ہے.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

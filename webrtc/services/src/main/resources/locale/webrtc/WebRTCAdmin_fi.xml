@@ -11,7 +11,7 @@
       <credentials>Credentials</credentials>
       <username>Username</username>
       <credential>Credential</credential>
-      <save>Save</save>
+      <save>Tallenna</save>
       <cancel>Cancel</cancel>
 
       <noServer>No server available, please add your first one</noServer>

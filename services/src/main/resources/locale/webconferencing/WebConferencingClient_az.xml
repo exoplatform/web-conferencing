@@ -2,7 +2,7 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>OK</ok>
+    <ok>Oldu</ok>
     <cancel>Ləğv Et</cancel>
     
     <notConfigured>konfuqrasiya olunmamışdır</notConfigured>

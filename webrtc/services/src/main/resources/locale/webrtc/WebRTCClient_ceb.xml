@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Call</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <call>Nanawag</call>
+    <callingYou>kay nanawag nimo...</callingYou>
+    <callWith>Motawag uban</callWith>
+    <callTo>manawag didto</callTo>
+    <incomingCall>Naay niabot nga nanawag</incomingCall>
     <answer>Tubag</answer>
-    <decline>Decline</decline>
-    <callStartTip>Click to start a video call</callStartTip>
+    <decline>Dili tubagon</decline>
+    <callStartTip>Pislita arun maka sugod og bidyo na tawag</callStartTip>
     <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
     
     <providerError>WebRTC provider error</providerError>
@@ -18,8 +18,8 @@
     <errorAddCall>The call could not be started due to a server error</errorAddCall>
     <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
     <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
-    <errorStartingCall>Error starting call</errorStartingCall>
-    <errorIncomingCall>Incoming call error</errorIncomingCall>
+    <errorStartingCall>Sayup pagsugod sa tawag</errorStartingCall>
+    <errorIncomingCall>Padulong nga tawag pero sayup</errorIncomingCall>
     <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
     <errorReadCall>Error reading call information from the server</errorReadCall>
     <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>

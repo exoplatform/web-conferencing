@@ -3,15 +3,15 @@
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
-      <title>WebRTC settings</title>
-      <servers>STUN / TURN servers</servers>
-      <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
+      <title>การตั้งค่า WebRTC</title>
+      <servers>เซิร์ฟเวอร์ STUN / TURN</servers>
+      <serversTip>เซิร์ฟเวอร์ STUN / TURN จำเป็นต้องใช้เพื่อให้แน่ใจว่าการสนทนาทางเว็บทำงานได้อย่างถูกต้องระหว่างเราเตอร์เครือข่าย เราขอแนะนำให้ตั้งค่าเซิร์ฟเวอร์ TURN ส่วนตัวของคุณเพื่อควบคุมการรักษาความปลอดภัยในการติดต่อสื่อสารของคุณและมั่นใจได้ว่าจะสามารถเข้าถึงได้สูงสุด</serversTip>
       <url>URL</url>
       <serverUrl>Server URL...</serverUrl>
       <credentials>Credentials</credentials>
       <username>Username</username>
       <credential>Credential</credential>
-      <save>Save</save>
+      <save>บันทึก</save>
       <cancel>Cancel</cancel>
 
       <noServer>No server available, please add your first one</noServer>

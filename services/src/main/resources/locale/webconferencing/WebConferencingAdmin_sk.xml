@@ -3,8 +3,8 @@
   <webconferencing>
     <admin>
       <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
+      <title>Správa webových konferencií</title>
+      <info>Webové konferencie môžu byť spracované rôznymi poskytovateľmi. Môžete povoliť poskytovateľa, ktorý potrebujete, a nakonfigurovať nastavenia.</info>
       <provider>Provider</provider>
       <description>Description</description>
       <active>Active</active>

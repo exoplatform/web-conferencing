@@ -9,10 +9,10 @@
       <url>URL</url>
       <serverUrl>Server URL...</serverUrl>
       <credentials>Credentials</credentials>
-      <username>Username</username>
+      <username>사용자 이름</username>
       <credential>Credential</credential>
-      <save>Save</save>
-      <cancel>Cancel</cancel>
+      <save>저장</save>
+      <cancel>취소</cancel>
 
       <noServer>No server available, please add your first one</noServer>
       <addNewServer>Add a new server</addNewServer>

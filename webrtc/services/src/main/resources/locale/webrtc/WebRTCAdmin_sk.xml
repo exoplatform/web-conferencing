@@ -11,7 +11,7 @@
       <credentials>Credentials</credentials>
       <username>Username</username>
       <credential>Credential</credential>
-      <save>Save</save>
+      <save>Uložiť</save>
       <cancel>Cancel</cancel>
 
       <noServer>No server available, please add your first one</noServer>
@@ -20,13 +20,13 @@
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
+      <serverRemoveText>Naozaj chcete odstrániť túto konfiguráciu servera?</serverRemoveText>
       <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Error Diagnostics</errorDiagnostic>
-      <enableLogCollection>Enable client-side log collection</enableLogCollection>
-      <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
+      <enableLogCollection>Povoliť kolekciu denníka na strane klienta</enableLogCollection>
+      <logCollectionInfo>Tento príznak zaznamená informácie z klienta v protokoloch serverov s cieľom riešiť problém spojenia WebRTC. Používajte opatrne, tento režim je podrobný a môže spôsobiť značné režijné náklady na sieť.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

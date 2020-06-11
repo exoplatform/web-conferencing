@@ -2,10 +2,10 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Web Conferencing</page>
-      <title>Web Conferencing Administration</title>
-      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
-      <provider>Provider</provider>
+      <page>ویب کنفرنس</page>
+      <title>ویب کانفرنس انتظامیہ</title>
+      <info>ویب کنفرننگ مختلف فراہم کرنے والے کی طرف سے سنبھالا جا سکتا ہے. آپ اس فراہم کنندہ کو اختیار دے سکتے ہیں جسکی آپکو ضرورت ہے اور ترتیبات کو ترتیب دے سکتے ہیں.</info>
+      <provider>فراہم کرنے والا</provider>
       <description>تفصیل</description>
       <active>زیر عمل</active>
       <actions>اعمال</actions>

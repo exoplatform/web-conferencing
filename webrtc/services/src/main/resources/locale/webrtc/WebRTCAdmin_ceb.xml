@@ -11,8 +11,8 @@
       <credentials>Credentials</credentials>
       <username>Username</username>
       <credential>Credential</credential>
-      <save>Save</save>
-      <cancel>Cancel</cancel>
+      <save>I-luwas</save>
+      <cancel>I-kansela</cancel>
 
       <noServer>No server available, please add your first one</noServer>
       <addNewServer>Add a new server</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
       <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
-      <remove>Remove</remove>
+      <remove>Tangtangon</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Error Diagnostics</errorDiagnostic>

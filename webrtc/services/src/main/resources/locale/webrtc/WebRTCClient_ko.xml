@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Call</call>
+    <call>호출</call>
     <callingYou>is calling you...</callingYou>
     <callWith>Call with</callWith>
     <callTo>Call to</callTo>

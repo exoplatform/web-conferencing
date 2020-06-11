@@ -3,12 +3,12 @@
   <!-- Messages for Platform menu and view settings -->
   <UIBasicProfile>
     <label>
-      <myconnector>My Call</myconnector>
+      <myconnector>تماس من</myconnector>
     </label>
   </UIBasicProfile>
   <UIEditUserProfileForm>
     <label>
-      <myconnector>My Call</myconnector>
+      <myconnector>تماس من</myconnector>
     </label>
   </UIEditUserProfileForm>
   <!-- Messages for Platform add-on -->

@@ -3,29 +3,29 @@
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
-      <title>WebRTC settings</title>
+      <title>تنظیمات WebRTC</title>
       <servers>STUN / TURN servers</servers>
       <serversTip>بی حس کردن/روشن کردن سرور نیاز به اطمینان حاصل شود که وب سایت کنفرانس تماس خواهد به درستی کار در سراسر شبکه روتر. ما به شدت توصیه می شود راه اندازی خصوصی خود را به نوبه خود سرور برای نگه داشتن کنترل بر امنیت ارتباطات خود و اطمینان از حداکثر در دسترس بودن.</serversTip>
       <url>آدرس</url>
-      <serverUrl>Server URL...</serverUrl>
-      <credentials>Credentials</credentials>
+      <serverUrl>آدرس سرور...</serverUrl>
+      <credentials>مجوزها</credentials>
       <username>نام کاربری</username>
-      <credential>Credential</credential>
+      <credential>مجوز</credential>
       <save>ذخيره</save>
       <cancel>انصراف</cancel>
 
-      <noServer>No server available, please add your first one</noServer>
-      <addNewServer>Add a new server</addNewServer>
-      <removeServer>Remove server</removeServer>
+      <noServer>سروری موجود نیست، لطفا اولین سرور خود را اضافه کنید</noServer>
+      <addNewServer>افزودن یک سرور جدید</addNewServer>
+      <removeServer>حذف سرور</removeServer>
       
       <!-- Confirmation dialog -->
-      <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
-      <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
+      <confirmServerRemoval>حذف سرور ICE?</confirmServerRemoval>
+      <serverRemoveText>آیا از حذف تنظیمات این سرور اطمینان دارید?</serverRemoveText>
       <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
-      <errorDiagnostic>Error Diagnostics</errorDiagnostic>
-      <enableLogCollection>Enable client-side log collection</enableLogCollection>
+      <errorDiagnostic>تشخیص خطا</errorDiagnostic>
+      <enableLogCollection>فعالسازی ارتباط client-side log</enableLogCollection>
       <logCollectionInfo>This flag will log information from client in the server logs in order to troubleshoot WebRTC connectivity issue. Use carefully, this mode is verbose and may cause significant network overhead.</logCollectionInfo>
     </admin>
   </webrtc>

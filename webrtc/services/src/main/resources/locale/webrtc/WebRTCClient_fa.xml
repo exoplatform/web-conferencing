@@ -2,10 +2,10 @@
 <bundle>
   <webrtc>
     <call>تماس</call>
-    <callingYou>is calling you...</callingYou>
-    <callWith>Call with</callWith>
-    <callTo>Call to</callTo>
-    <incomingCall>Incoming call</incomingCall>
+    <callingYou>در حال تماس با شما...</callingYou>
+    <callWith>تماس با</callWith>
+    <callTo>تماس با</callTo>
+    <incomingCall>تماس دریافتی</incomingCall>
     <answer>پاسخ</answer>
     <decline>کاهش</decline>
     <callStartTip>کلیک کنید برای شروع یک تماس تصویری</callStartTip>
@@ -13,8 +13,8 @@
     
     <providerError>WebRTC provider error</providerError>
     <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
-    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
-    <callStopped>The call was stopped</callStopped>
+    <refreshTryAgainContactAdmin>لطفا صحفه را رفرش کنید. اگه همچنان خطا وجود داشت، لطفا خطا را با مدیر سایت مطرح کنید.</refreshTryAgainContactAdmin>
+    <callStopped>تماس متوقف شد</callStopped>
     <errorAddCall>این تماس می تواند آغاز شود به دلیل یک خطای سرور. لطفا دوباره سعی کنید. اگر مشکل همچنان ادامه دارد, لطفا با مدیر سیستم تماس بگیرید.</errorAddCall>
     <errorOpeningCall>یک خطا رخ داده است در حالی که باز کردن پنجره تماس. لطفا صفحه را تازه کنید و دوباره سعی کنید. اگر خطا همچنان ادامه دارد, لطفا با مدیر سیستم تماس بگیرید.</errorOpeningCall>
     <callWindowNotOpen>تماس پنجره می تواند باز نمی شود. لطفا چک کنید اگر آن مسدود شده بود توسط مرورگر خود را.</callWindowNotOpen>
@@ -26,8 +26,8 @@
     <errorSubscribeCall>موفق به ایجاد یک سرور به مرورگر کانال برای تماس با به روز رسانی. لطفا صفحه را تازه کنید و دوباره سعی کنید. اگر مشکل همچنان ادامه دارد, لطفا با مدیر سیستم تماس بگیرید.</errorSubscribeCall>
     <errorStartingConnection>خطا در شروع ارتباط</errorStartingConnection>
     <notSupportedPlatform>پلت فرم پشتیبانی نشده</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
-    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
+    <yourBrowserNotSupportWebrtc>مرورگر شما WebRTC را پشتیبانی نمی کند</yourBrowserNotSupportWebrtc>
+    <notInitialized>رابط تماس تصویری WebRTC به طور صحیح راه اندازی نشده. لطفا این پنجره را بسته و دوباره تلاش کنید.</notInitialized>
     <connectionFailed>ارتباط موفق</connectionFailed>
     <audioVideoRequired>یک میکروفون و یا دوربین های مورد نیاز برای قرار دادن یک تماس</audioVideoRequired>
     <mediaDevicesError>خطا در دسترسی به دوربین یا میکروفون</mediaDevicesError>

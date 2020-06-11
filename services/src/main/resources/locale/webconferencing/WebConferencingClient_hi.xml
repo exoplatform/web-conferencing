@@ -3,7 +3,7 @@
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
     <ok>OK</ok>
-    <cancel>Cancel</cancel>
+    <cancel>रद्द करें</cancel>
     
     <notConfigured>not configured</notConfigured>
     <errorReference>Error reference:</errorReference>

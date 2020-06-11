@@ -14,9 +14,9 @@
       <save>Salvaţi</save>
       <cancel>Renunță</cancel>
 
-      <noServer>No server available, please add your first one</noServer>
-      <addNewServer>Add a new server</addNewServer>
-      <removeServer>Remove server</removeServer>
+      <noServer>Nici un server disponibil, vă rugăm să adăugaţi primul server</noServer>
+      <addNewServer>Adaugă un nou server</addNewServer>
+      <removeServer>Eliminaţi server</removeServer>
       
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Ștergeți serverul ICE?</confirmServerRemoval>

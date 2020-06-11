@@ -9,10 +9,10 @@
       <url>URL</url>
       <serverUrl>Server URL...</serverUrl>
       <credentials>Credentials</credentials>
-      <username>Username</username>
+      <username>Felhasználónév</username>
       <credential>Credential</credential>
-      <save>Save</save>
-      <cancel>Cancel</cancel>
+      <save>Mentés</save>
+      <cancel>Mégse</cancel>
 
       <noServer>No server available, please add your first one</noServer>
       <addNewServer>Add a new server</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Remove ICE Server?</confirmServerRemoval>
       <serverRemoveText>Are you sure you want to remove this server configuration?</serverRemoveText>
-      <remove>Remove</remove>
+      <remove>Eltávolítás</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Error Diagnostics</errorDiagnostic>

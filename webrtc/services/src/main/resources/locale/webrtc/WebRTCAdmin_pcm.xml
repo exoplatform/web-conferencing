@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Comot ICE Server?</confirmServerRemoval>
       <serverRemoveText>You sure say you won comot dis server configuration?</serverRemoveText>
-      <remove>Remove</remove>
+      <remove>Comot</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Diagnostics of de Error</errorDiagnostic>

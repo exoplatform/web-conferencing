@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Call</call>
+    <call>Soita</call>
     <callingYou>is calling you...</callingYou>
     <callWith>Call with</callWith>
     <callTo>Call to</callTo>
@@ -9,19 +9,19 @@
     <answer>Answer</answer>
     <decline>Decline</decline>
     <callStartTip>Click to start a video call</callStartTip>
-    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
+    <callRunningTip>Tämä puhelu on jo käynnissä. Valitse näytä puhelun ikkuna.</callRunningTip>
     
     <providerError>WebRTC provider error</providerError>
     <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
     <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
     <callStopped>The call was stopped</callStopped>
-    <errorAddCall>The call could not be started due to a server error</errorAddCall>
-    <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
-    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
+    <errorAddCall>Puhelu ei voitu käynnistää koska palvelin virhe. Ole hyvä ja yritä uudelleen. Jos ongelma ei poistu, ota yhteyttä järjestelmänvalvojaan.</errorAddCall>
+    <errorOpeningCall>Tapahtui virhe avattaessa puhelun ikkuna. Päivitä sivu ja yritä uudelleen. Jos virhe ei poistu, ota yhteyttä järjestelmänvalvojaan.</errorOpeningCall>
+    <callWindowNotOpen>Soita ikkuna ei voitu avata. Ole hyvä ja tarkista, jos se oli estetty selaimen.</callWindowNotOpen>
     <errorStartingCall>Error starting call</errorStartingCall>
     <errorIncomingCall>Incoming call error</errorIncomingCall>
-    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
-    <errorReadCall>Error reading call information from the server</errorReadCall>
+    <errorReadUserStatus>Virhe luettaessa käyttäjä tilan tiedot palvelimelta</errorReadUserStatus>
+    <errorReadCall>Virhe luettaessa puhelun tiedot palvelimelta</errorReadCall>
     <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
     <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
     <errorStartingConnection>Error starting connection</errorStartingConnection>
@@ -31,8 +31,8 @@
     <connectionFailed>Connection failed</connectionFailed>
     <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
     <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
-    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
-    <noAudioFound>No microphone was detected</noAudioFound>
+    <accessDenied>Ei voitu avata media device johtuen pääsy tai käyttöoikeus virhe. Varmista että laite on kytketty ja ei käytössä toinen sovellus.</accessDenied>
+    <noAudioFound>Ei mikrofoni oli havaittu</noAudioFound>
     <butVideoFound>but a camera was found</butVideoFound>
     
     <admin>

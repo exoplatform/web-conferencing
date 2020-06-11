@@ -6,9 +6,9 @@
       <title>Web Conferencing Administration</title>
       <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
       <provider>Provider</provider>
-      <description>Description</description>
+      <description>Leírás</description>
       <active>Active</active>
-      <actions>Actions</actions>
+      <actions>Műveletek</actions>
     </admin>
   </webconferencing>
 </bundle>
