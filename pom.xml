@@ -57,7 +57,7 @@
     <!-- **************************************** -->
     <!-- Dependencies versions                    -->
     <!-- **************************************** -->
-    <org.exoplatform.ecms.version>6.0.x-SNAPSHOT</org.exoplatform.ecms.version>
+    <addon.exo.ecms.version>6.0.x-SNAPSHOT</addon.exo.ecms.version>
     <org.exoplatform.social.version>6.0.x-SNAPSHOT</org.exoplatform.social.version>
     <!-- for tests -->
     <junit.version>4.12</junit.version>
@@ -69,7 +69,7 @@
       <dependency>
         <groupId>org.exoplatform.ecms</groupId>
         <artifactId>ecms</artifactId>
-        <version>${org.exoplatform.ecms.version}</version>
+        <version>${addon.exo.ecms.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

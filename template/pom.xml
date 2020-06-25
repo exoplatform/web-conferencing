@@ -51,7 +51,6 @@
     <!-- **************************************** -->
     <web-conferencing.version>1.1.x-SNAPSHOT</web-conferencing.version>
     <org.exoplatform.depmgt.version>17.x-SNAPSHOT</org.exoplatform.depmgt.version>
-    <org.exoplatform.platform.version>5.0.0-RC01</org.exoplatform.platform.version>
     <!-- for tests -->
     <junit.version>4.12</junit.version>
   </properties>
@@ -70,7 +69,7 @@
       <dependency>
         <groupId>org.exoplatform.platform</groupId>
         <artifactId>platform</artifactId>
-        <version>${org.exoplatform.platform.version}</version>
+        <version>${org.exoplatform.social.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
