@@ -77,7 +77,7 @@ public class RESTWebConferencingService implements ResourceContainer {
    * @return the provider config
    */
   @GET
-  @RolesAllowed("administrators")
+  @RolesAllowed({"administrators","professional"})
   @Path("/provider/{type}/configuration") // TODO not used
   public Response getProviderConfig(@Context UriInfo uriInfo,
                                     @Context HttpServletRequest request,
@@ -120,7 +120,7 @@ public class RESTWebConferencingService implements ResourceContainer {
    * @return the response
    */
   @POST
-  @RolesAllowed("administrators")
+  @RolesAllowed({"administrators","professional"})
   @Path("/provider/{type}/configuration")
   public Response postProviderConfig(@Context UriInfo uriInfo,
                                      @Context HttpServletRequest request,
@@ -167,7 +167,7 @@ public class RESTWebConferencingService implements ResourceContainer {
    * @return the provider configs
    */
   @GET
-  @RolesAllowed("administrators")
+  @RolesAllowed({"administrators","professional"})
   @Path("/providers/configuration")
   public Response getProviderConfigs(@Context UriInfo uriInfo, @Context HttpServletRequest request) {
     ConversationState convo = ConversationState.getCurrent();

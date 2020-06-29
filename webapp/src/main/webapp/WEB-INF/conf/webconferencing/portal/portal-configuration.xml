@@ -25,6 +25,9 @@
                 <value>
                   <string>/platform/administrators</string>
                 </value>
+                <value>
+                  <string>/platform/professional</string>
+                </value>
               </collection>
             </field>
             <field name="ownerType">
