@@ -26,7 +26,7 @@
   <page>
     <name>webconferencing</name>
     <title>Web Conferencing Administration</title>
-    <access-permissions>manager:/platform/administrators</access-permissions>
+    <access-permissions>*:/platform/administrators</access-permissions>
     <edit-permission>manager:/platform/administrators</edit-permission>
     <portlet-application>
       <portlet>
