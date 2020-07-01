@@ -5,7 +5,7 @@
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
       <title>Paramètres WebRTC</title>
       <servers>Serveurs STUN/TURN</servers>
-      <serversTip>Des serveurs STUN ou TURN sont nécessaires pour assurer que les appels de web conférences marchent correctement au travers des routeurs réseau. Nous recommandons fortement d'installer votre propre serveur TURN afin de garder le contrôle de la sécurité des communications et assurer une disponibilité maximale.</serversTip>
+      <serversTip>Des serveurs STUN ou TURN sont nécessaires pour assurer que les appels en visioconférence marchent correctement au travers des routeurs réseau. Nous recommandons fortement d'installer votre propre serveur TURN afin de garder le contrôle de la sécurité des communications et assurer une disponibilité maximale.</serversTip>
       <url>URL</url>
       <serverUrl>URL Serveur...</serverUrl>
       <credentials>Identifiants</credentials>

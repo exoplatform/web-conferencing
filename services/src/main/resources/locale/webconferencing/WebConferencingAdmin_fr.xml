@@ -2,9 +2,9 @@
 <bundle>
   <webconferencing>
     <admin>
-      <page>Conférences Web</page>
-      <title>Administration des Conférences Web</title>
-      <info>Les conférences web peuvent être traitées par différents connecteurs. Vous pouvez activer les connecteurs dont vous avez besoin et les paramétrer.</info>
+      <page>Visioconférence</page>
+      <title>Administration des Visioconférences</title>
+      <info>Les visioconférences peuvent être prises en charge par différents connecteurs. Vous pouvez activer les connecteurs dont vous avez besoin et les paramétrer.</info>
       <provider>Connecteur</provider>
       <description>Description</description>
       <active>Activé</active>
