@@ -1598,7 +1598,7 @@
 				}
 			});
 		};
-		
+
 		var addPopoverButton = function($target, context) {
 			var initializer = addCallButton($target, context);
 			initializer.done(function($container) {
@@ -1632,7 +1632,6 @@
 							$userAction.data("callbuttonuser", userId);
 							// cleanup after previous user
 							$userAction.find(".callButtonContainer").empty();
-							addPopoverButton($userAction, userContext(userId));
 						}
 					}
 				}
