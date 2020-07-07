@@ -1632,6 +1632,7 @@
 							$userAction.data("callbuttonuser", userId);
 							// cleanup after previous user
 							$userAction.find(".callButtonContainer").empty();
+							addPopoverButton($userAction, userContext(userId));
 						}
 					}
 				}
