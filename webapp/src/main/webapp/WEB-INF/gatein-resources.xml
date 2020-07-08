@@ -28,14 +28,14 @@
     <application-name>webconferencing</application-name>
     <portlet-name>WebConferencingPortlet</portlet-name>
     <skin-name>Enterprise</skin-name>
-    <css-path>/skin/css/webconferencing-enterprise.css</css-path>
+    <css-path>/skin/css/webconferencing.css</css-path>
     <overwrite>true</overwrite>
   </portlet-skin>
   <portlet-skin>
     <application-name>webconferencing</application-name>
     <portlet-name>WebConferencingAdminPortlet</portlet-name>
     <skin-name>Enterprise</skin-name>
-    <css-path>/skin/css/webconferencing-admin-enterprise.css</css-path>
+    <css-path>/skin/css/webconferencing-admin.css</css-path>
     <overwrite>true</overwrite>
   </portlet-skin>
 

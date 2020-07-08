@@ -270,3 +270,33 @@
 		background-image: url("../icons/oxygen/16/actions/process-stop.png")
 	}
 }
+
+/*
+ * Web Conferencing style for Enterprise skin (for Platform 5.0)
+ */
+
+.callButtonContainer {
+	font-size: 15px;
+}
+
+@media (min-width: 481px) {
+	.popoverCall {
+		/*text-align: initial !important;*/
+	}
+}
+
+@media (max-width: 480px) {
+	.popoverCall {
+		text-align: center !important;
+	}
+}
+
+.preferred.popoverCall ~ .dropdown-toggle {
+	margin-left: -2px;
+}
+
+.transparentButton, .transparentButton ~ .dropdown-toggle {
+	background: transparent !important;
+	border: solid 1px transparent !important;
+	box-shadow: none !important;
+}

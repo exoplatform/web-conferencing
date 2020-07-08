@@ -155,10 +155,6 @@
               <includes>
                 <include>webconferencing.less</include>
                 <include>webconferencing-admin.less</include>
-                <include>webconferencing-admin-default.less</include>
-                <include>webconferencing-admin-enterprise.less</include>
-                <include>webconferencing-default.less</include>
-                <include>webconferencing-enterprise.less</include>
               </includes>
             </configuration>
             <goals>
