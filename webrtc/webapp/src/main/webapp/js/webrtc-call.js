@@ -350,6 +350,7 @@ if (eXo.webConferencing) {
 										// If it will be required to change a host in future, then this message should be send
 										// by a new host with '__all__' content, others should understand this and update their 
 										// owner ID to this sender ID.
+									  // TODO 15.07.2020: if not owner, then send Hello to all already present in the call
 										return sendMessage({
 							    		"hello": isOwner ? "__all__" : call.owner.id
 							      }).done(function() {

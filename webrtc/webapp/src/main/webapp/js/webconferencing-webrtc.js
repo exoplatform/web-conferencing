@@ -241,7 +241,7 @@
 								// We want have same ID independently on who started the call
 								var callId;
 								if (target.group) {
-									// This should not happen until group calls will be supported
+									// Group calls runs between all members of a space or chat room 
 									callId = "g/" + (target.type == "chat_room" ? context.roomName : target.id);
 								} else {
 									// Sort IMs to have always the same ID (independently on who started the call)
