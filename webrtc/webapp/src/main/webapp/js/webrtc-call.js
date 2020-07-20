@@ -98,7 +98,11 @@ if (eXo.webConferencing) {
 		
 		eXo.webConferencing.startCall = function(call) {
 			var process = $.Deferred();
-			// Page closing should end a call properly
+
+			$(function() {
+				$("#webrtc-call-container").css("pointer-events", "auto");
+				webConferencing.getProvider("webrtc").done(function(webrtc, initialized) {
+					// Page closing should end a call properly
 			var pc;
 			var $outgoingRing;
 
@@ -167,7 +171,7 @@ if (eXo.webConferencing) {
 						stopLocal();
 					} else {
 						// No sense to send 'leaved' for P2P, it is already should be stopped
-						webrtc.deleteCall(callId).always(function() {
+						webrtc.deleteCall(call.id).always(function() {
 							stopLocal();
 						});
 					}									
@@ -281,10 +285,6 @@ if (eXo.webConferencing) {
 			var getPreference = function(name) {
 				return localStorage.getItem(preferenceKey(name));
 			};
-
-			$(function() {
-				$("#webrtc-call-container").css("pointer-events", "auto");
-				webConferencing.getProvider("webrtc").done(function(webrtc, initialized) {
 					if (initialized) {
 						if (webrtc.isSupportedPlatform()) {
 							log.debug("Call page: " + location.origin + location.pathname);
