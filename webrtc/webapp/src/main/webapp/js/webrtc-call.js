@@ -103,188 +103,191 @@ if (eXo.webConferencing) {
 				$("#webrtc-call-container").css("pointer-events", "auto");
 				webConferencing.getProvider("webrtc").done(function(webrtc, initialized) {
 					// Page closing should end a call properly
-			var pc;
-			var $outgoingRing;
+					var pc;
+					var $outgoingRing;
 
-			var stopStream = function(stream) {
-				var videoTracks = stream.getVideoTracks();
-				for (var i = 0; i < videoTracks.length; ++i) {
-					videoTracks[i].stop();
-			  }
-				var audioTracks = stream.getAudioTracks();
-				for (var i = 0; i < audioTracks.length; ++i) {
-					audioTracks[i].stop();
-			  }
-			};
+					var stopStream = function(stream) {
+						var videoTracks = stream.getVideoTracks();
+						for (var i = 0; i < videoTracks.length; ++i) {
+							videoTracks[i].stop();
+			  			}
+						var audioTracks = stream.getAudioTracks();
+						for (var i = 0; i < audioTracks.length; ++i) {
+							audioTracks[i].stop();
+			 			}
+					};
 
-			var stopLocal = function() {
-				if ($outgoingRing) {
-					$outgoingRing.remove();
-				}
+					var stopLocal = function() {
+						if ($outgoingRing) {
+							$outgoingRing.remove();
+						}
 
-				showStopped(webrtc.message("callStopped"));
+						showStopped(webrtc.message("callStopped"));
 				
-				var localStream = localVideo.srcObject;
-				localVideo.srcObject = null;
-				if (localStream) {
-					stopStream(localStream);
-				}
+						var localStream = localVideo.srcObject;
+						localVideo.srcObject = null;
+						if (localStream) {
+							stopStream(localStream);
+						}
 				
-				if (pc) {
-					try {
-						// TODO in FF it warns:
-						// RTCPeerConnection.getLocalStreams/getRemoteStreams are deprecated. Use RTCPeerConnection.getSenders/getReceivers instead.
-						// But for Chrome it's seems a single working solution
-						var localStreams = pc.getLocalStreams();
-						for (var i = 0; i < localStreams.length; ++i) {
-							stopStream(localStreams[i]);
-					  }
-						var remoteStreams = pc.getRemoteStreams();
-						for (var i = 0; i < remoteStreams.length; ++i) {
-							stopStream(remoteStreams[i]);
-					  }
-					} catch(e) {
-						log.warn("Failed to stop peer streams", e);
-					}
-					try {
-						pc.close();
-					} catch(e) {
-						log.warn("Failed to close peer connection", e);
-					}											
-				}
-				window.removeEventListener("beforeunload", beforeunloadListener);
-				window.removeEventListener("unload", unloadListener);
-			};
+						if (pc) {
+							try {
+								// TODO in FF it warns:
+								// RTCPeerConnection.getLocalStreams/getRemoteStreams are deprecated. Use RTCPeerConnection.getSenders/getReceivers instead.
+								// But for Chrome it's seems a single working solution
+								var localStreams = pc.getLocalStreams();
+								for (var i = 0; i < localStreams.length; ++i) {
+									stopStream(localStreams[i]);
+					  			}
+								var remoteStreams = pc.getRemoteStreams();
+								for (var i = 0; i < remoteStreams.length; ++i) {
+									stopStream(remoteStreams[i]);
+					  			}
+							} catch(e) {
+								log.warn("Failed to stop peer streams", e);
+							}
+							try {
+								pc.close();
+							} catch(e) {
+								log.warn("Failed to close peer connection", e);
+							}											
+						}
+						window.removeEventListener("beforeunload", beforeunloadListener);
+						window.removeEventListener("unload", unloadListener);
+					};
 			
-			var stopping = false;
-			var stopCall = function(localOnly) {
-				// TODO Here we also could send 'bye' message - it will work for 'Hang Up' button, 
-				// but in case of page close it may not be sent to others, thus we delete the call here.
-				if (!stopping) {
-					stopping = true;
-					// Play complete ringtone
-					var $complete = $("<audio autoplay style='display: none;'>" 
+					var stopping = false;
+					var stopCall = function(localOnly) {
+						// TODO Here we also could send 'bye' message - it will work for 'Hang Up' button, 
+						// but in case of page close it may not be sent to others, thus we delete the call here.
+						if (!stopping) {
+							stopping = true;
+							// Play complete ringtone
+							var $complete = $("<audio autoplay style='display: none;'>" 
 								+ "<source src='/webrtc/audio/complete.mp3' type='audio/mpeg'>"  
 								+ "Your browser does not support the audio element.</audio>");
-					$(document.body).append($complete);
-					if (localOnly) {
-						stopLocal();
-					} else {
-						// No sense to send 'leaved' for P2P, it is already should be stopped
-						webrtc.deleteCall(call.id).always(function() {
-							stopLocal();
+							$(document.body).append($complete);
+							if (localOnly) {
+								stopLocal();
+							} else {
+								// No sense to send 'leaved' for P2P, it is already should be stopped
+								webrtc.deleteCall(call.id).always(function() {
+									stopLocal();
+								});
+							}									
+						}
+					};
+
+					var beforeunloadListener = function(e) {
+						stopCall();
+					};
+
+					var unloadListener = function(e) {
+						stopCall();
+					};
+
+					var stopCallWaitClose = function(localOnly) {
+						stopCall(localOnly);
+						setTimeout(function() {
+							window.close();
+						}, 1500);
+					};
+
+					var handleConnectionError = function(logMessage, err) {
+						log.error(logMessage, err, function(ref) {
+							showError(webrtc.message("errorStartingConnection"), webConferencing.errorText(err), ref);	
 						});
-					}									
-				}
-			};
+						// Release a peer connection (and media devices) and delete a call 
+						stopCall();
+						// TODO we also could send a fact of error to other peer(s) to inform them about this peer state,
+						// then others could stop calling (for P2P) or mark a participant disconnected (in group calls).
+					};
 
-			var beforeunloadListener = function(e) {
-				stopCall();
-			};
+					var sendMessage = function(message) {
+						return webConferencing.toCallUpdate(callId, $.extend({
+							"provider" : webrtc.getType(),
+							"sender" : currentUserId,
+							"host" : isOwner
+		  				}, message));
+					};
 
-			var unloadListener = function(e) {
-				stopCall();
-			};
+					var sendHello = function() {
+						// It is a first message send on the call channel by a peer, 
+						// it tells that the end is ready to exchange other information (i.e. accepted the call)
+						// If it will be required to change a host in future, then this message should be send
+						// by a new host with '__all__' content, others should understand this and update their 
+						// owner ID to this sender ID.
+			  			// TODO 15.07.2020: if not owner, then send Hello to all already present in the call
+						return sendMessage({
+							"hello": isOwner ? "__all__" : call.owner.id
+		  				}).done(function() {
+			  				log.debug("Sent Hello (by " + (isOwner ? "owner" : "participant") + ") for " + callId);
+		  				}).fail(function(err) {
+							handleConnectionError("Failed to send Hello for " + callId, err);
+						});
+					};
 
-			var stopCallWaitClose = function(localOnly) {
-				stopCall(localOnly);
-				setTimeout(function() {
-					window.close();
-				}, 1500);
-			};
+					var sendBye = function() {
+						// TODO not used
+						// It is a last message send on the call channel by a peer, 
+						// other side should treat is as call successfully ended and no further action required (don't need delete the call)
+						return sendMessage({
+							"bye": isOwner ? "__all__" : call.owner.id
+		  				}).done(function() {
+			  				log.debug("Sent Bye (by " + (isOwner ? "owner" : "participant") + ") for " + callId);
+		  				}).fail(function(err) {
+							log.error("Failed to send Bye (by " + (isOwner ? "owner" : "participant") + ") for " + callId, err);
+						});
+					};
 
-			var handleConnectionError = function(logMessage, err) {
-				log.error(logMessage, err, function(ref) {
-					showError(webrtc.message("errorStartingConnection"), webConferencing.errorText(err), ref);	
-				});
-				// Release a peer connection (and media devices) and delete a call 
-				stopCall();
-				// TODO we also could send a fact of error to other peer(s) to inform them about this peer state,
-				// then others could stop calling (for P2P) or mark a participant disconnected (in group calls).
-			};
+					var sendOffer = function(localDescription) {
+						return sendMessage({
+							"offer": JSON.stringify(localDescription)
+		  				}).done(function() {
+			  				log.debug("Published offer for " + callId + ": " + JSON.stringify(localDescription));
+						}).fail(function(err) {
+							// TODO May be to retry?
+							handleConnectionError("Failed to send offer for " + callId, err);
+						});
+					};
 
-			var sendMessage = function(message) {
-				return webConferencing.toCallUpdate(callId, $.extend({
-					"provider" : webrtc.getType(),
-					"sender" : currentUserId,
-					"host" : isOwner
-		  		}, message));
-			};
+					var sendAnswer = function(localDescription) {
+						return sendMessage({
+							"answer": JSON.stringify(localDescription)
+		 				}).done(function() {
+			  				log.debug("Published answer for " + callId + ": " + JSON.stringify(localDescription));
+						}).fail(function(err) {
+							handleConnectionError("Failed to send answer for " + callId, err);
+						});
+					};
 
-			var sendHello = function() {
-				// It is a first message send on the call channel by a peer, 
-				// it tells that the end is ready to exchange other information (i.e. accepted the call)
-				// If it will be required to change a host in future, then this message should be send
-				// by a new host with '__all__' content, others should understand this and update their 
-				// owner ID to this sender ID.
-			  	// TODO 15.07.2020: if not owner, then send Hello to all already present in the call
-				return sendMessage({
-					"hello": isOwner ? "__all__" : call.owner.id
-		  		}).done(function() {
-			  		log.debug("Sent Hello (by " + (isOwner ? "owner" : "participant") + ") for " + callId);
-		  		}).fail(function(err) {
-					handleConnectionError("Failed to send Hello for " + callId, err);
-				});
-			};
+					var sendCandidate = function(candidate, number) {
+						return sendMessage({
+							"candidate" : candidate
+		  				}).done(function() {
+			  				log.debug("Published candidate (" + number + ") for " + callId + ": " + JSON.stringify(candidate));
+						}).fail(function(err) {
+							handleConnectionError("Failed to send candidate (" + number + ") for " + callId, err);
+						});
+					};
 
-			var sendBye = function() {
-				// TODO not used
-				// It is a last message send on the call channel by a peer, 
-				// other side should treat is as call successfully ended and no further action required (don't need delete the call)
-				return sendMessage({
-					"bye": isOwner ? "__all__" : call.owner.id
-		  		}).done(function() {
-			  		log.debug("Sent Bye (by " + (isOwner ? "owner" : "participant") + ") for " + callId);
-		  		}).fail(function(err) {
-					log.error("Failed to send Bye (by " + (isOwner ? "owner" : "participant") + ") for " + callId, err);
-				});
-			};
+					// Save user state for audio/video mute in local storage
+					var preferenceKey = function(name) {
+						return currentUserId + "@exo.webconferencing.webrtc." + name;
+					};
 
-			var sendOffer = function(localDescription) {
-				return sendMessage({
-					"offer": JSON.stringify(localDescription)
-		  		}).done(function() {
-			  		log.debug("Published offer for " + callId + ": " + JSON.stringify(localDescription));
-				}).fail(function(err) {
-					// TODO May be to retry?
-					handleConnectionError("Failed to send offer for " + callId, err);
-				});
-			};
+					var savePreference = function(name, value) {
+						try {
+							localStorage.setItem(preferenceKey(name), value);
+						} catch(err) {
+							log.error("Error saving call preference for " + callId, err);
+						}
+					};
 
-			var sendAnswer = function(localDescription) {
-				return sendMessage({
-					"answer": JSON.stringify(localDescription)
-		 		}).done(function() {
-			  		log.debug("Published answer for " + callId + ": " + JSON.stringify(localDescription));
-				}).fail(function(err) {
-					handleConnectionError("Failed to send answer for " + callId, err);
-				});
-			};
-
-			var sendCandidate = function(candidate, number) {
-				return sendMessage({
-					"candidate" : candidate
-		  		}).done(function() {
-			  		log.debug("Published candidate (" + number + ") for " + callId + ": " + JSON.stringify(candidate));
-				}).fail(function(err) {
-					handleConnectionError("Failed to send candidate (" + number + ") for " + callId, err);
-				});
-			};
-
-			// Save user state for audio/video mute in local storage
-			var preferenceKey = function(name) {
-				return currentUserId + "@exo.webconferencing.webrtc." + name;
-			};
-			var savePreference = function(name, value) {
-				try {
-					localStorage.setItem(preferenceKey(name), value);
-				} catch(err) {
-					log.error("Error saving call preference for " + callId, err);
-				}
-			};
-			var getPreference = function(name) {
-				return localStorage.getItem(preferenceKey(name));
-			};
+					var getPreference = function(name) {
+						return localStorage.getItem(preferenceKey(name));
+					};
+					
 					if (initialized) {
 						if (webrtc.isSupportedPlatform()) {
 							log.debug("Call page: " + location.origin + location.pathname);
