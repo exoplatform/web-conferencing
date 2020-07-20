@@ -105,6 +105,7 @@ if (eXo.webConferencing) {
 					// Page closing should end a call properly
 					var pc;
 					var $outgoingRing;
+					var callId = call.id;
 
 					var stopStream = function(stream) {
 						var videoTracks = stream.getVideoTracks();
@@ -171,7 +172,7 @@ if (eXo.webConferencing) {
 								stopLocal();
 							} else {
 								// No sense to send 'leaved' for P2P, it is already should be stopped
-								webrtc.deleteCall(call.id).always(function() {
+								webrtc.deleteCall(callId).always(function() {
 									stopLocal();
 								});
 							}									
@@ -291,7 +292,6 @@ if (eXo.webConferencing) {
 					if (initialized) {
 						if (webrtc.isSupportedPlatform()) {
 							log.debug("Call page: " + location.origin + location.pathname);
-							var callId = call.id;
 							var isGroup = callId.startsWith("g/");
 							if (isGroup) {
 								log.warn("Group calls not supported: " + callId);
