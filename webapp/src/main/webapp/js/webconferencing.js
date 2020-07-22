@@ -2345,8 +2345,6 @@
 			webConferencing.loadStyle("/webconferencing/skin/jquery-ui.theme.min.css");
 			webConferencing.loadStyle("/webconferencing/skin/jquery.pnotify.default.css");
 			webConferencing.loadStyle("/webconferencing/skin/jquery.pnotify.default.icons.css");
-			//webConferencing.loadStyle("/webconferencing/skin/webconferencing.css"); // this CSS will be loaded as portlet skin
-			// FYI eXo.env.client.skin contains skin name, it can be consulted to load a specific CSS
 		} catch(err) {
 			log.error("Error configuring Web Conferencing notifications.", err);
 		}
