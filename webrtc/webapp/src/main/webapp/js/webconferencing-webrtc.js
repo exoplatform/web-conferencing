@@ -17,7 +17,7 @@
 		// Start with default logger, later in configure() we'll get it for the provider.
 		// We know it's webrtc here.
 		var log = webConferencing.getLog("webrtc");
-		//log.trace("> Loading at " + location.origin + location.pathname);
+    //log.trace("> Loading at " + location.origin + location.pathname);
 		
 		function WebrtcProvider() {
 			var NON_WHITESPACE_PATTERN = /\s+/;
@@ -235,123 +235,180 @@
 				var button = $.Deferred();
 				if (self.isSupportedPlatform()) {
 					if (settings && context && context.currentUser) {
-						// XXX Currently we support only P2P calls
-						if (!context.isGroup) {
-							context.details().done(function(target) {
-								// We want have same ID independently on who started the call
-								var callId;
-								if (target.group) {
-									// Group calls runs between all members of a space or chat room 
-									callId = "g/" + (target.type == "chat_room" ? context.roomName : target.id);
-								} else {
-									// Sort IMs to have always the same ID (independently on who started the call)
-									var parts = [context.currentUser.id, target.id];
-									var partsAsc = parts.slice();
-									partsAsc.sort();
-									callId = "p/" + partsAsc.join("@");
-								}
-								var $button = $("<a title='" + message("callStartTip") + "'"
-											+ " class='webrtcCallAction' data-placement='bottom' data-toggle='tooltip'>"
-											+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
-											+ "<span class='callTitle'>" + message("call") + "</span></a>");
-								if (readCallWindow(callId)) {
-									// If call window saved locally: check if the call isn't running and joined by this user and mark the button if so
-									webConferencing.getCall(callId).done(function(call) { // this will call server-side via Comet
-										if (call.state == "started") {
-											for (var pi = 0; pi < call.participants.length; pi++) {
-												var p = call.participants[pi];
-												if (p.id == context.currentUser.id) {
-													if (p.state == "joined") {
-														log.trace(">>> Call " + callId + " already joined by " + context.currentUser.id);
-														setButtonCall($button, callId); // should be removed on stop/leaved event in init()
-														return;
-													}
-												}
-											}											
-										}
-										removeCallWindow(callId);
-									}).fail(function(err) {
-										// we don't show any error at this stage, but let an user to place a new call
-										removeCallWindow(callId);
-										if (err && err.code == "NOT_FOUND_ERROR") {
-											// call not found - OK
-										} else {
-											log.warn("Failed to get call info: " + callId, err); // warn because we continue and let start a call
-										}
-									}); 
-								}
-								$button.click(function() {
-									openCallWindow(callId, function(callWindow) {
-										log.info("Call creating: " + callId + " target: " + target.title);
-										// Open a window for a new call
-										var link = callLink(callId);
-										var callWindowId;
-										if (callWindow) {
-											callWindow.location.href = link;
-										} else {
-											callWindowId = windowId(context.currentUser.id, callId);
-											callWindow = webConferencing.showCallPopup(link, callWindowId);
-										}
-										// Create a call
-										var callInfo = {
-											owner : context.currentUser.id,
-											ownerType : "user",
-											provider : self.getType(),
-											title : target.title,
-											participants : [context.currentUser.id, target.id].join(";") // eXo user ids separated by ';' !
-										};
-										webConferencing.addCall(callId, callInfo).done(function(call) {
-											log.info("Call created: " + callId);
-											// Tell the window to start the call  
-											onCallWindowReady(callWindow).done(function() {
-												log.debug("Call page open: " + callId);
-												callWindow.document.title = message("callTo") + " " + target.title;
-												callWindow.eXo.webConferencing.startCall(call).done(function(state) {
-													log.info("Call " + state + ": " + callId);
+						//if (!context.isGroup) { // TODO cleanup
+						context.details().done(function(target) {
+							// We want have same ID independently on who started the call
+							var callId;
+							if (target.group) {
+								// Group calls runs between all members of a space or chat room 
+								callId = "g/" + (target.type == "chat_room" ? context.roomName : target.id);
+							} else {
+								// Sort IMs to have always the same ID (independently on who started the call)
+								var parts = [context.currentUser.id, target.id];
+								var partsAsc = parts.slice();
+								partsAsc.sort();
+								callId = "p/" + partsAsc.join("@");
+							}
+							var $button = $("<a title='" + message("callStartTip") + "'"
+										+ " class='webrtcCallAction' data-placement='bottom' data-toggle='tooltip'>"
+										+ "<i class='uiIcon callButtonIconVideo uiIconLightGray'></i>"
+										+ "<span class='callTitle'>" + message("call") + "</span></a>");
+							if (readCallWindow(callId)) {
+								// If call window saved locally: check if the call isn't running and joined by this user and mark the button if so
+								webConferencing.getCall(callId).done(function(call) { // this will call server-side via Comet
+									if (call.state == "started") {
+										for (var pi = 0; pi < call.participants.length; pi++) {
+											var p = call.participants[pi];
+											if (p.id == context.currentUser.id) {
+												if (p.state == "joined") {
+													log.trace(">>> Call " + callId + " already joined by " + context.currentUser.id);
 													setButtonCall($button, callId); // should be removed on stop/leaved event in init()
-													if (callWindowId) {
-														saveCallWindow(callId, callWindowId);
-													}
-												}).fail(function(err) {
-													log.showError("Call start failed: " + callId, err, message("errorStartingCall"));
-												});
-											}).fail(function(err) {
-												log.showError("Call page failed: " + callId, err, message("errorOpeningCall"));
-											});
-										}).fail(function(err) {
-											log.showError("Call creation failed: " + callId, err, message("errorStartingCall"), 
-														message("errorAddCall") + ". " + message("refreshTryAgainContactAdmin"));
-											setTimeout(function() {
-												// Let error window to be open a bit to see its state/error/etc - for admins/devs
-												callWindow.close();
-											}, 2500);
-										});
-									});
+													return;
+												}
+											}
+										}											
+									}
+									removeCallWindow(callId);
+								}).fail(function(err) {
+									// we don't show any error at this stage, but let an user to place a new call
+									removeCallWindow(callId);
+									if (err && err.code == "NOT_FOUND_ERROR") {
+										// call not found - OK
+									} else {
+										log.warn("Failed to get call info: " + callId, err); // warn because we continue and let start a call
+									}
+								}); 
+							}
+							$button.click(function() {
+							  openCallWindow(callId, function(callWindow) {
+							    var owner = target.group ? target.id : context.currentUser.id;
+							    var participants = target.group ? target.members : [context.currentUser.id, target.id];
+							    var callInfo = {
+                    owner : owner,
+                    ownerType : target.type,
+                    provider : self.getType(),
+                    title : target.title,
+                    participants : participants.join(";") // eXo user ids separated by ';' !
+                  };
+                  webConferencing.getCall(callId).done(function(call) { // this will call server-side via Comet
+                    // Call exists, we need join it
+                    log.info("Call joining: " + callId + " target: " + target.title);
+                    // TODO copy-pasted from creation
+                    var link = callLink(callId);
+                    var callWindowId;
+                    if (callWindow) {
+                      callWindow.location.href = link;
+                    } else {
+                      callWindowId = windowId(context.currentUser.id, callId);
+                      callWindow = webConferencing.showCallPopup(link, callWindowId);
+                    }
+                    // Join a call
+                    webConferencing.updateCall(callId, callInfo).done(function(call) {
+                      log.info("Call joined: " + callId);
+                      // TODO copy-pasted
+                      // Tell the window to start-join the call  
+                      onCallWindowReady(callWindow).done(function() {
+                        log.debug("Call page open: " + callId);
+                        callWindow.document.title = message("callTo") + " " + target.title;
+                        callWindow.eXo.webConferencing.startCall(call).done(function(state) {
+                          log.info("Call " + state + ": " + callId);
+                          setButtonCall($button, callId); // should be removed on stop/leaved event in init()
+                          if (callWindowId) {
+                            saveCallWindow(callId, callWindowId);
+                          }
+                        }).fail(function(err) {
+                          log.showError("Call start failed: " + callId, err, message("errorStartingCall"));
+                        });
+                      }).fail(function(err) {
+                        log.showError("Call page failed: " + callId, err, message("errorOpeningCall"));
+                      });
+                    }).fail(function(err) {
+                      log.info("Call join failed: " + callId + " target: " + target.title, err);
+                      log.showError("Call join failed: " + callId, err, message("errorJoiningCall"), 
+                          message("errorJoinCall") + ". " + message("refreshTryAgainContactAdmin"));
+                      setTimeout(function() {
+                        // Let error window to be open a bit to see its state/error/etc - for admins/devs
+                        callWindow.close();
+                      }, 2500);
+                    });
+							    }).fail(function(err) {
+	                  if (err && err.code == "NOT_FOUND_ERROR") {
+	                    // call not found - create an one
+	                    log.info("Call creating: " + callId + " target: " + target.title);
+	                    // Open a window for a new call
+	                    var link = callLink(callId);
+	                    var callWindowId;
+	                    if (callWindow) {
+	                      callWindow.location.href = link;
+	                    } else {
+	                      callWindowId = windowId(context.currentUser.id, callId);
+	                      callWindow = webConferencing.showCallPopup(link, callWindowId);
+	                    }
+	                    // Create a call
+	                    //var callInfo = {
+	                    // owner : context.currentUser.id,
+	                    //  ownerType : "user",
+	                    //  provider : self.getType(),
+	                    //  title : target.title,
+	                    //  participants : [context.currentUser.id, target.id].join(";") // eXo user ids separated by ';' !
+	                    //};
+	                    webConferencing.addCall(callId, callInfo).done(function(call) {
+	                      log.info("Call created: " + callId);
+	                      call.caller = context.currentUser;
+	                      // Tell the window to start the call  
+	                      onCallWindowReady(callWindow).done(function() {
+	                        log.debug("Call page open: " + callId);
+	                        callWindow.document.title = message("callTo") + " " + target.title;
+	                        callWindow.eXo.webConferencing.startCall(call).done(function(state) {
+	                          log.info("Call " + state + ": " + callId);
+	                          setButtonCall($button, callId); // should be removed on stop/leaved event in init()
+	                          if (callWindowId) {
+	                            saveCallWindow(callId, callWindowId);
+	                          }
+	                        }).fail(function(err) {
+	                          log.showError("Call start failed: " + callId, err, message("errorStartingCall"));
+	                        });
+	                      }).fail(function(err) {
+	                        log.showError("Call page failed: " + callId, err, message("errorOpeningCall"));
+	                      });
+	                    }).fail(function(err) {
+	                      log.showError("Call creation failed: " + callId, err, message("errorStartingCall"), 
+	                            message("errorAddCall") + ". " + message("refreshTryAgainContactAdmin"));
+	                      setTimeout(function() {
+	                        // Let error window to be open a bit to see its state/error/etc - for admins/devs
+	                        callWindow.close();
+	                      }, 2500);
+	                    });
+	                  } else {
+	                    log.error("Failed to get call info: " + callId, err);
+	                  }
+	                });
 								});
-                setTimeout(function(){
-									$button.filter(".webrtcCallAction.preferred").tooltip();
-								}, 200)
-								// Assign target ID to the button for later use on started event in init()
-								$button.data("targetid", target.id);
-								setTimeout(function() {
-									// Wait for promise done handlers outside and enable tooltip for added by them preferred (default) button
-									$button.filter(".webrtcCallAction.preferred").tooltip();
-								}, 200);
-								button.resolve($button);
-							}).fail(function(err) {
-								if (err && err.code == "NOT_FOUND_ERROR") {
-									button.reject(err.message);
-								} else {
-									var msg = "Error getting context details";
-									log.error(msg, err);
-									button.reject(msg, err);
-								}
 							});
-						} else {
-							var msg = "Group calls not supported";
-							log.trace(msg);
-							button.reject(msg);
-						}
+              setTimeout(function(){
+								$button.filter(".webrtcCallAction.preferred").tooltip();
+							}, 200)
+							// Assign target ID to the button for later use on started event in init()
+							$button.data("targetid", target.id);
+							setTimeout(function() {
+								// Wait for promise done handlers outside and enable tooltip for added by them preferred (default) button
+								$button.filter(".webrtcCallAction.preferred").tooltip();
+							}, 200);
+							button.resolve($button);
+						}).fail(function(err) {
+							if (err && err.code == "NOT_FOUND_ERROR") {
+								button.reject(err.message);
+							} else {
+								var msg = "Error getting context details";
+								log.error(msg, err);
+								button.reject(msg, err);
+							}
+						});
+						//} else {
+						//	var msg = "Group calls not supported";
+						//	log.trace(msg);
+						//	button.reject(msg);
+						//}
 					} else {
 						var msg = "Not configured or empty context";
 						log.error(msg);

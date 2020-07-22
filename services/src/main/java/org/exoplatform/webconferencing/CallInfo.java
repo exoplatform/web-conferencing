@@ -43,7 +43,7 @@ public class CallInfo {
 
   /** The owner. */
   protected final IdentityInfo  owner;
-
+  
   /** The provider type. */
   protected final String        providerType;
 

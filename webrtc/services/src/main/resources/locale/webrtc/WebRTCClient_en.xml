@@ -16,9 +16,11 @@
     <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
     <callStopped>The call was stopped</callStopped>
     <errorAddCall>The call could not be started due to a server error</errorAddCall>
+    <errorUpdateCall>The call could not be updated due to a server error</errorUpdateCall>
     <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
     <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
     <errorStartingCall>Error starting call</errorStartingCall>
+    <errorJoiningCall>Error joining call</errorJoiningCall>
     <errorIncomingCall>Incoming call error</errorIncomingCall>
     <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
     <errorReadCall>Error reading call information from the server</errorReadCall>
