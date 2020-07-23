@@ -5,6 +5,8 @@ if (eXo.webConferencing) {
 	(function(webConferencing) {
 		"use strict";
 		
+		const ALL = "__all__";
+		
 		/** For debug logging. */
 		var log = webConferencing.getLog("webrtc").prefix("call");
 		// log.trace("> Loading at " + location.origin + location.pathname);
@@ -109,9 +111,29 @@ if (eXo.webConferencing) {
 							// Page closing should end a call properly
 		          var pc;
 		          var callId = call.id;
+		          var isGroup = callId.startsWith("g/");
 		          var currentUserId = webConferencing.getUser().id;
 		          // call.caller will present only on for the caller, joining participants will not have it 
 		          var isCaller = call.caller ? true : false; // TODO 
+		          
+		          $("#webrtc-call-starting").hide();
+              $("#webrtc-call-container").show();
+              var $convo = $("#webrtc-call-conversation");
+              var $title = $("#webrtc-call-title > h1");
+              $title.text(call.title);
+              
+              var $videos = $convo.find("#videos");
+              var $remoteVideo = $videos.find("#remote-video");
+              var remoteVideo = $remoteVideo.get(0);
+              var $localVideo = $videos.find("#local-video");
+              var localVideo = $localVideo.get(0);
+              var $miniVideo = $videos.find("#mini-video");
+              var miniVideo = $miniVideo.get(0);
+              
+              var $controls = $convo.find("#controls");
+              $controls.addClass("active");
+              $controls.show(); // TODO apply show/hide on timeout
+              var $hangupButton = $controls.find("#hangup");
 
 		          var stopStream = function(stream) {
 		            var videoTracks = stream.getVideoTracks();
@@ -125,11 +147,20 @@ if (eXo.webConferencing) {
 		          };
 		          
 		          var $outgoingRing;
+              var playOutgoingRingtone = function() {
+                $outgoingRing = $("<audio loop autoplay style='display: none;'>" 
+                      + "<source src='/webrtc/audio/echo.mp3' type='audio/mpeg'>"  
+                      + "Your browser does not support the audio element.</audio>");
+                $(document.body).append($outgoingRing);
+              };
+              var stopOutgoingRingtone = function() {
+                if ($outgoingRing) {
+                  $outgoingRing.remove();
+                }
+              };
+              
 		          var stopLocal = function() {
-		            if ($outgoingRing) {
-		              $outgoingRing.remove();
-		            }
-
+		            stopOutgoingRingtone();
 		            showStopped(webrtc.message("callStopped"));
 		        
 		            var localStream = localVideo.srcObject;
@@ -138,29 +169,29 @@ if (eXo.webConferencing) {
 		              stopStream(localStream);
 		            }
 		        
-		            if (pc) {
-		              try {
-		                // TODO in FF it warns:
-		                // RTCPeerConnection.getLocalStreams/getRemoteStreams are deprecated. Use
-		                // RTCPeerConnection.getSenders/getReceivers instead.
-		                // But for Chrome it's seems a single working solution
-		                var localStreams = pc.getLocalStreams();
-		                for (var i = 0; i < localStreams.length; ++i) {
-		                  stopStream(localStreams[i]);
-		                }
-		                var remoteStreams = pc.getRemoteStreams();
-		                for (var i = 0; i < remoteStreams.length; ++i) {
-		                  stopStream(remoteStreams[i]);
-		                }
-		              } catch(e) {
-		                log.warn("Failed to stop peer streams", e);
-		              }
-		              try {
-		                pc.close();
-		              } catch(e) {
-		                log.warn("Failed to close peer connection", e);
-		              }                     
-		            }
+//		            if (pc) {
+//		              try {
+//		                // TODO in FF it warns:
+//		                // RTCPeerConnection.getLocalStreams/getRemoteStreams are deprecated. Use
+//		                // RTCPeerConnection.getSenders/getReceivers instead.
+//		                // But for Chrome it's seems a single working solution
+//		                var localStreams = pc.getLocalStreams();
+//		                for (var i = 0; i < localStreams.length; ++i) {
+//		                  stopStream(localStreams[i]);
+//		                }
+//		                var remoteStreams = pc.getRemoteStreams();
+//		                for (var i = 0; i < remoteStreams.length; ++i) {
+//		                  stopStream(remoteStreams[i]);
+//		                }
+//		              } catch(e) {
+//		                log.warn("Failed to stop peer streams", e);
+//		              }
+//		              try {
+//		                pc.close();
+//		              } catch(e) {
+//		                log.warn("Failed to close peer connection", e);
+//		              }                     
+//		            }
 		            window.removeEventListener("beforeunload", beforeunloadListener);
 		            window.removeEventListener("unload", unloadListener);
 		          };
@@ -179,10 +210,17 @@ if (eXo.webConferencing) {
 		              if (localOnly) {
 		                stopLocal();
 		              } else {
-		                // No sense to send 'leaved' for P2P, it is already should be stopped
-		                webrtc.deleteCall(callId).always(function() {
-		                  stopLocal();
-		                });
+		                if (isGroup) {
+	                    // Send 'leaved' for group call 
+	                    webrtc.leavedCall(callId).always(function() {
+	                      stopLocal();
+	                    });
+	                  } else {
+	                    // No sense to send 'leaved' for one-on-one, it is already should be stopped
+	                    webrtc.deleteCall(callId).always(function() {
+	                      stopLocal();
+	                    });
+	                  }
 		              }                 
 		            }
 		          };
@@ -197,9 +235,9 @@ if (eXo.webConferencing) {
 
 		          var stopCallWaitClose = function(localOnly) {
 		            stopCall(localOnly);
-		            setTimeout(function() {
-		              window.close();
-		            }, 1500);
+	              setTimeout(function() {
+                  window.close();
+                }, 1500);		              
 		          };
 
 		          var handleConnectionError = function(logMessage, err) {
@@ -220,12 +258,11 @@ if (eXo.webConferencing) {
 		              }, message));
 		          };
 
-		          var sendHello = function() {
+		          var sendHello = function(userId) {
 		            // It is a first message send on the call channel by a peer,
 		            // it tells that the peer is ready to exchange other information (i.e. accepted the call)
-		            // TODO 15.07.2020: if not caller, then send Hello to all participants already present in the call
 		            return sendMessage({
-		              "hello": isCaller ? "__all__" : call.owner.id
+		              "hello": userId ? userId : ALL
 		              }).done(function() {
 		                log.debug("Sent Hello (by " + (isCaller ? "caller" : "participant") + ") for " + callId);
 		              }).fail(function(err) {
@@ -238,7 +275,7 @@ if (eXo.webConferencing) {
 		            // It is a last message send on the call channel by a peer,
 		            // other side should treat is as call successfully ended and no further action required (don't need delete the call)
 		            return sendMessage({
-		              "bye": isCaller ? "__all__" : call.owner.id
+		              "bye": isCaller ? ALL : call.owner.id // TODO
 		              }).done(function() {
 		                log.debug("Sent Bye (by " + (isCaller ? "caller" : "participant") + ") for " + callId);
 		              }).fail(function(err) {
@@ -246,9 +283,10 @@ if (eXo.webConferencing) {
 		            });
 		          };
 
-		          var sendOffer = function(localDescription) {
+		          var sendOffer = function(localDescription, toUser) {
 		            return sendMessage({
-		              "offer": JSON.stringify(localDescription)
+		              "offer": JSON.stringify(localDescription),
+		              "receiver" : toUser ? toUser : ALL 
 		              }).done(function() {
 		                log.debug("Published offer for " + callId + ": " + JSON.stringify(localDescription));
 		            }).fail(function(err) {
@@ -257,9 +295,10 @@ if (eXo.webConferencing) {
 		            });
 		          };
 
-		          var sendAnswer = function(localDescription) {
+		          var sendAnswer = function(localDescription, toUser) {
 		            return sendMessage({
-		              "answer": JSON.stringify(localDescription)
+		              "answer": JSON.stringify(localDescription),
+		              "receiver" : toUser ? toUser : ALL 
 		            }).done(function() {
 		                log.debug("Published answer for " + callId + ": " + JSON.stringify(localDescription));
 		            }).fail(function(err) {
@@ -267,9 +306,10 @@ if (eXo.webConferencing) {
 		            });
 		          };
 
-		          var sendCandidate = function(candidate, number) {
+		          var sendCandidate = function(candidate, number, toUser) {
 		            return sendMessage({
-		              "candidate" : candidate
+		              "candidate" : candidate,
+		              "receiver" : toUser ? toUser : ALL
 		              }).done(function() {
 		                log.debug("Published candidate (" + number + ") for " + callId + ": " + JSON.stringify(candidate));
 		            }).fail(function(err) {
@@ -293,26 +333,7 @@ if (eXo.webConferencing) {
 		          var getPreference = function(name) {
 		            return localStorage.getItem(preferenceKey(name));
 		          };
-							
-							$("#webrtc-call-starting").hide();
-              $("#webrtc-call-container").show();
-              var $convo = $("#webrtc-call-conversation");
-              var $title = $("#webrtc-call-title > h1");
-              $title.text(call.title);
-              
-              var $videos = $convo.find("#videos");
-              var $remoteVideo = $videos.find("#remote-video");
-              var remoteVideo = $remoteVideo.get(0);
-              var $localVideo = $videos.find("#local-video");
-              var localVideo = $localVideo.get(0);
-              var $miniVideo = $videos.find("#mini-video");
-              var miniVideo = $miniVideo.get(0);
-              
-              var $controls = $convo.find("#controls");
-              $controls.addClass("active");
-              $controls.show(); // TODO apply show/hide on timeout
-              var $hangupButton = $controls.find("#hangup");
-              
+		          
               window.addEventListener("beforeunload", beforeunloadListener);
               window.addEventListener("unload", unloadListener);
               
@@ -331,6 +352,8 @@ if (eXo.webConferencing) {
                       stopCall(true);
                     }
                   }
+                } else if (update.eventType == "call_leaved") {
+                  // TODO remove used media from UI here, or RTC connection will fire pc.onremovestream?
                 }
               }, function(err) {
                 // Otherwise, in case of error subscribing user updates and remote call stopping
@@ -397,10 +420,6 @@ if (eXo.webConferencing) {
                   }
                 }
                 
-                // log.trace("WebRTC configuration: " + JSON.stringify(rtcConfig));
-                log.trace("Creating RTCPeerConnection");
-                pc = new RTCPeerConnection(rtcConfig);
-                
                 // Constraints required for offer
                 var sdpConstraints = {
                   "offerToReceiveAudio": true, 
@@ -411,39 +430,287 @@ if (eXo.webConferencing) {
                   sdpConstraints = {}; // XXX in fact even undefined doesn't fit, need call without a parameter
                 }
                 
-                var subscribed = $.Deferred(); // subscription happens once per a call
-                var negotiation = $.Deferred();
-                var connection = $.Deferred();
+                var localMedia = $.Deferred(); // local media collected once per a call
                 
-                // Add peer listeners for connection flow
-                // For debug purpose: count local candidates to logs readability
-                var localCandidateCnt = 0;
-                pc.onicecandidate = function (event) {
-                  // This will happen when browser will be ready to exchange peers setup
-                  var candidateNumb = ++localCandidateCnt;
-                  log.debug("ICE candidate (" + candidateNumb + ") ready for " + callId);
+                function UserPeer(userId) {
+                  var self = this;
+                  
+                  var connection = $.Deferred();
+                  
                   connection.then(function() {
-                    if (event.candidate) {
-                      sendCandidate(event.candidate, candidateNumb);
-                    } else {
-                      // else All ICE candidates have been sent. ICE gathering has finished.
-                      // Send empty candidate as a sign of finished ICE gathering.
-                      sendCandidate({}, candidateNumb).done(function() {
-                        log.debug("All ICE candidates (" + candidateNumb + ") have been sent");
+                    // Stop outgoing ringtone when finished negotiating
+                    stopOutgoingRingtone();
+                  });
+                  
+                  var pc = new RTCPeerConnection(rtcConfig);
+                  
+                  // log.trace("WebRTC configuration: " + JSON.stringify(rtcConfig));
+                  log.trace("Creating RTCPeerConnection for " + userId);
+                  
+                  // Once remote stream arrives, show it in the remote video element
+                  // TODO it's modern way of WebRTC stream addition, but it doesn't work in Chrome (of 2018)
+                  // pc.ontrack = function(event) {
+                  // log.trace(">> ontrack for " + callId);
+                    // $remoteVideo.get(0).srcObject = event.streams[0];
+                  // };
+                  pc.onaddstream = function (event) { 
+                    // Remote video added: switch local to a mini and show the remote as main
+                    log.debug("Added stream for " + callId);
+                    // Stop local
+                    localVideo.pause();
+                    $localVideo.removeClass("active");
+                    $localVideo.hide();
+                    
+                    // Show remote
+                    remoteVideo.srcObject = event.stream;
+                    $remoteVideo.addClass("active");
+                    $remoteVideo.show();
+                    
+                    // Show local in mini
+                    miniVideo.srcObject = localVideo.srcObject;
+                    localVideo.srcObject = null;
+                    $miniVideo.addClass("active");
+                    $miniVideo.show();
+                    
+                    //
+                    $videos.addClass("active");
+                  };
+                  
+                  pc.onremovestream = function(event) {
+                    // TODO check the event stream URL before removal?
+                    log.debug("Removed stream for " + callId);
+                    // Stop remote
+                    remoteVideo.pause();
+                    $remoteVideo.removeClass("active");
+                    $remoteVideo.hide();
+                    remoteVideo.srcObject = null;
+                    
+                    // Show local
+                    localVideo.srcObject = miniVideo.srcObject;
+                    $localVideo.addClass("active");
+                    
+                    // Hide mini
+                    miniVideo.srcObject = null;
+                    $miniVideo.removeClass("active");
+                    $miniVideo.hide();
+                    
+                    $videos.removeClass("active");
+                  };
+                  
+                  // The 'negotiationneeded' event trigger offer generation
+                  pc.onnegotiationneeded = function () {
+                    // XXX Jun 4 2018: it's a workaround for Chrome (v66+) which produces several onnegotiationneeded events for
+                    // single
+                    // added stream (seems an event per a track in the stream):
+                    // See https://bugs.chromium.org/p/chromium/issues/detail?id=740501
+                    // TODO we also would postpone next event handling until the current one will be done and release it in
+                    // always() handlers below, but this way we need implement 
+                    // 1) real reetrancy locking in JS 2) adapt RTC flow to apply
+                    // several offers/answers durinbg a single call.
+                    // This will be fired after adding a local media stream and browser readiness
+                    // Ready to join the call: say hello to others
+                    log.debug("Negotiation starting (by " + (isCaller ? "caller" : "participant") + ") for " + userId + "@" + callId);
+                    log.trace("Creating offer for " + callId);
+                    // TODO we could save the offer to use for all next peers
+                    pc.createOffer().then(function(desc) { // sdpConstraints
+                      log.trace("Setting local description for " + userId + "@" + callId);
+                      pc.setLocalDescription(desc).then(function() {
+                        log.trace("Sending offer for " + userId + "@" + callId);
+                        sendOffer(pc.localDescription, userId);
+                      }).catch(function(err) {
+                        handleConnectionError("Failed to set local description for " + userId + "@" + callId, err);
                       });
+                    }).catch(function(err) {
+                      handleConnectionError("Failed to create an offer for " + userId + "@" + callId, err);
+                    });
+                  };
+                  
+                  // Add peer listeners for connection flow
+                  // For debug purpose: count local candidates to logs readability
+                  var localCandidateCnt = 0;
+                  pc.onicecandidate = function (event) {
+                    // This will happen when browser will be ready to exchange peers setup
+                    var candidateNumb = ++localCandidateCnt;
+                    log.debug("ICE candidate (" + candidateNumb + ") ready for " + userId + "@" + callId);
+                    connection.then(function() {
+                      if (event.candidate) {
+                        sendCandidate(event.candidate, candidateNumb);
+                      } else {
+                        // else All ICE candidates have been sent. ICE gathering has finished.
+                        // Send empty candidate as a sign of finished ICE gathering.
+                        sendCandidate({}, candidateNumb).done(function() {
+                          log.debug("All ICE candidates (" + candidateNumb + ") have been sent for " + userId);
+                        });
+                      }
+                    });
+                  };
+                  
+                  this.getUserId = function() {
+                    return userId;
+                  };
+                  
+                  this.addCandidate = function(candidate, candidateNumb) {
+                    connection.then(function() {
+                      log.trace("Creating candidate (" + candidateNumb + ") for " + userId + "@" + callId);
+                      var iceCandidate;
+                      // Check if the end of a generation of candidates indicated:
+                      // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/icecandidate_event
+                      // When an ICE negotiation session runs out of candidates to propose for a given RTCIceTransport,
+                      // it has completed gathering for a generation of candidates.
+                      // That this has occurred is indicated by an icecandidate event whose candidate string is empty ("").
+                      // Peter's note: But this empty string will be send only by Firefox as for Apr 14, 2020. Tested on FF
+                      // 75, Chrome 81, Edge 44/18.
+                      // And Edge (44/18) will fail if add such candidate - we need add null instead, see below.
+                      // We send all candidates to the peers and *here* we make a decision:
+                      if (isEdge && typeof(candidate.candidate) === "string" && candidate.candidate.length === 0) {
+                        // XXX MS Edge requires special way of end-of-candidates informing
+                        // https://stackoverflow.com/questions/57340034/webrtc-adapter-js-giving-addremotecandidate-error-while-connecting-audio-call
+                        // https://stackoverflow.com/questions/51641174/how-do-i-indicate-the-end-of-remote-candidates
+                        iceCandidate = new RTCIceCandidate(null);
+                      } else {
+                        // In other cases we let the browser to handle the candidate AS IS
+                        iceCandidate = new RTCIceCandidate(candidate);                               
+                      }
+                      log.trace("Adding candidate (" + candidateNumb + ") for " + userId + "@" + callId);
+                      pc.addIceCandidate(iceCandidate).then(function() {
+                        log.debug("Added candidate (" + candidateNumb + ") for " + userId + "@" + callId);
+                      }).catch(function(err) {
+                        handleConnectionError("Failed to add candidate (" + candidateNumb + ") for " + userId + "@" + callId, err);
+                      });                           
+                    });
+                  };
+                  
+                  this.addOffer = function(offer) {
+                    // Add a remove offer
+                    try {
+                      offer = JSON.parse(offer);
+                      if (isEdge) {
+                        offer = new RTCSessionDescription(offer);
+                      }
+                      log.trace("Setting remote description (offer) for " + userId + "@" + callId);
+                      pc.setRemoteDescription(offer).then(function() {
+                        // If we received an offer, we need to answer
+                        if (pc.remoteDescription.type == "offer") {
+                          // Add local stream to the connection and then build an answer 
+                          self.start().then(function() {
+                            log.trace("Creating answer for " + callId);
+                            pc.createAnswer().then(function(desc) { // sdpConstraints?
+                              log.trace("Setting local description for " + callId);
+                              pc.setLocalDescription(desc).then(function() {
+                                log.trace("Sending answer for " + callId);
+                                sendAnswer(pc.localDescription, userId).then(function() {
+                                  connection.resolve().then(function() {
+                                    // Participant ready to exchange ICE candidates
+                                    log.debug("Started exchange network information with peers for " + userId + "@" + callId);
+                                  });
+                                });
+                              }).catch(function(err) {
+                                handleConnectionError("Failed to set local description (answer) for " + userId + "@" + callId, err);
+                              });
+                            }).catch(function(err) {
+                              handleConnectionError("Failed to create an answer for " + userId + "@" + callId, err);
+                            });
+                          });
+                        } else {
+                          // TODO need show something to an user or it's normal behaviour (part of a flow)?
+                          log.error("Remote description type IS NOT 'offer' BUT '" + pc.remoteDescription.type 
+                                + "'. Call state not defined for " + userId + "@" + callId);
+                        }
+                      }).catch(function(err) {
+                        handleConnectionError("Failed to set offer (remote description) for " + userId + "@" + callId, err);
+                      });
+                    } catch(err) {
+                      handleConnectionError("Error processing offer for " + userId + "@" + callId, err);
                     }
-                  });
-                };
+                  };
+                  
+                  this.addAnswer = function(answer) {
+                    // Add a remove answer
+                    try {
+                      answer = JSON.parse(answer);
+                      if (isEdge) {
+                        answer = new RTCSessionDescription(answer);
+                      }
+                      log.trace("Setting answer (remote description) for " + userId + "@" + callId);
+                      pc.setRemoteDescription(answer).then(function() {
+                        log.trace("Apllied answer (remote description) for " + userId + "@" + callId);
+                        // Resolve connection (network) exchange only from here
+                        connection.resolve().then(function() {
+                          // Caller ready to exchange ICE candidates
+                          log.debug("Started exchange network information with peers for " + userId + "@" + callId);
+                        });                          
+                      }).catch(function(err) {
+                        handleConnectionError("Failed to set answer (remote description) for " + userId + "@" + callId, err);
+                      });
+                    } catch(err) {
+                      handleConnectionError("Error processing answer for " + userId + "@" + callId, err);
+                    }
+                  };
+                  
+                  this.start = function() {
+                    // add local stream right now
+                    var process = $.Deferred();
+                    localMedia.then(function(localStream) {
+                      log.debug("Adding local (" + (isCaller ? "caller" : "participant") + ") stream for " + userId + "@" + callId);
+                      try {
+                        pc.addStream(localStream); // this may cause onnegotiationneeded event if no offer present
+                        // XXX It's deprecated way but Chrome (prior ~ v66) works using it
+                        // localStream.getTracks().forEach(function(track) {
+                        // pc.addTrack(track, localStream);
+                        // });
+                        process.resolve();
+                      } catch(err) {
+                        log.error("Failed to add local stream for " + callId, err);
+                        process.reject(err);
+                      }
+                      log.debug("Started exchange (" + (isCaller ? "caller" : "participant") + ") media information for " + callId);
+                      connection.then(function() {
+                        // It's still not fully 'joined' user here, RTC only starts exchange ICE candidates at this point
+                        // and actual call will start in few seconds (depends on network and other factors),
+                        // User may also fail to exchange candidates and media stream will not be established -
+                        // it will look like the call not started to an user.
+                        // If we want join the call after actual media streams will be obtained we need do more advanced
+                        // logic and look for All candidates will be sent, then check if all media streams added.
+                        webrtc.joinedCall(callId);
+                      });
+                    });
+                    return process.promise();
+                  };
+                  
+                  this.close = function() {
+                    connection.then(function() {
+                      try {
+                        // TODO in FF it warns:
+                        // RTCPeerConnection.getLocalStreams/getRemoteStreams are deprecated. Use
+                        // RTCPeerConnection.getSenders/getReceivers instead.
+                        // But for Chrome it's seems a single working solution
+                        var localStreams = pc.getLocalStreams();
+                        for (var i = 0; i < localStreams.length; ++i) {
+                          stopStream(localStreams[i]);
+                        }
+                        var remoteStreams = pc.getRemoteStreams();
+                        for (var i = 0; i < remoteStreams.length; ++i) {
+                          stopStream(remoteStreams[i]);
+                        }
+                      } catch(e) {
+                        log.warn("Failed to stop peer streams", e);
+                      }
+                      try {
+                        pc.close();
+                      } catch(e) {
+                        log.warn("Failed to close peer connection", e);
+                      }
+                      
+                      // We assume it's a Bye from the caller or other party to us: ends the call locally 
+                      // and close the window for one-on-one
+                      stopCall(true);
+                      log.debug("Stoped (" + (isCaller ? "caller" : "participant") + " call for " + callId);
+                    });
+                  };
+                }
                 
-                var playOutgoingRingtone = function() {
-                  $outgoingRing = $("<audio loop autoplay style='display: none;'>" 
-                        + "<source src='/webrtc/audio/echo.mp3' type='audio/mpeg'>"  
-                        + "Your browser does not support the audio element.</audio>");
-                  $(document.body).append($outgoingRing);
-                  negotiation.then(function() {
-                    $outgoingRing.remove();
-                  });
-                };
+                // Active peers
+                var peers = {};
                 
                 // Subscribe to the call updates
                 // For debug purpose: count remote candidates to logs readability
@@ -451,148 +718,87 @@ if (eXo.webConferencing) {
                 var listener = webConferencing.onCallUpdate(callId, function(message) {
                   if (message.provider == webrtc.getType()) {
                     if (message.sender != currentUserId) {
+                      var peer = peers[message.sender];
                       if (message.candidate) {
-                        // ICE candidate of remote party (can happen several times)
-                        var candidateNumb = ++remoteCandidateCnt;
-                        var candidateStr = JSON.stringify(message.candidate);
-                        log.debug("Received candidate (" + candidateNumb + ") for " + callId + ": " + candidateStr);
-                        var hasCandidate = Object.getOwnPropertyNames(message.candidate).length > 0;
-                        if (hasCandidate) {
-                          connection.then(function() {
-                            log.trace("Creating candidate (" + candidateNumb + ") for " + callId);
-                            var candidate;
-                            // Check if the end of a generation of candidates indicated:
-                            // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/icecandidate_event
-                            // When an ICE negotiation session runs out of candidates to propose for a given RTCIceTransport,
-                            // it has completed gathering for a generation of candidates.
-                            // That this has occurred is indicated by an icecandidate event whose candidate string is empty ("").
-                            // Peter's note: But this empty string will be send only by Firefox as for Apr 14, 2020. Tested on FF
-                            // 75, Chrome 81, Edge 44/18.
-                            // And Edge (44/18) will fail if add such candidate - we need add null instead, see below.
-                            // We send all candidates to the peers and *here* we make a decision:
-                            if (isEdge && typeof(message.candidate.candidate) === "string" && message.candidate.candidate.length === 0) {
-                              // XXX MS Edge requires special way of end-of-candidates informing
-                              // https://stackoverflow.com/questions/57340034/webrtc-adapter-js-giving-addremotecandidate-error-while-connecting-audio-call
-                              // https://stackoverflow.com/questions/51641174/how-do-i-indicate-the-end-of-remote-candidates
-                              candidate = new RTCIceCandidate(null);
+                        if (message.receiver == currentUserId) {
+                          // ICE candidate of remote party (can happen several times), 
+                          // it should be addressed to a particular receiver
+                          var candidateNumb = ++remoteCandidateCnt;
+                          var candidateStr = JSON.stringify(message.candidate);
+                          log.debug("Received candidate (" + candidateNumb + ") for " + callId + ": " + candidateStr);
+                          var hasCandidate = Object.getOwnPropertyNames(message.candidate).length > 0;
+                          if (hasCandidate) {
+                            if (peer) {
+                              peer.addCandidate(message.candidate);
                             } else {
-                              // In other cases we let the browser to handle the candidate AS IS
-                              candidate = new RTCIceCandidate(message.candidate);                               
+                              log.warn("Unexpected candidate received but peer doesn't exist for " + callId);
                             }
-                            log.trace("Adding candidate (" + candidateNumb + ") for " + callId);
-                            pc.addIceCandidate(candidate).then(function() {
-                              log.debug("Added candidate (" + candidateNumb + ") for " + callId);
-                            }).catch(function(err) {
-                              handleConnectionError("Failed to add candidate (" + candidateNumb + ") for " + callId, err);
-                            });                           
-                          });
-                        }
-                        if (!hasCandidate) {
-                          log.info("Call connected (added " + (candidateNumb - 1) + " ICE candidates): " + callId);
+                          } else {
+                            log.info("Call connected (added " + (candidateNumb - 1) + " ICE candidates): " + callId);
+                          }
                         }
                       } else if (message.offer) {
-                        log.debug("Received offer for " + callId + ": " + JSON.stringify(message.offer));
-                        // Offer of a caller on callee side
-                        if (isCaller) {
-                          log.warn("Unexpected offer received on caller side for " + callId);
-                        } else {
-                          try {
-                            var offer = JSON.parse(message.offer);
-                            if (isEdge) {
-                              offer = new RTCSessionDescription(offer);
-                            }
-                            negotiation.then(function(localStream) {
-                              log.trace("Setting remote description (offer) for " + callId);
-                              pc.setRemoteDescription(offer).then(function() {
-                                // if we received an offer, we need to answer
-                                if (pc.remoteDescription.type == "offer") { 
-                                  log.trace("Creating answer for " + callId);
-                                  pc.createAnswer().then(function(desc) { // sdpConstraints?
-                                    log.trace("Setting local description for " + callId);
-                                    pc.setLocalDescription(desc).then(function() {
-                                      log.trace("Sending answer for " + callId);
-                                      sendAnswer(pc.localDescription).then(function() {
-                                        connection.resolve().then(function() {
-                                          // Participant ready to exchange ICE candidates
-                                          log.debug("Started exchange network information with peers for " + callId);
-                                        });
-                                      });
-                                    }).catch(function(err) {
-                                      handleConnectionError("Failed to set local description (answer) for " + callId, err);
-                                    });
-                                  }).catch(function(err) {
-                                    handleConnectionError("Failed to create an answer for " + callId, err);
-                                  });
-                                } else {
-                                  // TODO need show something to an user or it's normal behaviour (part of a flow)?
-                                  log.error("Remote description type IS NOT 'offer' BUT '" + pc.remoteDescription.type 
-                                        + "'. Call state not defined for " + callId);
-                                }
-                              }).catch(function(err) {
-                                handleConnectionError("Failed to set remote description (offer) for " + callId, err);
-                              });
-                            });
-                          } catch(err) {
-                            handleConnectionError("Error processing offer for " + callId, err);
+                        if (message.receiver == currentUserId) {
+                          // Offer should be addressed to a particular receiver
+                          log.debug("Received offer for " + callId + ": " + JSON.stringify(message.offer));
+                          if (peer) {
+                            // peer already exists - should this not happen?
+                            log.warn("Unexpected offer received on " + (isCaller ? "caller" : "participant") +
+                                " side with already created peer for " + peer.getUserId() + "@" + callId);
+                          } else {
+                            // We create a peer on an offer send to this user
+                            peer = new UserPeer(message.sender);
+                            peers[message.sender] = peer;
                           }
+                          peer.addOffer(message.offer);
                         }
                       } else if (message.answer) {
-                        log.debug("Received answer for " + callId + ": " + JSON.stringify(message.answer));
-                        if (isCaller) {
-                          // Answer of a callee to the caller: it's final stage of the parties discovery
-                          try {
-                            var answer = JSON.parse(message.answer);
-                            if (isEdge) {
-                              answer = new RTCSessionDescription(answer);
-                            }
-                            negotiation.then(function() {
-                              log.trace("Setting answer (remote description) for " + callId);
-                              pc.setRemoteDescription(answer).then(function() {
-                                log.trace("Apllied answer (remote description) for " + callId);
-                                // Resolve connection (network) exchange only from here
-                                connection.resolve().then(function() {
-                                  // Caller ready to exchange ICE candidates
-                                  log.debug("Started exchange network information with peers for " + callId);
-                                });
-                              }).catch(function(err) {
-                                handleConnectionError("Failed to set answer (remote description) for " + callId, err);
-                              });
-                            });
-                          } catch(err) {
-                            handleConnectionError("Error processing answer for " + callId, err);
+                        if (message.receiver == currentUserId) {
+                          // Answer should be addressed to a particular receiver
+                          log.debug("Received answer for " + callId + ": " + JSON.stringify(message.answer));
+                          if (peer) {
+                            // peer already exists - should this not happen?
+                            log.warn("Unexpected answer received on " + (isCaller ? "caller" : "participant") +
+                                " side with already created peer for " + peer.getUserId() + "@" + callId);
+                          } else {
+                            // We create a peer on an answer send to this user
+                            peer = new UserPeer(message.sender);
+                            peers[message.sender] = peer; 
                           }
-                        } else {
-                          // FYI this could be OK to receive for group call
-                          log.warn("Unexpected answer received on participant side of " + callId);
+                          peer.addAnswer(message.answer);
                         }
                       } else if (message.hello) {
-                        // To start the call send "hello" - first message in the flow for each client
+                        // To start the call send "hello" - first message in the flow for each peer,
+                        // next others already presenting in the call will answer with an offer
                         log.debug("Received Hello for " + callId + ": " + JSON.stringify(message.hello));
-                        if (message.hello == currentUserId) {
-                          // We assume it's a hello to the caller: start sending offer and candidates
-                          // This will work once (for group calls, need re-initialize the process)
-                          negotiation.resolve().then(function() {
-                            if (isCaller) {
-                              log.debug("Started exchange (caller) media information for " + callId);
-                            } else {
-                              // This should not happen until group calls will be supported
-                              log.warn("Started exchange (participant) media information for " + callId);
-                            }
-                          });
+                        if (message.hello == ALL) {
+                          if (peer) {
+                            // peer already exists - should this not happen?
+                            log.debug("Skip hello received for already created peer for " + callId);
+                          } else {
+                            peer = new UserPeer(message.sender);
+                            peers[message.sender] = peer;
+                            // Add local media stream and start negotiation, 
+                            // which in turn will send offer to the remote peer who said the Hello
+                            peer.start();
+                          }
                         } else {
-                          log.debug("Hello was not to me (but to " + message.hello + ")");
+                          log.warn("Unexpected hello received to " + message.hello + " peer for " + callId);
                         }
-                      } else if (message.bye && false) {
-                        // TODO not used
-                        // Remote part leaved the call: stop listen the call
+                      } else if (message.bye) {
+                        // TODO a peer can send bye on leaving the call
+                        // Remote part leaved the call: should we stop listen the call?
                         log.debug("Received Bye for " + callId + ": " + JSON.stringify(message.bye));
-                        if (message.bye == currentUserId || message.bye == "__all__") {
-                          // We assume it's a Bye from the caller or other party to us: ends the call locally and close the
-                          // window
-                          stopCall(true);
-                          listener.off();                     
+                        if (message.bye == ALL) {
+                          if (peer) {
+                            delete peers[message.sender];
+                            peer.close();
+                            listener.off(); // stop listen on call updates in this window
+                          } else {
+                            log.debug("Skip bye received for not existing peer for " + callId);
+                          }
                         } else {
-                          log.debug("Bye was not to me (but to " + message.bye + ")");
+                          log.warn("Unexpected hello received to " + message.hello + " peer for " + callId);
                         }
                       } else {
                         log.warn("Received unexpected message for " + callId + ": " + JSON.stringify(message));
@@ -606,7 +812,15 @@ if (eXo.webConferencing) {
                   });
                   process.reject(userMsg);
                 }, function() {
-                  subscribed.resolve();
+                  // When subscribed to the call channel and local media ready - 
+                  // send Hello to let others start negotiate with this peer 
+                  localMedia.then(function() {
+                    sendHello().then(function() {
+                      // FYI Hello sent by the caller will not be answered by anyone, 
+                      // but it may be used by the server-side and for logging purposes
+                      // A peer will send the offer when negotiation will be resolved (received Hello from others via start())
+                    });
+                  });
                 });
                 
                 // Show current user camera in the video,
@@ -716,13 +930,6 @@ if (eXo.webConferencing) {
                       savePreference("video.disable", new String(!enableVideo()));
                       $muteVideo.toggleClass("on");
                     });
-                    // add local stream right now
-                    log.debug("Adding local (" + (isCaller ? "caller" : "participant") + ") stream for " + callId);
-                    pc.addStream(localStream); // this will cause onnegotiationneeded event
-                    // XXX It's deprecated way but Chrome (prior ~ v66) works using it
-                    // localStream.getTracks().forEach(function(track) {
-                    // pc.addTrack(track, localStream);
-                    // });
                     // if user had saved audio/video disabled, mute them accordingly
                     if (getPreference("audio.disable") == "true") {
                       log.info("Apply user preference: audio disabled");
@@ -734,15 +941,7 @@ if (eXo.webConferencing) {
                       enableVideo(false);
                       $muteVideo.addClass("on");
                     }
-                    connection.then(function() {
-                      // It's still not fully 'joined' user here, RTC only starts exchange ICE candidates at this point
-                      // and actual call will start in few seconds (depends on network and other factors),
-                      // User may also fail to exchange candidates and media stream will not be established -
-                      // it will look like the call not started to an user.
-                      // If we want join the call after actual media streams will be obtained we need do more advanced
-                      // logic and look for All candidates will be sent, then check if all media streams added.
-                      webrtc.joinedCall(callId);
-                    });
+                    localMedia.resolve(localStream);
                   }).catch(function(err) {
                     // In case of getting user medias we can face with different errors (on different browsers and its versions)
                     var errMsg = webConferencing.errorText(err);
@@ -772,30 +971,16 @@ if (eXo.webConferencing) {
                 
                 // Differentiate one-on-one and group calls from the beginning
                 // TODO But better make a single logic for all types of calls
-  							var isGroup = callId.startsWith("g/");
   							if (isGroup) {
   							  log.trace("Preparing group call: " + callId);
-  								// log.warn("Group calls not supported: " + callId);
-  								// showError("Warning", "Group calls not supported by WebRTC connector");
-  								// setTimeout(function() {
-  								// window.close();
-  								// }, 7000);
-  								// process.reject("Group calls not supported");
-  							  
                   // 'Hang Up' also leaves group call
                   $hangupButton.click(function() {
-                    // TODO
-                    stopCallWaitClose();
+                    stopCall();
                   });
                   
                   if (isCaller) {
                     playOutgoingRingtone();
                   }
-                  // TODO
-                  // pc.onnegotiationneeded - will it happen for each peer?
-                  // pc.onaddstream - will be several times. how many for each peer in the group?
-                  // pc.onremovestream - on peer gone. or change quality of the media?
-  							  
   							} else {
   								log.trace("Preparing one-on-one call: " + callId);
   								
@@ -813,108 +998,6 @@ if (eXo.webConferencing) {
                   $hangupButton.click(function() {
                     stopCallWaitClose();
                   });
-  								
-  						  	// let the 'negotiationneeded' event trigger offer generation
-  								var canNegotiate = true;
-  							  pc.onnegotiationneeded = function () {
-  							  	// XXX Jun 4 2018: it's a workaround for Chrome (v66+) which produces several onnegotiationneeded events for
-                    // single
-  							  	// added stream (seems an event per a track in the stream):
-  							  	// See https://bugs.chromium.org/p/chromium/issues/detail?id=740501
-  							  	// TODO we also would postpone next event handling until the current one will be done and release it in
-                    // always()
-  							  	// handlers below, but this way we need implement 1) real reetrancy locking in JS 2) adapt RTC flow to apply
-                    // several
-  							  	// offers/answers durinbg a single call.
-  							  	if (canNegotiate) {
-  							  		canNegotiate = false;
-  							  		// This will be fired after adding a local media stream and browser readiness
-  								  	// Ready to join the call: say hello to each other
-  							  		log.debug("Negotiation starting (by " + (isCaller ? "caller" : "participant") + ") for " + callId);
-  								  	subscribed.then(function() {
-  								  		sendHello().then(function() {
-  								  			if (isCaller) {
-  								  				// Hello sent by the caller will not be answered by anyone, but it may be used by the server-side and
-                            // for logging purposes
-  							  					// Caller will send the offer when negotiation will be resolved (received Hello from others)
-  								  				negotiation.then(function() {
-  								  					log.trace("Creating offer for " + callId);
-  												    pc.createOffer().then(function(desc) { // sdpConstraints
-  												    	log.trace("Setting local description for " + callId);
-  												    	pc.setLocalDescription(desc).then(function() {
-  												    		log.trace("Sending offer for " + callId);
-  												    		sendOffer(pc.localDescription).always(function() {
-  												    			canNegotiate = true;
-  												    		});
-  												      }).catch(function(err) {
-  												      	handleConnectionError("Failed to set local description for " + callId, err);
-  													    });
-  												    }).catch(function(err) {
-  												    	handleConnectionError("Failed to create an offer for " + callId, err);
-  												    });
-  								  				});
-  										  	} else {
-  										  		// TODO do we need to re-run the participant part of negotiation here if some stream added/removed?
-  										  		// Participant sends Hello to the other end to initiate a negotiation there,
-  								  				// a peer (caller) on the other end is ready for negotiation and waits for an offer message.
-  										  		negotiation.resolve().then(function() {
-  														log.debug("Started exchange (participant) media information for " + callId);
-  													}).always(function() {
-  														canNegotiate = true;
-  									    		});
-  										  	}
-  								  		});
-  								  	});
-  							  	} // skip otherwise the event
-  							  };			  	
-  							  // once remote stream arrives, show it in the remote video element
-  							  // TODO it's modern way of WebRTC stream addition, but it doesn't work in Chrome
-  							  // pc.ontrack = function(event) {
-  							  // log.trace(">> ontrack for " + callId);
-  							  	// $remoteVideo.get(0).srcObject = event.streams[0];
-  							  // };
-  								pc.onaddstream = function (event) { 
-  									// Remote video added: switch local to a mini and show the remote as main
-  									log.debug("Added stream for " + callId);
-  									// Stop local
-  									localVideo.pause();
-  									$localVideo.removeClass("active");
-  									$localVideo.hide();
-  									
-  									// Show remote
-  									remoteVideo.srcObject = event.stream;
-  									$remoteVideo.addClass("active");
-  									$remoteVideo.show();
-  									
-  									// Show local in mini
-  									miniVideo.srcObject = localVideo.srcObject;
-  									localVideo.srcObject = null;
-  									$miniVideo.addClass("active");
-  									$miniVideo.show();
-  									
-  									//
-  									$videos.addClass("active");
-  								};
-  							  pc.onremovestream = function(event) {
-  							  	// TODO check the event stream URL before removal?
-  							  	log.debug("Removed stream for " + callId);
-  							  	// Stop remote
-  							  	remoteVideo.pause();
-  									$remoteVideo.removeClass("active");
-  									$remoteVideo.hide();
-  									remoteVideo.srcObject = null;
-  									
-  									// Show local
-  									localVideo.srcObject = miniVideo.srcObject;
-  									$localVideo.addClass("active");
-  									
-  									// Hide mini
-  									miniVideo.srcObject = null;
-  									$miniVideo.removeClass("active");
-  									$miniVideo.hide();
-  									
-  									$videos.removeClass("active");
-  							  };
   							}
   							// Resolve this in any case of above media devices discovery result
                 process.resolve("started");
