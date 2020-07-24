@@ -455,23 +455,27 @@ if (eXo.webConferencing) {
                   // };
                   pc.ontrack = function (event) {
                     log.debug("Added stream for " + callId);
+                    // Stop local
                     localVideo.pause();
                     $localVideo.removeClass("active");
                     $localVideo.hide();
   
+                    // Show remote
                     var videoElement$ = $("<video></video>").attr({
+                      id: `remote-${userId}`,
                       autoplay: "",
                       muted: ""
                     });
                     videoElement$.get(0).srcObject = event.streams[0];
-                    var videoContainer$ = $("<div></div>").addClass("videoContainer").append(videoElement$);
-                    $videos.append(videoContainer$);
+                    $videos.append(videoElement$);
   
                     // Show local in mini
-                    miniVideo.srcObject = localVideo.srcObject;
-                    localVideo.srcObject = null;
-                    $miniVideo.addClass("active");
-                    $miniVideo.show();
+                    if (localVideo.srcObject) {
+                      miniVideo.srcObject = localVideo.srcObject;
+                      localVideo.srcObject = null;
+                      $miniVideo.addClass("active");
+                      $miniVideo.show();
+                    }
                     
                     //
                     $videos.addClass("active");
