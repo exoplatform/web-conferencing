@@ -282,8 +282,16 @@
 							$button.click(function() {
 							  openCallWindow(callId, function(callWindow) {
 							    var owner = target.group ? target.id : context.currentUser.id;
-							    var participants = target.group ? target.members : [context.currentUser.id, target.id];
-							    var callInfo = {
+							    var participants;
+							    if (target.group) {
+							      participants = [];
+							      for (var p in target.members) {
+							        participants.push(p);
+							      }							      
+							    } else {
+							      participants = [context.currentUser.id, target.id];
+							    }
+                  var callInfo = {
                     owner : owner,
                     ownerType : target.type,
                     provider : self.getType(),
@@ -303,8 +311,9 @@
                       callWindow = webConferencing.showCallPopup(link, callWindowId);
                     }
                     // Join a call
-                    webConferencing.updateCall(callId, callInfo).done(function(call) {
-                      log.info("Call joined: " + callId);
+                    joinedCall(callId).done(function(call) {
+                    //webConferencing.updateCall(callId, callInfo).done(function(call) {
+                      //log.info("Call joined: " + callId);
                       // TODO copy-pasted
                       // Tell the window to start-join the call  
                       onCallWindowReady(callWindow).done(function() {
@@ -323,12 +332,14 @@
                         log.showError("Call page failed: " + callId, err, message("errorOpeningCall"));
                       });
                     }).fail(function(err) {
-                      log.info("Call join failed: " + callId + " target: " + target.title, err);
+                      //log.info("Call join failed: " + callId + " target: " + target.title, err);
                       log.showError("Call join failed: " + callId, err, message("errorJoiningCall"), 
-                          message("errorJoinCall") + ". " + message("refreshTryAgainContactAdmin"));
+                          (err.message ? err.message : err) + ". " + message("refreshTryAgainContactAdmin"));
                       setTimeout(function() {
                         // Let error window to be open a bit to see its state/error/etc - for admins/devs
-                        callWindow.close();
+                        if (callWindow) {
+                          callWindow.close();
+                        }
                       }, 2500);
                     });
 							    }).fail(function(err) {

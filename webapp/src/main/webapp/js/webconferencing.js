@@ -1375,19 +1375,33 @@
 			$(function() {
 				var $chat = $("#chat-application");
 				if (chat.isApplication() && $chat.length > 0) {
-					var $roomDetail = $chat.find("#room-detail");
           document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function() {
-            $roomDetail = $chat.find("#room-detail");
-            var $wrapper = $(".callButtonContainerWrapper");
-            $wrapper = $(".callButtonContainerWrapper");
-            $wrapper.hide(); // hide immediately
-            $wrapper.html('');
-            $roomDetail.removeData("roomcallinitialized");
+//            $roomDetail = $chat.find("#room-detail");
+//            var $wrapper = $(".callButtonContainerWrapper");
+//            $wrapper.hide(); // hide immediately
+//            $wrapper.html('');
+//            $roomDetail.removeData("roomcallinitialized");
+            var $roomDetail = $chat.find("#room-detail");
+            if (!$roomDetail.data("roomcallinitialized")) {
+              $roomDetail.data("roomcallinitialized", true);
+              addRoomButtton();
+            } else {
+              log.trace("Chat room already initialized");
+            }
           });
 					var addRoomButtton = function() {
-						$roomDetail.find(".callButtonContainerWrapper").hide(); // hide immediately
+            var $roomDetail = $chat.find("#room-detail");
+            var $wrapper = $roomDetail.find(".callButtonContainerWrapper");
+            if ($wrapper.length > 0) {
+              $wrapper.empty();
+            } else {
+              $wrapper = $("<div class='callButtonContainerWrapper pull-right' style='display: none;'></div>");
+              $roomDetail.find(".room-action-menu").prepend($wrapper);
+            }
+					  
+						//$roomDetail.find(".callButtonContainerWrapper").hide(); // hide immediately
 						setTimeout(function() {
-							var $wrapper = $(".callButtonContainerWrapper");
+						  var $wrapper = $roomDetail.find(".callButtonContainerWrapper");
 							getChatContext().done(function(context) {
 								if (context.isSpace) {
 									// When in Chat app we set current space ID from the current room.
@@ -1431,13 +1445,6 @@
 						}, 1500); // XXX whoIsOnline may run 500-750ms on eXo Tribe
 					};
 					
-					if (!$roomDetail.data("roomcallinitialized")) {
-						$roomDetail.data("roomcallinitialized", true);
-						addRoomButtton();
-					} else {
-						log.trace("Chat room already initialized");
-					}
-					
 					// User popovers in right panel
 					var $chatUsers = $chat.find("#chat-users");
 					$chatUsers.each(function(index, elem) {
@@ -1445,7 +1452,7 @@
 						if (!$target.data("usercallinitialized")) {
 							$target.data("usercallinitialized", true);
 							$target.click(function() {
-								$roomDetail.removeData("roomcallinitialized");
+							  $chat.find("#room-detail").removeData("roomcallinitialized");
 								addRoomButtton();
 							});
 						}

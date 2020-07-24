@@ -933,8 +933,8 @@ if (eXo.webConferencing) {
                       }
                       
                       var rms = Math.sqrt(total / inputDataLength);
-                      console.log("measure");
-                      console.log(rms * 100);
+                      //console.log("measure");
+                      //console.log(rms * 100);
                     };
                     /** END AUDIO */
 

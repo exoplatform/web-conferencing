@@ -17,7 +17,7 @@
     <callStopped>The call was stopped</callStopped>
     <errorAddCall>The call could not be started due to a server error</errorAddCall>
     <errorUpdateCall>The call could not be updated due to a server error</errorUpdateCall>
-    <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
+    <errorOpeningCall>An error occurred while opening the call window.</errorOpeningCall>
     <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
     <errorStartingCall>Error starting call</errorStartingCall>
     <errorJoiningCall>Error joining call</errorJoiningCall>
