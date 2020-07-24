@@ -453,19 +453,20 @@ if (eXo.webConferencing) {
                   // log.trace(">> ontrack for " + callId);
                     // $remoteVideo.get(0).srcObject = event.streams[0];
                   // };
-                  pc.onaddstream = function (event) { 
-                    // Remote video added: switch local to a mini and show the remote as main
+                  pc.ontrack = function (event) {
                     log.debug("Added stream for " + callId);
-                    // Stop local
                     localVideo.pause();
                     $localVideo.removeClass("active");
                     $localVideo.hide();
-                    
-                    // Show remote
-                    remoteVideo.srcObject = event.stream;
-                    $remoteVideo.addClass("active");
-                    $remoteVideo.show();
-                    
+  
+                    var videoElement$ = $("<video></video>").attr({
+                      autoplay: "",
+                      muted: ""
+                    });
+                    videoElement$.get(0).srcObject = event.streams[0];
+                    var videoContainer$ = $("<div></div>").addClass("videoContainer").append(videoElement$);
+                    $videos.append(videoContainer$);
+  
                     // Show local in mini
                     miniVideo.srcObject = localVideo.srcObject;
                     localVideo.srcObject = null;
@@ -474,6 +475,29 @@ if (eXo.webConferencing) {
                     
                     //
                     $videos.addClass("active");
+                  };
+  
+                  pc.onaddstream = function (event) { 
+                    // Remote video added: switch local to a mini and show the remote as main
+                    log.debug("Added stream for " + callId);
+                    // Stop local
+                    // localVideo.pause();
+                    // $localVideo.removeClass("active");
+                    // $localVideo.hide();
+                      
+                    // // Show remote
+                    // remoteVideo.srcObject = event.stream;
+                    // $remoteVideo.addClass("active");
+                    // $remoteVideo.show();
+                      
+                    // // Show local in mini
+                    // miniVideo.srcObject = localVideo.srcObject;
+                    // localVideo.srcObject = null;
+                    // $miniVideo.addClass("active");
+                    // $miniVideo.show();
+                      
+                    // //
+                    // $videos.addClass("active");
                   };
                   
                   pc.onremovestream = function(event) {
@@ -886,8 +910,34 @@ if (eXo.webConferencing) {
                 }
                 log.info("Starting call " + callId);
                 inputsReady.done(function(constraints, comment) {
+                  window.AudioContext = (window.AudioContext || window.webkitAudioContext);
+
                   log.info("Media constraints: " + JSON.stringify(constraints) + " " + comment);
                   navigator.mediaDevices.getUserMedia(constraints).then(function(localStream) {
+                    /** AUDIO MEASUREMENT */
+                    var audioContext = new AudioContext();
+                    var mediaStreamSource = audioContext.createMediaStreamSource(localStream);
+                    var processor = audioContext.createScriptProcessor(2048, 1, 1);
+
+                    mediaStreamSource.connect(audioContext.destination);
+                    mediaStreamSource.connect(processor);
+                    processor.connect(audioContext.destination);
+
+                    processor.onaudioprocess = function (e) {
+                      var inputData = e.inputBuffer.getChannelData(0);
+                      var inputDataLength = inputData.length;
+                      var total = 0;
+  
+                      for (var i = 0; i < inputDataLength; i++) {
+                          total += Math.abs(inputData[i++]);
+                      }
+                      
+                      var rms = Math.sqrt(total / inputDataLength);
+                      console.log("measure");
+                      console.log(rms * 100);
+                    };
+                    /** END AUDIO */
+
                     // successCallback: show local camera output
                     localVideo.srcObject = localStream;
                     $localVideo.addClass("active");
