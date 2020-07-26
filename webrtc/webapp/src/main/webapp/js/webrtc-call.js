@@ -368,7 +368,7 @@ if (eXo.webConferencing) {
               // General errors including RTC catch here
               try {
                 // WebRTC connection to establish a call connection
-                log.trace("Creating RTC peer connection for " + callId);
+                log.trace("Creating RTC configuration for " + callId);
                 var rtcConfig = webrtc.getRtcConfiguration();
                 // Clean to keep only meaningful fields
                 if (!rtcConfig.bundlePolicy) {
@@ -562,7 +562,7 @@ if (eXo.webConferencing) {
                     log.debug("ICE candidate (" + candidateNumb + ") ready for " + userId + "@" + callId);
                     connection.then(function() {
                       if (event.candidate) {
-                        sendCandidate(event.candidate, candidateNumb);
+                        sendCandidate(event.candidate, candidateNumb, userId);
                       } else {
                         // else All ICE candidates have been sent. ICE gathering has finished.
                         // Send empty candidate as a sign of finished ICE gathering.
@@ -757,7 +757,7 @@ if (eXo.webConferencing) {
                           var hasCandidate = Object.getOwnPropertyNames(message.candidate).length > 0;
                           if (hasCandidate) {
                             if (peer) {
-                              peer.addCandidate(message.candidate);
+                              peer.addCandidate(message.candidate, candidateNumb);
                             } else {
                               log.warn("Unexpected candidate received but peer doesn't exist for " + callId);
                             }

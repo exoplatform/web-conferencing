@@ -38,6 +38,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.persistence.PersistenceException;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.picocontainer.Startable;
+
 import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
@@ -66,9 +70,6 @@ import org.exoplatform.webconferencing.dao.StorageException;
 import org.exoplatform.webconferencing.domain.CallEntity;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.picocontainer.Startable;
 
 
 /**
@@ -533,8 +534,10 @@ public class WebConferencingService implements Startable {
                     participants.add(part);
                   } else {
                     // external participant
-                    participants.add(new ParticipantInfo(providerType, pid));
+                    participants.add(part = new ParticipantInfo(providerType, pid));
                   }
+                  // We start the call with all parts leaved, later call pages will update it to JOINED
+                  part.setState(UserState.LEAVED);
                 } else {
                   LOG.error("Cannot add call participant with too long ID: " + pid);
                   throw new CallArgumentException("Wrong participant ID (" + pid + ")");
@@ -566,6 +569,7 @@ public class WebConferencingService implements Startable {
               // Notify participants (about started call)
               if (isGroup) {
                 // it's group call: fire group's user listener for incoming, except of the caller
+                //for (UserInfo part : call.getParticipants()) {
                 for (UserInfo part : call.getParticipants()) {
                   if (UserInfo.TYPE_NAME.equals(part.getType())) {
                     if (!currentUserId.equals(part.getId())) {
@@ -716,7 +720,7 @@ public class WebConferencingService implements Startable {
    * @param clientId the client id
    * @throws StorageException if storage exception happen
    * @throws ParticipantNotFoundException if call or its participants not found in storage
-   * @throws CallSettingsException if call entry has wrong settings (room call title)
+   * @throws CallSettingsException if call entry has wrong settings (room title, owner type etc)
    * @throws CallNotFoundException if call not found in storage
    */
   protected void startCall(CallInfo call, String clientId) throws ParticipantNotFoundException,
@@ -744,13 +748,20 @@ public class WebConferencingService implements Startable {
 
     updateCallAndParticipants(call);
 
-    for (UserInfo part : call.getParticipants()) {
-      fireUserCallStateChanged(part.getId(),
-                               callId,
-                               call.getProviderType(),
-                               CallState.STARTED,
-                               call.getOwner().getId(),
-                               call.getOwner().getType());
+    // Jul 26, 2020: Inform all group members about the call
+    // For P2P call we need only inform another peer and this loop does the work perfectly
+    Collection<UserInfo> parts = call.getOwner().isGroup() ? GroupInfo.class.cast(call.getOwner()).getMembers().values()
+                                                           : call.getParticipants();
+    for (UserInfo part : parts) {
+      if (!userId.equals(part.getId())) {
+        // Inform all except of the user who started the call
+        fireUserCallStateChanged(part.getId(),
+                                 callId,
+                                 call.getProviderType(),
+                                 CallState.STARTED,
+                                 call.getOwner().getId(),
+                                 call.getOwner().getType());
+      }
     }
   }
 
@@ -833,12 +844,12 @@ public class WebConferencingService implements Startable {
               if (partId.equals(part.getId())) {
                 // Leave should not be called on a call session started after stopping an one previous of this
                 // call.
-                if (part.hasSameClientId(clientId)) {
-                  part.setState(UserState.LEAVED);
-                  part.setClientId(null);
-                  leaved = part;
-                  leavedNum++;
-                } // otherwise we may meet this user running a new same call too quickly (before CometD will
+                //if (part.hasSameClientId(clientId)) {
+                part.setState(UserState.LEAVED);
+                part.setClientId(null);
+                leaved = part;
+                leavedNum++;
+                //} // otherwise we may meet this user running a new same call too quickly (before CometD will
                   // unsubscribe this call previous channel), we ignore this leave so
               } else {
                 // if null - user hasn't joined
@@ -864,7 +875,8 @@ public class WebConferencingService implements Startable {
             }
             // Check if don't need stop the call if all parts leaved already
             if (call.getOwner().isGroup()) {
-              if (leavedNum == call.getParticipants().size()) {
+              if (leavedNum == call.getParticipants().size() || call.getParticipants().size() == 0 
+                  || call.getParticipants().stream().allMatch(p -> p.getState() == UserState.LEAVED)) {
                 // Stop when all group members leave the call
                 stopCall(call, partId, false);
               }

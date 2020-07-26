@@ -33,6 +33,7 @@ public class CallState {
   public static final String STOPPED = "stopped";
 
   /** The Constant PAUSED. */
+  @Deprecated // TODO do we need it?
   public static final String PAUSED  = "paused";
 
   /** The id. */

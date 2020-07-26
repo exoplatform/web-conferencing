@@ -134,6 +134,24 @@
 				}
 			};
 
+			var startedCall = function(callId) {
+        return webConferencing.updateCall(callId, "started").done(function() {
+          log.info("Call started: " + callId);
+        }).fail(function(err) {
+          log.error("Error starting call: " + callId, err);
+        });
+      };
+      this.startedCall = startedCall;
+      
+      var stoppedCall = function(callId) {
+        return webConferencing.updateCall(callId, "stopped").done(function() {
+          log.info("Call stopped: " + callId);
+        }).fail(function(err) {
+          log.error("Error stopping call: " + callId, err);
+        });
+      };
+      this.stoppedCall = stoppedCall;
+			
 			var joinedCall = function(callId) {
 				return webConferencing.updateCall(callId, "joined").done(function() {
 					log.info("Call joined: " + callId);
@@ -287,7 +305,8 @@
 							      participants = [];
 							      for (var p in target.members) {
 							        participants.push(p);
-							      }							      
+							      }
+							      //participants.push(context.currentUser.id);
 							    } else {
 							      participants = [context.currentUser.id, target.id];
 							    }
@@ -300,7 +319,7 @@
                   };
                   webConferencing.getCall(callId).done(function(call) { // this will call server-side via Comet
                     // Call exists, we need join it
-                    log.info("Call joining: " + callId + " target: " + target.title);
+                    log.info("Call " + (call.state == "stopped" ? "starting" : "joining") + ": " + callId + " target: " + target.title);
                     // TODO copy-pasted from creation
                     var link = callLink(callId);
                     var callWindowId;
@@ -310,17 +329,37 @@
                       callWindowId = windowId(context.currentUser.id, callId);
                       callWindow = webConferencing.showCallPopup(link, callWindowId);
                     }
-                    // Join a call
-                    joinedCall(callId).done(function(call) {
+                    // Start or join the call depending on its state
+                    var started = false;
+                    var callOp;
+                    if (call.state == "stopped") {
+                      started = true;
+                      callOp = startedCall(callId);
+                      callOp.fail(function(err) {
+                        log.showError("Call start failed: " + callId, err, message("errorStartingCall"), 
+                            (err.message ? err.message : err) + ". " + message("refreshTryAgainContactAdmin"));
+                      });
+                    } else {
+                      callOp = joinedCall(callId);
+                      callOp.fail(function(err) {
+                        //log.info("Call join failed: " + callId + " target: " + target.title, err);
+                        log.showError("Call join failed: " + callId, err, message("errorJoiningCall"), 
+                            (err.message ? err.message : err) + ". " + message("refreshTryAgainContactAdmin"));
+                      });
+                    }
+                    callOp.done(function(call) {
                     //webConferencing.updateCall(callId, callInfo).done(function(call) {
                       //log.info("Call joined: " + callId);
                       // TODO copy-pasted
-                      // Tell the window to start-join the call  
+                      // Tell the window to start-join the call
+                      if (started) {
+                        call.caller = context.currentUser;
+                      }
                       onCallWindowReady(callWindow).done(function() {
                         log.debug("Call page open: " + callId);
                         callWindow.document.title = message("callTo") + " " + target.title;
                         callWindow.eXo.webConferencing.startCall(call).done(function(state) {
-                          log.info("Call " + state + ": " + callId);
+                          log.info("Call " + state + " with user " + context.currentUser.id + ": " + callId);
                           setButtonCall($button, callId); // should be removed on stop/leaved event in init()
                           if (callWindowId) {
                             saveCallWindow(callId, callWindowId);
@@ -331,10 +370,7 @@
                       }).fail(function(err) {
                         log.showError("Call page failed: " + callId, err, message("errorOpeningCall"));
                       });
-                    }).fail(function(err) {
-                      //log.info("Call join failed: " + callId + " target: " + target.title, err);
-                      log.showError("Call join failed: " + callId, err, message("errorJoiningCall"), 
-                          (err.message ? err.message : err) + ". " + message("refreshTryAgainContactAdmin"));
+                    }).fail(function() {
                       setTimeout(function() {
                         // Let error window to be open a bit to see its state/error/etc - for admins/devs
                         if (callWindow) {
@@ -565,126 +601,130 @@
 							if (update.providerType == self.getType()) {
 								if (update.eventType == "call_state") {
 									var callId = update.callId;
-									if (update.owner.type == "user") {
-										var lastCallId = lastUpdate ? lastUpdate.callId : null;
-										var lastCallState = lastUpdate ? lastUpdate.callState : null;
-										if ((update.callState == "started" || update.callState == "stopped") && callId == lastCallId && update.callState == lastCallState) {
-											log.trace("<<< XXX User call state updated skipped as duplicated: " + JSON.stringify(update));
-										} else {
-											if (lastUpdateReset) {
-												clearTimeout(lastUpdateReset);
-											}
-											lastUpdate = update;
-											lastUpdateReset = setTimeout(function() {
-												lastUpdate = null; // XXX avoid double action on duplicated update - temp solution
-											}, 500);
-											if (update.callState == "started") {
-												log.info("Incoming call: " + callId);
-												webConferencing.getCall(callId).done(function(call) {
-													var callWindow;
-													var callWindowId = readCallWindow(callId);
-													if (callWindowId) {
-														callWindow = webConferencing.showCallPopup("", callWindowId);
+									//if (update.owner.type == "user") {
+									var lastCallId = lastUpdate ? lastUpdate.callId : null;
+									var lastCallState = lastUpdate ? lastUpdate.callState : null;
+									if ((update.callState == "started" || update.callState == "stopped") && callId == lastCallId && update.callState == lastCallState) {
+										log.trace("<<< XXX User call state updated skipped as duplicated: " + JSON.stringify(update));
+									} else {
+										if (lastUpdateReset) {
+											clearTimeout(lastUpdateReset);
+										}
+										lastUpdate = update;
+										lastUpdateReset = setTimeout(function() {
+											lastUpdate = null; // XXX avoid double action on duplicated update - temp solution
+										}, 500);
+										if (update.callState == "started") {
+											log.info("Incoming call: " + callId);
+											webConferencing.getCall(callId).done(function(call) {
+												var callWindow;
+												var callWindowId = readCallWindow(callId);
+												if (callWindowId) {
+													callWindow = webConferencing.showCallPopup("", callWindowId);
+												}
+												// here this window will be blocked by popup blocker and will be undefined
+												// need use messaging between windows to know if a call is actually running
+												if (callWindow && callWindow.location.href !== "about:blank") {
+													// call already running in this browser - don't need ask the user for it
+													log.trace(">>> Call alreadey joined and running: " + callWindowId);
+												} else {
+													if (callWindow) {
+														callWindow.close();
 													}
-													// here this window will be blocked by popup blocker and will be undefined
-													// need use messaging between windows to know if a call is actually running
-													if (callWindow && callWindow.location.href !== "about:blank") {
-														// call already running in this browser - don't need ask the user for it
-														log.trace(">>> Call alreadey joined and running: " + callWindowId);
-													} else {
-														if (callWindow) {
-															callWindow.close();
-														}
-														var callerId = call.owner.id;
-														var callerLink = call.owner.profileLink;
-														var callerAvatar = call.owner.avatarLink;
-														var callerMessage = call.owner.title + " " + message("callingYou");
-														var callerRoom = callerId;
-														call.title = call.owner.title; // for callee the call title is a caller name
-														webConferencing.getUserStatus(currentUserId).done(function(user) {
-															// Find if we need/can play a ringtone
-															var visible = document.visibilityState ? document.visibilityState == "visible" : true;
-															var playRing = !user || user.status == "available" || user.status == "away";
-															var popover = acceptCallPopover(callId, callerLink, callerAvatar, callerMessage);
-															popover.progress(function($call) {
-																$callPopup = $call;
-																$callPopup.callState = update.callState;
-																if (playRing && visible) {
-																	$callPopup.playRingtone();
+													var callerId = call.owner.id;
+													var callerLink = call.owner.profileLink;
+													var callerAvatar = call.owner.avatarLink;
+													var callerMessage = call.owner.title + " " + message("callingYou");
+													var callerRoom = callerId;
+													call.title = call.owner.title; // for callee the call title is a caller name
+													webConferencing.getUserStatus(currentUserId).done(function(user) {
+														// Find if we need/can play a ringtone
+														var visible = document.visibilityState ? document.visibilityState == "visible" : true;
+														var playRing = !user || user.status == "available" || user.status == "away";
+														var popover = acceptCallPopover(callId, callerLink, callerAvatar, callerMessage);
+														popover.progress(function($call) {
+															$callPopup = $call;
+															$callPopup.callState = update.callState;
+															if (playRing && visible) {
+																$callPopup.playRingtone();
+															}
+														}); 
+														popover.done(function(msg) {
+															log.info("User " + msg + " call: " + callId);
+															// We try open already running call if found, then create a new call if not found
+															openCallWindow(callId, function(callWindow) {
+																var link = callLink(callId);
+																var callWindowId;
+																if (callWindow) {
+																	callWindow.location.href = link;
+																} else {
+																	callWindowId = windowId(context.currentUser.id, callId);
+																	callWindow = webConferencing.showCallPopup(link, callWindowId);
 																}
-															}); 
-															popover.done(function(msg) {
-																log.info("User " + msg + " call: " + callId);
-																// We try open already running call if found, then create a new call if not found
-																openCallWindow(callId, function(callWindow) {
-																	var link = callLink(callId);
-																	var callWindowId;
-																	if (callWindow) {
-																		callWindow.location.href = link;
-																	} else {
-																		callWindowId = windowId(context.currentUser.id, callId);
-																		callWindow = webConferencing.showCallPopup(link, callWindowId);
-																	}
-																	// Tell the window to start a call  
-																	onCallWindowReady(callWindow).done(function() {
-																		log.debug("Call page loaded: " + callId);
-																		callWindow.document.title = message("callWith") + " " + call.owner.title;
-																		callWindow.eXo.webConferencing.startCall(call).done(function(state) {
-																			log.info("Call " + state + ": " + callId);
-																			assignCallButton(update.owner.id, callId);
-																			if (callWindowId) {
-																				saveCallWindow(callId, callWindowId);
-																			}
-																		}).fail(function(err) {
-																			log.showError("Failed to start/join call: " + callId, err, message("errorStartingCall"));
-																		});
+																// Tell the window to start a call  
+																onCallWindowReady(callWindow).done(function() {
+																	log.debug("Call page loaded: " + callId);
+																	callWindow.document.title = call.owner.group ? call.owner.title + " " + message("meeting") : message("callWith") + " " + call.owner.title;
+																	callWindow.eXo.webConferencing.startCall(call).done(function(state) {
+																		log.info("Call " + state + ": " + callId);
+																		assignCallButton(update.owner.id, callId);
+																		if (callWindowId) {
+																			saveCallWindow(callId, callWindowId);
+																		}
 																	}).fail(function(err) {
-																		log.showError("Call page failed: " + callId, err, message("errorOpeningCall"));
+																		log.showError("Failed to start/join call: " + callId, err, message("errorStartingCall"));
 																	});
+																}).fail(function(err) {
+																	log.showError("Call page failed: " + callId, err, message("errorOpeningCall"));
 																});
 															});
-															popover.fail(function(msg) {
-																if ($callPopup.callState != "stopped" && $callPopup.callState != "joined") {
-																	log.info("User " + msg + " call: " + callId);
-																	log.trace("<<< User " + msg + ($callPopup.callState ? " just " + $callPopup.callState : "") 
-																				+ " call " + callId + ", deleting it.");
-																	deleteCall(callId);
+														});
+														popover.fail(function(msg) {
+															if ($callPopup.callState != "stopped" && $callPopup.callState != "joined") {
+																log.info("User " + msg + " call: " + callId);
+																log.trace("<<< User " + msg + ($callPopup.callState ? " just " + $callPopup.callState : "") 
+																			+ " call " + callId + ", deleting it.");
+																if (call.owner.group) {
+																  leavedCall(callId);
+																} else {
+																  deleteCall(callId);																  
 																}
-															});
-															if (!visible && playRing) {
-																// If not visible but need to play a ring - wait for other clients that could play and if none then play here
-																// We wait for random timeout to let an one be first (w/ higher probability)
-																setTimeout(function() {
-																	if ($callPopup && $callPopup.callId == callId && !isRingtonePlayed(callId)) {
-																		$callPopup.playRingtone();
-																	}
-																}, 2500 + webConferencing.getRandom(1, 1000));
 															}
-														}).fail(function(err) {
-															var msg = err ? webConferencing.errorText(err) : message("errorReadUserStatus");
-															log.showError("Failed to get user status: " + currentUserId, err, message("errorIncomingCall"), msg);
-														});														
-													}
-												}).fail(function(err) {
-													var msg = err ? webConferencing.errorText(err) : message("errorReadCall");
-													log.showError("Failed to get call info: " + callId, err, message("errorIncomingCall"), msg);
-												});
-											} else if (update.callState == "stopped") {
-												// Hide accept popover for this call, if any
-												var hasPopup = closeCallPopup(callId, update.callState);
-												var hasWindow = readCallWindow(callId);
-												unassignCallButton(callId);
-												removeCallWindow(callId);
-												if (hasPopup || hasWindow) {
-													log.info("Call stopped remotelly: " + callId);
-												} else {
-													log.debug("Call stopped remotelly: " + callId);
+														});
+														if (!visible && playRing) {
+															// If not visible but need to play a ring - wait for other clients that could play and if none then play here
+															// We wait for random timeout to let an one be first (w/ higher probability)
+															setTimeout(function() {
+																if ($callPopup && $callPopup.callId == callId && !isRingtonePlayed(callId)) {
+																	$callPopup.playRingtone();
+																}
+															}, 2500 + webConferencing.getRandom(1, 1000));
+														}
+													}).fail(function(err) {
+														var msg = err ? webConferencing.errorText(err) : message("errorReadUserStatus");
+														log.showError("Failed to get user status: " + currentUserId, err, message("errorIncomingCall"), msg);
+													});														
 												}
+											}).fail(function(err) {
+												var msg = err ? webConferencing.errorText(err) : message("errorReadCall");
+												log.showError("Failed to get call info: " + callId, err, message("errorIncomingCall"), msg);
+											});
+										} else if (update.callState == "stopped") {
+											// Hide accept popover for this call, if any
+											var hasPopup = closeCallPopup(callId, update.callState);
+											var hasWindow = readCallWindow(callId);
+											unassignCallButton(callId);
+											removeCallWindow(callId);
+											if (hasPopup || hasWindow) {
+												log.info("Call stopped remotelly: " + callId);
+											} else {
+												log.debug("Call stopped remotelly: " + callId);
 											}
 										}
-									} else {
-										log.warn("Group calls not supported: " + callId);
 									}
+									//} else {
+									//	log.warn("Group calls not supported: " + callId);
+									//}
 								} else if (update.eventType == "call_joined") {
 									// If user has incoming popup open for this call (several user's windows/clients), then close it
 									if (currentUserId == update.part.id) {
