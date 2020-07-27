@@ -129,6 +129,8 @@ if (eXo.webConferencing) {
               var localVideo = $localVideo.get(0);
               var $miniVideo = $videos.find("#mini-video");
               var miniVideo = $miniVideo.get(0);
+
+              var connectionVideos = {};
               
               var $controls = $convo.find("#controls");
               $controls.addClass("active");
@@ -455,29 +457,15 @@ if (eXo.webConferencing) {
                   // };
                   pc.ontrack = function (event) {
                     log.debug("Added stream for " + callId);
-                    // Stop local
-                    localVideo.pause();
-                    $localVideo.removeClass("active");
-                    $localVideo.hide();
-  
                     // Show remote
-                    var videoElement$ = $("<video></video>").attr({
+                    var videoElement$ = $("<video class='remote-mini active'></video>").attr({
                       id: `remote-${userId}`,
                       autoplay: "",
                       muted: ""
-                    });
+                    }).css("left", `${Object.keys(connectionVideos).length * 210 + 20}px`);
                     videoElement$.get(0).srcObject = event.streams[0];
                     $videos.append(videoElement$);
-  
-                    // Show local in mini
-                    if (localVideo.srcObject) {
-                      miniVideo.srcObject = localVideo.srcObject;
-                      localVideo.srcObject = null;
-                      $miniVideo.addClass("active");
-                      $miniVideo.show();
-                    }
-                    
-                    //
+                    connectionVideos[userId] = videoElement$;
                     $videos.addClass("active");
                   };
   
@@ -521,6 +509,9 @@ if (eXo.webConferencing) {
                     miniVideo.srcObject = null;
                     $miniVideo.removeClass("active");
                     $miniVideo.hide();
+
+                    delete connectionVideos[userId];
+                    $(`#remote-${userId}`).remove();
                     
                     $videos.removeClass("active");
                   };
