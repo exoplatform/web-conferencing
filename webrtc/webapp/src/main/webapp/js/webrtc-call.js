@@ -129,8 +129,6 @@ if (eXo.webConferencing) {
               var localVideo = $localVideo.get(0);
               var $miniVideo = $videos.find("#mini-video");
               var miniVideo = $miniVideo.get(0);
-
-              var connectionVideos = {};
               
               var $controls = $convo.find("#controls");
               $controls.addClass("active");
@@ -223,7 +221,7 @@ if (eXo.webConferencing) {
 	                      stopLocal();
 	                    });
 	                  }
-		              }                 
+                  }            
 		            }
 		          };
 
@@ -458,15 +456,23 @@ if (eXo.webConferencing) {
                   pc.ontrack = function (event) {
                     log.debug("Added stream for " + callId);
                     // Show remote
-                    var videoElement$ = $("<video class='remote-mini active'></video>").attr({
-                      id: `remote-${userId}`,
-                      autoplay: "",
-                      muted: ""
-                    }).css("left", `${Object.keys(connectionVideos).length * 210 + 20}px`);
-                    videoElement$.get(0).srcObject = event.streams[0];
-                    $videos.append(videoElement$);
-                    connectionVideos[userId] = videoElement$;
-                    $videos.addClass("active");
+                    if (!$(`#remote-${userId}`).length) {
+                      var videoElement$ = $("<video class='remote-mini active'></video>").attr({
+                        id: `remote-${userId}`,
+                        autoplay: "",
+                        muted: ""
+                      }).css("left", `${(Object.keys(peers).length - 1) * 210 + 20}px`);
+                      videoElement$.get(0).srcObject = event.streams[0];
+                      $videos.append(videoElement$);
+                      $videos.addClass("active");
+                    }
+                  };
+
+                  pc.oniceconnectionstatechange = function (event) {
+                    var state = pc.iceConnectionState;
+                    if (state === "failed" || state === "closed" || state === "disconnected") {
+                      $(`#remote-${userId}`).remove(); 
+                    }
                   };
   
                   pc.onaddstream = function (event) { 
@@ -509,9 +515,6 @@ if (eXo.webConferencing) {
                     miniVideo.srcObject = null;
                     $miniVideo.removeClass("active");
                     $miniVideo.hide();
-
-                    delete connectionVideos[userId];
-                    $(`#remote-${userId}`).remove();
                     
                     $videos.removeClass("active");
                   };
