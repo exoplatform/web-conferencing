@@ -23,9 +23,7 @@
 		<div id="webrtc-call-title"><h1></h1></div>
 		<div id="webrtc-call-conversation">
 			<div id="videos">
-				<video id="remote-video" autoplay style="display:none;"></video>
 				<video id="local-video" autoplay muted></video>
-				<video id="mini-video" autoplay muted style="display:none;"></video>
 			</div>
 			<div id="controls" style="display:none;">
 				<svg id="mute-audio" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewbox="-10 -10 68 68">

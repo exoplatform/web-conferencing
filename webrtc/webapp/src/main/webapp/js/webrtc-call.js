@@ -123,12 +123,8 @@ if (eXo.webConferencing) {
               $title.text(call.title);
               
               var $videos = $convo.find("#videos");
-              var $remoteVideo = $videos.find("#remote-video");
-              var remoteVideo = $remoteVideo.get(0);
               var $localVideo = $videos.find("#local-video");
               var localVideo = $localVideo.get(0);
-              var $miniVideo = $videos.find("#mini-video");
-              var miniVideo = $miniVideo.get(0);
               
               var $controls = $convo.find("#controls");
               $controls.addClass("active");
@@ -136,7 +132,7 @@ if (eXo.webConferencing) {
               var $hangupButton = $controls.find("#hangup");
 
 		          var stopStream = function(stream) {
-		            var videoTracks = stream.getVideoTracks();
+                var videoTracks = stream.getVideoTracks();
 		            for (var i = 0; i < videoTracks.length; ++i) {
 		              videoTracks[i].stop();
 		            }
@@ -167,7 +163,7 @@ if (eXo.webConferencing) {
 		            localVideo.srcObject = null;
 		            if (localStream) {
 		              stopStream(localStream);
-		            }
+                }
 		        
 //		            if (pc) {
 //		              try {
@@ -470,55 +466,10 @@ if (eXo.webConferencing) {
 
                   pc.oniceconnectionstatechange = function (event) {
                     var state = pc.iceConnectionState;
-                    if (state === "failed" || state === "closed" || state === "disconnected") {
+                    if ((state === "failed" || state === "closed" || state === "disconnected") && $(`#remote-${userId}`).length) {
                       $(`#remote-${userId}`).remove(); 
                     }
                   };
-  
-                  pc.onaddstream = function (event) { 
-                    // Remote video added: switch local to a mini and show the remote as main
-                    log.debug("Added stream for " + callId);
-                    // Stop local
-                    // localVideo.pause();
-                    // $localVideo.removeClass("active");
-                    // $localVideo.hide();
-                      
-                    // // Show remote
-                    // remoteVideo.srcObject = event.stream;
-                    // $remoteVideo.addClass("active");
-                    // $remoteVideo.show();
-                      
-                    // // Show local in mini
-                    // miniVideo.srcObject = localVideo.srcObject;
-                    // localVideo.srcObject = null;
-                    // $miniVideo.addClass("active");
-                    // $miniVideo.show();
-                      
-                    // //
-                    // $videos.addClass("active");
-                  };
-                  
-                  pc.onremovestream = function(event) {
-                    // TODO check the event stream URL before removal?
-                    log.debug("Removed stream for " + callId);
-                    // Stop remote
-                    remoteVideo.pause();
-                    $remoteVideo.removeClass("active");
-                    $remoteVideo.hide();
-                    remoteVideo.srcObject = null;
-                    
-                    // Show local
-                    localVideo.srcObject = miniVideo.srcObject;
-                    $localVideo.addClass("active");
-                    
-                    // Hide mini
-                    miniVideo.srcObject = null;
-                    $miniVideo.removeClass("active");
-                    $miniVideo.hide();
-                    
-                    $videos.removeClass("active");
-                  };
-                  
                   // The 'negotiationneeded' event trigger offer generation
                   pc.onnegotiationneeded = function () {
                     // XXX Jun 4 2018: it's a workaround for Chrome (v66+) which produces several onnegotiationneeded events for
