@@ -339,6 +339,8 @@ if (eXo.webConferencing) {
                   if (update.owner.type == "user") {
                     if (update.callState == "stopped" && update.callId == callId) {
                       var msg = "Call stopped remotely: " + update.callId;
+                      // TODO: It should be called on peer.close or some another method that remove peer
+                      sendBye().then(function() {});
                       if (stopping) {
                         log.trace(msg); // it's already logged remotely by this client
                       } else {
@@ -467,6 +469,8 @@ if (eXo.webConferencing) {
                   pc.oniceconnectionstatechange = function (event) {
                     var state = pc.iceConnectionState;
                     if ((state === "failed" || state === "closed" || state === "disconnected") && $(`#remote-${userId}`).length) {
+                      // Also video removed on onCallUpdate when recieved 'bye',
+                      // but it will not be called if peer disconnects unexpectedly
                       $(`#remote-${userId}`).remove(); 
                     }
                   };
@@ -772,6 +776,10 @@ if (eXo.webConferencing) {
                           }
                         } else {
                           log.warn("Unexpected hello received to " + message.hello + " peer for " + callId);
+                        }
+                        // Also video removed on pc.oniceconnectionstatechange, which is better place, but it takes 5-7 sec
+                        if ($(`#remote-${message.sender}`).length) {
+                          $(`#remote-${message.sender}`).remove(); 
                         }
                       } else {
                         log.warn("Received unexpected message for " + callId + ": " + JSON.stringify(message));
