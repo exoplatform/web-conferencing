@@ -57,9 +57,9 @@
     <!-- **************************************** -->
     <!-- Dependencies versions                    -->
     <!-- **************************************** -->
-    <addon.exo.ecms.version>6.1.x-SNAPSHOT</addon.exo.ecms.version>
-    <org.exoplatform.social.version>6.1.x-SNAPSHOT</org.exoplatform.social.version>
-    <org.exoplatform.platform-ui.version>6.1.x-SNAPSHOT</org.exoplatform.platform-ui.version>
+    <addon.exo.ecms.version>6.1.0-10082020</addon.exo.ecms.version>
+    <org.exoplatform.social.version>6.1.0-10082020</org.exoplatform.social.version>
+    <org.exoplatform.platform-ui.version>6.1.0-10082020</org.exoplatform.platform-ui.version>
     <!-- for tests -->
     <junit.version>4.12</junit.version>
   </properties>
