@@ -115,7 +115,7 @@
   </module>-->
 
   <module>
-    <name>webConferencingAdmin</name>
+    <name>webConferencingAdminPortlet</name>
     <script>
       <path>/js/editorsAdmin.bundle.js</path>
     </script>
