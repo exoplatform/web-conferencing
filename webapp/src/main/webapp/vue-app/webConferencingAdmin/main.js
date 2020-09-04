@@ -22,6 +22,6 @@ export function init(settings) {
         h(adminApp, { props: { ...settings, i18n: i18n, language: lang, resourceBundleName: resourceBundleName } }),
       i18n,
       vuetify
-    }).$mount("#editors-admin");
+    }).$mount("#webconferencingAdmin");
   });
 }

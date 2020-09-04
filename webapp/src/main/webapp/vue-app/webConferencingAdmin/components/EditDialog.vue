@@ -150,7 +150,7 @@
 </template>
 
 <script>
-import { postData, getData } from "../conferencingAdminAPI";
+import { postData, getData } from "../AdminAPI";
 
 export default {
   props: {

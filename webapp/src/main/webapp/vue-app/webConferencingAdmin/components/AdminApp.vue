@@ -72,7 +72,7 @@
 </template>
 
 <script>
-import { postData, getData } from "../conferencingAdminAPI";
+import { postData, getData } from "../AdminAPI";
 import EditDialog from "./EditDialog.vue";
 
 export default {
