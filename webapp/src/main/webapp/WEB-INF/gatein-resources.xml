@@ -117,7 +117,7 @@
   <module>
     <name>webConferencingAdminPortlet</name>
     <script>
-      <path>/js/editorsAdmin.bundle.js</path>
+      <path>/js/webConferencingAdmin.bundle.js</path>
     </script>
     <depends>
       <module>vue</module>
