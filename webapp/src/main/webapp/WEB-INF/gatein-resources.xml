@@ -98,7 +98,7 @@
       <module>webConferencing</module>
     </depends>
   </module>
-  <module>
+  <!--<module>
     <name>webConferencingAdminPortlet</name>
     <script>
       <path>/js/webconferencing-admin-portlet.js</path>
@@ -111,6 +111,22 @@
     </depends>
     <depends>
       <module>webConferencingPortlet</module>
+    </depends>
+  </module>-->
+
+  <module>
+    <name>webConferencingAdmin</name>
+    <script>
+      <path>/js/editorsAdmin.bundle.js</path>
+    </script>
+    <depends>
+      <module>vue</module>
+    </depends>
+    <depends>
+      <module>vuetify</module>
+    </depends>
+    <depends>
+      <module>eXoVueI18n</module>
     </depends>
   </module>
   

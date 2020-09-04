@@ -55,3 +55,9 @@ dependency-reduced-pom.xml
 .groovy/
 transaction.log
 rebel.xml
+
+# Npm
+node_modules/
+
+#bin folder
+bin/
