@@ -6,7 +6,49 @@
   Map<String, String> messages = (Map<String, String>) request.getAttribute("messages");
 %>
 
-<div id="webconferencingAdmin" class="container-fluid">
+<div id="webconferencingAdmin">
+	<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light titleWithBorder">
+	</div>
+	<div class="v-skeleton-loader__bone blockProvidersInner">
+	  <div class="providersItem providersItem--name">
+		<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light providersSkeleton tableHeader">
+		</div>
+		<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light providersSkeleton skeletonText">
+		</div>
+		<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light providersSkeleton skeletonText">
+		</div>
+	  </div>
+	  <div class="providersItem providersItem--description">
+		<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light providersSkeleton tableHeader">
+		</div>
+		<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light providersSkeleton skeletonText">
+		</div>
+		<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light providersSkeleton skeletonText">
+		</div>
+	  </div>
+	  <div class="providersItem providersItem--active">
+		<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light providersSkeleton tableHeader">
+		</div>
+		<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light providersSkeleton skeletonSwitcher">
+		</div>
+		<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light providersSkeleton skeletonSwitcher">
+		</div>
+	  </div>
+	  <div class="providersItem providersItem--permissions">
+		<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light providersSkeleton tableHeader">
+		</div>
+		<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light providersSkeleton skeletonSettings">
+		</div>
+		<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light providersSkeleton skeletonSettings">
+		</div>
+	  </div>
+	</div>
+  </div>
+
+
+
+
+<!-- <div id="webconferencingAdmin" class="container-fluid">
 	<h3 class="titleWithBorder">${messages["webconferencing.admin.title"]}</h3>
 	<div class="content">
 		<p>${messages["webconferencing.admin.info"]}</p>
@@ -41,4 +83,4 @@
 			</tbody>
 		</table>
 	</div>
-</div>
+</div> -->
