@@ -79,7 +79,7 @@ public class WebConferencingAdminPortlet extends GenericPortlet {
       UserInfo exoUser = webConferencing.getUserInfo(remoteUser);
       if (exoUser != null) {
         // i18n messages
-        Map<String, String> messages = getResourceMessages("locale.webconferencing.WebConferencingAdmin", request.getLocale());
+        //Map<String, String> messages = getResourceMessages("locale.webconferencing.WebConferencingAdmin", request.getLocale());
         // Reduce and simplify the map for use in JSP: no real sense with small amount of messages
         //        messages = messages.entrySet().stream()
         //                   .filter(e -> e.getKey().startsWith(ADMIN_RESOURCE_PREFIX))
@@ -88,7 +88,7 @@ public class WebConferencingAdminPortlet extends GenericPortlet {
         //                                             a -> a.getValue()));
         
         // Markup
-        request.setAttribute("messages", messages);
+        //request.setAttribute("messages", messages);
         PortletRequestDispatcher prDispatcher = getPortletContext().getRequestDispatcher("/WEB-INF/pages/admin.jsp");
         prDispatcher.include(request, response);
 
