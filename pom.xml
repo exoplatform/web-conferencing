@@ -66,6 +66,7 @@
     <npm.version>6.14.5</npm.version>
     <!-- for tests -->
     <junit.version>4.12</junit.version>
+    <io.jsonwebtoken.version>0.10.5</io.jsonwebtoken.version>
   </properties>
   
   <dependencyManagement>
@@ -117,6 +118,21 @@
         <artifactId>web-conferencing-webrtc-webapp</artifactId>
         <version>${project.version}</version>
         <type>war</type>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>${io.jsonwebtoken.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-impl</artifactId>
+        <version>${io.jsonwebtoken.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-jackson</artifactId>
+        <version>${io.jsonwebtoken.version}</version>
       </dependency>
       <!-- for tests -->
       <dependency>
