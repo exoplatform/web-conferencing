@@ -26,7 +26,14 @@
 
   <component>
     <type>org.exoplatform.webconferencing.WebConferencingService</type>
+    <init-params>
+      <properties-param>
+        <name>jwt-configuration</name>
+        <property name="secret-key" value="${webconferencing.jwt.secret:mQzPudDBpSAqUwM0FY2r86gNAd6be5tN1xqwdFDOb4Us1DT4Tm}" />
+      </properties-param>
+    </init-params>
   </component>
+
   <component>
     <type>org.exoplatform.webconferencing.rest.RESTWebConferencingService</type>
   </component>
@@ -127,9 +134,25 @@
             </field>
           </object>
         </object-param>
+        <object-param>
+          <name>Web Conferencing Session Filter</name>
+          <object type="org.exoplatform.web.filter.FilterDefinition">
+            <field name="filter">
+              <object type="org.exoplatform.webconferencing.server.filter.SessionFilter" />
+            </field>
+            <field name="patterns">
+              <collection type="java.util.ArrayList" item-type="java.lang.String">
+                <value>
+                  <string>/.*</string>
+                </value>
+              </collection>
+            </field>
+          </object>
+        </object-param>
       </init-params>
     </component-plugin>
   </external-component-plugins>
+ 
   
   <!-- This configuration adds Admin portlet to Administration drop-down menu -->
   <external-component-plugins>

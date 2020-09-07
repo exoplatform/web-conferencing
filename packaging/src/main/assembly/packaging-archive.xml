@@ -30,6 +30,9 @@
        <useTransitiveDependencies>true</useTransitiveDependencies>
        <includes>
          <include>org.exoplatform.addons.web-conferencing:web-conferencing-*:jar</include>
+         <include>io.jsonwebtoken:jjwt-api:jar</include>
+         <include>io.jsonwebtoken:jjwt-impl:jar</include>
+         <include>io.jsonwebtoken:jjwt-jackson:jar</include>
        </includes>
        <scope>provided</scope>
        <fileMode>0644</fileMode>
