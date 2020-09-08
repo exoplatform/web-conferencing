@@ -19,7 +19,7 @@ export function init(settings) {
     // init Vue app when locale ressources are ready
     new Vue({
       render: h =>
-        h(adminApp, { props: { services: {...settings}, i18n: i18n, language: lang, resourceBundleName: resourceBundleName } }),
+        h(adminApp, { props: {...settings, i18n: i18n, language: lang, resourceBundleName: resourceBundleName } }),
       i18n,
       vuetify
     }).$mount("#webconferencingAdmin");
