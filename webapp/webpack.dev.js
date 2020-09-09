@@ -6,7 +6,7 @@ const webpackCommonConfig = require("./webpack.common.js");
 const app = "webconferencing";
 
 // add the server path to your server location path
-const exoServerPath = "../../plf/platform-6.0.0";
+const exoServerPath = "/exo-server";
 
 let config = merge(webpackCommonConfig, {
   output: {
