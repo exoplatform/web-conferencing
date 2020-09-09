@@ -46,14 +46,15 @@
                     </div>
                   </td>
                   <td class="center actionContainer">
-                    <!-- <div>
+                    <div>
                       <v-switch
                         :input-value="item.active"
                         :ripple="false"
+                        v-model="item.active"
                         color="#568dc9"
                         class="providersSwitcher"
                         @change="changeActive(item)" />
-                    </div> -->
+                    </div>
                   </td>
                   <td class="center actionContainer">
                     <!-- <edit-dialog
@@ -137,20 +138,34 @@ export default {
         `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/locale.${providerId}.${this.resourceBundleName}-${this.language}.json`;
       return exoi18n.loadLanguageAsync(this.language, resourceUrl);
     },
-    // async changeActive(provider) {
-    //   // getting rest for updating provider status
-    //   try {
-    //     const data = await postData(provider.links.self.href, { active: !provider.active });
-    //     this.error = null;
-    //     this.providers.map(p => {
-    //       if (p.provider === provider.provider) {
-    //         p.active = !provider.active;
-    //       }
-    //     });
-    //   } catch (err) {
-    //     this.error = err.message;
-    //   }
-    // }
+    changeActive(provider) {
+      // getting rest for updating provider status
+      try {
+        // const data = await postData(provider.links.self.href, { active: !provider.active });
+        this.providers.map(async function (item)  {
+          console.log(item.active, "1")
+          const data = await webConferencing.postProviderConfig(item.type, item.active)
+          console.log(item.active, "checked")
+          console.log(item.active, "2")
+        console.log(data, "post");
+        this.error = null;
+        if (item.title === provider.title) {
+            item.active = !provider.active;
+            console.log(item.active, "3")
+          }
+        });
+        // const data = await webConferencing.postProviderConfig(this.providers.type, this.checked)
+        // console.log(data, "post");
+        // this.error = null;
+        // this.providers.map(p => {
+        //   if (p.provider === provider.provider) {
+        //     p.active = !provider.active;
+        //   }
+        // });
+      } catch (err) {
+        this.error = err.message;
+      }
+    }
   }
 };
 </script>
