@@ -23,7 +23,7 @@
       </table>
       <WebRTC>
         <name>WebRTC</name>
-        <description>Default provider based on <a href="https://webrtc.org/">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.</description>
+        <description>Default provider based on WebRTC standard. Let users to place peer to peer call. No browser plugin needed.</description>
       </WebRTC>
       <Skype>
         <name>Skype</name>

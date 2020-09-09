@@ -120,6 +120,9 @@
       <path>/js/webConferencingAdmin.bundle.js</path>
     </script>
     <depends>
+      <module>webConferencing</module>
+    </depends>
+    <depends>
       <module>vue</module>
     </depends>
     <depends>
@@ -127,9 +130,6 @@
     </depends>
     <depends>
       <module>eXoVueI18n</module>
-    </depends>
-    <depends>
-      <module>webConferencing</module>
     </depends>
   </module>
   

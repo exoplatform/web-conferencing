@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 <template>
   <v-app id="web-conferencing-admin" class="VuetifyApp">
     <v-container style="width: 95%" class="v-application--is-ltr">
@@ -26,40 +27,40 @@
               <tbody v-if="providers.length > 0">
                 <tr 
                   v-for="item in providers" 
-                  :key="item.provider" 
+                  :key="item.title" 
                   class="providersTableRow">
                   <td>
                     <div>
-                      {{ i18n.te(`webconferencing.admin.${item.provider}.name`)
-                        ? $t(`webconferencing.admin.${item.provider}.name`)
-                        : item.provider 
+                      {{ i18n.te(`webconferencing.admin.${item.title}.name`)
+                        ? $t(`webconferencing.admin.${item.title}.name`)
+                        : item.title 
                       }}
                     </div>
                   </td>
                   <td>
                     <div>
-                      {{ i18n.te(`webconferencing.admin.${item.provider}.description`)
-                        ? $t(`webconferencing.admin.${item.provider}.description`)
+                      {{ i18n.te(`webconferencing.admin.${item.title}.description`)
+                        ? $t(`webconferencing.admin.${item.title}.description`)
                         : "" 
                       }}
                     </div>
                   </td>
                   <td class="center actionContainer">
-                    <div>
+                    <!-- <div>
                       <v-switch
                         :input-value="item.active"
                         :ripple="false"
                         color="#568dc9"
                         class="providersSwitcher"
                         @change="changeActive(item)" />
-                    </div>
+                    </div> -->
                   </td>
                   <td class="center actionContainer">
-                    <edit-dialog
+                    <!-- <edit-dialog
                       :provider-name="item.provider"
                       :provider-link="item.links.self.href"
                       :search-url="services.identities"
-                      :i18n="i18n" />
+                      :i18n="i18n" /> -->
                   </td>
                 </tr>
               </tbody>
@@ -104,22 +105,29 @@ export default {
       error: null
     };
   },
-  created() {
+   created() {
     this.getProviders();
+    console.log(webConferencing);
   },
   methods: {
     async getProviders() {
+      console.log(webConferencing, "webconf")
       // services object contains urls for requests
       try {
-        const data = await getData(this.services.providers);
+        // const data = await getData(this.services.providers);
+        const response = await webConferencing.getProvidersConfig();
+        console.log(response, "response")
+        const data = webConferencing.getProvidersConfig().done((response));
+        console.log(data, "data")
         this.error = null;
-        this.providers = data.editors;
-        const resourcesPromises = this.providers.map(({ provider }) => this.getProviderResources(provider));
-        Promise.all(resourcesPromises).then(res => {
-          res.map(localized => {
-            this.i18n.mergeLocaleMessage(this.language, localized.getLocaleMessage(this.language));
-          });
-        });
+        this.providers = await response;
+        console.log(this.providers, "providers")
+        // const resourcesPromises = this.providers.map(({ provider }) => this.getProviderResources(provider));
+        // Promise.all(resourcesPromises).then(res => {
+        //   res.map(localized => {
+        //     this.i18n.mergeLocaleMessage(this.language, localized.getLocaleMessage(this.language));
+        //   });
+        // });
       } catch (err) {
         this.error = err.message;
       }
@@ -129,20 +137,20 @@ export default {
         `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/locale.${providerId}.${this.resourceBundleName}-${this.language}.json`;
       return exoi18n.loadLanguageAsync(this.language, resourceUrl);
     },
-    async changeActive(provider) {
-      // getting rest for updating provider status
-      try {
-        const data = await postData(provider.links.self.href, { active: !provider.active });
-        this.error = null;
-        this.providers.map(p => {
-          if (p.provider === provider.provider) {
-            p.active = !provider.active;
-          }
-        });
-      } catch (err) {
-        this.error = err.message;
-      }
-    }
+    // async changeActive(provider) {
+    //   // getting rest for updating provider status
+    //   try {
+    //     const data = await postData(provider.links.self.href, { active: !provider.active });
+    //     this.error = null;
+    //     this.providers.map(p => {
+    //       if (p.provider === provider.provider) {
+    //         p.active = !provider.active;
+    //       }
+    //     });
+    //   } catch (err) {
+    //     this.error = err.message;
+    //   }
+    // }
   }
 };
 </script>

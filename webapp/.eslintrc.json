@@ -21,7 +21,8 @@
         "Vue": true,
         "Vuetify": true,
         "exoi18n": true,
-        "cCometd": true
+        "cCometd": true,
+        "webConferencing": true
     },
     "parserOptions": {
         "sourceType": "module",
