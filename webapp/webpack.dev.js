@@ -6,7 +6,7 @@ const webpackCommonConfig = require("./webpack.common.js");
 const app = "webconferencing";
 
 // add the server path to your server location path
-const exoServerPath = "/exo-server";
+const exoServerPath = "/eXo/jitsi/exo-server";
 
 let config = merge(webpackCommonConfig, {
   output: {

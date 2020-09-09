@@ -1,10 +1,10 @@
 {
   "name": "web-conferencing",
   "version": "1.0.0",
-  "description": "eXo web conferencing webapp",
+  "description": "eXo Web conferencing webapp",
   "repository": {
     "type": "git",
-    "url": "https://github.com/exoplatform/digital-workplace"
+    "url": "https://github.com/exoplatform/webconferencing"
   },
   "scripts": {
     "start": "webpack --config webpack.dev.js --mode development",
