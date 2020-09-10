@@ -1,5 +1,5 @@
 <div id="webconferencingAdmin">
-	<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light titleWithBorder">
+	<div class="v-skeleton-loader  v-skeleton-loader--is-loading theme--light webconferencingTitle">
 	</div>
 	<div class="v-skeleton-loader__bone blockProvidersInner">
 	  <div class="providersItem providersItem--name">

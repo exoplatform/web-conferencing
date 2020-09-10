@@ -12,17 +12,17 @@
         class="actionIcon" 
         data-original-title="Edit" 
         v-on="on">
-        <i class="uiIconEdit uiIconLightGray"></i>
+        <i class="uiIconSetting uiIconLightGray"></i>
       </a>
     </template>
 
     <v-card class="provider uiPopup">
       <div v-show="error" class="alert alert-error">{{ $t(error) }}</div>
       <v-card-title class="headline popupHeader justify-space-between providerHeader mb-0">
-        <span class="PopupTitle popupTitle providerHeaderTitle">{{ this.$t("webconferencing.admin.modal.title") }}</span>
+        <span class="PopupTitle popupTitle providerHeaderTitle" v-html="this.$t(`webconferencing.admin.modal.title`)"></span>
         <i class="uiIconClose providerHeaderClose" @click="closeDialog"></i>
       </v-card-title>
-      <v-card-text class="popupContent providerContent pa-4">
+      <!-- <v-card-text class="popupContent providerContent pa-4">
         <v-container class="permissions px-0">
           <v-row class="providerName ms-0">
             {{ i18n.te(`webconferencing.admin.${providerName}.name`) ? $t(`webconferencing.admin.${providerName}.name`) : providerName }}
@@ -128,8 +128,8 @@
             </v-col>
           </v-row>
         </v-container>
-      </v-card-text>
-      <v-card-actions class="dialogFooter footer justify-center pb-5">
+      </v-card-text> -->
+      <!-- <v-card-actions class="dialogFooter footer justify-center pb-5">
         <v-btn 
           class="btn btn-primary dialogFooterBtn me-2" 
           text 
@@ -144,7 +144,7 @@
           @click.native="closeDialog">
           {{ this.$t("webconferencing.admin.buttons.Cancel") }}
         </v-btn>
-      </v-card-actions>
+      </v-card-actions> -->
     </v-card>
   </v-dialog>
 </template>
@@ -158,7 +158,7 @@ export default {
       type: String,
       required: true
     },
-    providerName: {
+    providername: {
       type: String,
       required: true
     },
@@ -262,3 +262,9 @@ export default {
   }
 };
 </script>
+<style lang="less" scoped>
+  .uiIconSetting::before{
+    content: "\f13e";
+    font-size: 21px;
+  }
+</style>
