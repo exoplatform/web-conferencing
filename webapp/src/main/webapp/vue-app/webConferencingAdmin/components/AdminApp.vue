@@ -62,9 +62,7 @@
                     </div>
                   </td>
                   <td class="center actionContainer">
-                    <edit-dialog
-                      :providername="item.title"
-                      :i18n="i18n" />
+                    <i class="uiIconSetting uiIconLightGray"></i>
                   </td>
                 </tr>
               </tbody>
@@ -78,11 +76,9 @@
 
 <script>
 import { postData, getData } from "../AdminAPI";
-import EditDialog from "./EditDialog.vue";
 
 export default {
   components: {
-    EditDialog
   },
   props: {
     services: {
@@ -185,6 +181,10 @@ export default {
       padding: 0;
       margin: 0;
       height: 25px;
+    }
+    .uiIconSetting::before{
+      content: "\f13e";
+      font-size: 21px;
     }
   }
 </style>
