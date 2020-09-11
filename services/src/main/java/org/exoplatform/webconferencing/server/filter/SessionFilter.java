@@ -19,7 +19,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 /**
- * The Class SessionFilter.
+ * The Class SessionFilter adds/refreshes webconf session cookie to the response.
  */
 public class SessionFilter implements Filter {
 
@@ -49,7 +49,7 @@ public class SessionFilter implements Filter {
                                 .compact();
       Cookie cookie = new Cookie(WebConferencingService.SESSION_TOKEN_COOKIE, sessionToken);
       cookie.setPath("/");
-      cookie.setMaxAge(1200); // 20 mins
+      cookie.setMaxAge(2400); // 40 mins
       httpRes.addCookie(cookie);
     }
 
