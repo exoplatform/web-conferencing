@@ -6,7 +6,7 @@ let config = {
   // set the entry point of the application
   // can use multiple entry
   entry: {
-    webConferencingAdmin: "./src/main/webapp/vue-app/webConferencingAdmin/main.js"
+    webConferencingAdmin: "./src/main/webapp/vue-apps/webConferencingAdmin/main.js"
   },
   output: {
     filename: "js/[name].bundle.js",

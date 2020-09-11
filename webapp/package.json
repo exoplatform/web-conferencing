@@ -13,7 +13,7 @@
     "test": "jest",
     "test-coverage": "jest --coverage",
     "build": "webpack --config webpack.prod.js --mode production",
-    "lint": "eslint --fix ./src/main/webapp/vue-app/*.js ./src/main/webapp/vue-app/*/*.js ./src/main/webapp/vue-app/*/*/*/*.js ./src/main/webapp/vue-app/*/*/*/*.vue ./src/main/webapp/vue-app/*/*/*.vue  ./src/main/webapp/vue-app/*/*.vue ./src/main/webapp/vue-app/*.vue"
+    "lint": "eslint --fix ./src/main/webapp/vue-apps/*.js ./src/main/webapp/vue-apps/*/*.js ./src/main/webapp/vue-apps/*/*/*/*.js ./src/main/webapp/vue-apps/*/*/*/*.vue ./src/main/webapp/vue-apps/*/*/*.vue  ./src/main/webapp/vue-apps/*/*.vue ./src/main/webapp/vue-apps/*.vue"
   },
   "author": "eXo",
   "license": "LGPL",
