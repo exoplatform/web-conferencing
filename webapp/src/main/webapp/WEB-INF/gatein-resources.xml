@@ -39,6 +39,13 @@
     <overwrite>true</overwrite>
   </portlet-skin>
 
+  <javascript>
+    <param>
+      <js-module>webConferencingCallPlugin</js-module>
+      <js-path>/js/webconferencing-call-plugin.js</js-path>
+    </param>
+  </javascript>
+
   <!-- Javascript for webconferencing support in Platform -->
   <module>
     <name>webConferencingJqueryPnotify</name>
@@ -130,6 +137,28 @@
     </depends>
     <depends>
       <module>eXoVueI18n</module>
+    </depends>
+  </module>
+
+  <module>
+    <name>webConferencingCallApp</name>
+    <script>
+      <path>/js/webConferencingCall.bundle.js</path>
+    </script>
+    <depends>
+      <module>webConferencing</module>
+    </depends>
+    <depends>
+      <module>vue</module>
+    </depends>
+    <depends>
+      <module>vuetify</module>
+    </depends>
+    <depends>
+      <module>eXoVueI18n</module>
+    </depends>
+    <depends>
+      <module>extensionRegistry</module>
     </depends>
   </module>
   
