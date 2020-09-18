@@ -50,7 +50,7 @@
     <!-- Dependencies versions                    -->
     <!-- **************************************** -->
     <web-conferencing.version>1.1.x-SNAPSHOT</web-conferencing.version>
-    <org.exoplatform.depmgt.version>18.x-SNAPSHOT</org.exoplatform.depmgt.version>
+    <org.exoplatform.depmgt.version>18.x-jitsi-SNAPSHOT</org.exoplatform.depmgt.version>
     <!-- for tests -->
     <junit.version>4.12</junit.version>
   </properties>
