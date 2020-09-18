@@ -967,6 +967,8 @@
 			return process.promise();
 		};
 	}
+
+	this.getChatContext = WebConferencing.getChatContext;
 	
 	/**
 	 * WebConferencing core class.
@@ -1281,7 +1283,7 @@
 		/**
 		 * Find current Chat context from a room available in it.
 		 */
-		var getChatContext = function() {
+		this.getChatContext = function() {
 			var process = $.Deferred();
 			if (eXo.chat.selectedContact) {
 				var roomId = eXo.chat.selectedContact.user;

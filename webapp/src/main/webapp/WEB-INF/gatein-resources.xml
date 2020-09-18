@@ -141,7 +141,7 @@
   </module>
 
   <module>
-    <name>webConferencingCallApp</name>
+    <name>webConferencingCallButton</name>
     <script>
       <path>/js/webConferencingCall.bundle.js</path>
     </script>

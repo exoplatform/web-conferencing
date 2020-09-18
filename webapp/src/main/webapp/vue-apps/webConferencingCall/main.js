@@ -20,7 +20,7 @@ export function init(settings) {
     // init Vue app when locale ressources are ready
     new Vue({
       render: h =>
-        h(callDropdown, { ...settings, props: { i18n: i18n, language: lang, resourceBundleName: resourceBundleName } }),
+        h(callDropdown, { ...settings, props: { i18n: i18n, language: lang, resourceBundleName: resourceBundleName} }),
       i18n,
       vuetify
     }).$mount("#webConferencingCallDropdown");

@@ -48,10 +48,10 @@ const WebConferencingCallPlugin = [{
   enabled : true
 }];
 
-require(["SHARED/extensionRegistry", "SHARED/webConferencingCallApp"], function (extensionRegistry, webConferencingCallApp) {
+require(["SHARED/extensionRegistry", "SHARED/webConferencingCallButton"], function (extensionRegistry, webConferencingCallButton) {
   // init app only once with registering cloud drive extension
   var settings = {};
-  webConferencingCallApp.init(settings);
+  webConferencingCallButton.init(settings);
   for (const extension of WebConferencingCallPlugin) {
     // connect extension to AttachmentsComposer, "attachments-composer-action" is extension type
     // composer and extension type should be the same as in extension.js inside ecm-wcm-extension
