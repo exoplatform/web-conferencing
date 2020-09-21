@@ -967,8 +967,6 @@
 			return process.promise();
 		};
 	}
-
-	this.getChatContext = WebConferencing.getChatContext;
 	
 	/**
 	 * WebConferencing core class.
