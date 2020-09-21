@@ -1281,7 +1281,7 @@
 		/**
 		 * Find current Chat context from a room available in it.
 		 */
-		this.getChatContext = function() {
+		var getChatContext = function() {
 			var process = $.Deferred();
 			if (eXo.chat.selectedContact) {
 				var roomId = eXo.chat.selectedContact.user;
@@ -1367,6 +1367,7 @@
 			}
 			return process.promise();
 		};
+		this.getChatContext = getChatContext;
 		
 		/**
 		 * eXo Chat initialization
