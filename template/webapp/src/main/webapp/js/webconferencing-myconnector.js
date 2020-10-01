@@ -597,4 +597,4 @@
 	} else {
 		window.console && window.console.log("WARN: webConferencing not given and eXo.webConferencing not defined. My Connector provider registration skipped.");
 	}
-})($, typeof webConferencing != "undefined" ? webConferencing : null );
+})($, webConferencing);

@@ -38,7 +38,7 @@
 							var checkbox = this;
 							webConferencing.postProviderConfig(conf.type, this.checked).done(function(conf) {
 								// Ensure we show actual value
-								if (conf.active != checkbox.checked) {
+								if (conf.active !== checkbox.checked) {
 									checkbox.checked = conf.active; 
 								}
 							}).fail(function(err) {

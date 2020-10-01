@@ -39,6 +39,13 @@
     <overwrite>true</overwrite>
   </portlet-skin>
 
+  <javascript>
+    <param>
+      <js-module>webConferencingCallPlugin</js-module>
+      <js-path>/js/webconferencing-call-plugin.js</js-path>
+    </param>
+  </javascript>
+
   <!-- Javascript for webconferencing support in Platform -->
   <module>
     <name>webConferencingJqueryPnotify</name>
@@ -98,7 +105,7 @@
       <module>webConferencing</module>
     </depends>
   </module>
-  <module>
+  <!--<module>
     <name>webConferencingAdminPortlet</name>
     <script>
       <path>/js/webconferencing-admin-portlet.js</path>
@@ -111,6 +118,51 @@
     </depends>
     <depends>
       <module>webConferencingPortlet</module>
+    </depends>
+  </module>-->
+
+  <module>
+    <name>webConferencingAdminPortlet</name>
+    <script>
+      <path>/js/Admin.bundle.js</path>
+    </script>
+    <depends>
+      <module>webConferencing</module>
+    </depends>
+    <depends>
+      <module>vue</module>
+    </depends>
+    <depends>
+      <module>vuetify</module>
+    </depends>
+    <depends>
+      <module>eXoVueI18n</module>
+    </depends>
+  </module>
+
+  <module>
+    <name>webConferencingCallButton</name>
+    <script>
+      <path>/js/CallButtons.bundle.js</path>
+    </script>
+    <depends>
+      <module>webConferencing</module>
+    </depends>
+    <depends>
+      <module>vue</module>
+    </depends>
+    <depends>
+      <module>vuetify</module>
+    </depends>
+    <depends>
+      <module>eXoVueI18n</module>
+    </depends>
+    <depends>
+      <module>extensionRegistry</module>
+    </depends>
+    <depends>
+      <module>jquery</module>
+      <as>$</as>
     </depends>
   </module>
   

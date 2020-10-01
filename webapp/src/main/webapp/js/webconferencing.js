@@ -977,6 +977,9 @@
 		
 		// ******** Context ********
 		var contextInitializer = $.Deferred();
+
+		var callContextInitializer = $.Deferred();
+
 		var currentUser, currentSpaceId, currentRoomTitle;
 
 		// Providers
@@ -1282,16 +1285,21 @@
 		 * Find current Chat context from a room available in it.
 		 */
 		var getChatContext = function() {
+			return createChatContext(eXo.chat);
+		};
+		this.getChatContext = getChatContext;
+
+		var createChatContext = function (chat) {
 			var process = $.Deferred();
-			if (eXo.chat.selectedContact) {
-				var roomId = eXo.chat.selectedContact.user;
-				var roomTitle = eXo.chat.selectedContact.fullName;
-				
-				var isSpace = eXo.chat.selectedContact.type == "s"; // roomId && roomId.startsWith("space-");
-				var isRoom =  eXo.chat.selectedContact.type == "t"; // roomId && roomId.startsWith("team-");
+			if (chat.selectedContact) {
+				var roomId = chat.selectedContact.user;
+				var roomTitle = chat.selectedContact.fullName;
+
+				var isSpace = chat.selectedContact.type == "s"; // roomId && roomId.startsWith("space-");
+				var isRoom =  chat.selectedContact.type == "t"; // roomId && roomId.startsWith("team-");
 				var isGroup = isSpace || isRoom;
-				var isUser = !isGroup && eXo.chat.selectedContact.type == "u";
-				
+				var isUser = !isGroup && chat.selectedContact.type == "u";
+
 				// It is a logic used in Chat, so reuse it here:
 				var roomName = roomTitle.toLowerCase().split(" ").join("_");
 				var details = null;
@@ -1313,39 +1321,39 @@
 							details = data.promise();
 							if (isGroup) {
 								if (isSpace) {
-						  		var spaceId = roomName; // XXX no other way within Chat
-							  	getSpaceInfoReq(spaceId).done(function(space) {
-							  		data.resolve(space);
-							  	}).fail(function(err) {
-							  		log.trace("Error getting space info " + spaceId + " for chat context", err);
-							  		data.reject(err);
-							  	});
+									var spaceId = roomName; // XXX no other way within Chat
+									getSpaceInfoReq(spaceId).done(function(space) {
+										data.resolve(space);
+									}).fail(function(err) {
+										log.trace("Error getting space info " + spaceId + " for chat context", err);
+										data.reject(err);
+									});
 								} else if (isRoom) {
 									chat.getUsers(roomId).done(function(users) {
-						  			var unames = [];
-						  			for (var i=0; i<users.length; i++) {
-						  				var u = users[i];
-						  				if (u && u.name && u.name != "null") {
-						  					unames.push(u.name);
-						  				}
-						  			}
-						  			getRoomInfoReq(roomId, roomTitle, unames).done(function(info) {
-						  				data.resolve(info);												
-						  			}).fail(function(err) {
-						  				log.trace("Error getting Chat room info " + roomName + "/" + roomId + " for chat context", err);
-						  				data.reject(err);
-						  			});
-							  	}).fail(function(err) {
-							  		log.trace("Error getting Chat room users " + roomId + " for chat context", err);
+										var unames = [];
+										for (var i=0; i<users.length; i++) {
+											var u = users[i];
+											if (u && u.name && u.name != "null") {
+												unames.push(u.name);
+											}
+										}
+										getRoomInfoReq(roomId, roomTitle, unames).done(function(info) {
+											data.resolve(info);
+										}).fail(function(err) {
+											log.trace("Error getting Chat room info " + roomName + "/" + roomId + " for chat context", err);
+											data.reject(err);
+										});
+									}).fail(function(err) {
+										log.trace("Error getting Chat room users " + roomId + " for chat context", err);
 										data.reject("Error reading Chat room users for " + roomId);
-							  	});
-						  	} else {
-						  		data.reject("Unexpected context chat type: " + chatType + " for " + roomTitle);
-						  	}
+									});
+								} else {
+									data.reject("Unexpected context chat type: " + chatType + " for " + roomTitle);
+								}
 							} else {
 								// roomId is an user name for P2P chats
 								getUserInfoReq(roomId).done(function(user) {
-									data.resolve(user);												
+									data.resolve(user);
 								}).fail(function(err) {
 									log.trace("Error getting user info " + roomId + " for chat context", err);
 									data.reject(err);
@@ -1357,7 +1365,7 @@
 				};
 				process.resolve(context);
 			} else {
-				// If no room, then resolve with 'empty' context 
+				// If no room, then resolve with 'empty' context
 				process.resolve({
 					currentUser : currentUser,
 					isIOS : isIOS,
@@ -1366,7 +1374,7 @@
 				});
 			}
 			return process.promise();
-		};
+		}
 		
 		/**
 		 * eXo Chat initialization
@@ -1541,6 +1549,7 @@
 			};
 			return context;
 		};
+		
 		
 		var tiptip = function() {
 			var process = $.Deferred();
@@ -1843,7 +1852,6 @@
 					}
 				
 					contextInitializer.resolve();
-					
 					// also init registered providers
 					for (var i = 0; i < providers.length; i++) {
 						var p = providers[i];
@@ -2317,6 +2325,25 @@
 		};
 		
 		this.initRequest = initRequest; // for use in other modules (providers, portlets etc)
+
+		this.getCallContext = function() {
+			var result = $.Deferred();
+			contextInitializer.done(() => {
+				callContextInitializer.done(callContext => {
+					result.resolve(callContext);
+				}).fail((err, status) => {
+					result.reject(err, status);
+				})
+			}).fail((err, status) => {
+				result.reject(err, status);
+			})
+			return result.promise();
+		}
+		
+		this.initChatContext = async function(chat) {
+			const context = await createChatContext(chat);
+			callContextInitializer.resolve(context);
+		}
 	}
 	
 	var webConferencing = new WebConferencing();

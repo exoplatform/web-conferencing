@@ -104,5 +104,17 @@ public abstract class GroupInfo extends IdentityInfo {
       addMember(u);
     }
   }
+  
+  /**
+   * Set new members (replace existing ones).
+   *
+   * @param users the users
+   */
+  protected void setMembers(Collection<UserInfo> users) {
+    members.clear();
+    for (UserInfo u : users) {
+      addMember(u);
+    }
+  }
 
 }

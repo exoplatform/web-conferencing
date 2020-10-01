@@ -38,6 +38,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.persistence.PersistenceException;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.picocontainer.Startable;
+
 import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
@@ -45,6 +49,8 @@ import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.component.ComponentPlugin;
+import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -66,10 +72,6 @@ import org.exoplatform.webconferencing.dao.StorageException;
 import org.exoplatform.webconferencing.domain.CallEntity;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.picocontainer.Startable;
-
 
 /**
  * Created by The eXo Platform SAS.
@@ -80,37 +82,46 @@ import org.picocontainer.Startable;
 public class WebConferencingService implements Startable {
 
   /** The Constant ID_MAX_LENGTH. */
-  public static final int       ID_MAX_LENGTH         = 255;
+  public static final int       ID_MAX_LENGTH                = 255;
 
   /** The Constant TEXT_MAX_LENGTH. */
-  public static final int       TEXT_MAX_LENGTH       = 255;
+  public static final int       TEXT_MAX_LENGTH              = 255;
 
   /** The Constant ARG_MAX_LENGTH. */
-  public static final int       ARG_MAX_LENGTH        = 32;
+  public static final int       ARG_MAX_LENGTH               = 32;
 
   /** The Constant DATA_MAX_LENGTH. */
-  public static final int       DATA_MAX_LENGTH       = 2000;
+  public static final int       DATA_MAX_LENGTH              = 2000;
 
   /** The Constant SPACE_TYPE_NAME. */
-  public static final String    SPACE_TYPE_NAME       = "space".intern();
+  public static final String    SPACE_TYPE_NAME              = "space".intern();
 
   /** The Constant CHAT_ROOM_TYPE_NAME. */
-  public static final String    CHAT_ROOM_TYPE_NAME   = "chat_room".intern();
+  public static final String    CHAT_ROOM_TYPE_NAME          = "chat_room".intern();
+
+  /** The Constant SESSION_TOKEN_COOKIE. */
+  public static final String    SESSION_TOKEN_COOKIE         = "webconf_session_token".intern();
 
   /** The Constant GROUP_CALL_TYPE. */
-  protected static final String GROUP_CALL_TYPE       = "group".intern();
+  protected static final String GROUP_CALL_TYPE              = "group".intern();
 
   /** The Constant CALL_OWNER_SCOPE_NAME. */
-  protected static final String CALL_OWNER_SCOPE_NAME = "webconferencing.callOwner".intern();
+  protected static final String CALL_OWNER_SCOPE_NAME        = "webconferencing.callOwner".intern();
 
   /** The Constant CALL_ID_SCOPE_NAME. */
-  protected static final String CALL_ID_SCOPE_NAME    = "webconferencing.callId".intern();
+  protected static final String CALL_ID_SCOPE_NAME           = "webconferencing.callId".intern();
 
   /** The Constant USER_CALLS_SCOPE_NAME. */
-  protected static final String USER_CALLS_SCOPE_NAME = "webconferencing.user.calls".intern();
+  protected static final String USER_CALLS_SCOPE_NAME        = "webconferencing.user.calls".intern();
 
   /** The Constant PROVIDER_SCOPE_NAME. */
-  protected static final String PROVIDER_SCOPE_NAME   = "webconferencing.provider".intern();
+  protected static final String PROVIDER_SCOPE_NAME          = "webconferencing.provider".intern();
+
+  /** The Constant JWT_CONFIGURATION_PROPERTIES. */
+  protected static final String JWT_CONFIGURATION_PROPERTIES = "jwt-configuration";
+
+  /** The Constant SECRET_KEY. */
+  protected static final String SECRET_KEY                   = "secret-key";
 
   /**
    * Represent Space in calls.
@@ -181,6 +192,9 @@ public class WebConferencingService implements Startable {
 
   /** The Constant LOG. */
   protected static final Log                         LOG                 = ExoLogger.getLogger(WebConferencingService.class);
+
+  /** The secret key. */
+  protected final String                             secretKey;
 
   /** The organization. */
   protected final OrganizationService                organization;
@@ -270,19 +284,23 @@ public class WebConferencingService implements Startable {
    * @param settingService the setting service
    * @param callStorage the call storage
    * @param participantsStorage the participants storage
+   * @param initParams the initParams
    */
   public WebConferencingService(OrganizationService organization,
                                 IdentityManager socialIdentityManager,
                                 ListenerService listenerService,
                                 SettingService settingService,
                                 CallDAO callStorage,
-                                ParticipantDAO participantsStorage) {
+                                ParticipantDAO participantsStorage,
+                                InitParams initParams) {
     this.organization = organization;
     this.socialIdentityManager = socialIdentityManager;
     this.listenerService = listenerService;
     this.settingService = settingService;
     this.callStorage = callStorage;
     this.participantsStorage = participantsStorage;
+    PropertiesParam jwtSecretParam = initParams.getPropertiesParam(JWT_CONFIGURATION_PROPERTIES);
+    this.secretKey = jwtSecretParam.getProperty(SECRET_KEY);
   }
 
   /**
@@ -357,6 +375,15 @@ public class WebConferencingService implements Startable {
   }
 
   /**
+   * Gets the JWT secret key.
+   *
+   * @return the secret key
+   */
+  public String getSecretKey() {
+    return this.secretKey;
+  }
+
+  /**
    * Space info.
    *
    * @param spacePrettyName the space pretty name
@@ -393,8 +420,7 @@ public class WebConferencingService implements Startable {
    * @throws StorageException if error reading saved group call ID associated with a room
    * @throws IdentityStateException if error reading room member in Organization Service
    */
-  public RoomInfo getRoomInfo(String id, String title, String[] members) throws IdentityStateException,
-                                                                         StorageException {
+  public RoomInfo getRoomInfo(String id, String title, String[] members) throws IdentityStateException, StorageException {
     return roomInfo(id, title, members, findGroupCallId(id));
   };
 
@@ -533,8 +559,10 @@ public class WebConferencingService implements Startable {
                     participants.add(part);
                   } else {
                     // external participant
-                    participants.add(new ParticipantInfo(providerType, pid));
+                    participants.add(part = new ParticipantInfo(providerType, pid));
                   }
+                  // We start the call with all parts leaved, later call pages will update it to JOINED
+                  part.setState(UserState.LEAVED);
                 } else {
                   LOG.error("Cannot add call participant with too long ID: " + pid);
                   throw new CallArgumentException("Wrong participant ID (" + pid + ")");
@@ -716,7 +744,7 @@ public class WebConferencingService implements Startable {
    * @param clientId the client id
    * @throws StorageException if storage exception happen
    * @throws ParticipantNotFoundException if call or its participants not found in storage
-   * @throws CallSettingsException if call entry has wrong settings (room call title)
+   * @throws CallSettingsException if call entry has wrong settings (room title, owner type etc)
    * @throws CallNotFoundException if call not found in storage
    */
   protected void startCall(CallInfo call, String clientId) throws ParticipantNotFoundException,
@@ -744,13 +772,20 @@ public class WebConferencingService implements Startable {
 
     updateCallAndParticipants(call);
 
-    for (UserInfo part : call.getParticipants()) {
-      fireUserCallStateChanged(part.getId(),
-                               callId,
-                               call.getProviderType(),
-                               CallState.STARTED,
-                               call.getOwner().getId(),
-                               call.getOwner().getType());
+    // Jul 26, 2020: Inform all group members about the call
+    // For P2P call we need only inform another peer and this loop does the work perfectly
+    Collection<UserInfo> parts = call.getOwner().isGroup() ? GroupInfo.class.cast(call.getOwner()).getMembers().values()
+                                                           : call.getParticipants();
+    for (UserInfo part : parts) {
+      if (!userId.equals(part.getId())) {
+        // Inform all except of the user who started the call
+        fireUserCallStateChanged(part.getId(),
+                                 callId,
+                                 call.getProviderType(),
+                                 CallState.STARTED,
+                                 call.getOwner().getId(),
+                                 call.getOwner().getType());
+      }
     }
   }
 
@@ -833,12 +868,12 @@ public class WebConferencingService implements Startable {
               if (partId.equals(part.getId())) {
                 // Leave should not be called on a call session started after stopping an one previous of this
                 // call.
-                if (part.hasSameClientId(clientId)) {
-                  part.setState(UserState.LEAVED);
-                  part.setClientId(null);
-                  leaved = part;
-                  leavedNum++;
-                } // otherwise we may meet this user running a new same call too quickly (before CometD will
+                //if (part.hasSameClientId(clientId)) {
+                part.setState(UserState.LEAVED);
+                part.setClientId(null);
+                leaved = part;
+                leavedNum++;
+                //} // otherwise we may meet this user running a new same call too quickly (before CometD will
                   // unsubscribe this call previous channel), we ignore this leave so
               } else {
                 // if null - user hasn't joined
@@ -864,7 +899,8 @@ public class WebConferencingService implements Startable {
             }
             // Check if don't need stop the call if all parts leaved already
             if (call.getOwner().isGroup()) {
-              if (leavedNum == call.getParticipants().size()) {
+              if (leavedNum == call.getParticipants().size() || call.getParticipants().size() == 0 
+                  || call.getParticipants().stream().allMatch(p -> p.getState() == UserState.LEAVED)) {
                 // Stop when all group members leave the call
                 stopCall(call, partId, false);
               }
@@ -1357,7 +1393,7 @@ public class WebConferencingService implements Startable {
             UserInfo user = getUserInfo(p.getId());
             if (user == null) {
               // If user not found we treat it as external participant to work correctly
-              // with what addCall() does. 
+              // with what addCall() does.
               user = new ParticipantInfo(call.getProviderType(), p.getId());
             }
             user.setState(p.getState());

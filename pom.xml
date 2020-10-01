@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2017 eXo Platform SAS.
+    Copyright (C) 2020 eXo Platform SAS.
     
     This is free software; you can redistribute it and/or modify it
     under the terms of the GNU Lesser General Public License as
@@ -60,8 +60,13 @@
     <addon.exo.ecms.version>6.1.x-SNAPSHOT</addon.exo.ecms.version>
     <org.exoplatform.social.version>6.1.x-SNAPSHOT</org.exoplatform.social.version>
     <org.exoplatform.platform-ui.version>6.1.x-SNAPSHOT</org.exoplatform.platform-ui.version>
+    <!-- Maven Plugin for JS and CSS bundling and Unit Test execution -->
+    <com.github.eirslett.frontend.version>1.10.0</com.github.eirslett.frontend.version>
+    <node.version>v12.16.3</node.version>
+    <npm.version>6.14.5</npm.version>
     <!-- for tests -->
     <junit.version>4.12</junit.version>
+    <io.jsonwebtoken.version>0.10.5</io.jsonwebtoken.version>
   </properties>
   
   <dependencyManagement>
@@ -113,6 +118,21 @@
         <artifactId>web-conferencing-webrtc-webapp</artifactId>
         <version>${project.version}</version>
         <type>war</type>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>${io.jsonwebtoken.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-impl</artifactId>
+        <version>${io.jsonwebtoken.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-jackson</artifactId>
+        <version>${io.jsonwebtoken.version}</version>
       </dependency>
       <!-- for tests -->
       <dependency>
