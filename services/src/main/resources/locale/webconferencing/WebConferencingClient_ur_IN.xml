@@ -2,8 +2,8 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>ٹھیک ہے</ok>
-    <cancel>منسوخ</cancel>
+    <ok>OK</ok>
+    <cancel>Cancel</cancel>
     
     <notConfigured>not configured</notConfigured>
     <errorReference>Error reference:</errorReference>

@@ -26,8 +26,7 @@
       <!-- Error Diagnostics -->
       <errorDiagnostic>Səhvlərin Diaqnostikası</errorDiagnostic>
       <enableLogCollection>Müştəri günlükləri aktiv et</enableLogCollection>
-      <logCollectionInfo>Bu bayraq WebRTC bağlantısı problemini aradan qaldırmaq üçün müştəridən server günlüklərində olan məlumatları əldə edəcəkdir. Bunu diqqətlə istifadə edin ki, bu rejimin nətic
-sində, ağır şəbəkə yükü yaranmasın.</logCollectionInfo>
+      <logCollectionInfo>Bu bayraq WebRTC bağlantısı problemini aradan qaldırmaq üçün müştəridən server günlüklərində olan məlumatları əldə edəcəkdir. Bunu diqqətlə istifadə edin ki, bu rejimin nətic sində, ağır şəbəkə yükü yaranmasın.</logCollectionInfo>
     </admin>
   </webrtc>
 </bundle>

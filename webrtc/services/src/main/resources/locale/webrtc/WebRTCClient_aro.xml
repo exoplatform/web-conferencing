@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>مكالمة</call>
-    <callingYou>يتصل بك...</callingYou>
-    <callWith>الاتصال مع</callWith>
-    <callTo>إتصال إلى</callTo>
-    <incomingCall>مكالمة واردة</incomingCall>
-    <answer>إجابة</answer>
-    <decline>خفض</decline>
-    <callStartTip>إضغط فوق بدء مكالمة فيديو</callStartTip>
-    <callRunningTip>المكالمة جارية بالفعل. اضغط لاظهار نافذة المكالمة.</callRunningTip>
+    <call>Call</call>
+    <callingYou>is calling you...</callingYou>
+    <callWith>Call with</callWith>
+    <callTo>Call to</callTo>
+    <incomingCall>Incoming call</incomingCall>
+    <answer>Answer</answer>
+    <decline>Decline</decline>
+    <callStartTip>Click to start a video call</callStartTip>
+    <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
     
-    <providerError>خطأ في موفر WebRTC</providerError>
-    <providerNotAvailable>موفر WebRTC غير متوفر</providerNotAvailable>
-    <refreshTryAgainContactAdmin>الرجاء تحديث الصفحة و المحاولة مرة أخرى. إذا استمر الخطأ، الرجاء الاتصال بالمسؤول مع مرجع الخطأ هذا.</refreshTryAgainContactAdmin>
-    <callStopped>تم إيقاف المكالمة</callStopped>
-    <errorAddCall>تعذر بدء المكالمة نظراً لوجود خطأ على الخادم</errorAddCall>
-    <errorOpeningCall>حدث خطأ أثناء فتح صفحة المكالمة. الرجاء تحديث الصفحة وحاول مرة أخرى. إذا استمر الخطأ، الرجاء الاتصال بالمسؤول.</errorOpeningCall>
-    <callWindowNotOpen>تعذر فتح نافذة الاتصال. الرجاء التحقق إذا كان تم حظره بواسطة المستعرض الخاص بك.</callWindowNotOpen>
-    <errorStartingCall>خطأ في بدء تشغيل الاتصال</errorStartingCall>
-    <errorIncomingCall>خطأ المكالمات الواردة</errorIncomingCall>
-    <errorReadUserStatus>حدث خطأ أثناء قراءة معلومات حالة المستخدم من الخادم</errorReadUserStatus>
-    <errorReadCall>حدث خطأ أثناء قراءة معلومات الاتصال من الخادم</errorReadCall>
-    <errorSubscribeUser>خطأ في إنشاء قناة من الخادم إلى المتصفح لتوصيل تحديثات المستخدمين</errorSubscribeUser>
-    <errorSubscribeCall>خطأ في إنشاء قناة من الخادم إلى المتصفح لتحديثات المكالمات</errorSubscribeCall>
-    <errorStartingConnection>حدث خطأ أثناء بدء الاتصال</errorStartingConnection>
-    <notSupportedPlatform>نظام أساسي غير مدعوم</notSupportedPlatform>
-    <yourBrowserNotSupportWebrtc>المتصفح الخاص بك لا يدعم المكالمات WebRTC</yourBrowserNotSupportWebrtc>
-    <notInitialized>لم يتم تهيئة أو خطأ في التهيئة. الرجاء إغلاق هذا الإطار ثم حاول مرة أخرى.</notInitialized>
-    <connectionFailed>فشل في الاتصال</connectionFailed>
-    <audioVideoRequired>ميكروفون و/أو كاميرا مطلوبة لإجراء مكالمة</audioVideoRequired>
-    <mediaDevicesError>خطأ في الوصول إلى الكاميرا أو الميكروفون</mediaDevicesError>
-    <accessDenied>لا يمكن فتح الجهاز الإعلامي بسبب خطأ في إذن الوصول إلى خطأ أخر. تأكد من توصيل الجهاز و أن يكون غير مستخدم من قبل تطبيق آخر.</accessDenied>
-    <noAudioFound>لم يتم العثور على ميكروفون</noAudioFound>
-    <butVideoFound>ولكن تم العثور على كاميرا</butVideoFound>
+    <providerError>WebRTC provider error</providerError>
+    <providerNotAvailable>WebRTC provider not available</providerNotAvailable>
+    <refreshTryAgainContactAdmin>Please refresh the page and try again. If the error persists, please contact your administrator with this error reference.</refreshTryAgainContactAdmin>
+    <callStopped>The call was stopped</callStopped>
+    <errorAddCall>The call could not be started due to a server error</errorAddCall>
+    <errorOpeningCall>An error occurred while opening the call window. Please refresh the page and try again. If the error persists, please contact your administrator.</errorOpeningCall>
+    <callWindowNotOpen>Call window could not be opened. Please check if it was blocked by your browser.</callWindowNotOpen>
+    <errorStartingCall>Error starting call</errorStartingCall>
+    <errorIncomingCall>Incoming call error</errorIncomingCall>
+    <errorReadUserStatus>Error reading user status information from the server</errorReadUserStatus>
+    <errorReadCall>Error reading call information from the server</errorReadCall>
+    <errorSubscribeUser>Failed to establish a server-to-browser channel for communicating user updates</errorSubscribeUser>
+    <errorSubscribeCall>Failed to establish a server-to-browser channel for call updates</errorSubscribeCall>
+    <errorStartingConnection>Error starting connection</errorStartingConnection>
+    <notSupportedPlatform>Unsupported platform</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Your browser does not support WebRTC calls</yourBrowserNotSupportWebrtc>
+    <notInitialized>The WebRTC video call connector was not properly initialized. Please close this window and try again.</notInitialized>
+    <connectionFailed>Connection failed</connectionFailed>
+    <audioVideoRequired>A microphone and/or a camera are required to place a call</audioVideoRequired>
+    <mediaDevicesError>Error accessing the camera or microphone</mediaDevicesError>
+    <accessDenied>Could not open the media device due to an access or permission error. Make sure your device is connected and not being used by another application.</accessDenied>
+    <noAudioFound>No microphone was detected</noAudioFound>
+    <butVideoFound>but a camera was found</butVideoFound>
     
     <admin>
-      <wrongSettings>إعدادات خاطئة</wrongSettings>
-      <serverUrlMandatory>لا يمكن أن يكون رابط الخادم فارغا</serverUrlMandatory>
-      <usernameMandatory>لا يمكن ترك اسم المستخدم فارغا</usernameMandatory>
-      <credentialMandatory>كلمة المرور لا يمكن أن تكون فارغة</credentialMandatory>
-      <errorSavingSettings>حدث خطأ أثناء حفظ الإعدادات</errorSavingSettings>
+      <wrongSettings>Wrong settings</wrongSettings>
+      <serverUrlMandatory>Server URL cannot be empty</serverUrlMandatory>
+      <usernameMandatory>Username cannot be empty</usernameMandatory>
+      <credentialMandatory>Password cannot be empty</credentialMandatory>
+      <errorSavingSettings>Error saving settings</errorSavingSettings>
     </admin>
   </webrtc>
 </bundle>
