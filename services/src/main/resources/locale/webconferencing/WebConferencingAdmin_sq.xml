@@ -2,13 +2,48 @@
 <bundle>
   <webconferencing>
     <admin>
+      <error>
+        <ProviderNotRegistered>crwdns6966232:0crwdne6966232:0</ProviderNotRegistered>
+        <EmptyRequest>crwdns6966234:0crwdne6966234:0</EmptyRequest>
+        <CannotGetProviders>crwdns6966236:0crwdne6966236:0</CannotGetProviders>
+        <PermissionNotValid>crwdns6966238:0crwdne6966238:0</PermissionNotValid>
+        <CannotLoadIdentities>crwdns6966240:0crwdne6966240:0</CannotLoadIdentities>
+        <CannotSavePreferredEditor>crwdns6966242:0crwdne6966242:0</CannotSavePreferredEditor>
+        <UnableGetData>crwdns6966244:0crwdne6966244:0</UnableGetData>
+        <UnablePostData>crwdns6966246:0crwdne6966246:0</UnablePostData>
+      </error>
       <page>crwdns6858669:0crwdne6858669:0</page>
       <title>crwdns6858670:0crwdne6858670:0</title>
       <info>crwdns6858671:0crwdne6858671:0</info>
-      <provider>crwdns6858672:0crwdne6858672:0</provider>
-      <description>crwdns6858673:0crwdne6858673:0</description>
-      <active>crwdns6858674:0crwdne6858674:0</active>
-      <actions>crwdns6858675:0crwdne6858675:0</actions>
+      <table>
+        <Provider>crwdns6966248:0crwdne6966248:0</Provider>
+        <Description>crwdns6966250:0crwdne6966250:0</Description>
+        <Active>crwdns6966252:0crwdne6966252:0</Active>
+        <Permissions>crwdns6966254:0crwdne6966254:0</Permissions>
+      </table>
+      <WebRTC>
+        <name>crwdns6966256:0crwdne6966256:0</name>
+        <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
+      </WebRTC>
+      <Skype>
+        <name>crwdns6966260:0crwdne6966260:0</name>
+        <description>crwdns6966262:0crwdne6966262:0</description>
+      </Skype>
+      <Jitsi>
+        <name>crwdns6966264:0crwdne6966264:0</name>
+        <description>crwdns6966266:0crwdne6966266:0</description>
+      </Jitsi>
+      <modal>
+        <title>crwdns6966268:0crwdne6966268:0</title>
+        <SearchLabel>crwdns6966270:0crwdne6966270:0</SearchLabel>
+        <WithPermissions>crwdns6966272:0crwdne6966272:0</WithPermissions>
+        <None>crwdns6966274:0crwdne6966274:0</None>
+        <Everybody>crwdns6966276:0crwdne6966276:0</Everybody>
+      </modal>
+      <buttons>
+        <Save>crwdns6966278:0crwdne6966278:0</Save>
+        <Cancel>crwdns6966280:0crwdne6966280:0</Cancel>
+      </buttons>
     </admin>
   </webconferencing>
 </bundle>

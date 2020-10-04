@@ -2,13 +2,48 @@
 <bundle>
   <webconferencing>
     <admin>
+      <error>
+        <ProviderNotRegistered>The editor provider is not registered.</ProviderNotRegistered>
+        <EmptyRequest>The request should contain at least 1 form param (active/permissions).</EmptyRequest>
+        <CannotGetProviders>Can't get providers list.</CannotGetProviders>
+        <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
+        <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
+        <UnableGetData>An error occurred while reading the data.</UnableGetData>
+        <UnablePostData>An error occurred while saving the data.</UnablePostData>
+      </error>
       <page>Conferințe web</page>
       <title>Administrarea conferinței web</title>
       <info>Conferința web poate fi administrată de diferiți furnizori. Îți poți activa furnizorul de care ai nevoie și poți configura setările.</info>
-      <provider>Furnizor</provider>
-      <description>Descriere</description>
-      <active>Activ</active>
-      <actions>Acţiuni</actions>
+      <table>
+        <Provider>Furnizor</Provider>
+        <Description>Descriere</Description>
+        <Active>Activ</Active>
+        <Permissions>Acţiuni</Permissions>
+      </table>
+      <WebRTC>
+        <name>WebRTC</name>
+        <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
+      </WebRTC>
+      <Skype>
+        <name>Skype</name>
+        <description>Provider for Skype. Let users to place group and 1:1 calls. No plugin required but Skype app must be installed on client.</description>
+      </Skype>
+      <Jitsi>
+        <name>Jitsi</name>
+        <description>Jitsi provider for WebConferencing</description>
+      </Jitsi>
+      <modal>
+        <title>Provider settings</title>
+        <SearchLabel>URL :</SearchLabel>
+        <WithPermissions>Serverele STUN / TURN</WithPermissions>
+        <None>Nici unul</None>
+        <Everybody>Everybody</Everybody>
+      </modal>
+      <buttons>
+        <Save>Salvaţi</Save>
+        <Cancel>Renunță</Cancel>
+      </buttons>
     </admin>
   </webconferencing>
 </bundle>

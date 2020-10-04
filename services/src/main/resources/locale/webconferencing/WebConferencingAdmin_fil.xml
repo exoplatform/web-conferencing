@@ -2,13 +2,48 @@
 <bundle>
   <webconferencing>
     <admin>
+      <error>
+        <ProviderNotRegistered>The editor provider is not registered.</ProviderNotRegistered>
+        <EmptyRequest>The request should contain at least 1 form param (active/permissions).</EmptyRequest>
+        <CannotGetProviders>Can't get providers list.</CannotGetProviders>
+        <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
+        <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
+        <UnableGetData>An error occurred while reading the data.</UnableGetData>
+        <UnablePostData>An error occurred while saving the data.</UnablePostData>
+      </error>
       <page>Web Conferencing</page>
       <title>Ang administrasyon ng Web Conference</title>
       <info>Ang Web Conferencing ay maaaring humawak ng iba't ibang provider. Maaari mong paganahin ang provider na iyong kailangan at mag-configure ng mga setting.</info>
-      <provider>Anga tagapaghatid</provider>
-      <description>Deskripsyon</description>
-      <active>Gawing aktibo</active>
-      <actions>Ang mga Aksyon</actions>
+      <table>
+        <Provider>Anga tagapaghatid</Provider>
+        <Description>Paglalarawan</Description>
+        <Active>Gawing aktibo</Active>
+        <Permissions>Ang mga Aksyon</Permissions>
+      </table>
+      <WebRTC>
+        <name>WebRTC</name>
+        <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
+      </WebRTC>
+      <Skype>
+        <name>Skype</name>
+        <description>Provider for Skype. Let users to place group and 1:1 calls. No plugin required but Skype app must be installed on client.</description>
+      </Skype>
+      <Jitsi>
+        <name>Jitsi</name>
+        <description>Jitsi provider for WebConferencing</description>
+      </Jitsi>
+      <modal>
+        <title>Provider settings</title>
+        <SearchLabel>URL :</SearchLabel>
+        <WithPermissions>STUN / TRUN na mga server</WithPermissions>
+        <None>Wala</None>
+        <Everybody>Everybody</Everybody>
+      </modal>
+      <buttons>
+        <Save>Seyb</Save>
+        <Cancel>Kanselahin</Cancel>
+      </buttons>
     </admin>
   </webconferencing>
 </bundle>

@@ -2,13 +2,48 @@
 <bundle>
   <webconferencing>
     <admin>
+      <error>
+        <ProviderNotRegistered>Провайдер редактора не зареєстрований.</ProviderNotRegistered>
+        <EmptyRequest>Запит повинен містити принаймні 1 параметр форми (активний / дозволи).</EmptyRequest>
+        <CannotGetProviders>Неможливо отримати список провайдерів.</CannotGetProviders>
+        <PermissionNotValid>Вказаний дозвіл недійсний. Можливо, користувач чи група не існує.</PermissionNotValid>
+        <CannotLoadIdentities>Не вдається завантажити ідентифікації за вказаними критеріями</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Неможливо зберегти вибраний редактор в якості бажаного.</CannotSavePreferredEditor>
+        <UnableGetData>Під час читання даних сталась помилка.</UnableGetData>
+        <UnablePostData>Сталася помилка під час збереження даних.</UnablePostData>
+      </error>
       <page>Веб-Конференції</page>
       <title>Адміністрування Веб-Конференцій</title>
       <info>Веб-конференції можуть надаватися різними постачальниками. Ви можете ввімкнути потрібного постачальника та налаштувати параметри.</info>
-      <provider>Постачальник</provider>
-      <description>Опис</description>
-      <active>Активні</active>
-      <actions>Дії</actions>
+      <table>
+        <Provider>Постачальник</Provider>
+        <Description>Опис</Description>
+        <Active>Активні</Active>
+        <Permissions>Дії</Permissions>
+      </table>
+      <WebRTC>
+        <name>WebRTC</name>
+        <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
+      </WebRTC>
+      <Skype>
+        <name>Skype</name>
+        <description>Provider for Skype. Let users to place group and 1:1 calls. No plugin required but Skype app must be installed on client.</description>
+      </Skype>
+      <Jitsi>
+        <name>Jitsi</name>
+        <description>Jitsi provider for WebConferencing</description>
+      </Jitsi>
+      <modal>
+        <title>Provider settings</title>
+        <SearchLabel>URL :</SearchLabel>
+        <WithPermissions>STUN / TURN сервери</WithPermissions>
+        <None>Жоден</None>
+        <Everybody>Усі</Everybody>
+      </modal>
+      <buttons>
+        <Save>Зберегти</Save>
+        <Cancel>Скасувати</Cancel>
+      </buttons>
     </admin>
   </webconferencing>
 </bundle>

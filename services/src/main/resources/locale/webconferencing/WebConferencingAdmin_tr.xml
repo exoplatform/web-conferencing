@@ -2,13 +2,48 @@
 <bundle>
   <webconferencing>
     <admin>
+      <error>
+        <ProviderNotRegistered>Düzenleyici sağlayıcı kayıtlı değil.</ProviderNotRegistered>
+        <EmptyRequest>İstek en az 1 form parametresi (etkin/izinler) içermelidir.</EmptyRequest>
+        <CannotGetProviders>Sağlayıcı listesi alınamıyor.</CannotGetProviders>
+        <PermissionNotValid>Belirtilen izin geçerli değil. Kullanıcı veya grup mevcut olmayabilir.</PermissionNotValid>
+        <CannotLoadIdentities>Kimlikler belirtilen kriterlere göre yüklenemiyor</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Seçili düzenleyici tercih edilen düzenleyici olarak kaydedilemiyor.</CannotSavePreferredEditor>
+        <UnableGetData>Verileri okurken bir hata oluştu.</UnableGetData>
+        <UnablePostData>Verileri kaydederken bir hata oluştu.</UnablePostData>
+      </error>
       <page>Web Konferansı</page>
       <title>Web Konferansı İdaresi</title>
       <info>Web Konferansı farklı sağlayıcılar tarafından idare edilebilir. İhtiyacınız olan sağlayıcı idare edebilir ve ayarları ayarlayabilirsiniz.</info>
-      <provider>Sağlaycı</provider>
-      <description>Açıklama</description>
-      <active>Etkin</active>
-      <actions>Eylemler</actions>
+      <table>
+        <Provider>Sağlaycı</Provider>
+        <Description>Açıklama</Description>
+        <Active>Etkin</Active>
+        <Permissions>Eylemler</Permissions>
+      </table>
+      <WebRTC>
+        <name>WebRTC</name>
+        <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
+      </WebRTC>
+      <Skype>
+        <name>Skype</name>
+        <description>Provider for Skype. Let users to place group and 1:1 calls. No plugin required but Skype app must be installed on client.</description>
+      </Skype>
+      <Jitsi>
+        <name>Jitsi</name>
+        <description>Jitsi provider for WebConferencing</description>
+      </Jitsi>
+      <modal>
+        <title>Provider settings</title>
+        <SearchLabel>URL :</SearchLabel>
+        <WithPermissions>STUN / TURN sunucuları</WithPermissions>
+        <None>Hiçbiri</None>
+        <Everybody>Herkes</Everybody>
+      </modal>
+      <buttons>
+        <Save>Kaydet</Save>
+        <Cancel>İptal</Cancel>
+      </buttons>
     </admin>
   </webconferencing>
 </bundle>

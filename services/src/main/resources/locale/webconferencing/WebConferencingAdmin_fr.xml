@@ -2,13 +2,48 @@
 <bundle>
   <webconferencing>
     <admin>
+      <error>
+        <ProviderNotRegistered>Le fournisseur de l'éditeur n'est pas enregistré.</ProviderNotRegistered>
+        <EmptyRequest>La demande doit contenir au moins un formulaire param (actif/permissions).</EmptyRequest>
+        <CannotGetProviders>Impossible d'obtenir la liste des fournisseurs.</CannotGetProviders>
+        <PermissionNotValid>L'autorisation spécifiée n'est pas valable. Il est probable que l'utilisateur ou le groupe n'existe pas.</PermissionNotValid>
+        <CannotLoadIdentities>Impossible de charger les identités selon des critères spécifiés</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Impossible de sauvegarder l'éditeur sélectionné comme éditeur préféré.</CannotSavePreferredEditor>
+        <UnableGetData>Une erreur s'est produite lors de la lecture des données.</UnableGetData>
+        <UnablePostData>Une erreur s'est produite lors de la sauvegarde des données.</UnablePostData>
+      </error>
       <page>Visioconférence</page>
       <title>Administration des Visioconférences</title>
       <info>Les visioconférences peuvent être prises en charge par différents connecteurs. Vous pouvez activer les connecteurs dont vous avez besoin et les paramétrer.</info>
-      <provider>Connecteur</provider>
-      <description>Description</description>
-      <active>Activé</active>
-      <actions>Actions</actions>
+      <table>
+        <Provider>Connecteur</Provider>
+        <Description>Description</Description>
+        <Active>Activé</Active>
+        <Permissions>Actions</Permissions>
+      </table>
+      <WebRTC>
+        <name>WebRTC</name>
+        <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
+      </WebRTC>
+      <Skype>
+        <name>Skype</name>
+        <description>Provider for Skype. Let users to place group and 1:1 calls. No plugin required but Skype app must be installed on client.</description>
+      </Skype>
+      <Jitsi>
+        <name>Jitsi</name>
+        <description>Jitsi provider for WebConferencing</description>
+      </Jitsi>
+      <modal>
+        <title>Provider settings</title>
+        <SearchLabel>URL :</SearchLabel>
+        <WithPermissions>Serveurs STUN/TURN</WithPermissions>
+        <None>Aucune</None>
+        <Everybody>Tout le monde</Everybody>
+      </modal>
+      <buttons>
+        <Save>Enregistrer</Save>
+        <Cancel>Annuler</Cancel>
+      </buttons>
     </admin>
   </webconferencing>
 </bundle>
