@@ -61,6 +61,7 @@ rebel.xml
 
 # Npm
 node_modules/
+package-lock.json
 
 #bin folder
 bin/

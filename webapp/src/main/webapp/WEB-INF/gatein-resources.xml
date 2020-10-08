@@ -124,7 +124,7 @@
   <module>
     <name>webConferencingAdminPortlet</name>
     <script>
-      <path>/js/Admin.bundle.js</path>
+      <path>/js/admin.bundle.js</path>
     </script>
     <depends>
       <module>webConferencing</module>
@@ -143,7 +143,7 @@
   <module>
     <name>webConferencingCallButton</name>
     <script>
-      <path>/js/CallButtons.bundle.js</path>
+      <path>/js/callButtons.bundle.js</path>
     </script>
     <depends>
       <module>webConferencing</module>

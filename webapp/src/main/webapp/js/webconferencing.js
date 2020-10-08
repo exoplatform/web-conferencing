@@ -1284,6 +1284,7 @@
 		/**
 		 * Find current Chat context from a room available in it.
 		 */
+	  // TODO Deprecated, should be used by only old jQuery buttons, use getCallContext() instead
 		var getChatContext = function() {
 			return createChatContext(eXo.chat);
 		};
@@ -1329,24 +1330,25 @@
 										data.reject(err);
 									});
 								} else if (isRoom) {
-									chat.getUsers(roomId).done(function(users) {
+									let roomUsers = chat.selectedContact.participants;
+									if (roomUsers && roomUsers.length) {
 										var unames = [];
-										for (var i=0; i<users.length; i++) {
-											var u = users[i];
+										for (var i = 0; i < roomUsers.length; i++) {
+											var u = roomUsers[i];
 											if (u && u.name && u.name != "null") {
 												unames.push(u.name);
 											}
 										}
-										getRoomInfoReq(roomId, roomTitle, unames).done(function(info) {
+										getRoomInfoReq(roomId, roomTitle, unames).done(function (info) {
 											data.resolve(info);
-										}).fail(function(err) {
+										}).fail(function (err) {
 											log.trace("Error getting Chat room info " + roomName + "/" + roomId + " for chat context", err);
 											data.reject(err);
 										});
-									}).fail(function(err) {
-										log.trace("Error getting Chat room users " + roomId + " for chat context", err);
+									} else {
+										log.trace("Error getting Chat room users for " + roomId);
 										data.reject("Error reading Chat room users for " + roomId);
-									});
+									}
 								} else {
 									data.reject("Unexpected context chat type: " + chatType + " for " + roomTitle);
 								}

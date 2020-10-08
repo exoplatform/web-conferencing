@@ -6,8 +6,8 @@ let config = {
   // set the entry point of the application
   // can use multiple entry
   entry: {
-    Admin: "./src/main/webapp/vue-apps/Admin/main.js",
-    CallButtons: "./src/main/webapp/vue-apps/CallButtons/main.js"
+    admin: "./src/main/webapp/vue-apps/Admin/main.js",
+    callButtons: "./src/main/webapp/vue-apps/CallButtons/main.js"
   },
   output: {
     filename: "js/[name].bundle.js",
