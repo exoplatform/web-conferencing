@@ -4,14 +4,13 @@
       :placeholder="placeholder"
       :opendropdowncomponent="openDropdownComponent"
       :passrefs="passRefs"/>
-    <div v-if="isopen" class="template">
+    <div v-if="isopen" class="buttons-container">
       <div
         v-for="(button, index) in providersbutton"
         :key="index"
         :id="`call-button-container-${button._uid}`"
         :ref="`callbutton`"
-        @click="openDropdownComponent">
-      </div>
+        @click="openDropdownComponent"></div>
     </div>
   </div>
 </template>
@@ -50,7 +49,28 @@ export default {
     },
     passRefs() {
       this.$emit("getRefs", this.$refs);
-    },
+    }
   }
 };
 </script>
+
+<style scoped lang="less">
+@import "../../../skin/less/variables.less";
+
+.buttons-container {
+  background-color: white;
+  border: @defaultBorder;
+  border-radius: 3px;
+  margin-top: 3px;
+  width: @width + 30px;
+  box-shadow: @defaultShadow;
+  [id^="call-button-container-"] {
+    padding: 0 10px;
+    height: 36px;
+    border-radius: 3px;
+    &:hover {
+      background-color: @primaryColor;
+    }
+  }
+}
+</style>

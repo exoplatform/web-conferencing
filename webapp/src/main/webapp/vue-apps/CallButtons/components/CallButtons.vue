@@ -10,11 +10,12 @@
       @openDropdown="openDropdown($event)"/>
   </div>
 </template>
- <!-- @setSelectedProvider="setNewSelectedProvider($event)" -->
+
 <script>
 import dropdown from "./Dropdown.vue";
-
 let vm = null;
+let ref;
+
 export default {
   components: {
     dropdown
@@ -54,16 +55,15 @@ export default {
     try {
       const context = await webConferencing.getCallContext();
       thevue.callContext = context;
-      // console.log(thevue.callContext, "context");
       if (this.callContext) {
         try {
           const p = await webConferencing.getProvider("jitsi");
           this.providers.push(p);
 
           // To test with several providers
-          // const w = await webConferencing.getProvider("webrtc");
-          // this.providers.push(w);
-          // //
+          const w = await webConferencing.getProvider("webrtc");
+          this.providers.push(w);
+          //
           await this.initProvidersButton();
           this.createButtons();
         } catch (err) {
@@ -80,6 +80,7 @@ export default {
       await Promise.all(
         thevue.providers.map(async p => {
           if (await p.isInitialized) {
+            // const type = p.getType();
             const callButton = await p.callButton(this.callContext, "vue");
             thevue.providersButton.push(callButton);
           }
@@ -90,23 +91,31 @@ export default {
     createButtons() {
       if (this.providersButton.length) {
         for (const [index, pb] of this.providersButton.entries()) {
-          if (pb instanceof Vue) {
-            // add vue button
-            // console.log(pb);
-            if (this.providersButton.length > 1) {
-              if (this.isOpen) {
-                const ref = this.childRef.callbutton[index];
+          if (this.providersButton.length > 1) {
+            //add buttons to dropdown coomponent
+            if (this.isOpen) {
+              ref = this.childRef.callbutton[index];
+              // add vue button
+              if (pb instanceof Vue) {
                 vm = pb.$mount();
                 ref.appendChild(vm.$el);
+              } else {
+                // add button from DOM Element
+                ref.appendChild(pb.get(0));
               }
-            } else {
-              const callButton = this.$refs.callbutton;
-              vm = pb.$mount();
-              callButton.appendChild(vm.$el);
             }
           } else {
-            // add button from DOM Element
-
+            //add a single button
+            const callButton = this.$refs.callbutton;
+            callButton.classList.add("single");
+            if (pb instanceof Vue) {
+              // add vue button
+              vm = pb.$mount();
+              callButton.appendChild(vm.$el);
+            } else {
+              // add button from DOM Element
+              callButton.appendChild(pb.get(0));
+            }
           }
         }
       }
@@ -121,18 +130,72 @@ export default {
   }
 };
 </script>
-<style scoped lang="less">
-  @width: 100px;
+
+<style lang="less">
+@import "../../../skin/less/variables.less";
+
+.VuetifyApp {
   #call-button-container {
+    &.single {
+      width: @width - 14px;
+      height: 36px;
+      left: @width + 60px;
+      border: 1px solid rgb(232, 238, 242);
+      border-radius: 3px;
+      padding: 0 10px;
+      &:hover {
+        background-color: @primaryColor;
+        opacity: 1;
+      }
+    }
+    cursor: pointer !important;
     position: absolute;
-    left: @width + 60px;
+    left: @width + 40px;
     top: 2px;
-    width: @width;
-    // background-color: transparent;
-    // border: 1px solid rgb(232, 238, 242);
-    // border-radius: 3px;
+    width: @width + 20px;
+    [class^="uiIcon"] {
+      font-size: 12px;
+    }
   }
-  [class^="uiIcon"] {
-    font-size: 12px;
+  a,
+  a:hover,
+  a:focus {
+    color: unset;
   }
+  .room-actions-container {
+    [class^="uiIcon"] {
+      &.callButtonIconVideo {
+        top: 6px;
+      }
+      &:before {
+        color: unset;
+        height: 16px;
+        width: 16px;
+        margin-right: 4px;
+      }
+    }
+    .room-action-menu {
+      .room-action-component {
+        .webConferencingCallButtonAction {
+          #call-button-container.single:hover,
+          [id^="call-button-container-"]:hover,
+          a:hover,
+          button:hover {
+            i {
+              color: white;
+            }
+            span {
+              color: white;
+            }
+          }
+          button {
+            .v-btn__content {
+              letter-spacing: 0.1px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
 </style>
