@@ -52,7 +52,7 @@
     <web-conferencing.version>1.1.x-SNAPSHOT</web-conferencing.version>
     <org.exoplatform.depmgt.version>18.x-SNAPSHOT</org.exoplatform.depmgt.version>
     <!-- for tests -->
-    <junit.version>4.12</junit.version>
+    <junit.version>4.13.1</junit.version>
   </properties>
   
   <dependencyManagement>
