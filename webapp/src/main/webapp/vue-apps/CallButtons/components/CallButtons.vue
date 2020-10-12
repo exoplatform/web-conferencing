@@ -46,24 +46,28 @@ export default {
       error: null,
       placeholder: "Start call",
       isOpen: false,
-      childRef: null
+      childRef: null,
+      providersTypes: []
     };
   },
   async beforeMount() {
     const thevue = this;
     this.log = webConferencing.getLog("webconferencing-call-buttons");
     try {
+      const response = await webConferencing.getProvidersConfig();
+      this.providersTypes = response.map(provider => provider.type);
       const context = await webConferencing.getCallContext();
       thevue.callContext = context;
       if (this.callContext) {
         try {
-          const p = await webConferencing.getProvider("jitsi");
-          this.providers.push(p);
-
-          // To test with several providers
-          const w = await webConferencing.getProvider("webrtc");
-          this.providers.push(w);
-          //
+          // const p = await webConferencing.getProvider("jitsi");
+          // this.providers.push(p);
+          await Promise.all(
+            this.providersTypes.map(async type => {
+              const p = await webConferencing.getProvider(type);
+              this.providers.push(p);
+            })
+          );
           await this.initProvidersButton();
           this.createButtons();
         } catch (err) {
@@ -80,7 +84,6 @@ export default {
       await Promise.all(
         thevue.providers.map(async p => {
           if (await p.isInitialized) {
-            // const type = p.getType();
             const callButton = await p.callButton(this.callContext, "vue");
             thevue.providersButton.push(callButton);
           }
@@ -136,6 +139,11 @@ export default {
 
 .VuetifyApp {
   #call-button-container {
+    button {
+      .v-btn__content {
+        letter-spacing: 0.1px;
+      }
+    }
     &.single {
       width: @width - 14px;
       height: 36px;
@@ -146,6 +154,15 @@ export default {
       &:hover {
         background-color: @primaryColor;
         opacity: 1;
+      }
+    }
+    a:hover,
+    button:hover {
+      i {
+        color: white;
+      }
+      span {
+        color: white;
       }
     }
     cursor: pointer !important;
@@ -162,6 +179,16 @@ export default {
   a:focus {
     color: unset;
   }
+  #call-button-container.single:hover,
+  [id^="call-button-container-"]:hover,
+  button:hover {
+    i {
+      color: white;
+    }
+    span {
+      color: white;
+    }
+  }
   .room-actions-container {
     [class^="uiIcon"] {
       &.callButtonIconVideo {
@@ -174,28 +201,28 @@ export default {
         margin-right: 4px;
       }
     }
-    .room-action-menu {
-      .room-action-component {
-        .webConferencingCallButtonAction {
-          #call-button-container.single:hover,
-          [id^="call-button-container-"]:hover,
-          a:hover,
-          button:hover {
-            i {
-              color: white;
-            }
-            span {
-              color: white;
-            }
-          }
-          button {
-            .v-btn__content {
-              letter-spacing: 0.1px;
-            }
-          }
-        }
-      }
-    }
+    // .room-action-menu {
+    //   .room-action-component {
+    //     .webConferencingCallButtonAction {
+    //       // #call-button-container.single:hover,
+    //       // [id^="call-button-container-"]:hover,
+    //       // a:hover,
+    //       // button:hover {
+    //       //   i {
+    //       //     color: white;
+    //       //   }
+    //       //   span {
+    //       //     color: white;
+    //       //   }
+    //       // }
+    //       // button {
+    //       //   .v-btn__content {
+    //       //     letter-spacing: 0.1px;
+    //       //   }
+    //       // }
+    //     }
+    //   }
+    // }
   }
 }
 </style>
