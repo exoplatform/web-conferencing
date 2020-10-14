@@ -27,7 +27,7 @@
       </WebRTC>
       <Skype>
         <name>Skype</name>
-        <description>Provider for Skype. Let users to place group and 1:1 calls. No plugin required but Skype app must be installed on client.</description>
+        <description>Provider for Skype. Let users place a group and 1:1 calls. No plugin required but the Skype application must be installed on the client side.</description>
       </Skype>
       <Jitsi>
         <name>Jitsi</name>
@@ -35,7 +35,7 @@
       </Jitsi>
       <modal>
         <title>Provider settings</title>
-        <SearchLabel>URL :</SearchLabel>
+        <SearchLabel>Διεύθυνση URL:</SearchLabel>
         <WithPermissions>STUN / TURN servers</WithPermissions>
         <None>Δεν έχει οριστεί</None>
         <Everybody>Everybody</Everybody>

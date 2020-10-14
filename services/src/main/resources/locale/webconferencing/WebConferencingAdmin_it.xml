@@ -27,15 +27,15 @@
       </WebRTC>
       <Skype>
         <name>Skype</name>
-        <description>Provider for Skype. Let users to place group and 1:1 calls. No plugin required but Skype app must be installed on client.</description>
+        <description>Provider per Skype. Consenti agli utenti di effettuare chiamate di gruppo e 1:1. Nessun plugin richiesto, ma l'applicazione Skype deve essere installata lato client.</description>
       </Skype>
       <Jitsi>
         <name>Jitsi</name>
-        <description>Jitsi provider for WebConferencing</description>
+        <description>Provider Jitsi per WebConferencing</description>
       </Jitsi>
       <modal>
-        <title>Provider settings</title>
-        <SearchLabel>URL :</SearchLabel>
+        <title>Impostazioni provider</title>
+        <SearchLabel>URL:</SearchLabel>
         <WithPermissions>Server STUN/TURN</WithPermissions>
         <None>Nessuno</None>
         <Everybody>Tutti</Everybody>
