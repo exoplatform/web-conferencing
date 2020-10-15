@@ -161,7 +161,7 @@
       <module>extensionRegistry</module>
     </depends>
     <depends>
-      <module>jquery</module>
+      <module>jquery</module><!-- TODO get rid of jQuery in Vue component -->
       <as>$</as>
     </depends>
   </module>

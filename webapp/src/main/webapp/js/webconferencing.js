@@ -1389,7 +1389,6 @@
           document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function() {
             $roomDetail = $chat.find("#room-detail");
             var $wrapper = $(".callButtonContainerWrapper");
-            $wrapper = $(".callButtonContainerWrapper");
             $wrapper.hide(); // hide immediately
             $wrapper.html('');
             $roomDetail.removeData("roomcallinitialized");
@@ -1983,6 +1982,17 @@
 		  }
 		  return callWindow;
 		};
+    
+    /**
+     * Helper method to show call window (standard window or tab of the browser by default).
+     */
+    this.showCallWindow = function(url, name) {
+      var callWindow = window.open(url, name);
+      if (callWindow) {
+        callWindow.focus();
+      }
+      return callWindow;
+    };
 		
 		/** 
 		 * Helper method to obtain the user IM account of given type.

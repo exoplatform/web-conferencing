@@ -5,6 +5,7 @@
       :opendropdowncomponent="openDropdownComponent"
       :passrefs="passRefs"/>
     <div v-if="isopen" class="buttons-container">
+      <!-- TODO why we need IDs for them?? a class will not work? -->
       <div
         v-for="(button, index) in providersbutton"
         :key="index"
@@ -41,7 +42,7 @@ export default {
     }
   },
   updated() {
-    this.createbuttons();
+    this.createbuttons(); // TODO let's use same case as original func
   },
   methods: {
     openDropdownComponent(isOpen) {

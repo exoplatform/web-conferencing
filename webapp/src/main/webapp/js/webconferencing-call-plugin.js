@@ -1,8 +1,4 @@
-// The DOM element for the config examples
-//var testElement = document.createElement("div");
-//testElement.append("Element div (DOM)");
-
-const WebConferencingCallPlugin = [{
+const webconferencingExts = [{
   target : "chat",
   type : "room-action-component",
   // configuration defined here is used in exo-addons\web-conferencing\webapp\src\main\webapp\vue-apps
@@ -16,12 +12,12 @@ const WebConferencingCallPlugin = [{
   // if it should be custom icon that isn't supported by vuetify iconClass instead of iconName should be used
   iconName : "callButton",
   // appClass is a class of container which consist of action button and WebConferencingCall component
-  appClass : "webConferencingCallButton",
+  appClass : "webconferencingCallButton",
   // component has property which will be passed to dynamic component inside parent
   // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
   component : {
     // name should be the name registered via Vue.component (https://vuejs.org/v2/guide/components-registration.html#Component-Names)
-    name : "call-component",
+    name : "call-button",
     // events are passed to custom DynamicEvents directive (https://vuejs.org/v2/guide/custom-directive.html)
     events : []
   },
@@ -29,8 +25,14 @@ const WebConferencingCallPlugin = [{
   init : function (chat) {
     require(["SHARED/webConferencing", "SHARED/webConferencingCallButton"], function (webConferencing, webConferencingCallButton) {
       webConferencing.initChatContext(chat);
-      var settings = {};
-      webConferencingCallButton.init(settings);
+      //var settings = {}; // TODO not good as we cheat ourselves by this here!
+      // We know we are in the chat here, we can rely on its events and build specific logic  
+      document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
+        // TODO add all buttons from here
+        //addButton(target);
+        //webConferencingCallButton.destroy();
+        webConferencingCallButton.init(target);
+      });
     });
   },
   // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
@@ -49,21 +51,21 @@ const WebConferencingCallPlugin = [{
   // if it should be custom icon that isn't supported by vuetify iconClass instead of iconName should be used
   iconName : "callButton",
   // appClass is a class of container which consist of action button and WebConferencingCall component
-  appClass : "webConferencingCallButton",
+  appClass : "webConferencingCallButton", // TODO seems here we should add a MINI-class?
   // component has property which will be passed to dynamic component inside parent
   // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
   component : {
     // name should be the name registered via Vue.component (https://vuejs.org/v2/guide/components-registration.html#Component-Names)
-    name : "call-component",
+    name : "call-button",
     // events are passed to custom DynamicEvents directive (https://vuejs.org/v2/guide/custom-directive.html)
     events : []
   },
   // init call button context in mini chat
   init : function (chat) {
     require(["SHARED/webConferencing", "SHARED/webConferencingCallButton"], function (webConferencing, webConferencingCallButton) {
-      webConferencing.initChatContext(chat);
+      webConferencing.initChatContext(chat); // TODO should we point to a context it's a mini-chat here?
       var settings = {};
-      webConferencingCallButton.init(settings);
+      webConferencingCallButton.init(settings); // TODO not good as we cheat ourselves by this here!
     });
   },
   // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
@@ -87,7 +89,7 @@ const WebConferencingCallPlugin = [{
   // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
   component : {
     // name should be the name registered via Vue.component (https://vuejs.org/v2/guide/components-registration.html#Component-Names)
-    name : "call-component",
+    name : "call-button",
     // events are passed to custom DynamicEvents directive (https://vuejs.org/v2/guide/custom-directive.html)
     events : []
   },
@@ -129,14 +131,14 @@ const WebConferencingCallPlugin = [{
 
 require(["SHARED/extensionRegistry", "SHARED/webConferencing"], function (extensionRegistry, webConferencing) {
   const log = webConferencing.getLog("webconferencing-call-plugin");
-  for (const extension of WebConferencingCallPlugin) {
+  for (const extension of webconferencingExts) {
     extensionRegistry.registerExtension(extension.target, extension.type, extension);
     log.trace(`Register extension type of ${extension.type} for ${extension.target}`);
   }
 
+  // TODO it's not right thing to fire such events from not a Chat app!!
   // dispatch the event about adding an extension in the chat
-  document.dispatchEvent(new CustomEvent("chat-room-action-components-updated"));
-
+  //document.dispatchEvent(new CustomEvent("chat-room-action-components-updated"));
   // dispatch the event about adding an extension in the mini chat
-  document.dispatchEvent(new CustomEvent("mini-chat-title-action-components-updated"));
+  //document.dispatchEvent(new CustomEvent("mini-chat-title-action-components-updated"));
 });
