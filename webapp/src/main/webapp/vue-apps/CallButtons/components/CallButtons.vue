@@ -75,7 +75,7 @@ export default {
         //await this.initProvidersButton();
         await Promise.all(
           providers.map(async p => {
-            const callButton = await p.callButton(context, "vue"); // TODO don't force vue - it should be detected by ext point
+            const callButton = await p.callButton(context); // TODO don't force vue - it should be detected by ext point
             this.providersButton.push(callButton);
           })
         );
@@ -95,7 +95,7 @@ export default {
       await Promise.all(
         thevue.providers.map(async p => { // TODO async here???!
           if (await p.isInitialized) { // TODO await for boolean property??
-            const callButton = await p.callButton(this.callContext, "vue");
+            const callButton = await p.callButton(this.callContext);
             thevue.providersButton.push(callButton);
           }
         })
