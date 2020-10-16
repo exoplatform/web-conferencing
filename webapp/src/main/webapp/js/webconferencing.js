@@ -2344,9 +2344,11 @@
 			return localContext.promise();
 		}
 
-		this.createSpaceContext = function(spaceId) {
+		this.createSpaceContext = async function(spaceId) {
 			const localContext = $.Deferred();
-			//const context = spaceContext(spaceId);
+			contextInitializer.then(async () => {
+				localContext.resolve(spaceContext(spaceId));
+			});
 			return localContext.promise();
 		};
 
