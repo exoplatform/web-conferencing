@@ -62,7 +62,8 @@ export default {
     try {
       //const providersConfig = await webConferencing.getProvidersConfig();
       //this.providersTypes = providersConfig.map(provider => provider.type);
-      const context = await webConferencing.getCallContext();
+      //const context = await webConferencing.getCallContext(); // deleted getCallContext()
+      const context = await webConferencing.createChatContext(eXo.chat);
       //thevue.callContext = context;
       //if (this.callContext) {
       console.log(this.i18n)

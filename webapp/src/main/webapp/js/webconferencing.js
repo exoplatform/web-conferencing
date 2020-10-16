@@ -978,8 +978,6 @@
 		// ******** Context ********
 		var contextInitializer = $.Deferred();
 
-		var callContextInitializer = $.Deferred();
-
 		var currentUser, currentSpaceId, currentRoomTitle;
 
 		// Providers
@@ -1284,7 +1282,7 @@
 		/**
 		 * Find current Chat context from a room available in it.
 		 */
-	  // TODO Deprecated, should be used by only old jQuery buttons, use getCallContext() instead
+	  // TODO Deprecated, should be used by only old jQuery buttons
 		var getChatContext = function() {
 			return createChatContext(eXo.chat);
 		};
@@ -1780,7 +1778,7 @@
 			if (currentUser) { 
 				initUsers();
 				initSpacePopups();
-				initSpace();
+				//initSpace();
 				initChat();
 				initMiniChat();
 			}
@@ -2337,25 +2335,20 @@
 		};
 		
 		this.initRequest = initRequest; // for use in other modules (providers, portlets etc)
-
-		this.getCallContext = function() {
-			var result = $.Deferred();
-			contextInitializer.done(() => {
-				callContextInitializer.done(callContext => {
-					result.resolve(callContext);
-				}).fail((err, status) => {
-					result.reject(err, status);
-				})
-			}).fail((err, status) => {
-				result.reject(err, status);
-			})
-			return result.promise();
-		}
 		
-		this.initChatContext = async function(chat) {
-			const context = await createChatContext(chat);
-			callContextInitializer.resolve(context);
+		this.createChatContext = async function(chat) {
+			const localContext = $.Deferred();
+			contextInitializer.then(() => {
+				localContext.resolve(await createChatContext(chat));
+			});
+			return localContext.promise();
 		}
+
+		this.createSpaceContext = function(spaceId) {
+			const localContext = $.Deferred();
+			//const context = spaceContext(spaceId);
+			return localContext.promise();
+		};
 	}
 	
 	var webConferencing = new WebConferencing();
