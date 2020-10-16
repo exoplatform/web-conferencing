@@ -19,6 +19,8 @@
  */
 package org.exoplatform.webconferencing;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.sql.SQLException;
@@ -27,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -36,8 +39,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.persistence.PersistenceException;
+import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.fileupload.FileUploadException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -51,20 +59,29 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
+import org.exoplatform.services.jcr.RepositoryService;
+import org.exoplatform.services.jcr.core.ManageableRepository;
+import org.exoplatform.services.jcr.ext.app.SessionProviderService;
+import org.exoplatform.services.jcr.ext.common.SessionProvider;
+import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserStatus;
+import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
-import org.exoplatform.social.core.identity.model.Identity;
+import org.exoplatform.services.security.Identity;
+import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.social.core.identity.model.Profile;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
 import org.exoplatform.social.core.manager.IdentityManager;
 import org.exoplatform.social.core.service.LinkProvider;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
+import org.exoplatform.upload.UploadResource;
+import org.exoplatform.upload.UploadService;
 import org.exoplatform.webconferencing.UserInfo.IMInfo;
 import org.exoplatform.webconferencing.dao.CallDAO;
 import org.exoplatform.webconferencing.dao.ParticipantDAO;
@@ -185,13 +202,40 @@ public class WebConferencingService implements Startable {
   }
 
   /** The Constant OWNER_TYPE_SPACE. */
-  public static final String                         OWNER_TYPE_SPACE    = "space";
+  public static final String                         OWNER_TYPE_SPACE       = "space";
 
   /** The Constant OWNER_TYPE_CHATROOM. */
-  public static final String                         OWNER_TYPE_CHATROOM = "chat_room";
+  public static final String                         OWNER_TYPE_CHATROOM    = "chat_room";
+
+  /** The Constant CMS_GROUPS_PATH. */
+  public static final String                         CMS_GROUPS_PATH        = "groupsPath";
+
+  /** The Constant EXO_TITLE_PROP. */
+  public static final String                         EXO_TITLE_PROP         = "exo:title";
+
+  /** The Constant NT_FILE. */
+  public static final String                         NT_FILE                = "nt:file";
+
+  /** The Constant JCR_CONTENT. */
+  public static final String                         JCR_CONTENT            = "jcr:content";
+
+  /** The Constant JCR_DATA. */
+  public static final String                         JCR_DATA               = "jcr:data";
+
+  /** The Constant JCR_MIME_TYPE. */
+  public static final String                         JCR_MIME_TYPE          = "jcr:mimeType";
+
+  /** The Constant JCR_LAST_MODIFIED_PROP. */
+  public static final String                         JCR_LAST_MODIFIED_PROP = "jcr:lastModified";
+
+  /** The Constant EXO_RSS_ENABLE_PROP. */
+  public static final String                         EXO_RSS_ENABLE_PROP    = "exo:rss-enable";
+
+  /** The Constant NT_RESOURCE. */
+  public static final String                         NT_RESOURCE            = "nt:resource";
 
   /** The Constant LOG. */
-  protected static final Log                         LOG                 = ExoLogger.getLogger(WebConferencingService.class);
+  protected static final Log                         LOG                    = ExoLogger.getLogger(WebConferencingService.class);
 
   /** The secret key. */
   protected final String                             secretKey;
@@ -215,13 +259,31 @@ public class WebConferencingService implements Startable {
   protected final ParticipantDAO                     participantsStorage;
 
   /** The providers. */
-  protected final Map<String, CallProvider>          providers           = new ConcurrentHashMap<>();
+  protected final Map<String, CallProvider>          providers              = new ConcurrentHashMap<>();
 
   /** The space service. */
   protected SpaceService                             spaceService;
 
   /** The user listeners. */
-  protected final Map<String, Set<UserCallListener>> userListeners       = new ConcurrentHashMap<>();
+  protected final Map<String, Set<UserCallListener>> userListeners          = new ConcurrentHashMap<>();
+
+  /** The upload service. */
+  protected final UploadService                      uploadService;
+
+  /** The repository service. */
+  protected final RepositoryService                  repositoryService;
+
+  /** The session providers. */
+  protected final SessionProviderService             sessionProviders;
+
+  /** The node creator. */
+  protected final NodeHierarchyCreator               nodeCreator;
+
+  /** The identity registry. */
+  protected final IdentityRegistry                   identityRegistry;
+
+  /** The authenticator. */
+  protected final Authenticator                      authenticator;
 
   /**
    * Checks is ID valid (not null, not empty and not longer of {@value #ID_MAX_LENGTH} chars).
@@ -284,6 +346,12 @@ public class WebConferencingService implements Startable {
    * @param settingService the setting service
    * @param callStorage the call storage
    * @param participantsStorage the participants storage
+   * @param uploadService the upload service
+   * @param repositoryService the repository service
+   * @param sessionProviders the session providers
+   * @param nodeCreator the node creator
+   * @param identityRegistry the identity registry
+   * @param authenticator the authenticator
    * @param initParams the initParams
    */
   public WebConferencingService(OrganizationService organization,
@@ -292,6 +360,12 @@ public class WebConferencingService implements Startable {
                                 SettingService settingService,
                                 CallDAO callStorage,
                                 ParticipantDAO participantsStorage,
+                                UploadService uploadService,
+                                RepositoryService repositoryService,
+                                SessionProviderService sessionProviders,
+                                NodeHierarchyCreator nodeCreator,
+                                IdentityRegistry identityRegistry,
+                                Authenticator authenticator,
                                 InitParams initParams) {
     this.organization = organization;
     this.socialIdentityManager = socialIdentityManager;
@@ -299,6 +373,12 @@ public class WebConferencingService implements Startable {
     this.settingService = settingService;
     this.callStorage = callStorage;
     this.participantsStorage = participantsStorage;
+    this.uploadService = uploadService;
+    this.repositoryService = repositoryService;
+    this.sessionProviders = sessionProviders;
+    this.nodeCreator = nodeCreator;
+    this.identityRegistry = identityRegistry;
+    this.authenticator = authenticator;
     PropertiesParam jwtSecretParam = initParams.getPropertiesParam(JWT_CONFIGURATION_PROPERTIES);
     this.secretKey = jwtSecretParam.getProperty(SECRET_KEY);
   }
@@ -320,7 +400,10 @@ public class WebConferencingService implements Startable {
     if (user != null) {
       // Check if user not disabled
       if (user.isEnabled()) {
-        Identity userIdentity = socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME, id, true);
+        org.exoplatform.social.core.identity.model.Identity userIdentity =
+                                                                         socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME,
+                                                                                                                   id,
+                                                                                                                   true);
         if (userIdentity != null) {
           Profile socialProfile = userIdentity.getProfile();
           @SuppressWarnings("unchecked")
@@ -367,8 +450,8 @@ public class WebConferencingService implements Startable {
    *
    * @param spacePrettyName the space pretty name
    * @return the space info
-   * @throws StorageException if error reading saved group call ID associated with a space
    * @throws IdentityStateException if error reading space member in Organization Service
+   * @throws StorageException if error reading saved group call ID associated with a space
    */
   public SpaceInfo getSpaceInfo(String spacePrettyName) throws IdentityStateException, StorageException {
     return spaceInfo(spacePrettyName, findGroupCallId(spacePrettyName));
@@ -417,8 +500,8 @@ public class WebConferencingService implements Startable {
    * @param title the title
    * @param members the room members
    * @return the room info
-   * @throws StorageException if error reading saved group call ID associated with a room
    * @throws IdentityStateException if error reading room member in Organization Service
+   * @throws StorageException if error reading saved group call ID associated with a room
    */
   public RoomInfo getRoomInfo(String id, String title, String[] members) throws IdentityStateException, StorageException {
     return roomInfo(id, title, members, findGroupCallId(id));
@@ -742,9 +825,9 @@ public class WebConferencingService implements Startable {
    *
    * @param call the call
    * @param clientId the client id
-   * @throws StorageException if storage exception happen
    * @throws ParticipantNotFoundException if call or its participants not found in storage
    * @throws CallSettingsException if call entry has wrong settings (room title, owner type etc)
+   * @throws StorageException if storage exception happen
    * @throws CallNotFoundException if call not found in storage
    */
   protected void startCall(CallInfo call, String clientId) throws ParticipantNotFoundException,
@@ -790,16 +873,15 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * 
    * Join a call if it is started or start already stopped one.
    *
    * @param id the id
    * @param partId the participant id
    * @param clientId the client id
    * @return the call info object of type {@link CallInfo}
-   * @throws CallNotFoundException if call not found
    * @throws InvalidCallException if call in erroneous state and cannot be used, details are in caused
    *           exception
+   * @throws CallNotFoundException if call not found
    */
   public CallInfo joinCall(String id, String partId, String clientId) throws InvalidCallException, CallNotFoundException {
     // TODO exception if user not a participant?
@@ -868,13 +950,13 @@ public class WebConferencingService implements Startable {
               if (partId.equals(part.getId())) {
                 // Leave should not be called on a call session started after stopping an one previous of this
                 // call.
-                //if (part.hasSameClientId(clientId)) {
+                // if (part.hasSameClientId(clientId)) {
                 part.setState(UserState.LEAVED);
                 part.setClientId(null);
                 leaved = part;
                 leavedNum++;
-                //} // otherwise we may meet this user running a new same call too quickly (before CometD will
-                  // unsubscribe this call previous channel), we ignore this leave so
+                // } // otherwise we may meet this user running a new same call too quickly (before CometD will
+                // unsubscribe this call previous channel), we ignore this leave so
               } else {
                 // if null - user hasn't joined
                 if (part.getState() == null || part.getState().equals(UserState.LEAVED)) {
@@ -899,7 +981,7 @@ public class WebConferencingService implements Startable {
             }
             // Check if don't need stop the call if all parts leaved already
             if (call.getOwner().isGroup()) {
-              if (leavedNum == call.getParticipants().size() || call.getParticipants().size() == 0 
+              if (leavedNum == call.getParticipants().size() || call.getParticipants().size() == 0
                   || call.getParticipants().stream().allMatch(p -> p.getState() == UserState.LEAVED)) {
                 // Stop when all group members leave the call
                 stopCall(call, partId, false);
@@ -1164,8 +1246,8 @@ public class WebConferencingService implements Startable {
    * Save provider configuration.
    *
    * @param conf the configuration to save
-   * @throws JSONException if cannot serialize to JSON
    * @throws UnsupportedEncodingException if UTF8 not supported
+   * @throws JSONException if cannot serialize to JSON
    */
   public void saveProviderConfiguration(CallProviderConfiguration conf) throws UnsupportedEncodingException, JSONException {
     final String initialGlobalId = Scope.GLOBAL.getId();
@@ -1176,6 +1258,157 @@ public class WebConferencingService implements Startable {
     } finally {
       Scope.GLOBAL.id(initialGlobalId);
     }
+  }
+
+  /**
+   * Upload recording of the call.
+   *
+   * @param identity the space or user Id
+   * @param isSpace the is space
+   * @param user the user who recorded the video
+   * @param request the request
+   * @throws RepositoryException the repository exception
+   * @throws UploadFileException the upload recording exception
+   */
+  public void uploadFile(String identity, boolean isSpace, String user, HttpServletRequest request) throws UploadFileException,
+                                                                                                    RepositoryException {
+    String uploadId = String.valueOf((long) (Math.random() * 100000L));
+    try {
+      uploadService.createUploadResource(uploadId, request);
+    } catch (FileUploadException e) {
+      LOG.error("Cannot create upload resource: " + e.getMessage());
+      throw new UploadFileException("Cannot create upload resource", e);
+    }
+    UploadResource resource = uploadService.getUploadResource(uploadId);
+    if (resource.getStatus() == UploadResource.UPLOADED_STATUS) {
+      Node rootNode = getRootFolderNode(identity, isSpace);
+      saveFile(rootNode, resource, user);
+      uploadService.removeUploadResource(uploadId);
+    } else {
+      uploadService.removeUploadResource(uploadId);
+      throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: "
+          + resource.getStatus());
+    }
+  }
+
+  /**
+   * Save recording to JCR.
+   *
+   * @param parentNode the parent node
+   * @param resource the recording
+   * @throws RepositoryException the repository exception
+   */
+  private void saveFile(Node parent, UploadResource resource, String user) throws RepositoryException, UploadFileException {
+    ConversationState state = null;
+    try {
+      state = createState(user);
+      ConversationState.setCurrent(state);
+    } catch (Exception e) {
+      LOG.error("Cannot set conversation state for user: " + user, e);
+      throw new UploadFileException("Cannot set conversation state for user: " + user);
+    }
+
+    ManageableRepository repository = repositoryService.getCurrentRepository();
+    SessionProvider userProvider = sessionProviders.getSessionProvider(state);
+    sessionProviders.setSessionProvider(null, userProvider);
+    Session session = userProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
+    // Get node under user session
+    Node folder = (Node) session.getItem(parent.getPath());
+    Node fileNode = folder.addNode(resource.getFileName(), "nt:file");
+    if (!fileNode.hasProperty(EXO_TITLE_PROP)) {
+      fileNode.addMixin(EXO_RSS_ENABLE_PROP);
+    }
+    fileNode.setProperty(EXO_TITLE_PROP, resource.getFileName());
+    Node content = fileNode.addNode(JCR_CONTENT, NT_RESOURCE);
+    try (FileInputStream fis = new FileInputStream(resource.getStoreLocation())) {
+      content.setProperty(JCR_DATA, fis);
+    } catch (IOException e) {
+      LOG.error("Cannot set JCR_DATA to created node.", e.getMessage());
+      throw new UploadFileException("Cannot set JCR_DATA for file node " + resource.getFileName());
+    }
+    content.setProperty(JCR_MIME_TYPE, resource.getMimeType());
+    content.setProperty(JCR_LAST_MODIFIED_PROP, new GregorianCalendar());
+    folder.save();
+    try {
+      ConversationState.setCurrent(null);
+    } catch (Exception e) {
+      LOG.warn("An error occured while cleaning the ConversationState", e);
+    }
+  }
+
+  /**
+   * Gets the root folder node.
+   *
+   * @param identity the identity
+   * @param isSpace the is space
+   * @param user the user
+   * @return the root folder node
+   * @throws RepositoryException the repository exception
+   */
+  private Node getRootFolderNode(String identity, boolean isSpace) throws RepositoryException {
+    Node folderNode = null;
+    ManageableRepository repository = repositoryService.getCurrentRepository();
+    SessionProvider sessionProvider = sessionProviders.getSystemSessionProvider(null);
+    Session session = sessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
+    if (isSpace) {
+      Node rootSpace = null;
+      rootSpace = (Node) session.getItem(nodeCreator.getJcrPath(CMS_GROUPS_PATH) + "/spaces/" + identity);
+      folderNode = rootSpace.getNode("Documents");
+    } else {
+      String privateRelativePath = nodeCreator.getJcrPath("userPrivate");
+      Node userNode = null;
+      try {
+        userNode = nodeCreator.getUserNode(sessionProvider, identity);
+      } catch (Exception e) {
+        LOG.error("Cannot find user node by id: " + identity, e.getMessage());
+        throw new RepositoryException("Cannot find user node by id: " + identity, e);
+      }
+      folderNode = userNode.getNode(privateRelativePath);
+    }
+    return folderNode;
+  }
+
+  /**
+   * Creates the state.
+   *
+   * @param userId the user id
+   * @return the conversation state
+   */
+  private ConversationState createState(String userId) {
+    Identity userIdentity = userIdentity(userId);
+
+    if (userIdentity != null) {
+      ConversationState state = new ConversationState(userIdentity);
+      // Keep subject as attribute in ConversationState.
+      state.setAttribute(ConversationState.SUBJECT, userIdentity.getSubject());
+      return state;
+    }
+    LOG.warn("User identity not found " + userId + " for setting conversation state");
+    return null;
+  }
+
+  /**
+   * Find or create user identity.
+   *
+   * @param userId the user id
+   * @return the identity can be null if not found and cannot be created via
+   *         current authenticator
+   */
+  protected Identity userIdentity(String userId) {
+    Identity userIdentity = identityRegistry.getIdentity(userId);
+    if (userIdentity == null) {
+      // We create user identity by authenticator, but not register it in the
+      // registry
+      try {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("User identity not registered, trying to create it for: " + userId);
+        }
+        userIdentity = authenticator.createIdentity(userId);
+      } catch (Exception e) {
+        LOG.warn("Failed to create user identity: " + userId, e);
+      }
+    }
+    return userIdentity;
   }
 
   /**
@@ -1780,10 +2013,10 @@ public class WebConferencingService implements Startable {
    *
    * @param id the id
    * @return the call info
-   * @throws CallSettingsException if call entry has wrong settings (Chat room call
-   *           title too long or has bad value)
    * @throws IdentityStateException if error reading call owner or participant
    * @throws StorageException if persistent error happens
+   * @throws CallSettingsException if call entry has wrong settings (Chat room call
+   *           title too long or has bad value)
    * @throws CallOwnerException if call owner type of unknown type
    */
   protected CallInfo findCallById(String id) throws IdentityStateException,

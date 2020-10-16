@@ -19,35 +19,36 @@
     02110-1301 USA, or see the FSF site: http://www.fsf.org.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>addons-parent-pom</artifactId>
     <groupId>org.exoplatform.addons</groupId>
     <version>13-M01</version>
   </parent>
-  
+
   <groupId>org.exoplatform.addons.web-conferencing</groupId>
   <artifactId>web-conferencing</artifactId>
   <version>2.1.x-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>eXo Add-on:: eXo Web Conferencing</name>
   <description>eXo Web Conferencing portal extension</description>
-  
+
   <modules>
     <module>services</module>
     <module>webapp</module>
     <module>webrtc</module>
     <module>packaging</module>
   </modules>
-  
+
   <scm>
     <connection>scm:git:git://github.com/exoplatform/web-conferencing.git</connection>
     <developerConnection>scm:git:git@github.com:exoplatform/web-conferencing.git</developerConnection>
     <tag>HEAD</tag>
     <url>https://github.com/exoplatform/web-conferencing</url>
   </scm>
-  
+
   <properties>
     <!-- Defaut compiler settings -->
     <maven.compiler.optimize>true</maven.compiler.optimize>
@@ -58,6 +59,7 @@
     <!-- Dependencies versions                    -->
     <!-- **************************************** -->
     <addon.exo.ecms.version>6.1.x-SNAPSHOT</addon.exo.ecms.version>
+    <addon.exo.jcr.version>6.1.x-SNAPSHOT</addon.exo.jcr.version>
     <org.exoplatform.social.version>6.1.x-SNAPSHOT</org.exoplatform.social.version>
     <org.exoplatform.platform-ui.version>6.1.x-SNAPSHOT</org.exoplatform.platform-ui.version>
     <!-- Maven Plugin for JS and CSS bundling and Unit Test execution -->
@@ -68,7 +70,7 @@
     <junit.version>4.12</junit.version>
     <io.jsonwebtoken.version>0.10.5</io.jsonwebtoken.version>
   </properties>
-  
+
   <dependencyManagement>
     <dependencies>
       <!-- Import versions from platform project -->
@@ -133,6 +135,20 @@
         <groupId>io.jsonwebtoken</groupId>
         <artifactId>jjwt-jackson</artifactId>
         <version>${io.jsonwebtoken.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.exoplatform.jcr</groupId>
+        <artifactId>exo.jcr.component.core</artifactId>
+        <version>${addon.exo.jcr.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.exoplatform.jcr</groupId>
+        <artifactId>exo.jcr.component.ext</artifactId>
+        <version>${addon.exo.jcr.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <!-- for tests -->
       <dependency>
