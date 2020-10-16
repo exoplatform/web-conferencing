@@ -2346,8 +2346,17 @@
 
 		this.createSpaceContext = async function(spaceId) {
 			const localContext = $.Deferred();
-			contextInitializer.then(async () => {
+			contextInitializer.then(() => {
 				localContext.resolve(spaceContext(spaceId));
+			});
+			return localContext.promise();
+		};
+
+		// Can be used for single user profile and user popover
+		this.createUserContext = async function(userId) {
+			const localContext = $.Deferred();
+			contextInitializer.then(() => {
+				localContext.resolve(userContext(userId));
 			});
 			return localContext.promise();
 		};
