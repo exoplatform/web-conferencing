@@ -19,19 +19,20 @@
     02110-1301 USA, or see the FSF site: http://www.fsf.org.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.exoplatform.addons.web-conferencing</groupId>
     <artifactId>web-conferencing</artifactId>
     <version>2.1.x-jitsi-SNAPSHOT</version>
   </parent>
-  
+
   <artifactId>web-conferencing-services</artifactId>
   <packaging>jar</packaging>
   <name>eXo Web Conferencing :: Extension Services</name>
   <description>eXo Web Conferencing services of portal extension</description>
-  
+
   <dependencies>
     <!-- Others third party -->
     <dependency>
@@ -67,7 +68,7 @@
       <artifactId>social-component-core</artifactId>
       <scope>provided</scope>
     </dependency>
-     <dependency>
+    <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-api</artifactId>
       <scope>provided</scope>
@@ -80,6 +81,16 @@
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-jackson</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.jcr</groupId>
+      <artifactId>exo.jcr.component.core</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.jcr</groupId>
+      <artifactId>exo.jcr.component.ext</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>
