@@ -2349,6 +2349,22 @@
 			//const context = spaceContext(spaceId);
 			return localContext.promise();
 		};
+
+		this.getAllProviders = async function() {
+			const webConferencing = this;
+			const allProviders = $.Deferred();
+			contextInitializer.then(() => {
+				webConferencing.getProvidersConfig().then((providersConfig) => {
+					const providersTypes = providersConfig.map(provider => provider.type);
+					Promise.all(
+						providersTypes.map(type => webConferencing.getProvider(type))
+					).then(providers => {
+						allProviders.resolve(providers);
+					});
+				});
+			});
+			return allProviders.promise();
+		}
 	}
 	
 	var webConferencing = new WebConferencing();
