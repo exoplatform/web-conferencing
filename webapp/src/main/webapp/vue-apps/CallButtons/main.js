@@ -18,13 +18,14 @@ export function init(settings) {
   // getting locale ressources
   exoi18n.loadLanguageAsync(lang, url).then(i18n => {
     // init Vue app when locale ressources are ready
+    console.log("gfdghjkl")
     new Vue({
-      render: h =>
-        h(callButtons, { props: {...settings, i18n: i18n, language: lang, resourceBundleName: resourceBundleName} }),
+      render: function(h) {
+        return h(callButtons, { props: {...settings, i18n, language: lang, resourceBundleName} })},
       i18n,
       vuetify
-    });
-  });
+    })
+  })
   // TODO return actually created Vue component here via promise or directly
   // return theCallButtons;
 }

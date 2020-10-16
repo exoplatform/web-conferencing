@@ -1,6 +1,5 @@
 <template>
-  <!-- TODO we cannot use ID as many buttons may appear on the page!! Can class work for us? -->
-  <div id="call-button-container" ref="callbutton">
+  <div ref="callbutton" class="call-button-container">
     <dropdown
       v-if="providersButton.length > 1"
       :providersbutton="providersButton"
@@ -17,12 +16,10 @@ import dropdown from "./Dropdown.vue";
 
 const log = webConferencing.getLog("webconferencing-call-buttons");
 
-let vm = null; // TODO why we need vm globaly?
-let ref; // TODO what is this a global one?
-
 export default {
   components: {
     dropdown
+    // dropdown: function() {import("./Dropdown.vue")}
   },
   props: {
     services: {
@@ -54,6 +51,11 @@ export default {
       //providersTypes: []
     };
   },
+  // computed: {
+  //   dropdown() {
+  //     return () => import("./Dropdown.vue");
+  //   }
+  // },
   async beforeMount() {
     //const thevue = this;
     
@@ -63,8 +65,10 @@ export default {
       const context = await webConferencing.getCallContext();
       //thevue.callContext = context;
       //if (this.callContext) {
+      console.log(this.i18n)
       const providers = [];
       try {
+        providers.push(await webConferencing.getProvider("jitsi"));
         providers.push(await webConferencing.getProvider("jitsi"));
         //await Promise.all(
         //  this.providersTypes.map(async type => {
@@ -90,18 +94,21 @@ export default {
     }
   },
   methods: {
-    async initProvidersButton__donotuse() { // TODO do we needit actually? it is not reusable
-      const thevue = this;
-      await Promise.all(
-        thevue.providers.map(async p => { // TODO async here???!
-          if (await p.isInitialized) { // TODO await for boolean property??
-            const callButton = await p.callButton(this.callContext);
-            thevue.providersButton.push(callButton);
-          }
-        })
-      );
-    },
+    // async initProvidersButton__donotuse() { // TODO do we needit actually? it is not reusable
+    //   const thevue = this;
+    //   await Promise.all(
+    //     thevue.providers.map(async p => { // TODO async here???!
+    //       if (await p.isInitialized) { // TODO await for boolean property??
+    //         const callButton = await p.callButton(this.callContext, "vue");
+    //         thevue.providersButton.push(callButton);
+    //       }
+    //     })
+    //   );
+    // },
     createButtons() {
+      let ref; // TODO what is this a global one? //scoped
+      let vm = null; // TODO why we need vm globaly? //scoped
+
       //if (this.providersButton.length) {
       for (const [index, pb] of this.providersButton.entries()) {
         if (this.providersButton.length > 1) {
@@ -148,7 +155,7 @@ export default {
 @import "../../../skin/less/variables.less";
 
 .VuetifyApp {
-  #call-button-container {
+  .call-button-container {
     button {
       .v-btn__content {
         letter-spacing: 0.1px;
@@ -160,7 +167,7 @@ export default {
       left: @width + 60px;
       border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
-      padding: 0 10px;
+      padding: 0 5px;
       &:hover {
         background-color: @primaryColor;
         opacity: 1;
@@ -189,8 +196,8 @@ export default {
   a:focus {
     color: unset;
   }
-  #call-button-container.single:hover,
-  [id^="call-button-container-"]:hover,
+  .single:hover,
+  [class^="call-button-container-"]:hover,
   button:hover {
     i {
       color: white;
@@ -214,8 +221,8 @@ export default {
     // .room-action-menu {
     //   .room-action-component {
     //     .webConferencingCallButtonAction {
-    //       // #call-button-container.single:hover,
-    //       // [id^="call-button-container-"]:hover,
+    //       // .call-button-container.single:hover,
+    //       // [class^="call-button-container-"]:hover,
     //       // a:hover,
     //       // button:hover {
     //       //   i {

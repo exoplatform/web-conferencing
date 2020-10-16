@@ -1,6 +1,6 @@
 <template>
   <div class="dropdown-header" @click="opendropdowncomponent(); passrefs()">
-    <div id="dropdown-span">
+    <div class="dropdown-span">
       <i class="uiIconSocPhone uiIconSocBlue"></i>
       <span>{{ placeholder }}</span>
     </div>
@@ -37,7 +37,7 @@ export default {
     border: 1px solid rgb(232, 238, 242);
     border-radius: 3px;
     width: 100%;
-    #dropdown-span {
+    .dropdown-span {
       flex: 3;
       text-align: center;
     }

@@ -9,7 +9,7 @@
       <div
         v-for="(button, index) in providersbutton"
         :key="index"
-        :id="`call-button-container-${index}`"
+        :class="`call-button-container-${index}`"
         :ref="`callbutton`"
         @click="openDropdownComponent"></div>
     </div>
@@ -65,7 +65,7 @@ export default {
   margin-top: 3px;
   width: @width + 30px;
   box-shadow: @defaultShadow;
-  [id^="call-button-container-"] {
+  [class^="call-button-container-"] {
     padding: 0 10px;
     height: 36px;
     border-radius: 3px;
