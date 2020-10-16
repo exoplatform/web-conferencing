@@ -23,15 +23,15 @@ const webconferencingExts = [{
   },
   // init call button context in chat
   init : function (chat) {
-    require(["SHARED/webConferencing", "SHARED/webConferencingCallButton"], function (webConferencing, webConferencingCallButton) {
+    require(["SHARED/webConferencing", "SHARED/webConferencingCallButton"], function (webConferencing, callButtons) {
       webConferencing.initChatContext(chat);
       //var settings = {}; // TODO not good as we cheat ourselves by this here!
       // We know we are in the chat here, we can rely on its events and build specific logic  
       document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
+        // TODO remove previous one added button here        
+        //callButtons.destroy();
         // TODO add all buttons from here
-        //addButton(target);
-        //webConferencingCallButton.destroy();
-        webConferencingCallButton.init(target);
+        callButtons.init(target);
       });
     });
   },

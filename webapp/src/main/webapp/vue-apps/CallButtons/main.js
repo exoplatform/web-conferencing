@@ -14,23 +14,17 @@ const localePortlet = "locale.webconferencing";
 const resourceBundleName = "WebConferencingClient";
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
 
-let vmCallButtons = null;
-
 export function init(settings) {
-  // TODO we should know here was the Vue comp created previously and destroy that one before creating one new
-  if (vmCallButtons) {
-    // Destroy, clean the parent etc.
-    vmCallButtons.$destroy();
-  }
-  
   // getting locale ressources
   exoi18n.loadLanguageAsync(lang, url).then(i18n => {
     // init Vue app when locale ressources are ready
-    vmCallButtons = new Vue({
+    new Vue({
       render: h =>
         h(callButtons, { props: {...settings, i18n: i18n, language: lang, resourceBundleName: resourceBundleName} }),
       i18n,
       vuetify
     });
   });
+  // TODO return actually created Vue component here via promise or directly
+  // return theCallButtons;
 }
