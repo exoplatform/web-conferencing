@@ -2335,15 +2335,94 @@
 		};
 		
 		this.initRequest = initRequest; // for use in other modules (providers, portlets etc)
-		
-		this.createChatContext = async function(chat) {
-			const chatContext = await createChatContext(chat)
+
+		// Creates the chat context from events target (selected contact data)
+		var createChatContextFromTarget = function (context, target) {
+			var chatContext = context;
+			if (target && target.detail) {
+				if (chatContext) {
+					const roomId = target.detail.user;
+					const roomTitle = target.detail.fullName;
+					const isSpace = target.detail.type === "s"; // roomId && roomId.startsWith("space-");
+					const isRoom = target.detail.type === "t"; // roomId && roomId.startsWith("team-");
+					const isGroup = isSpace || isRoom;
+					const isUser = !isGroup && target.detail.type === "u";
+					// It is a logic used in Chat, so reuse it here:
+					const roomName = roomTitle.toLowerCase().split(" ").join("_");
+					chatContext.roomId = roomId;
+					chatContext.roomName = roomName; // has no sense for team rooms, but for spaces it's pretty_name
+					chatContext.roomTitle = roomTitle;
+					chatContext.isGroup = isGroup;
+					chatContext.isSpace = isSpace;
+					chatContext.isRoom = isRoom;
+					chatContext.isUser = isUser;
+					chatContext.participants = target.detail.participants;
+					chatContext.details = function () {
+						const data = $.Deferred();
+						if (isGroup) {
+							if (isSpace) {
+								const spaceId = roomName; // XXX no other way within Chat
+								getSpaceInfoReq(spaceId).done(function (space) {
+									data.resolve(space);
+								}).fail(function (err) {
+									log.trace(`Error getting space info for ${spaceId} space`, err);
+									data.reject(err);
+								});
+							} else if (isRoom) {
+								if (this.participants) {
+									const unames = [];
+									for (let i = 0; i < this.participants.length; i++) {
+										const u = this.participants[i];
+										if (u && u.name && u.name !== "null") {
+											unames.push(u.name);
+										}
+									}
+									getRoomInfoReq(roomId, roomTitle, unames).done(function (info) {
+										data.resolve(info);
+									}).fail(function (err) {
+										log.trace(`Error getting room info for ${roomName}/${roomId} room`, err);
+										data.reject(err);
+									});
+								} else {
+									log.trace(`Error getting room users for ${roomId} room`);
+									data.reject(`Error reading room users for ${roomId} room`);
+								}
+							} else {
+								data.reject(`Unexpected context for ${roomTitle} room`);
+							}
+						} else {
+							// roomId is an user name for P2P chats
+							getUserInfoReq(roomId).done(function (user) {
+								data.resolve(user);
+							}).fail(function (err) {
+								log.trace(`Error getting user info for ${roomId} room`, err);
+								data.reject(err);
+							});
+						}
+						return data.promise();
+					}
+					return chatContext;
+				}
+			} else {
+				log.warn("No details provided for the selected contact");
+			}
+		};
+
+		// target (optional) - the data from the exo-chat-selected-contact-changed event
+		// (target can be absent; it's needed to create the context for selected contact from event).
+		this.createChatContext = async function (chat, target) {
 			const localContext = $.Deferred();
 			contextInitializer.then(() => {
-				localContext.resolve(chatContext);
+				createChatContext(chat).then((chatContext) => {
+					// create context from the event
+					if (target) {
+						chatContext = createChatContextFromTarget(chatContext, target);
+					}
+					localContext.resolve(chatContext);
+				});
 			});
 			return localContext.promise();
-		}
+		};
 
 		this.createSpaceContext = async function(spaceId) {
 			const localContext = $.Deferred();
