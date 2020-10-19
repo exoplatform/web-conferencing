@@ -27,7 +27,7 @@ const webconferencingExts = [{
       //webConferencing.initChatContext(chat);
       //var settings = {}; // TODO not good as we cheat ourselves by this here!
       // We know we are in the chat here, we can rely on its events and build specific logic  
-      document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function (target) {
+      document.addEventListener("exo-chat-selected-contact-changed", function (target) {
         // TODO remove previous one added button here        
         //callButtons.destroy();
         // TODO add all buttons from here

@@ -2337,9 +2337,10 @@
 		this.initRequest = initRequest; // for use in other modules (providers, portlets etc)
 		
 		this.createChatContext = async function(chat) {
+			const chatContext = await createChatContext(chat)
 			const localContext = $.Deferred();
 			contextInitializer.then(() => {
-				localContext.resolve(await createChatContext(chat));
+				localContext.resolve(chatContext);
 			});
 			return localContext.promise();
 		}

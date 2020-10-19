@@ -32,17 +32,18 @@ export default {
       type: Boolean,
       required: true
     },
-    createbuttons: {
-      type: Function,
-      required: true
-    },
+    // createbuttons: {
+    //   type: Function,
+    //   required: true
+    // },
     placeholder: {
       type: String,
       required: true
     }
   },
   updated() {
-    this.createbuttons(); // TODO let's use same case as original func
+    // this.createbuttons(); // TODO let's use same case as original func
+    this.$emit("updated")
   },
   methods: {
     openDropdownComponent(isOpen) {
