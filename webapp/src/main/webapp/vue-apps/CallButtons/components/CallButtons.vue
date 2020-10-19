@@ -96,7 +96,6 @@ export default {
             this.providersButton.push(callButton);
           })
         );
-
         this.createButtons();
       } catch (err) {
         log.error("Error building call buttons", err);
@@ -110,42 +109,54 @@ export default {
   updated() {
     // this.callContext = /null;
     // this.callContext = await webConferencing.createChatContext(eXo.chat);
-    log.trace("updated", this.callContext);
+    // console.log("updated", this.callContext);
+    const thevue = this
     document.addEventListener(
       "exo-chat-selected-contact-changed",
       async target => {
         try {
-          this.$refs.callbutton.childNodes[0].removeChild(
-            this.$refs.callbutton.childNodes[0].children[0]
+          // thevue.$refs.callbutton.childNodes[0].removeChild(
+          //   thevue.$refs.callbutton.childNodes[0].children[0]
+          // );
+          // eslint-disable-next-line no-debugger
+          debugger;
+          if (thevue.$refs.callbutton.childNodes[0].children[0]) {
+            thevue.$children[0].$destroy()
+           thevue.$refs.callbutton.childNodes[0].removeChild(
+            thevue.$refs.callbutton.childNodes[0].children[0]
           );
-          //this.$destroy()
+            // thevue.$refs.callbutton.childNodes[0].removeChild(
+            //   thevue.$refs.callbutton.childNodes[0].children[0]
+            // );
+          }
+          //thevue.$destroy()
           //const providersConfig = await webConferencing.getProvidersConfig();
-          //this.providersTypes = providersConfig.map(provider => provider.type);
-          //this.callContext = await webConferencing.getCallContext(); // deleted getCallContext()
-          this.callContext = await webConferencing.createChatContext(eXo.chat);
-          log.trace(this.callContext);
+          //thevue.providersTypes = providersConfig.map(provider => provider.type);
+          //thevue.callContext = await webConferencing.getCallContext(); // deleted getCallContext()
+          thevue.callContext = await webConferencing.createChatContext(eXo.chat);
+          // log.trace(thevue.callContext);
           //thevue.callContext = context;
-          //if (this.callContext) {
-          this.providers = [];
-          this.providersButton = [];
+          //if (thevue.callContext) {
+          thevue.providers = [];
+          thevue.providersButton = [];
           try {
-            this.providers.push(await webConferencing.getProvider("jitsi"));
-            //this.providers.push(await webConferencing.getProvider("webrtc"));
-            // this.providers.push(await webConferencing.getProvider("jitsi"));
+            thevue.providers.push(await webConferencing.getProvider("jitsi"));
+            //thevue.providers.push(await webConferencing.getProvider("webrtc"));
+            // thevue.providers.push(await webConferencing.getProvider("jitsi"));
             //await Promise.all(
-            //  this.providersTypes.map(async type => {
+            //  thevue.providersTypes.map(async type => {
             //    const p = await webConferencing.getProvider(type);
-            //    this.providers.push(p);
+            //    thevue.providers.push(p);
             //  })
             //);
-            //await this.initProvidersButton();
+            //await thevue.initProvidersButton();
             await Promise.all(
-              this.providers.map(async p => {
-                const callButton = await p.callButton(this.callContext, "vue"); // TODO don't force vue - it should be detected by ext point
-                this.providersButton.push(callButton);
+              thevue.providers.map(async p => {
+                const callButton = await p.callButton(thevue.callContext, "vue"); // TODO don't force vue - it should be detected by ext point
+                thevue.providersButton.push(callButton);
               })
             );
-            this.createButtons();
+            thevue.createButtons();
           } catch (err) {
             log.error("Error building call buttons", err);
           }
@@ -195,7 +206,6 @@ export default {
           }
         } else {
           //add a single button
-          log.trace("refs: ", this.$refs.callbutton.childNodes[0]);
           const callButton = this.$refs.callbutton.childNodes[0];
           this.$refs.callbutton.classList.add("single");
           if (pb instanceof Vue) {

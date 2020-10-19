@@ -21,7 +21,7 @@ export function init(settings) {
 
   exoi18n.loadLanguageAsync(lang, url).then(i18n => {
     // init Vue app when locale ressources are ready
-    console.log(settings.detail.type, "gfdghjkl")
+    // console.log(settings.detail.type, "gfdghjkl")
      //if (settings.detail.type && settings.detail.type === "u") {
        new Vue({
          render: function(h) {
