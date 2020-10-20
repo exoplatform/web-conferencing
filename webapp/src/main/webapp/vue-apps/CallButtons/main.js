@@ -15,7 +15,7 @@ const resourceBundleName = "WebConferencingClient";
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
 
 export function create(context) {
-  let callContext = context;
+  const callContext = context;
   console.log(callContext, "context in main");
   const vmComp = exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
     const comp = Vue.component("call-button", {
@@ -46,9 +46,6 @@ export function create(context) {
     update: function(context) {
       console.log("in update");
       vmComp.then(vm => {
-        console.log(vm)
-        // eslint-disable-next-line no-debugger
-        debugger;
         console.log(vm._vnode.data.props.callContext, context)
         return vm._vnode.data.props.callContext = context;
       })

@@ -37,22 +37,23 @@ const webconferencingExts = [
         //let cont;
           webConferencing.createChatContext(chat).then(
             (context) => {
-              btn = callButtons.create(context);
-              console.log(btn)
-              document.addEventListener("exo-chat-selected-contact-changed", function() {
-                webConferencing.createChatContext(chat).then(cntxt => {console.log(btn); return btn.update(cntxt)})
-              })
+              callButtons.create(context).then(button => {
+                document.addEventListener("exo-chat-selected-contact-changed", function(target) {
+                webConferencing.createChatContext(chat, target).then(cntxt => { return button.update(cntxt)})
+              })});
+              //document.addEventListener("exo-chat-selected-contact-changed", function() {
+              //  webConferencing.createChatContext(chat).then(cntxt => {console.log(btn); return btn.update(cntxt)})
+              //})
               // return btn;
             }
           );
           // webConferencing.createChatContext(chat).then(
           //   (context) => {
           //     btn = callButtons.create(context);
-          //     console.log(btn)
           //     // return btn;
           //   },
           //   document.addEventListener("exo-chat-selected-contact-changed", function() {
-          //     webConferencing.createChatContext(chat).then(cntxt => {console.log(btn); return btn.update(cntxt)})
+          //     webConferencing.createChatContext(chat).then(cntxt => { return btn.update(cntxt)})
           //   })
           // );
         
@@ -60,7 +61,6 @@ const webconferencingExts = [
         // document.addEventListener(
         //   "exo-chat-selected-contact-changed",
         //   async function () {
-        //     //console.log("listener", await buttn);
 
         //     webConferencing.createChatContext(chat).then((context) => {
         //       callButtons.create(context).update(context);
@@ -69,9 +69,7 @@ const webconferencingExts = [
         //     //const updBtn = await buttn;
         //     //const cont = await localCont
         //     // const res = updBtn.then(btn => btn.update(localContext))
-        //     // console.log(updBtn.update(localContext));
         //     //return updBtn.update(cont);
-        //     // console.log(res)
         //     // return res;
         //     // return await button.update(webConferencing.createChatContext(chat))
 
@@ -82,17 +80,14 @@ const webconferencingExts = [
         //     //   .then((context) => {
         //     //     // callBtn = callButtons.create(context);
         //     //     // return callButtons.create(context).then((button) => {
-        //     //     //     console.log(button.$el, "2")
         //     //     callButtons.create(context);
         //     //     //     return button;
         //     //     //   })
         //     //     //.then((res) => res);
         //     //   })
         //     // .then((res) => {
-        //     //   console.log(res, "update");
         //     //   res.update(webConferencing.createChatContext(chat));
         //     // });
-        //     //     // console.log(await button.update(await webConferencing.createChatContext(chat)));
         //     //     // await button.update(await webConferencing.createChatContext(chat));
 
         //     //     //   // TODO remove previous one added button here

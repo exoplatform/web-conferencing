@@ -7,8 +7,7 @@
       :placeholder="placeholder"
       @updated="createButtons"
       @getRefs="getRef($event)"
-      @openDropdown="openDropdown($event)"
-    />
+      @openDropdown="openDropdown($event)" />
     <singlebtn v-else :providersbutton="providersButton" @updated="createButtons" />
   </div>
 </template>
@@ -82,7 +81,9 @@ export default {
       let providers = [];
       try {
         providers.push(await webConferencing.getProvider("jitsi"));
-        providers = this.callContext.isUser ? [...providers, await webConferencing.getProvider("webrtc")] : [...providers];
+        providers = this.callContext.isUser
+          ? [...providers, await webConferencing.getProvider("webrtc")]
+          : [...providers];
         //await Promise.all(
         //  this.providersTypes.map(async type => {
         //    const p = await webConferencing.getProvider(type);
