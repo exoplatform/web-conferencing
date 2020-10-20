@@ -1,8 +1,8 @@
 <template>
   <div class="dropdown-header" @click="opendropdowncomponent(); passrefs()">
-    <div class="dropdown-span">
+    <div class="dropdown-heading">
       <i class="uiIconSocPhone uiIconSocBlue"></i>
-      <span>{{ placeholder }}</span>
+      {{ placeholder }}
     </div>
     <v-divider class="mx-4" vertical />
     <i class="uiIconArrowDown"></i>
@@ -37,7 +37,7 @@ export default {
     border: 1px solid rgb(232, 238, 242);
     border-radius: 3px;
     width: 100%;
-    .dropdown-span {
+    .dropdown-heading {
       flex: 3;
       text-align: center;
     }

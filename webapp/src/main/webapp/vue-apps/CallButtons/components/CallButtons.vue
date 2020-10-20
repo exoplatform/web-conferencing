@@ -26,17 +26,18 @@ export default {
     // dropdown: function() {import("./Dropdown.vue")}
   },
   props: {
-    contact: {
-      type: Object,
-      require: false,
-      default: function() {
-        return {};
-      }
-    },
-    services: {
+    // contact: {
+    //   type: Object,
+    //   require: false,
+    //   default: function() {
+    //     return {};
+    //   }
+    // },
+    callContext: {
       type: Object,
       required: true
     },
+    // context:
     i18n: {
       type: Object,
       required: true
@@ -52,8 +53,9 @@ export default {
   },
   data() {
     return {
-      callContext: null,
-      providers: [],
+      //callContext: null,
+      //providers: [],
+      // context: {},
       providersButton: [],
       error: null,
       placeholder: "Start call",
@@ -67,22 +69,20 @@ export default {
   //     return () => import("./Dropdown.vue");
   //   }
   // },
-  async created() {
+  async beforeMount() {
+    //const thevue = this;
     try {
       //this.$destroy()
       //const providersConfig = await webConferencing.getProvidersConfig();
       //this.providersTypes = providersConfig.map(provider => provider.type);
-      //this.callContext = await webConferencing.getCallContext(); // deleted getCallContext()
-      this.callContext = await webConferencing.createChatContext(eXo.chat);
-      // console.log(this.callContext);
+      //const context = await webConferencing.getCallContext(); // deleted getCallContext()
+      //const context = await webConferencing.createChatContext(eXo.chat);
       //thevue.callContext = context;
       //if (this.callContext) {
-      //this.providers = [];
-      //this.providersButton = [];
+      let providers = [];
       try {
-        this.providers.push(await webConferencing.getProvider("jitsi"));
-        //this.providers.push(await webConferencing.getProvider("webrtc"));
-        // this.providers.push(await webConferencing.getProvider("jitsi"));
+        providers.push(await webConferencing.getProvider("jitsi"));
+        providers = this.callContext.isUser ? [...providers, await webConferencing.getProvider("webrtc")] : [...providers];
         //await Promise.all(
         //  this.providersTypes.map(async type => {
         //    const p = await webConferencing.getProvider(type);
@@ -91,7 +91,7 @@ export default {
         //);
         //await this.initProvidersButton();
         await Promise.all(
-          this.providers.map(async p => {
+          providers.map(async p => {
             const callButton = await p.callButton(this.callContext, "vue"); // TODO don't force vue - it should be detected by ext point
             this.providersButton.push(callButton);
           })
@@ -106,67 +106,8 @@ export default {
     }
   },
 
-  updated() {
-    // this.callContext = /null;
-    // this.callContext = await webConferencing.createChatContext(eXo.chat);
-    // console.log("updated", this.callContext);
-    const thevue = this
-    document.addEventListener(
-      "exo-chat-selected-contact-changed",
-      async target => {
-        try {
-          // thevue.$refs.callbutton.childNodes[0].removeChild(
-          //   thevue.$refs.callbutton.childNodes[0].children[0]
-          // );
-          // eslint-disable-next-line no-debugger
-          debugger;
-          if (thevue.$refs.callbutton.childNodes[0].children[0]) {
-            thevue.$children[0].$destroy()
-           thevue.$refs.callbutton.childNodes[0].removeChild(
-            thevue.$refs.callbutton.childNodes[0].children[0]
-          );
-            // thevue.$refs.callbutton.childNodes[0].removeChild(
-            //   thevue.$refs.callbutton.childNodes[0].children[0]
-            // );
-          }
-          //thevue.$destroy()
-          //const providersConfig = await webConferencing.getProvidersConfig();
-          //thevue.providersTypes = providersConfig.map(provider => provider.type);
-          //thevue.callContext = await webConferencing.getCallContext(); // deleted getCallContext()
-          thevue.callContext = await webConferencing.createChatContext(eXo.chat);
-          // log.trace(thevue.callContext);
-          //thevue.callContext = context;
-          //if (thevue.callContext) {
-          thevue.providers = [];
-          thevue.providersButton = [];
-          try {
-            thevue.providers.push(await webConferencing.getProvider("jitsi"));
-            //thevue.providers.push(await webConferencing.getProvider("webrtc"));
-            // thevue.providers.push(await webConferencing.getProvider("jitsi"));
-            //await Promise.all(
-            //  thevue.providersTypes.map(async type => {
-            //    const p = await webConferencing.getProvider(type);
-            //    thevue.providers.push(p);
-            //  })
-            //);
-            //await thevue.initProvidersButton();
-            await Promise.all(
-              thevue.providers.map(async p => {
-                const callButton = await p.callButton(thevue.callContext, "vue"); // TODO don't force vue - it should be detected by ext point
-                thevue.providersButton.push(callButton);
-              })
-            );
-            thevue.createButtons();
-          } catch (err) {
-            log.error("Error building call buttons", err);
-          }
-          //}
-        } catch (err) {
-          log.error("Error getting call context", err);
-        }
-      }
-    );
-  },
+  // updated() {
+  // },
   methods: {
     async initProvidersButton__donotuse() {
       // TODO do we needit actually? it is not reusable
