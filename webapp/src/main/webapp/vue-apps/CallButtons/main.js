@@ -15,7 +15,7 @@ const resourceBundleName = "WebConferencingClient";
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
 
 export function create(context) {
-  const callContext = { ...context };
+  let callContext = context;
   console.log(callContext, "context in main");
   const vmComp = exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
     const comp = Vue.component("call-button", {
@@ -26,23 +26,32 @@ export function create(context) {
         );
       },
     });
-    // console.log(callButtons)
-    const vm = new Vue({
+    return new Vue({
       el: "#call-button-container",
       // data,
       comp,
-      render: (h) =>
-        h(callButtons, {
+      render: (h) => {
+        console.log("INIT");
+        return h(comp, 
+          {
           props: { callContext, i18n, language: lang, resourceBundleName },
-        }),
+        }
+        )
+      },
     });
-    return vm;
+    // return vm;
   });
-  return vmComp;
-  // return {
-  //   update: function(context) {
-  //     vmComp.then(vm => {
-  //     })
-  //   }}
+  // return vmComp;
+  return {
+    update: function(context) {
+      console.log("in update");
+      vmComp.then(vm => {
+        console.log(vm)
+        // eslint-disable-next-line no-debugger
+        debugger;
+        console.log(vm._vnode.data.props.callContext, context)
+        return vm._vnode.data.props.callContext = context;
+      })
+    }}
   // return vmComp;
 }

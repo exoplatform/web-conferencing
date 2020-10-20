@@ -29,37 +29,79 @@ const webconferencingExts = [
         "SHARED/webConferencingCallButton",
       ], function (webConferencing, callButtons) {
         //webConferencing.initChatContext(chat);
-        let callBtn;
-        // webConferencing.createChatContext(chat).then((context) => {
-        //   callBtn = callButtons.create(context);
-        //   callBtn
-        //     .then((button) => {
-        //       return (callBtn = button);
-        //     })
-        //     .then((res) => {
+        // let callBtn;
+        // let cont;
+        // let buttn; 
+        // const getCurrentButton = 
+        let btn;
+        //let cont;
+          webConferencing.createChatContext(chat).then(
+            (context) => {
+              btn = callButtons.create(context);
+              console.log(btn)
+              document.addEventListener("exo-chat-selected-contact-changed", function() {
+                webConferencing.createChatContext(chat).then(cntxt => {console.log(btn); return btn.update(cntxt)})
+              })
+              // return btn;
+            }
+          );
+          // webConferencing.createChatContext(chat).then(
+          //   (context) => {
+          //     btn = callButtons.create(context);
+          //     console.log(btn)
+          //     // return btn;
+          //   },
+          //   document.addEventListener("exo-chat-selected-contact-changed", function() {
+          //     webConferencing.createChatContext(chat).then(cntxt => {console.log(btn); return btn.update(cntxt)})
+          //   })
+          // );
+        
+        // getCurrentButton()
+        // document.addEventListener(
+        //   "exo-chat-selected-contact-changed",
+        //   async function () {
+        //     //console.log("listener", await buttn);
+
+        //     webConferencing.createChatContext(chat).then((context) => {
+        //       callButtons.create(context).update(context);
         //     });
-        // });
-        // var settings = {
-        //   context: webConferencing.createChatContext(chat)
-        // }; // TODO not good as we cheat ourselves by this here!
-        // We know we are in the chat here, we can rely on its events and build specific logic
-        document.addEventListener("exo-chat-selected-contact-changed", function () {
-        //   let callBtn;
-        webConferencing.createChatContext(chat).then((context) => {
-          callBtn = callButtons.create(context);
-          return callBtn
-            .then((button) => {
-              console.log(button.$el)
-              return button;
-            })
-            //.then((res) => res);
-        });
-        //   // TODO remove previous one added button here
-        //   //callButtons.destroy();
-        //   // TODO add all buttons from here
-        //   // callButtons.init(target);
-        //   button.update(await webConferencing.createChatContext(chat), target);
-        });
+        //     return await getCurrentButton().update(await cont)
+        //     //const updBtn = await buttn;
+        //     //const cont = await localCont
+        //     // const res = updBtn.then(btn => btn.update(localContext))
+        //     // console.log(updBtn.update(localContext));
+        //     //return updBtn.update(cont);
+        //     // console.log(res)
+        //     // return res;
+        //     // return await button.update(webConferencing.createChatContext(chat))
+
+        //     // await button
+
+        //     // webConferencing
+        //     //   .createChatContext(chat)
+        //     //   .then((context) => {
+        //     //     // callBtn = callButtons.create(context);
+        //     //     // return callButtons.create(context).then((button) => {
+        //     //     //     console.log(button.$el, "2")
+        //     //     callButtons.create(context);
+        //     //     //     return button;
+        //     //     //   })
+        //     //     //.then((res) => res);
+        //     //   })
+        //     // .then((res) => {
+        //     //   console.log(res, "update");
+        //     //   res.update(webConferencing.createChatContext(chat));
+        //     // });
+        //     //     // console.log(await button.update(await webConferencing.createChatContext(chat)));
+        //     //     // await button.update(await webConferencing.createChatContext(chat));
+
+        //     //     //   // TODO remove previous one added button here
+        //     //     //   //callButtons.destroy();
+        //     //     //   // TODO add all buttons from here
+        //     //     //   // callButtons.init(target);
+        //     //     //   button.update(await webConferencing.createChatContext(chat), target);
+        //   }
+        // );
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
