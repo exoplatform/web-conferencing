@@ -2,8 +2,8 @@ import callButtons from "./components/CallButtons.vue";
 
 Vue.use(Vuetify);
 const vuetify = new Vuetify({
-  dark: true,
-  iconfont: "",
+  dark : true,
+  iconfont : "",
 });
 
 // getting language of user
@@ -12,38 +12,36 @@ const lang =
 const localePortlet = "locale.webconferencing";
 const resourceBundleName = "WebConferencingClient";
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
+const log = webConferencing.getLog("webconferencing-call-buttons");
 
 export function create(context, extensionContainer) {
-  const callContext = context;
   const result = new Promise((resolve, reject) => {
-    exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
-      const comp = Vue.component("call-button", {
-        render : function (createElement) {
-          return createElement(
-            callButtons,
-            {props : {...callContext, i18n, language : lang, resourceBundleName}} // tag name
-          );
-        },
-      });
-      const vmComp = new Vue({
-        el : extensionContainer,
-        comp,
-        render : (h) => {
-          return h(comp, {
-              props : {...callContext, i18n, language : lang, resourceBundleName},
-            },
-            i18n,
-            vuetify
-          );
-        },
-      });
+    if (extensionContainer && extensionContainer.length > 0) {
+      exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
+        const vmComp = new Vue({
+          el : extensionContainer[0],
+          components : {
+            "call-button" : callButtons
+          },
+          render : (h) => {
+            return h(callButtons, {
+                props : {callContext : context, i18n, language : lang, resourceBundleName},
+              },
+              i18n,
+              vuetify
+            );
+          },
+        });
 
-      resolve({
-        update : function (context) {
-          vmComp._vnode.data.props.callContext = context;
-        }
+        resolve({
+          update : function (context) {
+            vmComp._vnode.data.props.callContext = context;
+          }
+        });
       });
-    });
+    } else {
+      log.error("Error getting the extension container");
+    }
   });
 
   return result;
