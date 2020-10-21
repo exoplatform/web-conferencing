@@ -68,42 +68,27 @@ export default {
   //     return () => import("./Dropdown.vue");
   //   }
   // },
-  async beforeMount() {
-    //const thevue = this;
+  beforeMount() {
+    const thevue = this;
     try {
-      //this.$destroy()
-      //const providersConfig = await webConferencing.getProvidersConfig();
-      //this.providersTypes = providersConfig.map(provider => provider.type);
-      //const context = await webConferencing.getCallContext(); // deleted getCallContext()
-      //const context = await webConferencing.createChatContext(eXo.chat);
-      //thevue.callContext = context;
-      //if (this.callContext) {
-      let providers = [];
-      try {
-        providers.push(await webConferencing.getProvider("jitsi"));
-        providers = this.callContext.isUser
-          ? [...providers, await webConferencing.getProvider("webrtc")]
-          : [...providers];
-        //await Promise.all(
-        //  this.providersTypes.map(async type => {
-        //    const p = await webConferencing.getProvider(type);
-        //    this.providers.push(p);
-        //  })
-        //);
-        //await this.initProvidersButton();
-        await Promise.all(
-          providers.map(async p => {
-            const callButton = await p.callButton(this.callContext, "vue"); // TODO don't force vue - it should be detected by ext point
-            this.providersButton.push(callButton);
-          })
-        );
-        this.createButtons();
-      } catch (err) {
-        log.error("Error building call buttons", err);
+      if (this.callContext.details) {
+        const callButtons = [];
+        webConferencing.getAllProviders().then(providers => {
+          providers.map(provider => {
+            callButtons.push(provider.callButton(thevue.callContext));
+          });
+          Promise.allSettled(callButtons).then(resCallButtons => {
+            resCallButtons.forEach((button) => {
+              if (button.status === "fulfilled") {
+                thevue.providersButton.push(button);
+              }
+            });
+            thevue.createButtons();
+          });
+        });
       }
-      //}
     } catch (err) {
-      log.error("Error getting call context", err);
+      log.error("Error building call buttons", err);
     }
   },
 
