@@ -80,7 +80,7 @@ export default {
           Promise.allSettled(callButtons).then(resCallButtons => {
             resCallButtons.forEach((button) => {
               if (button.status === "fulfilled") {
-                thevue.providersButton.push(button);
+                thevue.providersButton.push(button.value);
               }
             });
             thevue.createButtons();

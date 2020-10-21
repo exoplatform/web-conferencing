@@ -41,6 +41,7 @@ export function create(context, extensionContainer) {
       });
     } else {
       log.error("Error getting the extension container");
+      reject(new Error("Error getting the extension container"));
     }
   });
 
