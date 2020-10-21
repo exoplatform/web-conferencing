@@ -1,5 +1,6 @@
 <template>
   <div ref="callbutton" class="call-button-container">
+    <!-- <p>{{ $store.state.count }}</p> -->
     <dropdown
       v-if="providersButton.length > 1"
       :providersbutton="providersButton"
@@ -25,18 +26,6 @@ export default {
     // dropdown: function() {import("./Dropdown.vue")}
   },
   props: {
-    // contact: {
-    //   type: Object,
-    //   require: false,
-    //   default: function() {
-    //     return {};
-    //   }
-    // },
-    callContext: {
-      type: Object,
-      required: true
-    },
-    // context:
     i18n: {
       type: Object,
       required: true
@@ -53,15 +42,24 @@ export default {
   data() {
     return {
       //callContext: null,
-      //providers: [],
-      // context: {},
       providersButton: [],
       error: null,
       placeholder: "Start call",
       isOpen: false,
       childRef: null
-      //providersTypes: []
     };
+  },
+  computed: {
+    callContext() {
+      return this.$store.state.callContext
+    }
+  },
+  watch: {
+    callContext(newContext, oldContext) {
+      // console.log(newContext, "new")
+      this.providersButton = [];
+      this.setProvidersButtons(newContext)
+    }
   },
   // computed: {
   //   dropdown() {
@@ -70,31 +68,35 @@ export default {
   // },
   created() {
     const thevue = this;
-    console.log(thevue.callContext);
-    try {
-      if (thevue.callContext && thevue.callContext.details) {
-        const callButtons = [];
-        webConferencing.getAllProviders().then(providers => {
-          providers.map(provider => {
-            callButtons.push(provider.callButton(thevue.callContext));
-          });
-          Promise.allSettled(callButtons).then(resCallButtons => {
-            resCallButtons.forEach((button) => {
-              if (button.status === "fulfilled") {
-                thevue.providersButton.push(button.value);
-              }
-            });
-            thevue.createButtons();
-          });
-        });
-      }
-    } catch (err) {
-      log.error("Error building call buttons", err);
-    }
+    // this.$store.dispatch("setProvidersButtons")
+    // try {
+    //   if (thevue.callContext && thevue.callContext.details) {
+    //     const callButtons = [];
+    //     webConferencing.getAllProviders().then(providers => {
+    //       providers.map(provider => {
+    //         callButtons.push(provider.callButton(thevue.callContext));
+    //       });
+    //       Promise.allSettled(callButtons).then(resCallButtons => {
+    //         resCallButtons.forEach((button) => {
+    //           if (button.status === "fulfilled") {
+    //             this.$store.state.providersButton.push(button.value);
+    //           }
+    //         });
+    //         thevue.createButtons();
+    //       });
+    //     });
+    //   }
+    // } catch (err) {
+    //   log.error("Error building call buttons", err);
+    // }
+    this.setProvidersButtons(this.callContext)
   },
-
-  // updated() {
-  // },
+  beforeDestroy() {
+    // console.log(this.$store.state.callContext, "beforeDestroy")
+  },
+  updated() {
+    // console.log(this.$store.state.callContext, "UPdate")
+  },
   methods: {
     async initProvidersButton__donotuse() {
       // TODO do we needit actually? it is not reusable
@@ -105,10 +107,33 @@ export default {
           if (await p.isInitialized) {
             // TODO await for boolean property??
             const callButton = await p.callButton(this.callContext, "vue");
-            thevue.providersButton.push(callButton);
+            this.providersButton.push(callButton);
           }
         })
       );
+    },
+    setProvidersButtons(context) {
+      const thevue = this;
+      try {
+      if (context && context.details) {
+        const callButtons = [];
+        webConferencing.getAllProviders().then(providers => {
+          providers.map(provider => {
+            callButtons.push(provider.callButton(context));
+          });
+          Promise.allSettled(callButtons).then(resCallButtons => {
+            resCallButtons.forEach((button) => {
+              if (button.status === "fulfilled") {
+                this.providersButton.push(button.value);
+              }
+            });
+            thevue.createButtons();
+          });
+        });
+      }
+    } catch (err) {
+      log.error("Error building call buttons", err);
+    }
     },
     createButtons() {
       let ref;

@@ -1,5 +1,4 @@
 const EVENT_ROOM_SELECTION_CHANGED = "exo-chat-selected-contact-changed";
-
 let userProfilePopupButton;
 
 const webconferencingExts = [
@@ -32,16 +31,29 @@ const webconferencingExts = [
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
       ], function (webConferencing, callButtons) {
+        // webConferencing.createChatContext(chat).then((context) => {
+        //     callButtons.create(context, extensionContainer).then(button => {
+        //       document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function (target) {
+        //         webConferencing.createChatContext(chat, target).then(contextFromEvent => {
+        //           button.update(contextFromEvent);
+        //         });
+        //       });
+        //     });
+        //   }
+        // );
         webConferencing.createChatContext(chat).then((context) => {
-            callButtons.create(context, extensionContainer).then(button => {
-              document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function (target) {
-                webConferencing.createChatContext(chat, target).then(contextFromEvent => {
-                  button.update(contextFromEvent);
-                });
+          callButtons.store.commit("switchRoom", context)
+          callButtons.create(callButtons.store.state.callContext, extensionContainer).then(button => {
+            document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function (target) {
+              // callButtons.store.commit("increment")
+              webConferencing.createChatContext(chat, target).then(contextFromEvent => {
+                callButtons.store.commit("switchRoom", contextFromEvent)
+                button.update(callButtons.store.state.callContext);
               });
             });
-          }
-        );
+          });
+        }
+      );
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
