@@ -68,7 +68,7 @@ export default {
   //     return () => import("./Dropdown.vue");
   //   }
   // },
-  beforeMount() {
+  created() {
     const thevue = this;
     try {
       if (this.callContext.details) {
@@ -109,9 +109,6 @@ export default {
         })
       );
     },
-    // async getCallContext() {
-    //   // this.callContext = await webConferencing.getCallContext();
-    // },
     createButtons() {
       let ref;
       let vm = null;
