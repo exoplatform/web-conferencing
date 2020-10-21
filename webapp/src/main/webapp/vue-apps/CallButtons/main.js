@@ -1,8 +1,7 @@
 import callButtons from "./components/CallButtons.vue";
 
 Vue.use(Vuetify);
-const comp = Vue.component("call-button", callButtons
- )
+const comp = Vue.component("call-button", callButtons);
 const vuetify = new Vuetify({
   dark : true,
   iconfont : "",
@@ -20,7 +19,7 @@ export function create(context, extensionContainer) {
   const callContext = context;
   const result = new Promise((resolve, reject) => {
     if (extensionContainer && extensionContainer.length > 0) {
-       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
+        exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
         // const comp = Vue.component("call-button", callButtons, {
         //   render: function(h) {
         //     return h(callButtons, {
@@ -28,11 +27,11 @@ export function create(context, extensionContainer) {
         //     })
         //   }
         // })
-        const vmComp = new Vue({
+        const vmComp =  new Vue({
           el : extensionContainer[0],
-          components : {
-            comp
-          },
+          // components : {
+          //   comp
+          // },
           render : function (h) {
             return h(comp, {
                 props : {callContext, i18n, language : lang, resourceBundleName},
@@ -44,10 +43,16 @@ export function create(context, extensionContainer) {
         });
         resolve({
           update : function (context) {
-            return vmComp._vnode.data.props.callContext = context;
+            vmComp._vnode.data.props.callContext = context
           }
         });
       });
+      // resolve({
+      //   update : function (context) {
+      //     vmComp.then(vm => 
+      //     vm._vnode.data.props.callContext = context)
+      //   }
+      // });
     } else {
       log.error("Error getting the extension container");
       reject(new Error("Error getting the extension container"));

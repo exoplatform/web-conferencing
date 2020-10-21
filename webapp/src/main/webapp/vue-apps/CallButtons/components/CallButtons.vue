@@ -70,8 +70,9 @@ export default {
   // },
   created() {
     const thevue = this;
+    console.log(thevue.callContext);
     try {
-      if (this.callContext.details) {
+      if (thevue.callContext && thevue.callContext.details) {
         const callButtons = [];
         webConferencing.getAllProviders().then(providers => {
           providers.map(provider => {
