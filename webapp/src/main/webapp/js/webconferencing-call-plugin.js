@@ -32,8 +32,7 @@ const webconferencingExts = [
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
       ], function (webConferencing, callButtons) {
-        webConferencing.createChatContext(chat).then(
-          (context) => {
+        webConferencing.createChatContext(chat).then((context) => {
             callButtons.create(context, extensionContainer).then(button => {
               document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function (target) {
                 webConferencing.createChatContext(chat, target).then(contextFromEvent => {
@@ -77,17 +76,18 @@ const webconferencingExts = [
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
       ], function (webConferencing, callButtons) {
-        webConferencing.createChatContext(chat).then(
-          (context) => {
-            callButtons.create(context, extensionContainer).then(button => {
-              document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function (target) {
-                webConferencing.createChatContext(chat, target).then(contextFromEvent => {
-                  button.update(contextFromEvent);
+        if (!(eXo.env.portal.selectedNodeUri === 'chat')) { // don't init in chat
+          webConferencing.createChatContext(chat).then((context) => {
+              callButtons.create(context, extensionContainer).then(button => {
+                document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function (target) {
+                  webConferencing.createChatContext(chat, target).then(contextFromEvent => {
+                    button.update(contextFromEvent);
+                  });
                 });
               });
-            });
-          }
-        );
+            }
+          );
+        }
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
@@ -122,17 +122,12 @@ const webconferencingExts = [
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
       ], function (webConferencing, callButtons) {
-        webConferencing.createSpaceContext(spaceId)(
-          (context) => {
+        webConferencing.createSpaceContext(spaceId).then((context) => {
             callButtons.create(context, extensionContainer).then(button => {
               //button.update(context);  // don't need
             });
           }
         );
-        var settings = {
-          targetExtensionPoint : "space",
-        };
-        webConferencingCallButton.init(settings);
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
