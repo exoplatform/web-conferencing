@@ -9,7 +9,10 @@
       @updated="createButtons"
       @getRefs="getRef($event)"
       @openDropdown="openDropdown($event)" />
-    <singlebtn v-else :providersbutton="providersButton" @updated="createButtons" />
+    <singlebtn 
+      v-else 
+      :providersbutton="providersButton" 
+      @updated="createButtons" />
   </div>
 </template>
 
@@ -56,8 +59,9 @@ export default {
   },
   watch: {
     callContext(newContext, oldContext) {
-      // console.log(newContext, "new")
+      // console.log(newContext, oldContext, "new")
       this.providersButton = [];
+      this.$refs.callbutton.classList.remove("single");
       this.setProvidersButtons(newContext)
     }
   },
@@ -67,7 +71,7 @@ export default {
   //   }
   // },
   created() {
-    const thevue = this;
+    // const thevue = this;
     // this.$store.dispatch("setProvidersButtons")
     // try {
     //   if (thevue.callContext && thevue.callContext.details) {
@@ -161,6 +165,8 @@ export default {
           if (pb instanceof Vue) {
             // add vue button
             vm = pb.$mount(); // TODO why we need vm globaly?
+            // console.log(pb)
+            // console.log(vm, callButton, "vm")
             callButton.appendChild(vm.$el);
           } else {
             // add button from DOM Element

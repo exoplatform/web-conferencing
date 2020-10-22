@@ -9,14 +9,14 @@ export const store = new Vuex.Store({
     // count: 0,
     callContext: {},
     // providersButton: []
-  }, 
+  },
   mutations: {
     // increment(state) {
     //   state.count++
     // },
     switchRoom(state, context) {
-      state.callContext = context
-    }
+      state.callContext = context;
+    },
   },
   actions: {
     // increment(context) {
@@ -43,13 +43,13 @@ export const store = new Vuex.Store({
     //     });
     //   }
     // }
-  }
-})
+  },
+});
 // store.dispatch("increment")
 const comp = Vue.component("call-button", callButtons);
 const vuetify = new Vuetify({
-  dark : true,
-  iconfont : "",
+  dark: true,
+  iconfont: "",
 });
 
 // getting language of user
@@ -62,20 +62,31 @@ const log = webConferencing.getLog("webconferencing-call-buttons");
 
 export function create(context, extensionContainer) {
   // const callContext = context;
+  store.commit("switchRoom", context);
   const result = new Promise((resolve, reject) => {
     if (extensionContainer && extensionContainer.length > 0) {
-        exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
-        const vmComp =  new Vue({
-          el : extensionContainer[0],
+      exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
+        const vmComp = new Vue({
+          el: extensionContainer[0],
           store: store,
           // props: {
           //   callContext: {
           //     type: Object,
           //     default: context
           //   }},
-          render : function (h) {
-            return h(callButtons, {
-                props : {callContext: context, i18n, language : lang, resourceBundleName},
+          //data: {
+          //callContext: context
+          //},
+          render: function(h) {
+            return h(
+              callButtons,
+              {
+                props: {
+                  callContext: store.state.callContext,
+                  i18n,
+                  language: lang,
+                  resourceBundleName,
+                },
               },
               i18n,
               vuetify
@@ -83,16 +94,15 @@ export function create(context, extensionContainer) {
           },
         });
         resolve({
-          update : function (context) {
+          update: function(context) {
+            store.commit("switchRoom", context);
             // vmComp.callContext = context
-            // vmComp.$options.callContxt = context
-            // vmComp.$props.callContext = context
-          }
+          },
         });
       });
       // resolve({
       //   update : function (context) {
-      //     vmComp.then(vm => 
+      //     vmComp.then(vm =>
       //     vm._vnode.data.props.callContext = context)
       //   }
       // });

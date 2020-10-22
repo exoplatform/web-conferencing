@@ -32,10 +32,6 @@ export default {
       type: Boolean,
       required: true
     },
-    // createbuttons: {
-    //   type: Function,
-    //   required: true
-    // },
     placeholder: {
       type: String,
       required: true
