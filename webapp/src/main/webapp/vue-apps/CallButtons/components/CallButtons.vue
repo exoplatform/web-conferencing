@@ -9,10 +9,7 @@
       @updated="createButtons"
       @getRefs="getRef($event)"
       @openDropdown="openDropdown($event)" />
-    <singlebtn 
-      v-else 
-      :providersbutton="providersButton" 
-      @updated="createButtons" />
+    <singlebtn v-else :providersbutton="providersButton" @updated="createButtons" />
   </div>
 </template>
 
@@ -54,7 +51,7 @@ export default {
   },
   computed: {
     callContext() {
-      return this.$store.state.callContext
+      return this.$store.state.callContext;
     }
   },
   watch: {
@@ -62,7 +59,7 @@ export default {
       // console.log(newContext, oldContext, "new")
       this.providersButton = [];
       this.$refs.callbutton.classList.remove("single");
-      this.setProvidersButtons(newContext)
+      this.setProvidersButtons(newContext);
     }
   },
   // computed: {
@@ -93,7 +90,7 @@ export default {
     // } catch (err) {
     //   log.error("Error building call buttons", err);
     // }
-    this.setProvidersButtons(this.callContext)
+      this.setProvidersButtons(this.callContext);
   },
   beforeDestroy() {
     // console.log(this.$store.state.callContext, "beforeDestroy")
@@ -119,25 +116,25 @@ export default {
     setProvidersButtons(context) {
       const thevue = this;
       try {
-      if (context && context.details) {
-        const callButtons = [];
-        webConferencing.getAllProviders().then(providers => {
-          providers.map(provider => {
-            callButtons.push(provider.callButton(context));
-          });
-          Promise.allSettled(callButtons).then(resCallButtons => {
-            resCallButtons.forEach((button) => {
-              if (button.status === "fulfilled") {
-                this.providersButton.push(button.value);
-              }
+        if (context && context.details && this.providersButton.length === 0) {
+          const callButtons = [];
+          webConferencing.getAllProviders().then(providers => {
+            providers.map(provider => {
+              callButtons.push(provider.callButton(context));
             });
-            thevue.createButtons();
+            Promise.allSettled(callButtons).then(resCallButtons => {
+              resCallButtons.forEach(button => {
+                if (button.status === "fulfilled") {
+                  this.providersButton.push(button.value);
+                }
+              });
+              thevue.createButtons();
+            });
           });
-        });
+        }
+      } catch (err) {
+        log.error("Error building call buttons", err);
       }
-    } catch (err) {
-      log.error("Error building call buttons", err);
-    }
     },
     createButtons() {
       let ref;
@@ -162,11 +159,12 @@ export default {
           //add a single button
           const callButton = this.$refs.callbutton.childNodes[0];
           this.$refs.callbutton.classList.add("single");
+          callButton.innerHTML = "";
           if (pb instanceof Vue) {
             // add vue button
             vm = pb.$mount(); // TODO why we need vm globaly?
-            // console.log(pb)
-            // console.log(vm, callButton, "vm")
+            // console.log(pb);
+            // console.log(vm, callButton, "vm");
             callButton.appendChild(vm.$el);
           } else {
             // add button from DOM Element
