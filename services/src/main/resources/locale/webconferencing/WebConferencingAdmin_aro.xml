@@ -26,15 +26,15 @@
         <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
       </WebRTC>
       <Skype>
-        <name>Skype</name>
-        <description>Provider for Skype. Let users place a group and 1:1 calls. No plugin required but the Skype application must be installed on the client side.</description>
+        <name>سكايب</name>
+        <description>موفر لسكايب. يسمح للمستخدمين بوضع  مكالمات 1:1 أو مجموعة. لا توجد إضافة مطلوبة لكن تطبيق سكايب يجب تثبيته من قبل العميل.</description>
       </Skype>
       <Jitsi>
         <name>Jitsi</name>
-        <description>Jitsi provider for WebConferencing</description>
+        <description>مزود Jitsi لـ WebConference</description>
       </Jitsi>
       <modal>
-        <title>Provider settings</title>
+        <title>إعدادات المزود</title>
         <SearchLabel>العنوان:</SearchLabel>
         <WithPermissions>تشغيل / إيقاف الخادم</WithPermissions>
         <None>لا شَيْء</None>
