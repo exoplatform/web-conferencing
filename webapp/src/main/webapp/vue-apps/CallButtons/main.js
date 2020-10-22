@@ -16,6 +16,7 @@ export const store = new Vuex.Store({
   actions: {
   },
 });
+const comp = Vue.component("call-button", callButtons);
 const vuetify = new Vuetify({
   dark: true,
   iconfont: "",
@@ -37,15 +38,11 @@ export function create(context, target) {
         const vmComp = new Vue({
           el: target[0],
           store: store,
-          components: {
-            "call-button": callButtons
-          },
           render: function(h) {
             return h(
               callButtons,
               {
                 props: {
-                  // callContext: store.state.callContext,
                   i18n,
                   language: lang,
                   resourceBundleName,

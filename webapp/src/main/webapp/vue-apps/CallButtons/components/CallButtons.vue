@@ -1,6 +1,5 @@
 <template>
   <div ref="callbutton" class="call-button-container">
-    <!-- <p>{{ $store.state.count }}</p> -->
     <dropdown
       v-if="providersButton.length > 1"
       :providersbutton="providersButton"
@@ -16,6 +15,7 @@
 </template>
 
 <script>
+import {store} from "../main.js"
 import dropdown from "./Dropdown.vue";
 import singlebtn from "./SingleButton.vue";
 
@@ -52,7 +52,7 @@ export default {
   },
   computed: {
     callContext() {
-      return this.$store.state.callContext;
+      return store.state.callContext;
     }
   },
   watch: {
