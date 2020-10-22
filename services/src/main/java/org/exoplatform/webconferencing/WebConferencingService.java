@@ -118,6 +118,30 @@ public class WebConferencingService implements Startable {
 
   /** The Constant SESSION_TOKEN_COOKIE. */
   public static final String    SESSION_TOKEN_COOKIE         = "webconf_session_token".intern();
+  
+  /** The operation call added. */
+  public static String OPERATION_CALL_ADDED = "call-added";
+  
+  /** The operation call started. */
+  public static String OPERATION_CALL_STARTED = "call-started";
+  
+  /** The operation call joined. */
+  public static String OPERATION_CALL_JOINED = "call-joined";
+  
+  /** The operation call leaved. */
+  public static String OPERATION_CALL_LEAVED = "call-leaved";
+  
+  /** The operation call stopped. */
+  public static String OPERATION_CALL_STOPPED = "call-stopped";
+  
+  /** The operation call deleted. */
+  public static String OPERATION_CALL_DELETED = "call-deleted";
+  
+  /** The operation call recorded. */
+  public static String OPERATION_CALL_RECORDED = "call-recorded";
+  
+  public static String STATUS_OK = "ok";
+  public static String STATUS_KO = "ko";
 
   /** The Constant GROUP_CALL_TYPE. */
   protected static final String GROUP_CALL_TYPE              = "group".intern();
@@ -139,7 +163,7 @@ public class WebConferencingService implements Startable {
 
   /** The Constant SECRET_KEY. */
   protected static final String SECRET_KEY                   = "secret-key";
-
+  
   /**
    * Represent Space in calls.
    */
@@ -336,7 +360,7 @@ public class WebConferencingService implements Startable {
   public static boolean isValidData(String data) throws UnsupportedEncodingException {
     return data == null || (data.length() > 0 && data.getBytes("UTF8").length <= DATA_MAX_LENGTH);
   }
-
+  
   /**
    * Instantiates a new web conferencing service.
    *
@@ -564,13 +588,15 @@ public class WebConferencingService implements Startable {
                                                     IdentityStateException,
                                                     CallConflictException,
                                                     CallSettingsException {
+    final long opStart = System.currentTimeMillis();
+    final String currentUserId = currentUserId();
+    
     if (isValidId(id)) {
       if (isValidId(ownerId)) {
         if (isNotNullArg(ownerType)) {
           if (isNotNullArg(providerType)) {
             if (isValidText(title)) {
 
-              final String currentUserId = currentUserId();
               final boolean isUser = UserInfo.TYPE_NAME.equals(ownerType);
               final boolean isSpace = OWNER_TYPE_SPACE.equals(ownerType);
               final boolean isRoom = OWNER_TYPE_CHATROOM.equals(ownerType);
@@ -689,6 +715,10 @@ public class WebConferencingService implements Startable {
                 notifyUserCallStateChanged(call, currentUserId, CallState.STARTED);
               }
 
+              // Log metrics - call created
+              // service=notifications operation=send-push-notification parameters="user:thomas,token:xxxxxxxxxxxDLu-,type:android,pluginId:RelationshipReceivedRequestPlugin" status=ok duration_ms=298 
+              LOG.info(metricMessage(currentUserId, call, OPERATION_CALL_ADDED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+
               return call;
             } else {
               throw new CallArgumentException("Wrong call title");
@@ -733,11 +763,19 @@ public class WebConferencingService implements Startable {
    *           exception
    */
   public CallInfo stopCall(String id, boolean remove) throws CallNotFoundException, InvalidCallException {
+    final long opStart = System.currentTimeMillis();
     CallInfo call = getCall(id);
     if (call != null) {
       String userId = currentUserId();
       try {
         stopCall(call, userId, remove);
+        if (remove) {
+          // Log metrics - call deleted
+          LOG.info(metricMessage(userId, call, OPERATION_CALL_DELETED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+        } else {
+          // Log metrics - call stopped
+          LOG.info(metricMessage(userId, call, OPERATION_CALL_JOINED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+        }
         return call;
       } catch (StorageException e) {
         throw new InvalidCallException("Error stopping call: " + id, e);
@@ -807,10 +845,17 @@ public class WebConferencingService implements Startable {
    *           exception
    */
   public CallInfo startCall(String id, String clientId) throws CallNotFoundException, InvalidCallException {
+    final long opStart = System.currentTimeMillis();
     CallInfo call = getCall(id);
     if (call != null) {
       try {
-        startCall(call, clientId);
+        // TODO use current user from the request (Comet) not an one system
+        String userId = currentUserId();
+        startCall(call, userId, clientId);
+        
+        // Log metrics - call started
+        LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+        
         return call;
       } catch (StorageException | ParticipantNotFoundException | CallSettingsException e) {
         throw new InvalidCallException("Error starting call: " + id, e);
@@ -824,13 +869,14 @@ public class WebConferencingService implements Startable {
    * Start existing call.
    *
    * @param call the call
+   * @param partId the participant id who started the call
    * @param clientId the client id
    * @throws ParticipantNotFoundException if call or its participants not found in storage
    * @throws CallSettingsException if call entry has wrong settings (room title, owner type etc)
    * @throws StorageException if storage exception happen
    * @throws CallNotFoundException if call not found in storage
    */
-  protected void startCall(CallInfo call, String clientId) throws ParticipantNotFoundException,
+  protected void startCall(CallInfo call, String partId, String clientId) throws ParticipantNotFoundException,
                                                            CallSettingsException,
                                                            StorageException,
                                                            CallNotFoundException {
@@ -842,9 +888,8 @@ public class WebConferencingService implements Startable {
 
     // On call start we mark all parts LEAVED and then each of them will join and be marked as JOINED in
     // joinCall()
-    String userId = currentUserId();
     for (UserInfo part : call.getParticipants()) {
-      if (UserInfo.TYPE_NAME.equals(part.getType()) && userId.equals(part.getId())) {
+      if (UserInfo.TYPE_NAME.equals(part.getType()) && partId.equals(part.getId())) {
         part.setState(UserState.JOINED);
         part.setClientId(clientId);
       } else {
@@ -860,7 +905,7 @@ public class WebConferencingService implements Startable {
     Collection<UserInfo> parts = call.getOwner().isGroup() ? GroupInfo.class.cast(call.getOwner()).getMembers().values()
                                                            : call.getParticipants();
     for (UserInfo part : parts) {
-      if (!userId.equals(part.getId())) {
+      if (!partId.equals(part.getId())) {
         // Inform all except of the user who started the call
         fireUserCallStateChanged(part.getId(),
                                  callId,
@@ -884,6 +929,7 @@ public class WebConferencingService implements Startable {
    * @throws CallNotFoundException if call not found
    */
   public CallInfo joinCall(String id, String partId, String clientId) throws InvalidCallException, CallNotFoundException {
+    final long opStart = System.currentTimeMillis();
     // TODO exception if user not a participant?
     CallInfo call = getCall(id);
     if (call != null) {
@@ -913,8 +959,15 @@ public class WebConferencingService implements Startable {
                                  part.getId());
             }
           }
+          // Log metrics - call joined
+          LOG.info(metricMessage(partId, call, OPERATION_CALL_JOINED, STATUS_OK, System.currentTimeMillis() - opStart, null));
         } else {
-          startCall(call, clientId);
+          // TODO check should we use partId instead of the current user for the start
+          // the partId it's current exo user in the request (Comet)
+          String userId = currentUserId();
+          startCall(call, userId, clientId);
+          // Log metrics - call started
+          LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null));
         }
       } catch (CallSettingsException | ParticipantNotFoundException | StorageException e) {
         throw new InvalidCallException("Error joining call: " + id, e);
@@ -1264,12 +1317,16 @@ public class WebConferencingService implements Startable {
    * Upload recording of the call.
    *
    * @param uploadInfo the upload info
+   * @param ownerId the space or user Id
+   * @param isSpace the is space
+   * @param userId the user who recorded the video
    * @param request the request
    * @throws UploadFileException the upload recording exception
    * @throws RepositoryException the repository exception
    */
   public void uploadFile(UploadFileInfo uploadInfo, HttpServletRequest request) throws UploadFileException, RepositoryException {
 
+    //final long opStart = System.currentTimeMillis();
     String uploadId = String.valueOf((long) (Math.random() * 100000L));
     try {
       uploadService.createUploadResource(uploadId, request);
@@ -1287,7 +1344,9 @@ public class WebConferencingService implements Startable {
       }
       Node rootNode = getRootFolderNode(owner, uploadInfo.isSpace());
       saveFile(rootNode, resource, uploadInfo.getUser());
-      uploadService.removeUploadResource(uploadId);
+      uploadService.removeUploadResource(uploadId); // TODO should this be in try-finally for a cleanup in case of saving failure?
+      // TODO Log metrics - call recording uploaded
+      //LOG.info(metricMessage(userId, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null));
     } else {
       uploadService.removeUploadResource(uploadId);
       throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: "
@@ -2197,6 +2256,50 @@ public class WebConferencingService implements Startable {
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       LOG.warn("Error reading call by ID: " + id, e);
     }
+  }
+  
+  /**
+   * Metric message for reporting to the stats logger.
+   *
+   * @param userId the user id of the operation
+   * @param call the call in the operation
+   * @param operation the operation name
+   * @param status the status of operation
+   * @param duration the operation duration in millseconds (can be <code>null</code>), it's not a call duration
+   * @param error the error if present (can be <code>null</code>)
+   * @return the string combining all given parameters in specified format
+   *         according
+   *         https://community.exoplatform.com/portal/g/:spaces:exo_itop/exo_itop/wiki/SPEC_-_logging_for_monitoring
+   */
+  protected String metricMessage(String userId,
+                                 // String clientId,
+                                 CallInfo call,
+                                 String operation,
+                                 String status,
+                                 Long duration,
+                                 String error) {
+    StringBuilder res = new StringBuilder("service=webconferencing");
+    res.append(" operation=").append(operation);
+    res.append(" status=").append(status);
+    res.append(" parameters=");
+    res.append("\"userId:").append(userId);
+    // res.append(", clientId:").append(clientId);
+    res.append(", isGroup:").append(call.getOwner().isGroup());
+    res.append(", owner:").append(call.getOwner().getId());
+    res.append(", ownerType:").append(call.getOwner().getType());
+    res.append(", provider:").append(call.getProviderType());
+    res.append(", state:").append(call.getState());
+    res.append(", participantsCount:").append(call.getParticipants().size());
+    if (call.getLastDate() != null) {
+      long callDuration = Math.round((System.currentTimeMillis() - call.getLastDate().getTime()) / 1000);
+      res.append(", callDuration_sec:").append(callDuration);
+    }
+    res.append("\"");
+    if (error != null && error.length() > 0) {
+      res.append(" error_msg=\"").append(error).append("\"");
+    }
+    res.append(" duration_ms=").append(duration != null ? duration : -1);
+    return res.toString();
   }
 
   // <<<<<<< Call storage: wrappers to catch JPA exceptions
