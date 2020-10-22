@@ -1032,9 +1032,9 @@ public class WebConferencingService implements Startable {
                                  call.getOwner().getType(),
                                  partId,
                                  part.getId());
-              // Log metrics - call leaved
-              LOG.info(metricMessage(partId, call, OPERATION_CALL_LEAVED, STATUS_OK, System.currentTimeMillis() - opStart, null));
             }
+            // Log metrics - call leaved
+            LOG.info(metricMessage(partId, call, OPERATION_CALL_LEAVED, STATUS_OK, System.currentTimeMillis() - opStart, null));
             // Check if don't need stop the call if all parts leaved already
             if (call.getOwner().isGroup()) {
               if (leavedNum == call.getParticipants().size() || call.getParticipants().size() == 0
