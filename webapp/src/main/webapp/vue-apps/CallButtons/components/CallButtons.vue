@@ -9,7 +9,9 @@
       @updated="createButtons"
       @getRefs="getRef($event)"
       @openDropdown="openDropdown($event)" />
-    <singlebtn v-else :providersbutton="providersButton" @updated="createButtons" />
+    <singlebtn 
+      v-else 
+      :providersbutton="providersButton" />
   </div>
 </template>
 
@@ -119,8 +121,11 @@ export default {
         if (context && context.details && this.providersButton.length === 0) {
           const callButtons = [];
           webConferencing.getAllProviders().then(providers => {
+            // console.log(providers)
             providers.map(provider => {
-              callButtons.push(provider.callButton(context));
+              if (provider.isInitialized) {
+                 callButtons.push(provider.callButton(context));
+              }
             });
             Promise.allSettled(callButtons).then(resCallButtons => {
               resCallButtons.forEach(button => {
@@ -163,7 +168,6 @@ export default {
           if (pb instanceof Vue) {
             // add vue button
             vm = pb.$mount(); // TODO why we need vm globaly?
-            // console.log(pb);
             // console.log(vm, callButton, "vm");
             callButton.appendChild(vm.$el);
           } else {

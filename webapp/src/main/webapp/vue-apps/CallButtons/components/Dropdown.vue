@@ -10,8 +10,7 @@
         v-for="(button, index) in providersbutton"
         :key="index"
         :class="`call-button-container-${index}`"
-        :ref="`callbutton`"
-        @click="openDropdownComponent"></div>
+        :ref="`callbutton`"></div>
     </div>
   </div>
 </template>
