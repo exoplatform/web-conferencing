@@ -188,6 +188,7 @@ export default {
     }
     cursor: pointer !important;
     position: absolute;
+    z-index: 777;
     left: @width + 40px;
     top: 2px;
     width: @width + 20px;

@@ -16,7 +16,6 @@ export const store = new Vuex.Store({
   actions: {
   },
 });
-const comp = Vue.component("call-button", callButtons);
 const vuetify = new Vuetify({
   dark: true,
   iconfont: "",
@@ -30,14 +29,17 @@ const resourceBundleName = "WebConferencingClient";
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
 const log = webConferencing.getLog("webconferencing-call-buttons");
 
-export function create(context, extensionContainer) {
+export function create(context, target) {
   store.commit("switchRoom", context);
   const result = new Promise((resolve, reject) => {
-    if (extensionContainer && extensionContainer.length > 0) {
+    if (target && target.length > 0) {
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
         const vmComp = new Vue({
-          el: extensionContainer[0],
+          el: target[0],
           store: store,
+          components: {
+            "call-button": callButtons
+          },
           render: function(h) {
             return h(
               callButtons,
