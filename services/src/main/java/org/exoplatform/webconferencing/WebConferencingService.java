@@ -990,6 +990,7 @@ public class WebConferencingService implements Startable {
    *           exception
    */
   public CallInfo leaveCall(String id, String partId, String clientId) throws InvalidCallException {
+    final long opStart = System.currentTimeMillis();
     // TODO exception if user not a participant?
     CallInfo call = getCall(id);
     if (call != null) {
@@ -1031,6 +1032,8 @@ public class WebConferencingService implements Startable {
                                  call.getOwner().getType(),
                                  partId,
                                  part.getId());
+              // Log metrics - call leaved
+              LOG.info(metricMessage(partId, call, OPERATION_CALL_LEAVED, STATUS_OK, System.currentTimeMillis() - opStart, null));
             }
             // Check if don't need stop the call if all parts leaved already
             if (call.getOwner().isGroup()) {
@@ -1038,10 +1041,14 @@ public class WebConferencingService implements Startable {
                   || call.getParticipants().stream().allMatch(p -> p.getState() == UserState.LEAVED)) {
                 // Stop when all group members leave the call
                 stopCall(call, partId, false);
+                // Log metrics - call stopped
+                LOG.info(metricMessage(partId, call, OPERATION_CALL_STOPPED, STATUS_OK, System.currentTimeMillis() - opStart, null));
               }
             } else if (call.getParticipants().size() - leavedNum <= 1) {
               // For P2P we remove the call when one of parts stand alone
               stopCall(call, partId, true);
+              // Log metrics - call deleted
+              LOG.info(metricMessage(partId, call, OPERATION_CALL_DELETED, STATUS_OK, System.currentTimeMillis() - opStart, null));
             }
           } // else, if no one leaved, we don't need any action (it may be leaved an user of already stopped
             // call, see comments above)
