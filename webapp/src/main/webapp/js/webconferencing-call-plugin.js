@@ -1,5 +1,6 @@
 const EVENT_ROOM_SELECTION_CHANGED = "exo-chat-selected-contact-changed";
 let userProfilePopupButton;
+let userProfileButton;
 
 const webconferencingExts = [
   {
@@ -93,7 +94,7 @@ const webconferencingExts = [
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
-    enabled: true,
+    enabled: false,
   },
   {
     target: "space-menu",
@@ -132,7 +133,7 @@ const webconferencingExts = [
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
-    enabled: true,
+    enabled: false,
   },
   {
     target: "user-profile-popup",
@@ -169,8 +170,44 @@ const webconferencingExts = [
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
-    enabled: true,
-  } /*
+    enabled: false,
+  },
+  {
+    target : "profile-header",
+    type : "action-component",
+    // configuration defined here is used in exo-addons\web-conferencing\webapp\src\main\webapp\vue-apps
+    // \Call\components\CallButtons.vue with
+    // social\webapp\portlet\src\main\webapp\profile-header\components\ProfileHeaderActions.vue and connects them
+    // key should be unique and used in parent component as a ref to WebConferencingCall component
+    key : "userProfileCallButton",
+    rank : 24,
+    iconName : "callButton",
+    appClass : "webсonferencingCallButton",
+    component : {
+      name : "call-button",
+      events : [],
+    },
+    // init call button context in user profile
+    init : function (target, userId) {
+      require([
+        "SHARED/webConferencing",
+        "SHARED/webConferencingCallButton",
+      ], function (webConferencing, callButtons) {
+        if (userProfileButton) {
+          // TO DO delete old button
+          //something like userProfileButton.destroy();
+        }
+
+        webConferencing.createUserContext(userId).then((context) => {
+          callButtons.create(context, target).then((button) => {
+            userProfileButton = button;
+          });
+        });
+      });
+    },
+    // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
+    enabled : false,
+  }/*
   // an example of the extension with DOM elements
 ,{
   target : "chat",
