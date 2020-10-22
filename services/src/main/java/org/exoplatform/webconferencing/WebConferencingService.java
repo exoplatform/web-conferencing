@@ -1263,15 +1263,13 @@ public class WebConferencingService implements Startable {
   /**
    * Upload recording of the call.
    *
-   * @param identity the space or user Id
-   * @param isSpace the is space
-   * @param user the user who recorded the video
+   * @param uploadInfo the upload info
    * @param request the request
-   * @throws RepositoryException the repository exception
    * @throws UploadFileException the upload recording exception
+   * @throws RepositoryException the repository exception
    */
-  public void uploadFile(String identity, boolean isSpace, String user, HttpServletRequest request) throws UploadFileException,
-                                                                                                    RepositoryException {
+  public void uploadFile(UploadFileInfo uploadInfo, HttpServletRequest request) throws UploadFileException, RepositoryException {
+
     String uploadId = String.valueOf((long) (Math.random() * 100000L));
     try {
       uploadService.createUploadResource(uploadId, request);
@@ -1281,8 +1279,14 @@ public class WebConferencingService implements Startable {
     }
     UploadResource resource = uploadService.getUploadResource(uploadId);
     if (resource.getStatus() == UploadResource.UPLOADED_STATUS) {
-      Node rootNode = getRootFolderNode(identity, isSpace);
-      saveFile(rootNode, resource, user);
+      String owner = null;
+      if (!uploadInfo.isSpace() && !uploadInfo.getIdentity().equals(uploadInfo.getUser())) {
+        owner = uploadInfo.getUser();
+      } else {
+        owner = uploadInfo.getIdentity();
+      }
+      Node rootNode = getRootFolderNode(owner, uploadInfo.isSpace());
+      saveFile(rootNode, resource, uploadInfo.getUser());
       uploadService.removeUploadResource(uploadId);
     } else {
       uploadService.removeUploadResource(uploadId);
