@@ -1324,9 +1324,6 @@ public class WebConferencingService implements Startable {
    * Upload recording of the call.
    *
    * @param uploadInfo the upload info
-   * @param ownerId the space or user Id
-   * @param isSpace the is space
-   * @param userId the user who recorded the video
    * @param request the request
    * @throws UploadFileException the upload recording exception
    * @throws RepositoryException the repository exception
