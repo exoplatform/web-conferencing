@@ -37,7 +37,6 @@ export default {
     }
   },
   updated() {
-    // this.createbuttons(); // TODO let's use same case as original func
     this.$emit("updated")
   },
   methods: {

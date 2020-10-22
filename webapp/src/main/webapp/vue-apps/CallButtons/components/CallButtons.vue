@@ -43,7 +43,6 @@ export default {
   },
   data() {
     return {
-      //callContext: null,
       providersButton: [],
       error: null,
       placeholder: "Start call",
@@ -58,7 +57,6 @@ export default {
   },
   watch: {
     callContext(newContext, oldContext) {
-      // console.log(newContext, oldContext, "new")
       this.providersButton = [];
       this.$refs.callbutton.classList.remove("single");
       this.setProvidersButtons(newContext);
@@ -70,35 +68,7 @@ export default {
   //   }
   // },
   created() {
-    // const thevue = this;
-    // this.$store.dispatch("setProvidersButtons")
-    // try {
-    //   if (thevue.callContext && thevue.callContext.details) {
-    //     const callButtons = [];
-    //     webConferencing.getAllProviders().then(providers => {
-    //       providers.map(provider => {
-    //         callButtons.push(provider.callButton(thevue.callContext));
-    //       });
-    //       Promise.allSettled(callButtons).then(resCallButtons => {
-    //         resCallButtons.forEach((button) => {
-    //           if (button.status === "fulfilled") {
-    //             this.$store.state.providersButton.push(button.value);
-    //           }
-    //         });
-    //         thevue.createButtons();
-    //       });
-    //     });
-    //   }
-    // } catch (err) {
-    //   log.error("Error building call buttons", err);
-    // }
-      this.setProvidersButtons(this.callContext);
-  },
-  beforeDestroy() {
-    // console.log(this.$store.state.callContext, "beforeDestroy")
-  },
-  updated() {
-    // console.log(this.$store.state.callContext, "UPdate")
+    this.setProvidersButtons(this.callContext);
   },
   methods: {
     async initProvidersButton__donotuse() {
@@ -121,7 +91,6 @@ export default {
         if (context && context.details && this.providersButton.length === 0) {
           const callButtons = [];
           webConferencing.getAllProviders().then(providers => {
-            // console.log(providers)
             providers.map(provider => {
               if (provider.isInitialized) {
                  callButtons.push(provider.callButton(context));
@@ -145,7 +114,6 @@ export default {
       let ref;
       let vm = null;
 
-      //if (this.providersButton.length) {
       for (const [index, pb] of this.providersButton.entries()) {
         if (this.providersButton.length > 1) {
           //add buttons to dropdown coomponent
@@ -168,7 +136,6 @@ export default {
           if (pb instanceof Vue) {
             // add vue button
             vm = pb.$mount(); // TODO why we need vm globaly?
-            // console.log(vm, callButton, "vm");
             callButton.appendChild(vm.$el);
           } else {
             // add button from DOM Element

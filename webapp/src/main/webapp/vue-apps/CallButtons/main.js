@@ -6,46 +6,16 @@ Vue.use(Vuetify);
 
 export const store = new Vuex.Store({
   state: {
-    // count: 0,
     callContext: {},
-    // providersButton: []
   },
   mutations: {
-    // increment(state) {
-    //   state.count++
-    // },
     switchRoom(state, context) {
       state.callContext = context;
     },
   },
   actions: {
-    // increment(context) {
-    //   context.commit("increment")
-    // },
-    // createButtons(context) {
-    //   context.commit()
-    // },
-    // setProvidersButtons(context, {callContext}) {
-    //   if (callContext && callContext.details) {
-    //     const callButtons = [];
-    //     webConferencing.getAllProviders().then(providers => {
-    //       providers.map(provider => {
-    //         callButtons.push(provider.callButton(callContext));
-    //       });
-    //       Promise.allSettled(callButtons).then(resCallButtons => {
-    //         resCallButtons.forEach((button) => {
-    //           if (button.status === "fulfilled") {
-    //             context.state.providersButton.push(button.value);
-    //           }
-    //         });
-    //         callButtons.methods.createButtons();
-    //       });
-    //     });
-    //   }
-    // }
   },
 });
-// store.dispatch("increment")
 const comp = Vue.component("call-button", callButtons);
 const vuetify = new Vuetify({
   dark: true,
@@ -61,7 +31,6 @@ const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${loca
 const log = webConferencing.getLog("webconferencing-call-buttons");
 
 export function create(context, extensionContainer) {
-  // const callContext = context;
   store.commit("switchRoom", context);
   const result = new Promise((resolve, reject) => {
     if (extensionContainer && extensionContainer.length > 0) {
@@ -69,20 +38,12 @@ export function create(context, extensionContainer) {
         const vmComp = new Vue({
           el: extensionContainer[0],
           store: store,
-          // props: {
-          //   callContext: {
-          //     type: Object,
-          //     default: context
-          //   }},
-          //data: {
-          //callContext: context
-          //},
           render: function(h) {
             return h(
               callButtons,
               {
                 props: {
-                  callContext: store.state.callContext,
+                  // callContext: store.state.callContext,
                   i18n,
                   language: lang,
                   resourceBundleName,
@@ -96,16 +57,9 @@ export function create(context, extensionContainer) {
         resolve({
           update: function(context) {
             store.commit("switchRoom", context);
-            // vmComp.callContext = context
           },
         });
       });
-      // resolve({
-      //   update : function (context) {
-      //     vmComp.then(vm =>
-      //     vm._vnode.data.props.callContext = context)
-      //   }
-      // });
     } else {
       log.error("Error getting the extension container");
       reject(new Error("Error getting the extension container"));

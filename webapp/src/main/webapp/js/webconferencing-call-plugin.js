@@ -31,16 +31,6 @@ const webconferencingExts = [
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
       ], function(webConferencing, callButtons) {
-        // webConferencing.createChatContext(chat).then((context) => {
-        //     callButtons.create(context, extensionContainer).then(button => {
-        //       document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function (target) {
-        //         webConferencing.createChatContext(chat, target).then(contextFromEvent => {
-        //           button.update(contextFromEvent);
-        //         });
-        //       });
-        //     });
-        //   }
-        // );
         webConferencing.createChatContext(chat).then((context) => {
           callButtons.create(context, extensionContainer).then((button) => {
             document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
