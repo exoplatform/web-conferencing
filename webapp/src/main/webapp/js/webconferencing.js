@@ -1320,7 +1320,7 @@
 							details = data.promise();
 							if (isGroup) {
 								if (isSpace) {
-									var spaceId = roomName; // XXX no other way within Chat
+									var spaceId = chat.selectedContact.prettyName;
 									getSpaceInfoReq(spaceId).done(function(space) {
 										data.resolve(space);
 									}).fail(function(err) {
@@ -2361,7 +2361,7 @@
 						const data = $.Deferred();
 						if (isGroup) {
 							if (isSpace) {
-								const spaceId = roomName; // XXX no other way within Chat
+								const spaceId = target.detail.prettyName;
 								getSpaceInfoReq(spaceId).done(function (space) {
 									data.resolve(space);
 								}).fail(function (err) {
