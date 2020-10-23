@@ -90,7 +90,7 @@ const webconferencingExts = [
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
-    enabled: false,
+    enabled: true,
   },
   {
     target: "space-menu",
@@ -129,7 +129,7 @@ const webconferencingExts = [
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
-    enabled: false,
+    enabled: true,
   },
   {
     target: "user-profile-popup",
@@ -166,7 +166,7 @@ const webconferencingExts = [
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
-    enabled: false,
+    enabled: true,
   },
   {
     target: "profile-header",

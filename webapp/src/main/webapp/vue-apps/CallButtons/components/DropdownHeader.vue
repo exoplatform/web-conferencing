@@ -3,19 +3,29 @@
     <div class="dropdown-heading">
       <i class="uiIconSocPhone uiIconSocBlue"></i>
       {{ placeholder }}
+      <!-- {{ placeholder }} -->
     </div>
-    <v-divider class="mx-4" vertical />
+    <v-divider 
+      :style="divider"
+      class="mx-4" 
+      vertical />
     <i class="uiIconArrowDown"></i>
   </div>
 </template>
 
 <script>
+import { store } from "../main.js";
+
 export default {
   props: {
     placeholder: {
-      type: String,
+      type: Object,
       required: true
     },
+    // divider: {
+    //   type: Object,
+    //   required: true
+    // },
     opendropdowncomponent: {
       type: Function,
       required: true
@@ -24,11 +34,23 @@ export default {
       type: Function,
       required: true
     }
+  },
+  computed: {
+    divider() {
+      return !store.state.mini
+        ? {
+            display: "inline-flex"
+          }
+        : {
+            display: "none"
+          };
+    }
   }
 };
 </script>
 
 <style scoped lang="less">
+
 .VuetifyApp {
   .dropdown-header {
     display: inline-flex;
@@ -51,6 +73,16 @@ export default {
   }
   .v-divider--vertical {
     min-height: 36px;
+  }
+}
+.mini {
+  .dropdown-header {
+    border: none;
+    background: transparent;
+    .dropdown-heading {
+      flex: 10;
+      text-align: right;
+    }
   }
 }
 </style>

@@ -7,11 +7,15 @@ Vue.use(Vuetify);
 export const store = new Vuex.Store({
   state: {
     callContext: {},
+    mini: false
   },
   mutations: {
     switchRoom(state, context) {
       state.callContext = context;
     },
+    toggleMini(state, condition) {
+      state.mini = condition ?  true : false;
+    }
   },
   actions: {
   },

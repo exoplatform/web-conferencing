@@ -45,15 +45,19 @@ export default {
     return {
       providersButton: [],
       error: null,
-      placeholder: "Start call",
+      // placeholder: store.state.mini ? "" : "Start call",
       isOpen: false,
-      childRef: null
+      childRef: null,
+      mini: false
     };
   },
   computed: {
     callContext() {
       return store.state.callContext;
-    }
+    },
+    placeholder() {
+      return store.state.mini ? "" : "Start call"
+    },
   },
   watch: {
     callContext(newContext, oldContext) {
@@ -67,7 +71,10 @@ export default {
   //     return () => import("./Dropdown.vue");
   //   }
   // },
+  // beforeCreate() {
+  // },
   created() {
+    // console.log(store.state.callContext)
     this.setProvidersButtons(this.callContext);
   },
   methods: {
@@ -86,6 +93,7 @@ export default {
       );
     },
     setProvidersButtons(context) {
+      this.isOpen = false;
       const thevue = this;
       try {
         if (context && context.details && this.providersButton.length === 0) {
@@ -113,7 +121,12 @@ export default {
     createButtons() {
       let ref;
       let vm = null;
-
+      const parentClass = Object.values(this.$refs.callbutton.parentElement.classList);
+      // eslint-disable-next-line no-debugger
+      // debugger;
+      // if (parentClass.indexOf("mini") !== -1) {
+        store.commit("toggleMini", parentClass.indexOf("mini") !== -1);
+      // }
       for (const [index, pb] of this.providersButton.entries()) {
         if (this.providersButton.length > 1) {
           //add buttons to dropdown coomponent
@@ -157,7 +170,6 @@ export default {
 
 <style lang="less">
 @import "../../../skin/less/variables.less";
-
 .VuetifyApp {
   .call-button-container {
     button {
@@ -188,7 +200,7 @@ export default {
     }
     cursor: pointer !important;
     position: absolute;
-    z-index: 777;
+    z-index: 100;
     left: @width + 40px;
     top: 2px;
     width: @width + 20px;
@@ -245,6 +257,14 @@ export default {
     //     }
     //   }
     // }
+  }
+}
+.mini {
+  .call-button-container {
+    right: 100px;
+    left: unset;
+    top: 12px;
+    width: unset;
   }
 }
 </style>
