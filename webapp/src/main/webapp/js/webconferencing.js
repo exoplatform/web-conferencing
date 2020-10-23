@@ -1288,23 +1288,74 @@
 		};
 		this.getChatContext = getChatContext;
 
-		var createChatContext = function (chat) {
-			var process = $.Deferred();
-			if (chat.selectedContact) {
-				var roomId = chat.selectedContact.user;
-				var roomTitle = chat.selectedContact.fullName;
+		// returns the context details function in accordance with context
+		var createContextDetailsFunction = function (context) {
+			var details = null;
+			return function () {
+				if (!details) {
+					var data = $.Deferred();
+					details = data.promise();
+					if (context.isGroup) {
+						if (context.isSpace) {
+							var spaceId = context.prettyName;
+							getSpaceInfoReq(spaceId).done(function (space) {
+								data.resolve(space);
+							}).fail(function (err) {
+								log.trace("Error getting space info " + spaceId + " for chat context", err);
+								data.reject(err);
+							});
+						} else if (context.isRoom) {
+							let roomUsers = context.participants;
+							if (roomUsers && roomUsers.length) {
+								var unames = [];
+								for (var i = 0; i < roomUsers.length; i++) {
+									var u = roomUsers[i];
+									if (u && u.name && u.name != "null") {
+										unames.push(u.name);
+									}
+								}
+								getRoomInfoReq(context.roomId, context.roomTitle, unames).done(function (info) {
+									data.resolve(info);
+								}).fail(function (err) {
+									log.trace("Error getting Chat room info " + context.roomName + "/" + context.roomId + " for chat context", err);
+									data.reject(err);
+								});
+							} else {
+								log.trace("Error getting Chat room users for " + context.roomId);
+								data.reject("Error reading Chat room users for " + context.roomId);
+							}
+						} else {
+							data.reject("Unexpected context chat type for " + context.roomTitle);
+						}
+					} else {
+						// roomId is an user name for P2P chats
+						getUserInfoReq(context.roomId).done(function (user) {
+							data.resolve(user);
+						}).fail(function (err) {
+							log.trace("Error getting user info " + context.roomId + " for chat context", err);
+							data.reject(err);
+						});
+					}
+				}
+				return details;
+			}
+		}
 
+		// target (optional) - the data from the exo-chat-selected-contact-changed event
+		// (target can be absent; it's needed to create the context for selected contact from event).
+		var createChatContext = function (chat, target) {
+			var chatContext;
+			if (chat.selectedContact) {
+				var roomTitle = chat.selectedContact.fullName;
 				var isSpace = chat.selectedContact.type == "s"; // roomId && roomId.startsWith("space-");
-				var isRoom =  chat.selectedContact.type == "t"; // roomId && roomId.startsWith("team-");
+				var isRoom = chat.selectedContact.type == "t"; // roomId && roomId.startsWith("team-");
 				var isGroup = isSpace || isRoom;
 				var isUser = !isGroup && chat.selectedContact.type == "u";
-
 				// It is a logic used in Chat, so reuse it here:
 				var roomName = roomTitle.toLowerCase().split(" ").join("_");
-				var details = null;
 				var context = {
 					currentUser : currentUser,
-					roomId : roomId,
+					roomId : chat.selectedContact.user,
 					roomName : roomName, // has no sense for team rooms, but for spaces it's pretty_name
 					roomTitle : roomTitle,
 					isGroup : isGroup,
@@ -1314,66 +1365,43 @@
 					isIOS : isIOS,
 					isAndroid : isAndroid,
 					isWindowsMobile : isWindowsMobile,
-					details : function() {
-						if (!details) {
-							var data = $.Deferred();
-							details = data.promise();
-							if (isGroup) {
-								if (isSpace) {
-									var spaceId = chat.selectedContact.prettyName;
-									getSpaceInfoReq(spaceId).done(function(space) {
-										data.resolve(space);
-									}).fail(function(err) {
-										log.trace("Error getting space info " + spaceId + " for chat context", err);
-										data.reject(err);
-									});
-								} else if (isRoom) {
-									let roomUsers = chat.selectedContact.participants;
-									if (roomUsers && roomUsers.length) {
-										var unames = [];
-										for (var i = 0; i < roomUsers.length; i++) {
-											var u = roomUsers[i];
-											if (u && u.name && u.name != "null") {
-												unames.push(u.name);
-											}
-										}
-										getRoomInfoReq(roomId, roomTitle, unames).done(function (info) {
-											data.resolve(info);
-										}).fail(function (err) {
-											log.trace("Error getting Chat room info " + roomName + "/" + roomId + " for chat context", err);
-											data.reject(err);
-										});
-									} else {
-										log.trace("Error getting Chat room users for " + roomId);
-										data.reject("Error reading Chat room users for " + roomId);
-									}
-								} else {
-									data.reject("Unexpected context chat type: " + chatType + " for " + roomTitle);
-								}
-							} else {
-								// roomId is an user name for P2P chats
-								getUserInfoReq(roomId).done(function(user) {
-									data.resolve(user);
-								}).fail(function(err) {
-									log.trace("Error getting user info " + roomId + " for chat context", err);
-									data.reject(err);
-								});
-							}
-						}
-						return details;
-					}
+					prettyName : chat.selectedContact.prettyName,
+					participants : chat.selectedContact.participants
 				};
-				process.resolve(context);
+				if (!target) {
+					context.details = createContextDetailsFunction(context);
+				}
+				chatContext = context;
 			} else {
 				// If no room, then resolve with 'empty' context
-				process.resolve({
+				chatContext = {
 					currentUser : currentUser,
 					isIOS : isIOS,
 					isAndroid : isAndroid,
 					isWindowsMobile : isWindowsMobile
-				});
+				};
 			}
-			return process.promise();
+
+			// Create the chat context from events target (selected contact data) if target is defined
+			if (target) {
+				if (target.detail) {
+					chatContext.roomId = target.detail.user;
+					chatContext.roomTitle = target.detail.fullName;
+					// Has no sense for team rooms, but for spaces it's pretty_name.
+					// It is a logic used in Chat, so reuse it here:
+					chatContext.roomName = chatContext.roomTitle.toLowerCase().split(" ").join("_");
+					chatContext.isSpace = target.detail.type === "s"; // roomId && roomId.startsWith("space-");
+					chatContext.isRoom = target.detail.type === "t"; // roomId && roomId.startsWith("team-");
+					chatContext.isGroup = chatContext.isSpace || chatContext.isRoom;
+					chatContext.isUser = !chatContext.isGroup && target.detail.type === "u";
+					chatContext.prettyName = target.detail.prettyName;
+					chatContext.participants = target.detail.participants;
+					chatContext.details = createContextDetailsFunction(chatContext);
+				} else {
+					log.warn("No details provided for the selected contact");
+				}
+			}
+			return chatContext;
 		}
 		
 		/**
@@ -1393,9 +1421,10 @@
           });
 					var addRoomButtton = function() {
 						$roomDetail.find(".callButtonContainerWrapper").hide(); // hide immediately
-						setTimeout(function() {
+						setTimeout(function () {
 							var $wrapper = $(".callButtonContainerWrapper");
-							getChatContext().done(function(context) {
+							const context = getChatContext();
+							if (context) {
 								if (context.isSpace) {
 									// When in Chat app we set current space ID from the current room.
 									// It may be used by the provider module by calling webConferencing.getCurrentSpaceId()
@@ -1416,12 +1445,12 @@
 								}
 								if (context.roomId) {
 									var initializer = addCallButton($wrapper, context);
-									initializer.done(function($container) {
+									initializer.done(function ($container) {
 										$container.find(".callButton").first().addClass("chatCall");
 										$container.find(".dropdown-menu").addClass("pull-right");
 										$wrapper.show();
 									});
-									initializer.fail(function(err) {
+									initializer.fail(function (err) {
 										if (err) {
 											log.error("Chat initialization failed in '" + context.roomTitle + "' for " + currentUser.id, err);
 											$roomDetail.removeData("roomcallinitialized");
@@ -1431,10 +1460,10 @@
 									log.trace("<< initChat WARN no room found in context");
 									$roomDetail.removeData("roomcallinitialized");
 								}
-							}).fail(function(err) {
-								log.error("Error getting room info from Chat server", err);
+							} else {
+								log.error("Error getting room info from Chat server");
 								$roomDetail.removeData("roomcallinitialized");
-							}); 
+							}
 						}, 1500); // XXX whoIsOnline may run 500-750ms on eXo Tribe
 					};
 					
@@ -2336,90 +2365,12 @@
 		
 		this.initRequest = initRequest; // for use in other modules (providers, portlets etc)
 
-		// Creates the chat context from events target (selected contact data)
-		var createChatContextFromTarget = function (context, target) {
-			var chatContext = context;
-			if (target && target.detail) {
-				if (chatContext) {
-					const roomId = target.detail.user;
-					const roomTitle = target.detail.fullName;
-					const isSpace = target.detail.type === "s"; // roomId && roomId.startsWith("space-");
-					const isRoom = target.detail.type === "t"; // roomId && roomId.startsWith("team-");
-					const isGroup = isSpace || isRoom;
-					const isUser = !isGroup && target.detail.type === "u";
-					// It is a logic used in Chat, so reuse it here:
-					const roomName = roomTitle.toLowerCase().split(" ").join("_");
-					chatContext.roomId = roomId;
-					chatContext.roomName = roomName; // has no sense for team rooms, but for spaces it's pretty_name
-					chatContext.roomTitle = roomTitle;
-					chatContext.isGroup = isGroup;
-					chatContext.isSpace = isSpace;
-					chatContext.isRoom = isRoom;
-					chatContext.isUser = isUser;
-					chatContext.participants = target.detail.participants;
-					chatContext.details = function () {
-						const data = $.Deferred();
-						if (isGroup) {
-							if (isSpace) {
-								const spaceId = target.detail.prettyName;
-								getSpaceInfoReq(spaceId).done(function (space) {
-									data.resolve(space);
-								}).fail(function (err) {
-									log.trace(`Error getting space info for ${spaceId} space`, err);
-									data.reject(err);
-								});
-							} else if (isRoom) {
-								if (this.participants) {
-									const unames = [];
-									for (let i = 0; i < this.participants.length; i++) {
-										const u = this.participants[i];
-										if (u && u.name && u.name !== "null") {
-											unames.push(u.name);
-										}
-									}
-									getRoomInfoReq(roomId, roomTitle, unames).done(function (info) {
-										data.resolve(info);
-									}).fail(function (err) {
-										log.trace(`Error getting room info for ${roomName}/${roomId} room`, err);
-										data.reject(err);
-									});
-								} else {
-									log.trace(`Error getting room users for ${roomId} room`);
-									data.reject(`Error reading room users for ${roomId} room`);
-								}
-							} else {
-								data.reject(`Unexpected context for ${roomTitle} room`);
-							}
-						} else {
-							// roomId is an user name for P2P chats
-							getUserInfoReq(roomId).done(function (user) {
-								data.resolve(user);
-							}).fail(function (err) {
-								log.trace(`Error getting user info for ${roomId} room`, err);
-								data.reject(err);
-							});
-						}
-						return data.promise();
-					}
-					return chatContext;
-				}
-			} else {
-				log.warn("No details provided for the selected contact");
-			}
-		};
-
 		// target (optional) - the data from the exo-chat-selected-contact-changed event
 		// (target can be absent; it's needed to create the context for selected contact from event).
 		this.createChatContext = async function (chat, target) {
 			const localContext = $.Deferred();
 			contextInitializer.then(() => {
-				createChatContext(chat).then((chatContext) => {
-					// create context from the event
-					if (target) {
-						chatContext = createChatContextFromTarget(chatContext, target);
-					}
-					localContext.resolve(chatContext);
-				});
+				localContext.resolve(createChatContext(chat, target));
 			});
 			return localContext.promise();
 		};
