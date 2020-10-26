@@ -4,22 +4,30 @@ import Vuex from "vuex";
 Vue.use(Vuex);
 Vue.use(Vuetify);
 
-export const store = new Vuex.Store({
-  state: {
-    callContext: {},
-    mini: false
-  },
-  mutations: {
-    switchRoom(state, context) {
-      state.callContext = context;
-    },
-    toggleMini(state, condition) {
-      state.mini = condition ?  true : false;
-    }
-  },
-  actions: {
-  },
-});
+ export const store = new Vuex.Store({
+   state: {
+     callContext: {
+        "app": {},
+        "space": {},
+        "mini": {},
+        "popup": {}
+     },
+     mini: false
+   },
+   mutations: {
+     initRoom(state, payload) {
+        state.callContext[payload.location] = payload.context;
+     },
+     switchRoom(state, payload) {
+        state.callContext[payload.location] = payload.context;
+     },
+     toggleMini(state, condition) {
+       state.mini = condition ?  true : false;
+     }
+   },
+   actions: {
+   },
+ });
 const comp = Vue.component("call-button", callButtons);
 const vuetify = new Vuetify({
   dark: true,
@@ -34,11 +42,15 @@ const resourceBundleName = "WebConferencingClient";
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
 const log = webConferencing.getLog("webconferencing-call-buttons");
 
-export function create(context, target) {
-  store.commit("switchRoom", context);
+export function create(context, target, loc) {
+  // console.log(this.store.state)
+  this.store.commit("initRoom", {context, location: loc});
   const result = new Promise((resolve, reject) => {
     if (target && target.length > 0) {
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
+        // if (this.store.state.callContext[loc] && JSON.stringify(this.store.state.callContext[loc]) !== JSON.stringify(context)) {
+        //   // console.log(this.store.state.callContext[loc] === context)
+        // }
         const vmComp = new Vue({
           el: target[0],
           store: store,
@@ -50,6 +62,7 @@ export function create(context, target) {
                   i18n,
                   language: lang,
                   resourceBundleName,
+                  loc: loc
                 },
               },
               i18n,
@@ -59,9 +72,10 @@ export function create(context, target) {
         });
         resolve({
           update: function(context) {
-            store.commit("switchRoom", context);
+            store.commit("switchRoom", {context, location: loc});
           },
         });
+        
       });
     } else {
       log.error("Error getting the extension container");

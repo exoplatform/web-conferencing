@@ -1,5 +1,5 @@
 <template>
-  <div ref="callbutton" class="call-button-container">
+  <div ref="callbutton" :class="['call-button-container', loc]">
     <dropdown
       v-if="providersButton.length > 1"
       :providersbutton="providersButton"
@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import {store} from "../main.js"
+import {store} from "../main.js";
 import dropdown from "./Dropdown.vue";
 import singlebtn from "./SingleButton.vue";
 
@@ -39,7 +39,11 @@ export default {
     resourceBundleName: {
       type: String,
       required: true
-    }
+    }, 
+    loc: {
+      type: String,
+      required: true
+    },
   },
   data() {
     return {
@@ -48,12 +52,12 @@ export default {
       // placeholder: store.state.mini ? "" : "Start call",
       isOpen: false,
       childRef: null,
-      mini: false
+      // mini: false,
     };
   },
   computed: {
     callContext() {
-      return store.state.callContext;
+      return store.state.callContext[this.loc];
     },
     placeholder() {
       return store.state.mini ? "" : "Start call"
@@ -61,9 +65,12 @@ export default {
   },
   watch: {
     callContext(newContext, oldContext) {
-      this.providersButton = [];
-      this.$refs.callbutton.classList.remove("single");
-      this.setProvidersButtons(newContext);
+      // console.log(newContext, oldContext, "NEW OLD");
+      // if (JSON.stringify(newContext) !== JSON.stringify(oldContext)) {
+        this.providersButton = [];
+        this.$refs.callbutton.classList.remove("single");
+        this.setProvidersButtons(newContext);
+      // }
     }
   },
   // computed: {
@@ -71,10 +78,7 @@ export default {
   //     return () => import("./Dropdown.vue");
   //   }
   // },
-  // beforeCreate() {
-  // },
   created() {
-    // console.log(store.state.callContext)
     this.setProvidersButtons(this.callContext);
   },
   methods: {
@@ -121,11 +125,11 @@ export default {
     createButtons() {
       let ref;
       let vm = null;
+      // const classList = Object.values(this.$refs.callbutton.classList);
       const parentClass = Object.values(this.$refs.callbutton.parentElement.classList);
-      // eslint-disable-next-line no-debugger
-      // debugger;
       // if (parentClass.indexOf("mini") !== -1) {
-        store.commit("toggleMini", parentClass.indexOf("mini") !== -1);
+         const condition = parentClass.indexOf("mini") !== -1 || parentClass.indexOf("popup") !== -1;
+        store.commit("toggleMini", condition);
       // }
       for (const [index, pb] of this.providersButton.entries()) {
         if (this.providersButton.length > 1) {

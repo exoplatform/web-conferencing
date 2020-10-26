@@ -27,17 +27,17 @@ const webconferencingExts = [
       events: [],
     },
     // init call button context in chat
-    init: function(target, chat) {
+    init: function(extensionContainer, chat) {
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
-      ], function (webConferencing, callButtons) {
+      ], function(webConferencing, callButtons) {
         webConferencing.createChatContext(chat).then((context) => {
-          callButtons.create(context, target).then((button) => {
-            document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function (target) {
-              webConferencing.createChatContext(chat, target).then((context) => {
-                button.update(context);
-              });
+          callButtons.create(context, extensionContainer, "app").then((button) => {
+            document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
+              webConferencing.createChatContext(chat, target).then((contextFromEvent) => {
+                  button.update(contextFromEvent);
+                });
             });
           });
         });
@@ -70,7 +70,7 @@ const webconferencingExts = [
       events: [],
     },
     // init call button context in mini chat
-    init: function(target, chat) {
+    init: function(extensionContainer, chat) {
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
@@ -78,11 +78,15 @@ const webconferencingExts = [
         if (!(eXo.env.portal.selectedNodeUri === "chat")) {
           // don't init in chat
           webConferencing.createChatContext(chat).then((context) => {
-            callButtons.create(context, target).then((button) => {
-              document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function (target) {
-                webConferencing.createChatContext(chat, target).then((context) => {
-                  button.update(context);
-                });
+            callButtons.create(context, extensionContainer, "mini").then((button) => {
+              document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(
+                target
+              ) {
+                webConferencing
+                  .createChatContext(chat, target)
+                  .then((contextFromEvent) => {
+                    button.update(contextFromEvent);
+                  });
               });
             });
           });
@@ -116,14 +120,14 @@ const webconferencingExts = [
       events: [],
     },
     // init call button context in space
-    init: function(target, spaceId) {
+    init: function(extensionContainer, spaceId) {
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
       ], function(webConferencing, callButtons) {
         webConferencing.createSpaceContext(spaceId).then((context) => {
-          callButtons.create(context, target).then((button) => {
-            //button.update(context);  // don't need
+          callButtons.create(context, extensionContainer, "space").then((button) => {
+            button.update(context);  // don't need
           });
         });
       });
@@ -147,18 +151,18 @@ const webconferencingExts = [
       events: [],
     },
     // init call button context in user profile popup
-    init: function(target, userId) {
+    init: function(extensionContainer, userId) {
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
-      ], function (webConferencing, callButtons) {
+      ], function(webConferencing, callButtons) {
         if (userProfilePopupButton) {
           // TO DO delete old button
           //something like userProfilePopupButton.destroy();
         }
 
         webConferencing.createUserContext(userId).then((context) => {
-          callButtons.create(context, target).then((button) => {
+          callButtons.create(context, extensionContainer, "popup").then((button) => {
             userProfilePopupButton = button;
             //button.update(context);  // don't need
           });
@@ -169,22 +173,22 @@ const webconferencingExts = [
     enabled: true,
   },
   {
-    target: "profile-header",
-    type: "action-component",
+    target : "profile-header",
+    type : "action-component",
     // configuration defined here is used in exo-addons\web-conferencing\webapp\src\main\webapp\vue-apps
     // \Call\components\CallButtons.vue with
     // social\webapp\portlet\src\main\webapp\profile-header\components\ProfileHeaderActions.vue and connects them
     // key should be unique and used in parent component as a ref to WebConferencingCall component
-    key: "userProfileCallButton",
-    rank: 24,
-    iconName: "callButton",
-    appClass: "webсonferencingCallButton",
-    component: {
-      name: "call-button",
-      events: [],
+    key : "userProfileCallButton",
+    rank : 24,
+    iconName : "callButton",
+    appClass : "webсonferencingCallButton",
+    component : {
+      name : "call-button",
+      events : [],
     },
     // init call button context in user profile
-    init: function(target, userId) {
+    init : function (target, userId) {
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
@@ -202,8 +206,9 @@ const webconferencingExts = [
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
-    enabled: false,
-  }/*
+    enabled : false,
+  }
+  /*
   // an example of the extension with DOM elements
 ,{
   target : "chat",
