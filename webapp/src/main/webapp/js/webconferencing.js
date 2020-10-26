@@ -1288,123 +1288,132 @@
 		};
 		this.getChatContext = getChatContext;
 
-		// returns the context details function in accordance with context
-		var createContextDetailsFunction = function (context) {
-			var details = null;
-			return function () {
-				if (!details) {
-					var data = $.Deferred();
-					details = data.promise();
-					if (context.isGroup) {
-						if (context.isSpace) {
-							var spaceId = context.prettyName;
-							getSpaceInfoReq(spaceId).done(function (space) {
-								data.resolve(space);
-							}).fail(function (err) {
-								log.trace("Error getting space info " + spaceId + " for chat context", err);
-								data.reject(err);
-							});
-						} else if (context.isRoom) {
-							let roomUsers = context.participants;
-							if (roomUsers && roomUsers.length) {
-								var unames = [];
-								for (var i = 0; i < roomUsers.length; i++) {
-									var u = roomUsers[i];
-									if (u && u.name && u.name != "null") {
-										unames.push(u.name);
-									}
-								}
-								getRoomInfoReq(context.roomId, context.roomTitle, unames).done(function (info) {
-									data.resolve(info);
-								}).fail(function (err) {
-									log.trace("Error getting Chat room info " + context.roomName + "/" + context.roomId + " for chat context", err);
-									data.reject(err);
-								});
-							} else {
-								log.trace("Error getting Chat room users for " + context.roomId);
-								data.reject("Error reading Chat room users for " + context.roomId);
-							}
-						} else {
-							data.reject("Unexpected context chat type for " + context.roomTitle);
-						}
-					} else {
-						// roomId is an user name for P2P chats
-						getUserInfoReq(context.roomId).done(function (user) {
-							data.resolve(user);
-						}).fail(function (err) {
-							log.trace("Error getting user info " + context.roomId + " for chat context", err);
-							data.reject(err);
-						});
-					}
-				}
-				return details;
-			}
-		}
+    // returns the context details function in accordance with context
+    var createContextDetails = function(context) {
+      var details = null;
+      return function() {
+        if (!details) {
+          var data = $.Deferred();
+          details = data.promise();
+          if (context.isGroup) {
+            if (context.isSpace) {
+              var spaceId = context.prettyName;
+              getSpaceInfoReq(spaceId).done(function(space) {
+                data.resolve(space);
+              }).fail(function(err) {
+                log.trace("Error getting space info " + spaceId + " for chat context", err);
+                data.reject(err);
+              });
+            } else if (context.isRoom) {
+              let roomUsers = context.participants;
+              if (roomUsers && roomUsers.length) {
+                var unames = [];
+                for (var i = 0; i < roomUsers.length; i++) {
+                  var u = roomUsers[i];
+                  if (u && u.name && u.name != "null") {
+                    unames.push(u.name);
+                  }
+                }
+                getRoomInfoReq(context.roomId, context.roomTitle, unames).done(function(info) {
+                  data.resolve(info);
+                }).fail(function(err) {
+                  log.trace("Error getting Chat room info " + context.roomName + "/" + context.roomId + " for chat context", err);
+                  data.reject(err);
+                });
+              } else {
+                log.trace("Error getting Chat room users for " + context.roomId);
+                data.reject("Error reading Chat room users for " + context.roomId);
+              }
+            } else {
+              data.reject("Unexpected context chat type for " + context.roomTitle);
+            }
+          } else {
+            // roomId is an user name for P2P chats
+            getUserInfoReq(context.roomId).done(function(user) {
+              data.resolve(user);
+            }).fail(function(err) {
+              log.trace("Error getting user info " + context.roomId + " for chat context", err);
+              data.reject(err);
+            });
+          }
+        }
+        return details;
+      }
+    };
 
-		// target (optional) - the data from the exo-chat-selected-contact-changed event
-		// (target can be absent; it's needed to create the context for selected contact from event).
-		var createChatContext = function (chat, target) {
-			var chatContext;
-			if (chat.selectedContact) {
-				var roomTitle = chat.selectedContact.fullName;
-				var isSpace = chat.selectedContact.type == "s"; // roomId && roomId.startsWith("space-");
-				var isRoom = chat.selectedContact.type == "t"; // roomId && roomId.startsWith("team-");
-				var isGroup = isSpace || isRoom;
-				var isUser = !isGroup && chat.selectedContact.type == "u";
-				// It is a logic used in Chat, so reuse it here:
-				var roomName = roomTitle.toLowerCase().split(" ").join("_");
-				var context = {
-					currentUser : currentUser,
-					roomId : chat.selectedContact.user,
-					roomName : roomName, // has no sense for team rooms, but for spaces it's pretty_name
-					roomTitle : roomTitle,
-					isGroup : isGroup,
-					isSpace : isSpace,
-					isRoom : isRoom,
-					isUser : isUser,
-					isIOS : isIOS,
-					isAndroid : isAndroid,
-					isWindowsMobile : isWindowsMobile,
-					prettyName : chat.selectedContact.prettyName,
-					participants : chat.selectedContact.participants
-				};
-				if (!target) {
-					context.details = createContextDetailsFunction(context);
-				}
-				chatContext = context;
-			} else {
-				// If no room, then resolve with 'empty' context
-				chatContext = {
-					currentUser : currentUser,
-					isIOS : isIOS,
-					isAndroid : isAndroid,
-					isWindowsMobile : isWindowsMobile
-				};
-			}
+    var createChatContext = function(chat) {
+      var chatContext;
+      if (chat.selectedContact) {
+        var roomTitle = chat.selectedContact.fullName;
+        // It is a logic used in Chat, so reuse it here:
+        var roomName = roomTitle.toLowerCase().split(" ").join("_");
+        var isSpace = chat.selectedContact.type === "s"; // roomId && roomId.startsWith("space-");
+        var isRoom = chat.selectedContact.type === "t"; // roomId && roomId.startsWith("team-");
+        var isGroup = isSpace || isRoom;
+        chatContext = {
+          currentUser: currentUser,
+          roomId: chat.selectedContact.user,
+          roomName: roomName, // has no sense for team rooms, but for spaces it's pretty_name
+          roomTitle: roomTitle,
+          isGroup: isGroup,
+          isSpace: isSpace,
+          isRoom: isRoom,
+          isUser: !isGroup && chat.selectedContact.type === "u",
+          isIOS: isIOS,
+          isAndroid: isAndroid,
+          isWindowsMobile: isWindowsMobile,
+          prettyName: chat.selectedContact.prettyName,
+          participants: chat.selectedContact.participants
+        };
+        chatContext.details = createContextDetails(chatContext);
+      } else {
+        // If no room, then resolve with 'empty' context
+        chatContext = {
+          currentUser: currentUser,
+          isIOS: isIOS,
+          isAndroid: isAndroid,
+          isWindowsMobile: isWindowsMobile
+        };
+      }
+      return chatContext;
+    };
 
-			// Create the chat context from events target (selected contact data) if target is defined
-			if (target) {
-				if (target.detail) {
-					chatContext.roomId = target.detail.user;
-					chatContext.roomTitle = target.detail.fullName;
-					// Has no sense for team rooms, but for spaces it's pretty_name.
-					// It is a logic used in Chat, so reuse it here:
-					chatContext.roomName = chatContext.roomTitle.toLowerCase().split(" ").join("_");
-					chatContext.isSpace = target.detail.type === "s"; // roomId && roomId.startsWith("space-");
-					chatContext.isRoom = target.detail.type === "t"; // roomId && roomId.startsWith("team-");
-					chatContext.isGroup = chatContext.isSpace || chatContext.isRoom;
-					chatContext.isUser = !chatContext.isGroup && target.detail.type === "u";
-					chatContext.prettyName = target.detail.prettyName;
-					chatContext.participants = target.detail.participants;
-					chatContext.details = createContextDetailsFunction(chatContext);
-				} else {
-					log.warn("No details provided for the selected contact");
-				}
-			}
-			return chatContext;
-		}
-		
-		/**
+    // Create the chat context from events target (selected room data)
+    // target - the data from the exo-chat-selected-contact-changed event
+    var createChatContextForSelectedRoom = function(target) {
+      var chatContext;
+      if (target) {
+        if (target.detail) {
+          var roomTitle = target.detail.fullName;
+          // It is a logic used in Chat, so reuse it here:
+          var roomName = roomTitle.toLowerCase().split(" ").join("_");
+          var isSpace = target.detail.type === "s"; // roomId && roomId.startsWith("space-");
+          var isRoom = target.detail.type === "t"; // roomId && roomId.startsWith("team-");
+          var isGroup = isSpace || isRoom;
+          chatContext = {
+            currentUser: currentUser,
+            roomId: target.detail.user,
+            roomName: roomName, // has no sense for team rooms, but for spaces it's pretty_name
+            roomTitle: roomTitle,
+            isGroup: isGroup,
+            isSpace: isSpace,
+            isRoom: isRoom,
+            isUser: !isGroup && target.detail.type === "u",
+            isIOS: isIOS,
+            isAndroid: isAndroid,
+            isWindowsMobile: isWindowsMobile,
+            prettyName: target.detail.prettyName,
+            participants: target.detail.participants
+          };
+          chatContext.details = createContextDetails(chatContext);
+        } else {
+          log.warn("No details provided for the selected contact");
+        }
+      }
+      return chatContext;
+    };
+
+    /**
 		 * eXo Chat initialization
 		 */
 		var initChat = function() {
@@ -2365,48 +2374,55 @@
 		
 		this.initRequest = initRequest; // for use in other modules (providers, portlets etc)
 
-		// target (optional) - the data from the exo-chat-selected-contact-changed event
-		// (target can be absent; it's needed to create the context for selected contact from event).
-		this.createChatContext = async function (chat, target) {
-			const localContext = $.Deferred();
-			contextInitializer.then(() => {
-				localContext.resolve(createChatContext(chat, target));
-			});
-			return localContext.promise();
-		};
+    // target (optional) - the data from the exo-chat-selected-contact-changed event
+    // (target can be absent; it's needed to create the context for selected contact from event).
+    this.createChatContext = async function(chat, target) {
+      const localContext = $.Deferred();
+      contextInitializer.then(() => {
+        if (target) {
+          localContext.resolve(createChatContextForSelectedRoom(target));
+        } else if (chat) {
+          localContext.resolve(createChatContext(chat));
+        } else {
+          log.warn("Failed to create the chat context: no required data");
+          localContext.reject("Failed to create the chat context: no required data");
+        }
+      });
+      return localContext.promise();
+    };
 
-		this.createSpaceContext = async function(spaceId) {
-			const localContext = $.Deferred();
-			contextInitializer.then(() => {
-				localContext.resolve(spaceContext(spaceId));
-			});
-			return localContext.promise();
-		};
+    this.createSpaceContext = async function(spaceId) {
+      const localContext = $.Deferred();
+      contextInitializer.then(() => {
+        localContext.resolve(spaceContext(spaceId));
+      });
+      return localContext.promise();
+    };
 
-		// Can be used for single user profile and user popover
-		this.createUserContext = async function(userId) {
-			const localContext = $.Deferred();
-			contextInitializer.then(() => {
-				localContext.resolve(userContext(userId));
-			});
-			return localContext.promise();
-		};
+    // Can be used for single user profile and user popover
+    this.createUserContext = async function(userId) {
+      const localContext = $.Deferred();
+      contextInitializer.then(() => {
+        localContext.resolve(userContext(userId));
+      });
+      return localContext.promise();
+    };
 
-		this.getAllProviders = async function() {
-			const webConferencing = this;
-			const allProviders = $.Deferred();
-			contextInitializer.then(() => {
-				webConferencing.getProvidersConfig().then((providersConfig) => {
-					const providersTypes = providersConfig.map(provider => provider.type);
-					Promise.all(
-						providersTypes.map(type => webConferencing.getProvider(type))
-					).then(providers => {
-						allProviders.resolve(providers);
-					});
-				});
-			});
-			return allProviders.promise();
-		}
+    this.getAllProviders = async function() {
+      const webConferencing = this;
+      const allProviders = $.Deferred();
+      contextInitializer.then(() => {
+        webConferencing.getProvidersConfig().then((providersConfig) => {
+          const providersTypes = providersConfig.map(provider => provider.type);
+          Promise.all(
+            providersTypes.map(type => webConferencing.getProvider(type))
+          ).then(providers => {
+            allProviders.resolve(providers);
+          });
+        });
+      });
+      return allProviders.promise();
+    };
 	}
 	
 	var webConferencing = new WebConferencing();
