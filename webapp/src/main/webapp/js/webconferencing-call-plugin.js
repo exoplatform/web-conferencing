@@ -27,13 +27,13 @@ const webconferencingExts = [
       events: [],
     },
     // init call button context in chat
-    init: function(extensionContainer, chat) {
+    init: function(target, chat) {
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
       ], function(webConferencing, callButtons) {
         webConferencing.createChatContext(chat).then((context) => {
-          callButtons.create(context, extensionContainer, "app").then((button) => {
+          callButtons.create(context, target, "app").then((button) => {
             document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
               webConferencing.createChatContext(chat, target).then((contextFromEvent) => {
                   button.update(contextFromEvent);
@@ -70,7 +70,7 @@ const webconferencingExts = [
       events: [],
     },
     // init call button context in mini chat
-    init: function(extensionContainer, chat) {
+    init: function(target, chat) {
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
@@ -78,7 +78,7 @@ const webconferencingExts = [
         if (!(eXo.env.portal.selectedNodeUri === "chat")) {
           // don't init in chat
           webConferencing.createChatContext(chat).then((context) => {
-            callButtons.create(context, extensionContainer, "mini").then((button) => {
+            callButtons.create(context, target, "mini").then((button) => {
               document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(
                 target
               ) {
@@ -120,13 +120,13 @@ const webconferencingExts = [
       events: [],
     },
     // init call button context in space
-    init: function(extensionContainer, spaceId) {
+    init: function(target, spaceId) {
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
       ], function(webConferencing, callButtons) {
         webConferencing.createSpaceContext(spaceId).then((context) => {
-          callButtons.create(context, extensionContainer, "space").then((button) => {
+          callButtons.create(context, target, "space").then((button) => {
             button.update(context);  // don't need
           });
         });
@@ -151,7 +151,7 @@ const webconferencingExts = [
       events: [],
     },
     // init call button context in user profile popup
-    init: function(extensionContainer, userId) {
+    init: function(target, userId) {
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
@@ -162,7 +162,7 @@ const webconferencingExts = [
         }
 
         webConferencing.createUserContext(userId).then((context) => {
-          callButtons.create(context, extensionContainer, "popup").then((button) => {
+          callButtons.create(context, target, "popup").then((button) => {
             userProfilePopupButton = button;
             //button.update(context);  // don't need
           });
