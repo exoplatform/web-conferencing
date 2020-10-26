@@ -46,13 +46,13 @@ export function create(context, target, loc) {
   // console.log(this.store.state)
   this.store.commit("initRoom", {context, location: loc});
   const result = new Promise((resolve, reject) => {
-    if (target && target.length > 0) {
+    if (target) {
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
         // if (this.store.state.callContext[loc] && JSON.stringify(this.store.state.callContext[loc]) !== JSON.stringify(context)) {
         //   // console.log(this.store.state.callContext[loc] === context)
         // }
         const vmComp = new Vue({
-          el: target[0],
+          el: target,
           store: store,
           render: function(h) {
             return h(
