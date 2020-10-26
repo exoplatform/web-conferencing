@@ -7,23 +7,35 @@ Vue.use(Vuetify);
  export const store = new Vuex.Store({
    state: {
      callContext: {
-        "app": {},
-        "space": {},
-        "mini": {},
-        "popup": {}
+        // "app": {},
+        // "space": {},
+        // "mini": {},
+        // "popup": {},
+        "isUser": {},
+        "isGroup": {}
      },
-     mini: false
+     mini: false,
    },
    mutations: {
      initRoom(state, payload) {
-        state.callContext[payload.location] = payload.context;
+       if (payload.context.isUser) {
+        state.callContext.isUser = payload.context
+       }
+      else if (!payload.context.isUser) {
+         state.callContext.isGroup = payload.context
+       }
+      //   state.callContext[payload.location] = payload.context;
      },
      switchRoom(state, payload) {
-        state.callContext[payload.location] = payload.context;
+      if (payload.context.isUser) {
+        state.callContext.isUser = payload.context
+       } else if (!payload.context.isUser) {
+         state.callContext.isGroup = payload.context
+       }
      },
      toggleMini(state, condition) {
        state.mini = condition ?  true : false;
-     }
+     },
    },
    actions: {
    },
@@ -43,13 +55,11 @@ const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${loca
 const log = webConferencing.getLog("webconferencing-call-buttons");
 
 export function create(context, target, loc) {
-  // console.log(this.store.state)
   this.store.commit("initRoom", {context, location: loc});
   const result = new Promise((resolve, reject) => {
     if (target) {
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
         // if (this.store.state.callContext[loc] && JSON.stringify(this.store.state.callContext[loc]) !== JSON.stringify(context)) {
-        //   // console.log(this.store.state.callContext[loc] === context)
         // }
         const vmComp = new Vue({
           el: target,
@@ -62,7 +72,7 @@ export function create(context, target, loc) {
                   i18n,
                   language: lang,
                   resourceBundleName,
-                  loc: loc
+                  loc: context.isUser ? "isUser" : "isGroup"
                 },
               },
               i18n,
@@ -72,6 +82,7 @@ export function create(context, target, loc) {
         });
         resolve({
           update: function(context) {
+            this.loc = context.isUser ? "isUser" : "isGroup";
             store.commit("switchRoom", {context, location: loc});
           },
         });

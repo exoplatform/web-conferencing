@@ -15,12 +15,12 @@
 </template>
 
 <script>
-import {store} from "../main.js";
+import { store } from "../main.js";
+import { mapState } from "vuex";
 import dropdown from "./Dropdown.vue";
 import singlebtn from "./SingleButton.vue";
 
 const log = webConferencing.getLog("webconferencing-call-buttons");
-
 export default {
   components: {
     dropdown,
@@ -56,13 +56,19 @@ export default {
     };
   },
   computed: {
-    callContext() {
-      return store.state.callContext[this.loc];
-    },
-    placeholder() {
-      return store.state.mini ? "" : "Start call"
-    },
-  },
+    ...mapState({
+    callContext(state) {return state.callContext[this.loc]},
+    placeholder: state => {return state.mini ? "" : "Start call"}
+  })
+
+  //   callContext() {
+  //     return store.state.callContext[this.loc];
+  //   },
+  //   placeholder() {
+  //     return store.state.mini ? "" : "Start call"
+  //   },
+  }
+  ,
   watch: {
     callContext(newContext, oldContext) {
       // console.log(newContext, oldContext, "NEW OLD");
@@ -79,6 +85,8 @@ export default {
   //   }
   // },
   created() {
+    // eslint-disable-next-line no-debugger
+    // debugger;
     this.setProvidersButtons(this.callContext);
   },
   methods: {

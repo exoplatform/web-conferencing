@@ -17,7 +17,7 @@ const webconferencingExts = [
     // if it should be custom icon that isn't supported by vuetify iconClass instead of iconName should be used
     iconName: "callButton",
     // appClass is a class of container which consist of action button and WebConferencingCall component
-    appClass: "webconferencingCallButton",
+    appClass: "webconferencingCallButton app",
     // component has property which will be passed to dynamic component inside parent
     // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
     component: {
@@ -33,7 +33,9 @@ const webconferencingExts = [
         "SHARED/webConferencingCallButton",
       ], function(webConferencing, callButtons) {
         webConferencing.createChatContext(chat).then((context) => {
-          callButtons.create(context, target, "app").then((button) => {
+          // console.log(callButtons.store, "callButtons")
+          callButtons.create(context, target).then((button) => {
+            // context.details().then(contex => console.log(contex, "context"));
             document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
               webConferencing.createChatContext(chat, target).then((contextFromEvent) => {
                   button.update(contextFromEvent);
@@ -78,7 +80,7 @@ const webconferencingExts = [
         if (!(eXo.env.portal.selectedNodeUri === "chat")) {
           // don't init in chat
           webConferencing.createChatContext(chat).then((context) => {
-            callButtons.create(context, target, "mini").then((button) => {
+            callButtons.create(context, target).then((button) => {
               document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(
                 target
               ) {
@@ -126,7 +128,8 @@ const webconferencingExts = [
         "SHARED/webConferencingCallButton",
       ], function(webConferencing, callButtons) {
         webConferencing.createSpaceContext(spaceId).then((context) => {
-          callButtons.create(context, target, "space").then((button) => {
+          
+          callButtons.create(context, target).then((button) => {
             button.update(context);  // don't need
           });
         });
@@ -162,7 +165,7 @@ const webconferencingExts = [
         }
 
         webConferencing.createUserContext(userId).then((context) => {
-          callButtons.create(context, target, "popup").then((button) => {
+          callButtons.create(context, target).then((button) => {
             userProfilePopupButton = button;
             //button.update(context);  // don't need
           });
