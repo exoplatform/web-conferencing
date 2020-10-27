@@ -3,7 +3,6 @@
     <div class="dropdown-heading">
       <i class="uiIconSocPhone uiIconSocBlue"></i>
       {{ placeholder }}
-      <!-- {{ placeholder }} -->
     </div>
     <v-divider 
       :style="divider"
@@ -19,13 +18,9 @@ import { store } from "../main.js";
 export default {
   props: {
     placeholder: {
-      type: Object,
+      type: String,
       required: true
     },
-    // divider: {
-    //   type: Object,
-    //   required: true
-    // },
     opendropdowncomponent: {
       type: Function,
       required: true

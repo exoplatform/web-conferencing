@@ -9,10 +9,6 @@ export default {
       type: Array,
       required: true
     },
-    createbuttons: {
-      type: Function,
-      required: true
-    }
   },
   methods: {
   }

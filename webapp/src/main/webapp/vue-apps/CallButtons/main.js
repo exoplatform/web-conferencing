@@ -1,4 +1,7 @@
+Vue.config.devtools = true
+
 import callButtons from "./components/CallButtons.vue";
+
 
 import Vuex from "vuex";
 Vue.use(Vuex);
@@ -12,35 +15,33 @@ Vue.use(Vuetify);
         // "mini": {},
         // "popup": {},
         "isUser": {},
-        "isGroup": {}
+        "isGroup": {},
      },
      mini: false,
+     location: ""
    },
    mutations: {
-     initRoom(state, payload) {
-       if (payload.context.isUser) {
+     initButton(state, payload) {
+       if (state.location === "isUser") {
         state.callContext.isUser = payload.context
        }
-      else if (!payload.context.isUser) {
+       if (state.location === "isGroup") {
          state.callContext.isGroup = payload.context
        }
       //   state.callContext[payload.location] = payload.context;
      },
-     switchRoom(state, payload) {
-      if (payload.context.isUser) {
-        state.callContext.isUser = payload.context
-       } else if (!payload.context.isUser) {
-         state.callContext.isGroup = payload.context
-       }
-     },
      toggleMini(state, condition) {
        state.mini = condition ?  true : false;
      },
+     defineLocation(state, location) {
+      state.location = location ? "isUser" : "isGroup"
+     }
    },
    actions: {
    },
  });
 const comp = Vue.component("call-button", callButtons);
+// const comp = Vue.component("call-button", () => import("./components/CallButtons.vue"));
 const vuetify = new Vuetify({
   dark: true,
   iconfont: "",
@@ -54,8 +55,9 @@ const resourceBundleName = "WebConferencingClient";
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
 const log = webConferencing.getLog("webconferencing-call-buttons");
 
-export function create(context, target, loc) {
-  this.store.commit("initRoom", {context, location: loc});
+export function create(context, target) {
+  this.store.commit("defineLocation", context.isUser)
+  this.store.commit("initButton", {context});
   const result = new Promise((resolve, reject) => {
     if (target) {
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
@@ -72,7 +74,6 @@ export function create(context, target, loc) {
                   i18n,
                   language: lang,
                   resourceBundleName,
-                  loc: context.isUser ? "isUser" : "isGroup"
                 },
               },
               i18n,
@@ -82,8 +83,9 @@ export function create(context, target, loc) {
         });
         resolve({
           update: function(context) {
-            this.loc = context.isUser ? "isUser" : "isGroup";
-            store.commit("switchRoom", {context, location: loc});
+            // Vue.set(vmComp, "loc", context.isUser ? "isUser" : "isGroup")
+            store.commit("defineLocation", context.isUser)
+            store.commit("initButton", {context});
           },
         });
         

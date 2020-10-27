@@ -1,5 +1,5 @@
 <template>
-  <div ref="callbutton" :class="['call-button-container', loc]">
+  <div ref="callbutton" :class="['call-button-container']">
     <dropdown
       v-if="providersButton.length > 1"
       :providersbutton="providersButton"
@@ -40,33 +40,26 @@ export default {
       type: String,
       required: true
     }, 
-    loc: {
-      type: String,
-      required: true
-    },
   },
   data() {
     return {
       providersButton: [],
       error: null,
-      // placeholder: store.state.mini ? "" : "Start call",
       isOpen: false,
       childRef: null,
-      // mini: false,
     };
   },
   computed: {
-    ...mapState({
-    callContext(state) {return state.callContext[this.loc]},
-    placeholder: state => {return state.mini ? "" : "Start call"}
-  })
-
-  //   callContext() {
-  //     return store.state.callContext[this.loc];
-  //   },
-  //   placeholder() {
-  //     return store.state.mini ? "" : "Start call"
-  //   },
+  //   ...mapState({
+  //   callContext(state) {return state.callContext[this.loc]},
+  //   placeholder: state => {return state.mini ? "" : "Start call"}
+  // })
+    callContext() {
+      return store.state.callContext[store.state.location];
+    },
+    placeholder() {
+      return store.state.mini ? "" : "Start call"
+    },
   }
   ,
   watch: {
@@ -85,25 +78,24 @@ export default {
   //   }
   // },
   created() {
-    // eslint-disable-next-line no-debugger
-    // debugger;
+    // console.log(this.callContext, "THIS created")
     this.setProvidersButtons(this.callContext);
   },
   methods: {
-    async initProvidersButton__donotuse() {
-      // TODO do we needit actually? it is not reusable
-      const thevue = this;
-      await Promise.all(
-        thevue.providers.map(async p => {
-          // TODO async here???!
-          if (await p.isInitialized) {
-            // TODO await for boolean property??
-            const callButton = await p.callButton(this.callContext, "vue");
-            this.providersButton.push(callButton);
-          }
-        })
-      );
-    },
+    // async initProvidersButton__donotuse() {
+    //   // TODO do we needit actually? it is not reusable
+    //   const thevue = this;
+    //   await Promise.all(
+    //     thevue.providers.map(async p => {
+    //       // TODO async here???!
+    //       if (await p.isInitialized) {
+    //         // TODO await for boolean property??
+    //         const callButton = await p.callButton(this.callContext, "vue");
+    //         this.providersButton.push(callButton);
+    //       }
+    //     })
+    //   );
+    // },
     setProvidersButtons(context) {
       this.isOpen = false;
       const thevue = this;
