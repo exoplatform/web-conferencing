@@ -65,7 +65,7 @@ export function create(context, target) {
         // }
         const comp = Vue.component("call-button", callButtons);
         const vmComp = new Vue({
-          el: target[0],
+          el: target,
           store: store,
           render: function(h) {
             return h(
