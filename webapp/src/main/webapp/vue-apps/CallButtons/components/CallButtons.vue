@@ -1,5 +1,5 @@
 <template>
-  <div ref="callbutton" :class="['call-button-container']">
+  <div ref="callbutton" :class="['call-button-container', location]">
     <dropdown
       v-if="providersButton.length > 1"
       :providersbutton="providersButton"
@@ -40,6 +40,10 @@ export default {
       type: String,
       required: true
     }, 
+    location: {
+      type: String,
+      required: true
+    }
   },
   data() {
     return {
@@ -55,7 +59,7 @@ export default {
   //   placeholder: state => {return state.mini ? "" : "Start call"}
   // })
     callContext() {
-      return store.state.callContext[store.state.location];
+      return store.state.callContext[this.location];
     },
     placeholder() {
       return store.state.mini ? "" : "Start call"

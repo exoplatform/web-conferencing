@@ -22,13 +22,13 @@ Vue.use(Vuetify);
    },
    mutations: {
      initButton(state, payload) {
-       if (state.location === "isUser") {
-        state.callContext.isUser = payload.context
-       }
-       if (state.location === "isGroup") {
-         state.callContext.isGroup = payload.context
-       }
-      //   state.callContext[payload.location] = payload.context;
+      //  if (state.location === "isUser") {
+      //   state.callContext.isUser = payload.context
+      //  }
+      //  if (state.location === "isGroup") {
+      //    state.callContext.isGroup = payload.context
+      //  }
+        state.callContext[state.location] = payload.context;
      },
      toggleMini(state, condition) {
        state.mini = condition ?  true : false;
@@ -40,7 +40,7 @@ Vue.use(Vuetify);
    actions: {
    },
  });
-const comp = Vue.component("call-button", callButtons);
+// const comp = Vue.component("call-button", callButtons);
 // const comp = Vue.component("call-button", () => import("./components/CallButtons.vue"));
 const vuetify = new Vuetify({
   dark: true,
@@ -63,8 +63,9 @@ export function create(context, target) {
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
         // if (this.store.state.callContext[loc] && JSON.stringify(this.store.state.callContext[loc]) !== JSON.stringify(context)) {
         // }
+        const comp = Vue.component("call-button", callButtons);
         const vmComp = new Vue({
-          el: target,
+          el: target[0],
           store: store,
           render: function(h) {
             return h(
@@ -74,6 +75,7 @@ export function create(context, target) {
                   i18n,
                   language: lang,
                   resourceBundleName,
+                  location: store.state.location
                 },
               },
               i18n,

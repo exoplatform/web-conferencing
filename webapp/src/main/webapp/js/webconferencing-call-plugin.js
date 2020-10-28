@@ -17,7 +17,7 @@ const webconferencingExts = [
     // if it should be custom icon that isn't supported by vuetify iconClass instead of iconName should be used
     iconName: "callButton",
     // appClass is a class of container which consist of action button and WebConferencingCall component
-    appClass: "webconferencingCallButton app",
+    appClass: "webconferencingCallButton",
     // component has property which will be passed to dynamic component inside parent
     // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
     component: {
@@ -25,6 +25,9 @@ const webconferencingExts = [
       name: "call-button",
       // events are passed to custom DynamicEvents directive (https://vuejs.org/v2/guide/custom-directive.html)
       events: [],
+      // props: {
+      //   className: this.appClass
+      // }
     },
     // init call button context in chat
     init: function(target, chat) {
@@ -33,7 +36,6 @@ const webconferencingExts = [
         "SHARED/webConferencingCallButton",
       ], function(webConferencing, callButtons) {
         webConferencing.createChatContext(chat).then((context) => {
-          // console.log(callButtons.store, "callButtons")
           callButtons.create(context, target).then((button) => {
             // context.details().then(contex => console.log(contex, "context"));
             document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
@@ -62,7 +64,7 @@ const webconferencingExts = [
     // if it should be custom icon that isn't supported by vuetify iconClass instead of iconName should be used
     iconName: "callButton",
     // appClass is a class of container which consist of action button and WebConferencingCall component
-    appClass: "webсonferencingCallButton", // TODO seems here we should add a MINI-class?
+    appClass: "mini webсonferencingCallButton", // TODO seems here we should add a MINI-class?
     // component has property which will be passed to dynamic component inside parent
     // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
     component: {
@@ -81,12 +83,8 @@ const webconferencingExts = [
           // don't init in chat
           webConferencing.createChatContext(chat).then((context) => {
             callButtons.create(context, target).then((button) => {
-              document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(
-                target
-              ) {
-                webConferencing
-                  .createChatContext(chat, target)
-                  .then((contextFromEvent) => {
+              document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
+                webConferencing.createChatContext(chat, target).then((contextFromEvent) => {
                     button.update(contextFromEvent);
                   });
               });
@@ -148,7 +146,7 @@ const webconferencingExts = [
     key: "userProfilePopupCallButton",
     rank: 23,
     iconName: "callButton",
-    appClass: "webсonferencingCallButton",
+    appClass: "popup webсonferencingCallButton",
     component: {
       name: "call-button",
       events: [],
@@ -163,7 +161,6 @@ const webconferencingExts = [
           // TO DO delete old button
           //something like userProfilePopupButton.destroy();
         }
-
         webConferencing.createUserContext(userId).then((context) => {
           callButtons.create(context, target).then((button) => {
             userProfilePopupButton = button;
