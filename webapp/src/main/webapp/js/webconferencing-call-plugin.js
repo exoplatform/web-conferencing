@@ -17,7 +17,8 @@ const webconferencingExts = [
     // if it should be custom icon that isn't supported by vuetify iconClass instead of iconName should be used
     iconName: "callButton",
     // appClass is a class of container which consist of action button and WebConferencingCall component
-    appClass: "webconferencingCallButton",
+    appClass: "call-button",
+    typeClass: "call-button--chat",
     // component has property which will be passed to dynamic component inside parent
     // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
     component: {
@@ -37,10 +38,9 @@ const webconferencingExts = [
       ], function(webConferencing, callButtons) {
         webConferencing.createChatContext(chat).then((context) => {
           callButtons.create(context, target).then((button) => {
-            // context.details().then(contex => console.log(contex, "context"));
             document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
-              webConferencing.createChatContext(chat, target).then((contextFromEvent) => {
-                  button.update(contextFromEvent);
+              webConferencing.createChatContext(chat, target).then((context) => {
+                  button.update(context);
                 });
             });
           });
@@ -64,7 +64,8 @@ const webconferencingExts = [
     // if it should be custom icon that isn't supported by vuetify iconClass instead of iconName should be used
     iconName: "callButton",
     // appClass is a class of container which consist of action button and WebConferencingCall component
-    appClass: "mini webсonferencingCallButton", // TODO seems here we should add a MINI-class?
+    appClass: "call-button",
+    typeClass: "call-button-mini call-button--chat-drawer",
     // component has property which will be passed to dynamic component inside parent
     // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
     component: {
@@ -84,8 +85,8 @@ const webconferencingExts = [
           webConferencing.createChatContext(chat).then((context) => {
             callButtons.create(context, target).then((button) => {
               document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
-                webConferencing.createChatContext(chat, target).then((contextFromEvent) => {
-                    button.update(contextFromEvent);
+                webConferencing.createChatContext(chat, target).then((context) => {
+                    button.update(context);
                   });
               });
             });
@@ -110,7 +111,8 @@ const webconferencingExts = [
     // if it should be custom icon that isn't supported by vuetify iconClass instead of iconName should be used
     iconName: "callButton",
     // appClass is a class of container which consist of action button and WebConferencingCall component
-    appClass: "webсonferencingCallButton",
+    appClass: "call-button",
+    typeClass: "call-button--space",
     // component has property which will be passed to dynamic component inside parent
     // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
     component: {
@@ -128,7 +130,7 @@ const webconferencingExts = [
         webConferencing.createSpaceContext(spaceId).then((context) => {
           
           callButtons.create(context, target).then((button) => {
-            button.update(context);  // don't need
+            //button.update(context);  // don't need
           });
         });
       });
@@ -146,7 +148,8 @@ const webconferencingExts = [
     key: "userProfilePopupCallButton",
     rank: 23,
     iconName: "callButton",
-    appClass: "popup webсonferencingCallButton",
+    appClass: "call-button",
+    typeClass: "call-button-mini call-button--tiptip",
     component: {
       name: "call-button",
       events: [],
@@ -182,7 +185,8 @@ const webconferencingExts = [
     key : "userProfileCallButton",
     rank : 24,
     iconName : "callButton",
-    appClass : "webсonferencingCallButton",
+    appClass : "call-button",
+    typeClass: "call-button--profile",
     component : {
       name : "call-button",
       events : [],
@@ -206,7 +210,7 @@ const webconferencingExts = [
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
-    enabled : false,
+    enabled : true,
   }
   /*
   // an example of the extension with DOM elements
