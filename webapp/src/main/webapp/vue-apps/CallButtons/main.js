@@ -56,6 +56,7 @@ export function create(context, target) {
             );
           },
         });
+        console.log(vmComp)
         resolve({
           store: localStore,
           update: function(context) {

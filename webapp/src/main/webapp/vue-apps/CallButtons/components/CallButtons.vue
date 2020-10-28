@@ -40,7 +40,11 @@ export default {
     store: {
       type: Object,
       required: true
-    }
+    },
+    st: {
+      type: Object,
+      required: true
+    },
   },
   data() {
     return {

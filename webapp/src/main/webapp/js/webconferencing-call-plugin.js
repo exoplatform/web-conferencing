@@ -32,12 +32,14 @@ const webconferencingExts = [
     },
     // init call button context in chat
     init: function(target, chat) {
+      const typeClass = this.typeClass
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
       ], function(webConferencing, callButtons) {
         webConferencing.createChatContext(chat).then((context) => {
-          callButtons.create(context, target).then((button) => {
+          callButtons.create(context, target, typeClass).then((button) => {
+            // context.details().then(contex => console.log(contex, "context"));
             document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
               webConferencing.createChatContext(chat, target).then((context) => {
                   button.update(context);
@@ -76,6 +78,7 @@ const webconferencingExts = [
     },
     // init call button context in mini chat
     init: function(target, chat) {
+      const typeClass = this.typeClass
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
@@ -83,7 +86,7 @@ const webconferencingExts = [
         if (!(eXo.env.portal.selectedNodeUri === "chat")) {
           // don't init in chat
           webConferencing.createChatContext(chat).then((context) => {
-            callButtons.create(context, target).then((button) => {
+            callButtons.create(context, target, typeClass).then((button) => {
               document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
                 webConferencing.createChatContext(chat, target).then((context) => {
                     button.update(context);
@@ -123,14 +126,15 @@ const webconferencingExts = [
     },
     // init call button context in space
     init: function(target, spaceId) {
+      const typeClass = this.typeClass
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
       ], function(webConferencing, callButtons) {
         webConferencing.createSpaceContext(spaceId).then((context) => {
           
-          callButtons.create(context, target).then((button) => {
-            //button.update(context);  // don't need
+          callButtons.create(context, target, typeClass).then((button) => {
+            button.update(context);  // don't need
           });
         });
       });
@@ -156,6 +160,7 @@ const webconferencingExts = [
     },
     // init call button context in user profile popup
     init: function(target, userId) {
+      const typeClass = this.typeClass
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
@@ -165,7 +170,7 @@ const webconferencingExts = [
           //something like userProfilePopupButton.destroy();
         }
         webConferencing.createUserContext(userId).then((context) => {
-          callButtons.create(context, target).then((button) => {
+          callButtons.create(context, target, typeClass).then((button) => {
             userProfilePopupButton = button;
             //button.update(context);  // don't need
           });
@@ -193,6 +198,7 @@ const webconferencingExts = [
     },
     // init call button context in user profile
     init : function (target, userId) {
+      const typeClass = this.typeClass
       require([
         "SHARED/webConferencing",
         "SHARED/webConferencingCallButton",
@@ -203,7 +209,7 @@ const webconferencingExts = [
         }
 
         webConferencing.createUserContext(userId).then((context) => {
-          callButtons.create(context, target).then((button) => {
+          callButtons.create(context, target, typeClass).then((button) => {
             userProfileButton = button;
           });
         });
