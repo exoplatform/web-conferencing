@@ -118,30 +118,31 @@ public class WebConferencingService implements Startable {
 
   /** The Constant SESSION_TOKEN_COOKIE. */
   public static final String    SESSION_TOKEN_COOKIE         = "webconf_session_token".intern();
-  
+
   /** The operation call added. */
-  public static String OPERATION_CALL_ADDED = "call-added";
-  
+  public static String          OPERATION_CALL_ADDED         = "call-added";
+
   /** The operation call started. */
-  public static String OPERATION_CALL_STARTED = "call-started";
-  
+  public static String          OPERATION_CALL_STARTED       = "call-started";
+
   /** The operation call joined. */
-  public static String OPERATION_CALL_JOINED = "call-joined";
-  
+  public static String          OPERATION_CALL_JOINED        = "call-joined";
+
   /** The operation call leaved. */
-  public static String OPERATION_CALL_LEAVED = "call-leaved";
-  
+  public static String          OPERATION_CALL_LEAVED        = "call-leaved";
+
   /** The operation call stopped. */
-  public static String OPERATION_CALL_STOPPED = "call-stopped";
-  
+  public static String          OPERATION_CALL_STOPPED       = "call-stopped";
+
   /** The operation call deleted. */
-  public static String OPERATION_CALL_DELETED = "call-deleted";
-  
+  public static String          OPERATION_CALL_DELETED       = "call-deleted";
+
   /** The operation call recorded. */
-  public static String OPERATION_CALL_RECORDED = "call-recorded";
-  
-  public static String STATUS_OK = "ok";
-  public static String STATUS_KO = "ko";
+  public static String          OPERATION_CALL_RECORDED      = "call-recorded";
+
+  public static String          STATUS_OK                    = "ok";
+
+  public static String          STATUS_KO                    = "ko";
 
   /** The Constant GROUP_CALL_TYPE. */
   protected static final String GROUP_CALL_TYPE              = "group".intern();
@@ -163,7 +164,7 @@ public class WebConferencingService implements Startable {
 
   /** The Constant SECRET_KEY. */
   protected static final String SECRET_KEY                   = "secret-key";
-  
+
   /**
    * Represent Space in calls.
    */
@@ -360,7 +361,7 @@ public class WebConferencingService implements Startable {
   public static boolean isValidData(String data) throws UnsupportedEncodingException {
     return data == null || (data.length() > 0 && data.getBytes("UTF8").length <= DATA_MAX_LENGTH);
   }
-  
+
   /**
    * Instantiates a new web conferencing service.
    *
@@ -590,7 +591,7 @@ public class WebConferencingService implements Startable {
                                                     CallSettingsException {
     final long opStart = System.currentTimeMillis();
     final String currentUserId = currentUserId();
-    
+
     if (isValidId(id)) {
       if (isValidId(ownerId)) {
         if (isNotNullArg(ownerType)) {
@@ -716,8 +717,15 @@ public class WebConferencingService implements Startable {
               }
 
               // Log metrics - call created
-              // service=notifications operation=send-push-notification parameters="user:thomas,token:xxxxxxxxxxxDLu-,type:android,pluginId:RelationshipReceivedRequestPlugin" status=ok duration_ms=298 
-              LOG.info(metricMessage(currentUserId, call, OPERATION_CALL_ADDED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+              // service=notifications operation=send-push-notification
+              // parameters="user:thomas,token:xxxxxxxxxxxDLu-,type:android,pluginId:RelationshipReceivedRequestPlugin" status=ok
+              // duration_ms=298
+              LOG.info(metricMessage(currentUserId,
+                                     call,
+                                     OPERATION_CALL_ADDED,
+                                     STATUS_OK,
+                                     System.currentTimeMillis() - opStart,
+                                     null));
 
               return call;
             } else {
@@ -852,10 +860,10 @@ public class WebConferencingService implements Startable {
         // TODO use current user from the request (Comet) not an one system
         String userId = currentUserId();
         startCall(call, userId, clientId);
-        
+
         // Log metrics - call started
         LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null));
-        
+
         return call;
       } catch (StorageException | ParticipantNotFoundException | CallSettingsException e) {
         throw new InvalidCallException("Error starting call: " + id, e);
@@ -877,9 +885,9 @@ public class WebConferencingService implements Startable {
    * @throws CallNotFoundException if call not found in storage
    */
   protected void startCall(CallInfo call, String partId, String clientId) throws ParticipantNotFoundException,
-                                                           CallSettingsException,
-                                                           StorageException,
-                                                           CallNotFoundException {
+                                                                          CallSettingsException,
+                                                                          StorageException,
+                                                                          CallNotFoundException {
     // TODO exception if user not a participant?
     String callId = call.getId();
 
@@ -888,6 +896,29 @@ public class WebConferencingService implements Startable {
 
     // On call start we mark all parts LEAVED and then each of them will join and be marked as JOINED in
     // joinCall()
+
+    // update participants
+    if (call.getOwner().isGroup()) {
+      Set<UserInfo> members = new HashSet<>(GroupInfo.class.cast(call.getOwner()).getMembers().values());
+      if (members.size() >= call.getParticipants().size()) {
+        members.removeAll(call.getParticipants());
+        for (UserInfo p : members) {
+          participantsStorage.create(createParticipantEntity(callId, p));
+        }
+        call.addParticipants(members);
+      } else {
+        Set<UserInfo> participants = new HashSet<>(call.getParticipants());
+        participants.removeAll(members);
+        call.removeParticipants(participants);
+        for (UserInfo part : participants) {
+          ParticipantEntity entity = participantsStorage.find(new ParticipantId(part.getId(), callId));
+          if (entity != null) {
+            participantsStorage.delete(entity);
+          }
+        }
+      }
+    }
+
     for (UserInfo part : call.getParticipants()) {
       if (UserInfo.TYPE_NAME.equals(part.getType()) && partId.equals(part.getId())) {
         part.setState(UserState.JOINED);
@@ -1042,13 +1073,23 @@ public class WebConferencingService implements Startable {
                 // Stop when all group members leave the call
                 stopCall(call, partId, false);
                 // Log metrics - call stopped
-                LOG.info(metricMessage(partId, call, OPERATION_CALL_STOPPED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+                LOG.info(metricMessage(partId,
+                                       call,
+                                       OPERATION_CALL_STOPPED,
+                                       STATUS_OK,
+                                       System.currentTimeMillis() - opStart,
+                                       null));
               }
             } else if (call.getParticipants().size() - leavedNum <= 1) {
               // For P2P we remove the call when one of parts stand alone
               stopCall(call, partId, true);
               // Log metrics - call deleted
-              LOG.info(metricMessage(partId, call, OPERATION_CALL_DELETED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+              LOG.info(metricMessage(partId,
+                                     call,
+                                     OPERATION_CALL_DELETED,
+                                     STATUS_OK,
+                                     System.currentTimeMillis() - opStart,
+                                     null));
             }
           } // else, if no one leaved, we don't need any action (it may be leaved an user of already stopped
             // call, see comments above)
@@ -1330,7 +1371,7 @@ public class WebConferencingService implements Startable {
    */
   public void uploadFile(UploadFileInfo uploadInfo, HttpServletRequest request) throws UploadFileException, RepositoryException {
 
-    //final long opStart = System.currentTimeMillis();
+    // final long opStart = System.currentTimeMillis();
     String uploadId = String.valueOf((long) (Math.random() * 100000L));
     try {
       uploadService.createUploadResource(uploadId, request);
@@ -1350,7 +1391,7 @@ public class WebConferencingService implements Startable {
       saveFile(rootNode, resource, uploadInfo.getUser());
       uploadService.removeUploadResource(uploadId); // TODO should this be in try-finally for a cleanup in case of saving failure?
       // TODO Log metrics - call recording uploaded
-      //LOG.info(metricMessage(userId, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+      // LOG.info(metricMessage(userId, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null));
     } else {
       uploadService.removeUploadResource(uploadId);
       throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: "
@@ -2261,7 +2302,7 @@ public class WebConferencingService implements Startable {
       LOG.warn("Error reading call by ID: " + id, e);
     }
   }
-  
+
   /**
    * Metric message for reporting to the stats logger.
    *

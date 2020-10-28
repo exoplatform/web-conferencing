@@ -145,4 +145,47 @@ public abstract class IdentityInfo {
    */
   public abstract String getType();
 
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((avatarLink == null) ? 0 : avatarLink.hashCode());
+    result = prime * result + ((id == null) ? 0 : id.hashCode());
+    result = prime * result + ((profileLink == null) ? 0 : profileLink.hashCode());
+    result = prime * result + ((title == null) ? 0 : title.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    IdentityInfo other = (IdentityInfo) obj;
+    if (avatarLink == null) {
+      if (other.avatarLink != null)
+        return false;
+    } else if (!avatarLink.equals(other.avatarLink))
+      return false;
+    if (id == null) {
+      if (other.id != null)
+        return false;
+    } else if (!id.equals(other.id))
+      return false;
+    if (profileLink == null) {
+      if (other.profileLink != null)
+        return false;
+    } else if (!profileLink.equals(other.profileLink))
+      return false;
+    if (title == null) {
+      if (other.title != null)
+        return false;
+    } else if (!title.equals(other.title))
+      return false;
+    return true;
+  }
+  
 }

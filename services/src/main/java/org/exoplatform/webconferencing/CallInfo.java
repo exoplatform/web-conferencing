@@ -135,6 +135,26 @@ public class CallInfo {
   }
 
   /**
+   * Removes the participants.
+   *
+   * @param parts the parts
+   */
+  public void removeParticipants(Collection<UserInfo> parts) {
+    for (UserInfo part : parts) {
+      removeParticipant(part);
+    }
+  }
+  
+  /**
+   * Removes the participant.
+   *
+   * @param part the part
+   */
+  public void removeParticipant(UserInfo part) {
+    participants.remove(part);
+  }
+
+  /**
    * Gets the state.
    *
    * @return the state
