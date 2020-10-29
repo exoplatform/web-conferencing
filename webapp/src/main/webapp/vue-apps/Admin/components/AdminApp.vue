@@ -107,7 +107,7 @@ export default {
   },
   created() {
     this.getProviders();
-    console.log(webConferencing);
+    console.log(this.i18n, this.$t);
   },
   methods: {
     async getProviders() {

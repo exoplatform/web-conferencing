@@ -4,9 +4,6 @@
       <i class="uiIconSocPhone uiIconSocBlue"></i>
       {{ header.placeholder }}
     </div>
-    <v-divider 
-      :style="header.divider"
-      vertical />
     <i class="uiIconArrowDown"></i>
   </div>
 </template>
@@ -27,20 +24,6 @@ export default {
       type: Function,
       required: true
     }
-  },
-  computed: {
-    divider() {
-      return {
-        display: "inline-flex"
-      };
-      /*!store.state.mini
-        ? {
-            display: "inline-flex"
-          }
-        : {
-            display: "none"
-          };*/
-    }
   }
 };
 </script>
@@ -56,6 +39,7 @@ export default {
     border: 1px solid rgb(232, 238, 242);
     border-radius: 3px;
     width: 100%;
+    min-height: 36px;
     .dropdown-heading {
       flex: 3;
       text-align: center;
@@ -67,9 +51,6 @@ export default {
   }
   hr {
     margin: 0;
-  }
-  .v-divider--vertical {
-    min-height: 36px;
   }
 }
 .call-button-mini {

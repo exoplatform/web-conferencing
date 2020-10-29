@@ -32,9 +32,6 @@ export function create(context, target) {
           initButton(state, payload) {
             Vue.set(state, "callContext", payload.context);
           },
-          toggleMini(state) {
-            Vue.set(state, "mini", true)
-          }
         }
       });
 

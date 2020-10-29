@@ -40,11 +40,7 @@ export default {
     store: {
       type: Object,
       required: true
-    },
-    st: {
-      type: Object,
-      required: true
-    },
+    }
   },
   data() {
     return {
@@ -62,12 +58,11 @@ export default {
       }
     },
     header() {
-      // return this.store.state.mini ? "" : "Start Call"
       const parentClass = Object.values(this.$refs.callbutton.parentElement.classList).join("");
       const condition = parentClass.includes("mini") || parentClass.includes("popup");
-      return condition ? {placeholder: "", divider: {display: "none"}} : {placeholder: this.i18n.te("webconferencing.callHeader")
-        ? this.$t("webconferencing.callHeader")
-      : "Start Call" , divider: {display: "inline-flex"}}
+      return condition ? {placeholder: ""} : {placeholder: this.i18n.te("webconferencing.callHeader")
+        ? this.i18n.t("webconferencing.callHeader")
+      : "Start Call"}
     },
   },
   watch: {
@@ -113,12 +108,6 @@ export default {
     createButtons() {
       let ref;
       let vm = null;
-      // const classList = Object.values(this.$refs.callbutton.classList);
-      const parentClass = Object.values(this.$refs.callbutton.parentElement.classList).join("");
-      const condition = parentClass.includes("mini") || parentClass.includes("popup");
-      if (condition) {
-       this.store.commit("toggleMini");
-      }
       for (const [index, pb] of this.providersButton.entries()) {
         if (this.providersButton.length > 1) {
           //add buttons to dropdown component
@@ -227,28 +216,6 @@ export default {
         margin-right: 4px;
       }
     }
-    // .room-action-menu {
-    //   .room-action-component {
-    //     .webConferencingCallButtonAction {
-    //       // .call-button-container.single:hover,
-    //       // [class^="call-button-container-"]:hover,
-    //       // a:hover,
-    //       // button:hover {
-    //       //   i {
-    //       //     color: white;
-    //       //   }
-    //       //   span {
-    //       //     color: white;
-    //       //   }
-    //       // }
-    //       // button {
-    //       //   .v-btn__content {
-    //       //     letter-spacing: 0.1px;
-    //       //   }
-    //       // }
-    //     }
-    //   }
-    // }
   }
 }
 .call-button-mini {
