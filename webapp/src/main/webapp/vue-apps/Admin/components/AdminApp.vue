@@ -107,7 +107,6 @@ export default {
   },
   created() {
     this.getProviders();
-    console.log(this.i18n, this.$t);
   },
   methods: {
     async getProviders() {
