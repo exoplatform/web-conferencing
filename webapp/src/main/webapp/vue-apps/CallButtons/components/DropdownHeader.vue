@@ -13,7 +13,6 @@
 </template>
 
 <script>
-import { store } from "../main.js";
 
 export default {
   props: {
@@ -32,13 +31,16 @@ export default {
   },
   computed: {
     divider() {
-      return !store.state.mini
+      return {
+        display: "inline-flex"
+      };
+      /*!store.state.mini
         ? {
             display: "inline-flex"
           }
         : {
             display: "none"
-          };
+          };*/
     }
   }
 };

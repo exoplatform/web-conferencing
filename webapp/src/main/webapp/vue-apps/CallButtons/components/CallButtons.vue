@@ -1,10 +1,10 @@
 <template>
-  <div ref="callbutton" :class="['call-button-container', location]">
+  <div ref="callbutton" :class="['call-button-container']">
     <dropdown
       v-if="providersButton.length > 1"
       :providersbutton="providersButton"
       :isopen="isOpen"
-      :placeholder="placeholder"
+      :placeholder="getPlaceholder()"
       @updated="createButtons"
       @getRefs="getRef($event)"
       @openDropdown="openDropdown($event)" />
@@ -15,8 +15,6 @@
 </template>
 
 <script>
-import { store } from "../main.js";
-import { mapState } from "vuex";
 import dropdown from "./Dropdown.vue";
 import singlebtn from "./SingleButton.vue";
 
@@ -25,7 +23,6 @@ export default {
   components: {
     dropdown,
     singlebtn
-    // dropdown: function() {import("./Dropdown.vue")}
   },
   props: {
     i18n: {
@@ -40,8 +37,8 @@ export default {
       type: String,
       required: true
     }, 
-    location: {
-      type: String,
+    store: {
+      type: Object,
       required: true
     }
   },
@@ -51,55 +48,27 @@ export default {
       error: null,
       isOpen: false,
       childRef: null,
+      initFinished: true
     };
   },
   computed: {
-  //   ...mapState({
-  //   callContext(state) {return state.callContext[this.loc]},
-  //   placeholder: state => {return state.mini ? "" : "Start call"}
-  // })
     callContext() {
-      return store.state.callContext[this.location];
+      if (this.store) {
+        return this.store.state.callContext;
+      }
     },
-    placeholder() {
-      return store.state.mini ? "" : "Start call"
-    },
-  }
-  ,
+  },
   watch: {
     callContext(newContext, oldContext) {
-      // console.log(newContext, oldContext, "NEW OLD");
-      // if (JSON.stringify(newContext) !== JSON.stringify(oldContext)) {
-        this.providersButton = [];
+      if (this.initFinished) {
+        this.initFinished = false;
+        this.providersButton.splice(0);
         this.$refs.callbutton.classList.remove("single");
         this.setProvidersButtons(newContext);
-      // }
+      }
     }
   },
-  // computed: {
-  //   dropdown() {
-  //     return () => import("./Dropdown.vue");
-  //   }
-  // },
-  created() {
-    // console.log(this.callContext, "THIS created")
-    this.setProvidersButtons(this.callContext);
-  },
   methods: {
-    // async initProvidersButton__donotuse() {
-    //   // TODO do we needit actually? it is not reusable
-    //   const thevue = this;
-    //   await Promise.all(
-    //     thevue.providers.map(async p => {
-    //       // TODO async here???!
-    //       if (await p.isInitialized) {
-    //         // TODO await for boolean property??
-    //         const callButton = await p.callButton(this.callContext, "vue");
-    //         this.providersButton.push(callButton);
-    //       }
-    //     })
-    //   );
-    // },
     setProvidersButtons(context) {
       this.isOpen = false;
       const thevue = this;
@@ -121,9 +90,12 @@ export default {
               thevue.createButtons();
             });
           });
+        } else {
+          this.initFinished = true;
         }
       } catch (err) {
         log.error("Error building call buttons", err);
+        this.initFinished = true;
       }
     },
     createButtons() {
@@ -132,12 +104,12 @@ export default {
       // const classList = Object.values(this.$refs.callbutton.classList);
       const parentClass = Object.values(this.$refs.callbutton.parentElement.classList);
       // if (parentClass.indexOf("mini") !== -1) {
-         const condition = parentClass.indexOf("mini") !== -1 || parentClass.indexOf("popup") !== -1;
-        store.commit("toggleMini", condition);
+         //const condition = parentClass.indexOf("mini") !== -1 || parentClass.indexOf("popup") !== -1;
+       // store.commit("toggleMini", condition);
       // }
       for (const [index, pb] of this.providersButton.entries()) {
         if (this.providersButton.length > 1) {
-          //add buttons to dropdown coomponent
+          //add buttons to dropdown component
           if (this.isOpen) {
             ref = this.childRef.callbutton[index];
             // add vue button
@@ -164,13 +136,17 @@ export default {
           }
         }
       }
+      this.initFinished = true;
     },
     openDropdown() {
       this.isOpen = !this.isOpen;
     },
     getRef(ref) {
-      // console.log(ref);
       this.childRef = ref;
+    },
+    getPlaceholder() {
+      // TO Do check the element class
+      return "Start call";
     }
   }
 };
