@@ -893,6 +893,7 @@ public class WebConferencingService implements Startable {
 
     // We save call in a single tx, thus logic split on gathering the changes and saving them at the end
     call.setState(CallState.STARTED);
+    call.setLastDate(Calendar.getInstance().getTime());
 
     // On call start we mark all parts LEAVED and then each of them will join and be marked as JOINED in
     // joinCall()
@@ -2336,8 +2337,10 @@ public class WebConferencingService implements Startable {
     res.append(", state:").append(call.getState());
     res.append(", participantsCount:").append(call.getParticipants().size());
     if (call.getLastDate() != null) {
-      long callDuration = Math.round((System.currentTimeMillis() - call.getLastDate().getTime()) / 1000);
-      res.append(", callDuration_sec:").append(callDuration);
+      long callDurationSec = Math.round((System.currentTimeMillis() - call.getLastDate().getTime()) / 1000);
+      res.append(", callDuration_sec:").append(callDurationSec);
+      long callDurationMin = Math.round(callDurationSec / 60);
+      res.append(", callDuration_min:").append(callDurationMin);
     }
     res.append("\"");
     if (error != null && error.length() > 0) {
