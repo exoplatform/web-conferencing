@@ -205,11 +205,6 @@ export default {
       font-size: 12px;
     }
   }
-  //a,
-  //a:hover,
-  //a:focus {
-    //color: unset;
-  //}
   .single:hover,
   [class^="call-button-container-"]:hover,
   button:hover {
