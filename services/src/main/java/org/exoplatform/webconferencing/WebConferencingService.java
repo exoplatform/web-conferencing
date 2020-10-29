@@ -907,7 +907,9 @@ public class WebConferencingService implements Startable {
           participantsStorage.create(createParticipantEntity(callId, p));
         }
         call.addParticipants(members);
-      } else {
+      } 
+      /* TODO: fix removing for chat rooms
+       * else {
         Set<UserInfo> participants = new HashSet<>(call.getParticipants());
         participants.removeAll(members);
         call.removeParticipants(participants);
@@ -917,7 +919,7 @@ public class WebConferencingService implements Startable {
             participantsStorage.delete(entity);
           }
         }
-      }
+      }*/
     }
 
     for (UserInfo part : call.getParticipants()) {
