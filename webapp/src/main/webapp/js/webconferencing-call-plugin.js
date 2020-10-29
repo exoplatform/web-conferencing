@@ -178,7 +178,7 @@ const webconferencingExts = [
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
-    enabled: true,
+    enabled: false,
   },
   {
     target : "profile-header",

@@ -1685,7 +1685,7 @@
 			});
 
 			// single user profile;
-			var $userProfileMenu = $(".uiProfileMenu:first");
+			/*var $userProfileMenu = $(".uiProfileMenu:first");
 			var userId = eXo.env.portal.profileOwner;
 
 			var $userActions = $userProfileMenu.find(".profileMenuApps");
@@ -1715,7 +1715,7 @@
             document.dispatchEvent(new CustomEvent('profile-extension-updated', { detail: profileExtensionAction}));
           }
         });
-      });
+      });*/
 		};
 
 		var spaceContext = function(spaceId) {
@@ -1817,8 +1817,8 @@
 				initUsers();
 				initSpacePopups();
 				//initSpace();
-				initChat();
-				initMiniChat();
+				//initChat();
+				//initMiniChat();
 			}
 		};
 
