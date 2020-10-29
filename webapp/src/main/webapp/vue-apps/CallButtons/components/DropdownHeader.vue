@@ -2,11 +2,10 @@
   <div class="dropdown-header" @click="opendropdowncomponent(); passrefs()">
     <div class="dropdown-heading">
       <i class="uiIconSocPhone uiIconSocBlue"></i>
-      {{ placeholder }}
+      {{ header.placeholder }}
     </div>
     <v-divider 
-      :style="divider"
-      class="mx-4" 
+      :style="header.divider"
       vertical />
     <i class="uiIconArrowDown"></i>
   </div>
@@ -16,8 +15,8 @@
 
 export default {
   props: {
-    placeholder: {
-      type: String,
+    header: {
+      type: Object,
       required: true
     },
     opendropdowncomponent: {
@@ -49,6 +48,7 @@ export default {
 <style scoped lang="less">
 
 .VuetifyApp {
+  
   .dropdown-header {
     display: inline-flex;
     align-items: center;
@@ -72,7 +72,7 @@ export default {
     min-height: 36px;
   }
 }
-.mini {
+.call-button-mini {
   .dropdown-header {
     border: none;
     background: transparent;

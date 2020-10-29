@@ -1,7 +1,7 @@
 <template>
   <div id="dropdown-vue">
     <dropdown-header
-      :placeholder="placeholder"
+      :header="header"
       :opendropdowncomponent="openDropdownComponent"
       :passrefs="passRefs"/>
     <div v-if="isopen" class="buttons-container">
@@ -31,7 +31,7 @@ export default {
       type: Boolean,
       required: true
     },
-    placeholder: {
+    header: {
       type: String,
       required: true
     }

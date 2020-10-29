@@ -4,7 +4,7 @@
       v-if="providersButton.length > 1"
       :providersbutton="providersButton"
       :isopen="isOpen"
-      :placeholder="getPlaceholder()"
+      :header="header"
       @updated="createButtons"
       @getRefs="getRef($event)"
       @openDropdown="openDropdown($event)" />
@@ -61,6 +61,14 @@ export default {
         return this.store.state.callContext;
       }
     },
+    header() {
+      // return this.store.state.mini ? "" : "Start Call"
+      const parentClass = Object.values(this.$refs.callbutton.parentElement.classList).join("");
+      const condition = parentClass.includes("mini") || parentClass.includes("popup");
+      return condition ? {placeholder: "", divider: {display: "none"}} : {placeholder: this.i18n.te("webconferencing.callHeader")
+        ? this.$t("webconferencing.callHeader")
+      : "Start Call" , divider: {display: "inline-flex"}}
+    },
   },
   watch: {
     callContext(newContext, oldContext) {
@@ -106,11 +114,11 @@ export default {
       let ref;
       let vm = null;
       // const classList = Object.values(this.$refs.callbutton.classList);
-      const parentClass = Object.values(this.$refs.callbutton.parentElement.classList);
-      // if (parentClass.indexOf("mini") !== -1) {
-         //const condition = parentClass.indexOf("mini") !== -1 || parentClass.indexOf("popup") !== -1;
-       // store.commit("toggleMini", condition);
-      // }
+      const parentClass = Object.values(this.$refs.callbutton.parentElement.classList).join("");
+      const condition = parentClass.includes("mini") || parentClass.includes("popup");
+      if (condition) {
+       this.store.commit("toggleMini");
+      }
       for (const [index, pb] of this.providersButton.entries()) {
         if (this.providersButton.length > 1) {
           //add buttons to dropdown component
@@ -147,13 +155,9 @@ export default {
     },
     getRef(ref) {
       this.childRef = ref;
-    },
-    getPlaceholder() {
-      // TO Do check the element class
-      return "Start call";
     }
   }
-};
+  }
 </script>
 
 <style lang="less">
@@ -186,6 +190,11 @@ export default {
         color: white;
       }
     }
+    a,
+    a:hover,
+    a:focus {
+      color: unset;
+    }
     cursor: pointer !important;
     position: absolute;
     z-index: 100;
@@ -196,11 +205,11 @@ export default {
       font-size: 12px;
     }
   }
-  a,
-  a:hover,
-  a:focus {
-    color: unset;
-  }
+  //a,
+  //a:hover,
+  //a:focus {
+    //color: unset;
+  //}
   .single:hover,
   [class^="call-button-container-"]:hover,
   button:hover {
@@ -247,12 +256,34 @@ export default {
     // }
   }
 }
-.mini {
+.call-button-mini {
   .call-button-container {
     right: 100px;
     left: unset;
     top: 12px;
     width: unset;
+  }
+}
+.call-button--profile {
+      width: 120px;
+      height: 36px;
+      position: relative;
+    .call-button-container {
+      left: -129px;
+      top: -38px;
+    }
+}
+.space-action-menu {
+    width: 86px;
+    height: 36px;
+    position: relative;
+  .call-button.call-button--space {
+    .call-button-container {
+      &.single{
+        top: 14px;
+        left: -100px;
+      }
+    }
   }
 }
 </style>
