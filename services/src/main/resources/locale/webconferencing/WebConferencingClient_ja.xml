@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>OK</ok>
     <cancel>キャンセル</cancel>
-    
+    <callHeader>Start Call</callHeader>
     <notConfigured>未設定</notConfigured>
     <errorReference>エラーの参照:</errorReference>
   </webconferencing>

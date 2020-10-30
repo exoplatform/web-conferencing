@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>Гаразд</ok>
     <cancel>Скасувати</cancel>
-    
+    <callHeader>Start Call</callHeader>
     <notConfigured>не налаштовано</notConfigured>
     <errorReference>Посилання на помилку:</errorReference>
   </webconferencing>

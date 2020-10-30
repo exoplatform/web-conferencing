@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>OK</ok>
     <cancel>Kanselahin</cancel>
-    
+    <callHeader>Start Call</callHeader>
     <notConfigured>hindi nai-configure</notConfigured>
     <errorReference>Ang referensya ng error:</errorReference>
   </webconferencing>

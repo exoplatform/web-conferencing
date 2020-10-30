@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>Oke</ok>
     <cancel>Membatalkan</cancel>
-    
+    <callHeader>Start Call</callHeader>
     <notConfigured>tidak di konfigurasi</notConfigured>
     <errorReference>Referensi kesalahan:</errorReference>
   </webconferencing>

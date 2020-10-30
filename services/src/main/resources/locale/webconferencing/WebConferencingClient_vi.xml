@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>Đồng ý</ok>
     <cancel>Hủy bỏ</cancel>
-    
+    <callHeader>Start Call</callHeader>
     <notConfigured>not configured</notConfigured>
     <errorReference>Error reference:</errorReference>
   </webconferencing>

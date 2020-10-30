@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>Accepta</ok>
     <cancel>Cancel·la</cancel>
-    
+    <callHeader>Start Call</callHeader>
     <notConfigured>no configurat</notConfigured>
     <errorReference>Referència de l'error:</errorReference>
   </webconferencing>

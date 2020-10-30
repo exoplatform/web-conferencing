@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>Gerai</ok>
     <cancel>Atšaukti</cancel>
-    
+    <callHeader>Start Call</callHeader>
     <notConfigured>not configured</notConfigured>
     <errorReference>Error reference:</errorReference>
   </webconferencing>

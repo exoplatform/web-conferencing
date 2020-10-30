@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>تایید</ok>
     <cancel>انصراف</cancel>
-    
+    <callHeader>Start Call</callHeader>
     <notConfigured>not configured</notConfigured>
     <errorReference>Error reference:</errorReference>
   </webconferencing>

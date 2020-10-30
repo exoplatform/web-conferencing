@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>OK</ok>
     <cancel>Zrušit</cancel>
-    
+    <callHeader>Start Call</callHeader>
     <notConfigured>nenastaveno</notConfigured>
     <errorReference>Odkaz na chybu:</errorReference>
   </webconferencing>

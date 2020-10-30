@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>OK</ok>
     <cancel>Anuluj</cancel>
-    
+    <callHeader>Start Call</callHeader>
     <notConfigured>nieskonfigurowany</notConfigured>
     <errorReference>Błąd odwołania:</errorReference>
   </webconferencing>

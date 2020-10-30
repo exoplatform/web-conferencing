@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>OK</ok>
     <cancel>Dili dayunon</cancel>
-    
+    <callHeader>Start Call</callHeader>
     <notConfigured>wala giconfigure</notConfigured>
     <errorReference>Ang error sa reperensiya:</errorReference>
   </webconferencing>
