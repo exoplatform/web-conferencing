@@ -1,13 +1,14 @@
 <template>
   <div ref="callbutton" :class="['call-button-container']">
     <dropdown
+      v-click-outside="hideDropdown"
       v-if="providersButton.length > 1"
       :providersbutton="providersButton"
       :isopen="isOpen"
       :header="header"
       @updated="createButtons"
       @getRefs="getRef($event)"
-      @openDropdown="openDropdown($event)" />
+      @showDropdown="showDropdown($event)" />
     <singlebtn 
       v-else 
       :providersbutton="providersButton" />
@@ -25,10 +26,6 @@ export default {
     singlebtn
   },
   props: {
-    i18n: {
-      type: Object,
-      required: true
-    },
     language: {
       type: String,
       required: true
@@ -60,8 +57,8 @@ export default {
     header() {
       const parentClass = Object.values(this.$refs.callbutton.parentElement.classList).join("");
       const condition = parentClass.includes("mini") || parentClass.includes("popup");
-      return condition ? {placeholder: ""} : {placeholder: this.i18n.te("webconferencing.callHeader")
-        ? this.i18n.t("webconferencing.callHeader")
+      return condition ? {placeholder: ""} : {placeholder: this.$i18n.te("webconferencing.callHeader")
+        ? this.$i18n.t("webconferencing.callHeader")
       : "Start Call"}
     },
   },
@@ -139,13 +136,16 @@ export default {
       }
       this.initFinished = true;
     },
-    openDropdown() {
+    showDropdown() {
       this.isOpen = !this.isOpen;
+    },
+    hideDropdown() {
+      this.isOpen = false;
     },
     getRef(ref) {
       this.childRef = ref;
     }
-  }
+  },
   }
 </script>
 
@@ -161,7 +161,7 @@ export default {
     &.single {
       width: @width - 14px;
       height: 36px;
-      left: @width + 60px;
+      left: 0px;
       border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
       padding: 0 5px;
@@ -185,10 +185,11 @@ export default {
       color: unset;
     }
     cursor: pointer !important;
-    position: absolute;
+    position: relative;
     z-index: 100;
-    left: @width + 40px;
-    top: 2px;
+    left: 0;
+    top: 0;
+    min-height: 36px;
     width: @width + 20px;
     [class^="uiIcon"] {
       font-size: 12px;
@@ -220,9 +221,8 @@ export default {
 }
 .call-button-mini {
   .call-button-container {
-    right: 100px;
-    left: unset;
-    top: 12px;
+    left: -19px;
+    top: 0;
     width: unset;
   }
 }
@@ -238,7 +238,7 @@ export default {
 .space-action-menu {
     width: 86px;
     height: 36px;
-    position: relative;
+    position: absolute;
   .call-button.call-button--space {
     .call-button-container {
       &.single{
@@ -247,5 +247,9 @@ export default {
       }
     }
   }
+}
+#UIProfileHeaderContainer {
+  position: relative;
+  z-index: 100;
 }
 </style>

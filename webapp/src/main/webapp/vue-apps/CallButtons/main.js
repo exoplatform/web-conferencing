@@ -1,4 +1,4 @@
-Vue.config.devtools = true
+Vue.config.devtools = true;
 
 import callButtons from "./components/CallButtons.vue";
 
@@ -12,6 +12,20 @@ const vuetify = new Vuetify({
 });
 
 const comp = Vue.component("call-button", callButtons);
+Vue.directive("click-outside", {
+  priority: 700,
+  bind: function(el, binding, vnode) {
+    el.clickOutside = function(e) {
+      if(!(el === e.target || el.contains(e.target))) {
+        vnode.context[binding.expression](e);
+      }
+    }
+    document.body.addEventListener("click", el.clickOutside);
+  },
+  unbind: function(el) {
+    document.body.removeEventListener("click", el.clickOutside);
+  },
+});
 
 // getting language of user
 const lang =
@@ -38,6 +52,8 @@ export function create(context, target) {
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
         const vmComp = new Vue({
           el: target,
+          i18n,
+          vuetify,
           mounted() {
             localStore.commit("initButton", {context});
           },
@@ -46,14 +62,12 @@ export function create(context, target) {
               callButtons,
               {
                 props: {
-                  i18n,
                   language: lang,
                   resourceBundleName,
                   store: localStore
                 },
-              },
-              vuetify
-            );
+              }
+            )
           },
         });
         resolve({

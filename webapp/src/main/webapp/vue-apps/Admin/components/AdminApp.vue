@@ -110,16 +110,13 @@ export default {
   },
   methods: {
     async getProviders() {
-      console.log(webConferencing, "webconf");
       // services object contains urls for requests
       try {
         // const data = await getData(this.services.providers);
         const response = await webConferencing.getProvidersConfig();
-        console.log(response, "response");
         const data = webConferencing.getProvidersConfig().done(response);
         this.error = null;
         this.providers = await response;
-        console.log(this.providers, "providers");
         // const resourcesPromises = this.providers.map(({ provider }) => this.getProviderResources(provider));
         // Promise.all(resourcesPromises).then(res => {
         //   res.map(localized => {
@@ -138,7 +135,6 @@ export default {
       // getting rest for updating provider status
       try {
         const data = await webConferencing.postProviderConfig(provider.type, provider.active)
-        console.log(provider.active, "checked", provider.title);
         this.error = null;
       } catch (err) {
         this.error = err.message;

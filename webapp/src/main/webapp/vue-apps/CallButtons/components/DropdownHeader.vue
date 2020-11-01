@@ -1,5 +1,5 @@
 <template>
-  <div class="dropdown-header" @click="opendropdowncomponent(); passrefs()">
+  <div class="dropdown-header" @click="showdropdowncomponent(); passrefs()">
     <div class="dropdown-heading">
       <i class="uiIconSocPhone uiIconSocBlue"></i>
       {{ header.placeholder }}
@@ -16,7 +16,7 @@ export default {
       type: Object,
       required: true
     },
-    opendropdowncomponent: {
+    showdropdowncomponent: {
       type: Function,
       required: true
     },

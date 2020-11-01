@@ -2,7 +2,7 @@
   <div id="dropdown-vue">
     <dropdown-header
       :header="header"
-      :opendropdowncomponent="openDropdownComponent"
+      :showdropdowncomponent="showDropdownComponent"
       :passrefs="passRefs"/>
     <div v-if="isopen" class="buttons-container">
       <!-- TODO why we need IDs for them?? a class will not work? -->
@@ -40,8 +40,8 @@ export default {
     this.$emit("updated")
   },
   methods: {
-    openDropdownComponent(isOpen) {
-      this.$emit("openDropdown", isOpen);
+    showDropdownComponent(isOpen) {
+      this.$emit("showDropdown", isOpen);
     },
     passRefs() {
       this.$emit("getRefs", this.$refs);
@@ -60,6 +60,9 @@ export default {
   margin-top: 3px;
   width: @width + 30px;
   box-shadow: @defaultShadow;
+  position: absolute;
+  top: 38px;
+  left: 0;
   [class^="call-button-container-"] {
     padding: 0 10px;
     height: 36px;
