@@ -21,6 +21,7 @@ import singlebtn from "./SingleButton.vue";
 
 const log = webConferencing.getLog("webconferencing-call-buttons");
 export default {
+  name: "CallButtons",
   components: {
     dropdown,
     singlebtn
@@ -34,10 +35,22 @@ export default {
       type: String,
       required: true
     }, 
-    store: {
+    // store: {
+    //   type: Object,
+    //   required: true
+    // },
+
+
+    callCntext: {
       type: Object,
       required: true
-    }
+    },
+    // providersButton: {
+    //   type: Array,
+    //   required: true
+    // }
+
+
   },
   data() {
     return {
@@ -49,11 +62,12 @@ export default {
     };
   },
   computed: {
-    callContext() {
-      if (this.store) {
-        return this.store.state.callContext;
-      }
-    },
+    // callContext() {
+    //   console.log(this, "THIS IN COMPONENT")
+    //   // if (this) {
+    //     return this.callCntext;
+    //   // }
+    // },
     header() {
       const parentClass = Object.values(this.$refs.callbutton.parentElement.classList).join("");
       const condition = parentClass.includes("mini") || parentClass.includes("popup");
@@ -63,17 +77,30 @@ export default {
     },
   },
   watch: {
-    callContext(newContext, oldContext) {
-      if (this.initFinished) {
-        this.initFinished = false;
-        this.providersButton.splice(0);
-        this.$refs.callbutton.classList.remove("single");
+    callCntext(newContext, oldContext) {
+      // if (this.initFinished && newContext.roomId !== oldContext.roomId) {
+      //  console.log("INSIDE WATCH", newContext, oldContext)
+        // this.initFinished = false;
+        // this.providersButton.splice(0);
+        // this.$refs.callbutton.classList.remove("single");
         this.setProvidersButtons(newContext);
-      }
-    }
+      // }
+    },
+    // callCntext
+  },
+  // created() {
+  //   console.log("CREATED COMPONENT");
+  //   this.setProvidersButtons(this.callCntext);
+  // },
+  mounted() {
+    console.log("MOUNTED COMPONENT");
   },
   methods: {
     setProvidersButtons(context) {
+      this.initFinished = false;
+      this.providersButton.splice(0);
+      this.$refs.callbutton.classList.remove("single");
+      console.log("IN setProvidersButtons")
       this.isOpen = false;
       const thevue = this;
       try {

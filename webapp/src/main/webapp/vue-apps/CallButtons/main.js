@@ -1,9 +1,9 @@
 Vue.config.devtools = true;
 
-import callButtons from "./components/CallButtons.vue";
+import CallButtons from "./components/CallButtons.vue";
 
-import Vuex from "vuex";
-Vue.use(Vuex);
+// import Vuex from "vuex";
+// Vue.use(Vuex);
 Vue.use(Vuetify);
 
 const vuetify = new Vuetify({
@@ -11,7 +11,8 @@ const vuetify = new Vuetify({
   iconfont: "",
 });
 
-const comp = Vue.component("call-button", callButtons);
+//const comp = Vue.component("call-button", CallButtons);
+
 Vue.directive("click-outside", {
   priority: 700,
   bind: function(el, binding, vnode) {
@@ -28,8 +29,7 @@ Vue.directive("click-outside", {
 });
 
 // getting language of user
-const lang =
-  (eXo && eXo.env && eXo.env.portal && eXo.env.portal.language) || "en";
+const lang = (eXo && eXo.env && eXo.env.portal && eXo.env.portal.language) || "en";
 const localePortlet = "locale.webconferencing";
 const resourceBundleName = "WebConferencingClient";
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
@@ -38,42 +38,71 @@ const log = webConferencing.getLog("webconferencing-call-buttons");
 export function create(context, target) {
   const result = new Promise((resolve, reject) => {
     if (target) {
-      const localStore = new Vuex.Store({
-        state: {
-          callContext: {},
-        },
-        mutations: {
-          initButton(state, payload) {
-            Vue.set(state, "callContext", payload.context);
-          },
-        }
-      });
+      // const localStore = new Vuex.Store({
+      //   state: {
+      //     callContext: {},
+      //   },
+      //   mutations: {
+      //     initButton(state, payload) {
+      //       Vue.set(state, "callContext", payload.context);
+      //     },
+      //   }
+      // });
 
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
         const vmComp = new Vue({
           el: target,
-          i18n,
-          vuetify,
-          mounted() {
-            localStore.commit("initButton", {context});
+          components: {
+            "CallButtons" : CallButtons
           },
+          data() {
+            return {
+              // store: localStore,
+              language: lang,
+              resourceBundleName,
+              callCntext: {}
+            }
+          },
+          created() {
+            this.getCallContext(context, this)
+            // console.log("CREATED MAIN")
+          },
+          // eslint-disable-next-line quotes
+          mounted() {
+            // console.log(this.store, "STORE")
+            this.getCallContext(context, this)
+            // console.log("MOUNTED MAIN")
+            // localStore.commit("initButton", {context});
+          },
+          methods: {
+            getCallContext(context, vmcomp) {
+              this.$set(vmcomp, "callCntext", context)
+            }
+          },
+          // eslint-disable-next-line quotes
+          // template: `<CallButtons :language="lang" :resourceBundleName="resourceBundleName" :callCntext="callCntext"></CallButtons>`,
+          i18n,
+          vuetify,  
           render: function(h) {
             return h(
-              callButtons,
+             CallButtons,
               {
                 props: {
-                  language: lang,
+                 language: lang,
                   resourceBundleName,
-                  store: localStore
-                },
-              }
-            )
+                  callCntext: this.callCntext
+                  // store: localStore
+               },
+             }
+           )
           },
         });
         resolve({
-          store: localStore,
+          // store: localStore,
+          callCntext: {},
           update: function(context) {
-            this.store.commit("initButton", {context});
+            vmComp.getCallContext(context,vmComp)
+            // this.store.commit("initButton", {context});
           },
         });
       });
