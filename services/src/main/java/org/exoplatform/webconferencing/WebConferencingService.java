@@ -45,6 +45,7 @@ import javax.jcr.Session;
 import javax.persistence.PersistenceException;
 import javax.servlet.http.HttpServletRequest;
 
+import org.antlr.grammar.v3.ANTLRParser.throwsSpec_return;
 import org.apache.commons.fileupload.FileUploadException;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -140,8 +141,10 @@ public class WebConferencingService implements Startable {
   /** The operation call recorded. */
   public static String          OPERATION_CALL_RECORDED      = "call-recorded";
 
+  /** The status ok. */
   public static String          STATUS_OK                    = "ok";
 
+  /** The status ko. */
   public static String          STATUS_KO                    = "ko";
 
   /** The Constant GROUP_CALL_TYPE. */
@@ -431,29 +434,10 @@ public class WebConferencingService implements Startable {
                                                                                                                    true);
         if (userIdentity != null) {
           Profile socialProfile = userIdentity.getProfile();
-          @SuppressWarnings("unchecked")
-          List<Map<String, String>> ims = (List<Map<String, String>>) socialProfile.getProperty(Profile.CONTACT_IMS);
+
           UserInfo info = new UserInfo(user.getUserName(), user.getFirstName(), user.getLastName());
-          if (ims != null) {
-            for (Map<String, String> m : ims) {
-              String imType = m.get("key");
-              String imId = m.get("value");
-              if (imId != null && imId.length() > 0) {
-                CallProvider provider = getProvider(imType);
-                // Here we take in account that provider may change its supported types in runtime
-                if (provider != null && provider.isActive() && provider.isSupportedType(imType)) {
-                  try {
-                    IMInfo im = provider.getIMInfo(imId);
-                    if (im != null) {
-                      info.addImAccount(im);
-                    } // otherwise provider doesn't have an IM type at all
-                  } catch (CallProviderException e) {
-                    LOG.warn(e.getMessage());
-                  }
-                }
-              }
-            }
-          }
+          // Add IMs accounts
+          getUserIMs(socialProfile).forEach(im -> info.addImAccount(im));
           info.setAvatarLink(socialProfile.getAvatarUrl());
           info.setProfileLink(LinkProvider.getUserProfileUri(id));
           return info;
@@ -899,28 +883,7 @@ public class WebConferencingService implements Startable {
     // joinCall()
 
     // update participants
-    if (call.getOwner().isGroup()) {
-      Set<UserInfo> members = new HashSet<>(GroupInfo.class.cast(call.getOwner()).getMembers().values());
-      if (members.size() >= call.getParticipants().size()) {
-        members.removeAll(call.getParticipants());
-        for (UserInfo p : members) {
-          participantsStorage.create(createParticipantEntity(callId, p));
-        }
-        call.addParticipants(members);
-      } 
-      /* TODO: fix removing for chat rooms
-       * else {
-        Set<UserInfo> participants = new HashSet<>(call.getParticipants());
-        participants.removeAll(members);
-        call.removeParticipants(participants);
-        for (UserInfo part : participants) {
-          ParticipantEntity entity = participantsStorage.find(new ParticipantId(part.getId(), callId));
-          if (entity != null) {
-            participantsStorage.delete(entity);
-          }
-        }
-      }*/
-    }
+    syncMembersAndParticipants(call);
 
     for (UserInfo part : call.getParticipants()) {
       if (UserInfo.TYPE_NAME.equals(part.getType()) && partId.equals(part.getId())) {
@@ -948,6 +911,53 @@ public class WebConferencingService implements Startable {
                                  call.getOwner().getId(),
                                  call.getOwner().getType());
       }
+    }
+  }
+
+  /**
+   * Update participants.
+   *
+   * @param id the id
+   * @param participantsJson the participants json
+   * @return the call info
+   * @throws CallNotFoundException the call not found exception
+   * @throws InvalidCallException the invalid call exception
+   * @throws StorageException the storage exception
+   */
+  public CallInfo updateParticipants(String id, Object participantsJson) throws CallNotFoundException,
+                                                                         InvalidCallException,
+                                                                         StorageException {
+    List<UserInfo> participants = getParticipantsFromJson(participantsJson);
+    return updateParticipants(id, participants);
+  }
+
+  /**
+   * Update participants.
+   *
+   * @param id the id
+   * @param participants the participants
+   * @return the call info
+   * @throws CallNotFoundException the call not found exception
+   * @throws InvalidCallException the invalid call exception
+   * @throws StorageException the storage exception
+   */
+
+  public CallInfo updateParticipants(String id, List<UserInfo> participants) throws CallNotFoundException,
+                                                                             InvalidCallException,
+                                                                             StorageException {
+    if (participants == null || participants.isEmpty()) {
+      throw new IllegalArgumentException("Participants cannot be null or empty");
+    }
+    CallInfo call = getCall(id);
+    if (call != null) {
+      try {
+        txUpdateParticipants(call, participants);
+      } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+        throw new StorageException("Error updating participants of  call " + id, e);
+      }
+      return call;
+    } else {
+      throw new CallNotFoundException("Call not found: " + id);
     }
   }
 
@@ -1405,9 +1415,11 @@ public class WebConferencingService implements Startable {
   /**
    * Save recording to JCR.
    *
-   * @param parentNode the parent node
+   * @param parent the parent
    * @param resource the recording
+   * @param user the user
    * @throws RepositoryException the repository exception
+   * @throws UploadFileException the upload file exception
    */
   private void saveFile(Node parent, UploadResource resource, String user) throws RepositoryException, UploadFileException {
     ConversationState state = null;
@@ -1452,7 +1464,6 @@ public class WebConferencingService implements Startable {
    *
    * @param identity the identity
    * @param isSpace the is space
-   * @param user the user
    * @return the root folder node
    * @throws RepositoryException the repository exception
    */
@@ -1596,6 +1607,39 @@ public class WebConferencingService implements Startable {
   }
 
   /**
+   * Gets the user IM accounts.
+   *
+   * @param profile the profile
+   * @return the user I ms
+   */
+  protected List<IMInfo> getUserIMs(Profile profile) {
+    List<IMInfo> activeIMs = new ArrayList<>();
+    @SuppressWarnings("unchecked")
+    List<Map<String, String>> ims = (List<Map<String, String>>) profile.getProperty(Profile.CONTACT_IMS);
+    if (ims != null) {
+      for (Map<String, String> m : ims) {
+        String imType = m.get("key");
+        String imId = m.get("value");
+        if (imId != null && imId.length() > 0) {
+          CallProvider provider = getProvider(imType);
+          // Here we take in account that provider may change its supported types in runtime
+          if (provider != null && provider.isActive() && provider.isSupportedType(imType)) {
+            try {
+              IMInfo im = provider.getIMInfo(imId);
+              if (im != null) {
+                activeIMs.add(im);
+              } // otherwise provider doesn't have an IM type at all
+            } catch (CallProviderException e) {
+              LOG.warn(e.getMessage());
+            }
+          }
+        }
+      }
+    }
+    return activeIMs;
+  }
+
+  /**
    * Provider config to json.
    *
    * @param conf the conf
@@ -1704,7 +1748,11 @@ public class WebConferencingService implements Startable {
           JSONObject json = new JSONObject(settings);
           String roomTitle = json.optString("roomTitle");
           if (roomTitle != null && roomTitle.length() > 0) {
-            owner = roomInfo(ownerId, roomTitle, new String[0], savedCall.getId());
+            String[] members = participantsStorage.findCallParts(savedCall.getId())
+                                                  .stream()
+                                                  .map(p -> p.getId())
+                                                  .toArray(String[]::new);
+            owner = roomInfo(ownerId, roomTitle, members, savedCall.getId());
           } else {
             LOG.warn("Saved call doesn't have room settings: '" + settings + "'");
             throw new CallSettingsException("Saved call doesn't have room settings");
@@ -1722,29 +1770,27 @@ public class WebConferencingService implements Startable {
       }
 
       String callId = savedCall.getId();
-
       //
       CallInfo call = new CallInfo(callId, savedCall.getTitle(), owner, savedCall.getProviderType());
       call.setState(savedCall.getState());
       call.setLastDate(savedCall.getLastDate());
-
       if (withParticipants) {
         // Note: in case of a space/room, here we'll add only the parts that were added on the call creation.
         // TODO should we add all current members as participants (and update their state from the DB) or
         // better to do this on client side?
-        for (ParticipantEntity p : participantsStorage.findCallParts(callId)) {
+        for (ParticipantEntity p : participantsStorage.findCallParts(savedCall.getId())) {
           if (UserInfo.TYPE_NAME.equals(p.getType())) {
             UserInfo user = getUserInfo(p.getId());
             if (user == null) {
               // If user not found we treat it as external participant to work correctly
               // with what addCall() does.
-              user = new ParticipantInfo(call.getProviderType(), p.getId());
+              user = new ParticipantInfo(savedCall.getProviderType(), p.getId());
             }
             user.setState(p.getState());
             user.setClientId(p.getClientId());
             call.addParticipant(user);
           } else {
-            LOG.warn("Non user participant skipped for call " + callId + ": " + p.getId() + " (" + p.getType() + ")");
+            LOG.warn("Non user participant skipped for call " + savedCall.getId() + ": " + p.getId() + " (" + p.getType() + ")");
           }
         }
       }
@@ -1969,6 +2015,35 @@ public class WebConferencingService implements Startable {
   }
 
   /**
+   * Sync members and participants.
+   *
+   * @param call the call
+   */
+  @ExoTransactional
+  protected void txSyncMembersAndParticipants(CallInfo call) {
+    if (call.getOwner().isGroup()) {
+      Set<UserInfo> members = new HashSet<>(GroupInfo.class.cast(call.getOwner()).getMembers().values());
+      if (members.size() >= call.getParticipants().size()) {
+        members.removeAll(call.getParticipants());
+        for (UserInfo p : members) {
+          participantsStorage.create(createParticipantEntity(call.getId(), p));
+        }
+        call.addParticipants(members);
+      } else {
+        Set<UserInfo> participants = new HashSet<>(call.getParticipants());
+        participants.removeAll(members);
+        call.removeParticipants(participants);
+        for (UserInfo part : participants) {
+          ParticipantEntity entity = participantsStorage.find(new ParticipantId(part.getId(), call.getId()));
+          if (entity != null) {
+            participantsStorage.delete(entity);
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * Update call and all its participants in a single transaction.
    *
    * @param call the call
@@ -2020,6 +2095,33 @@ public class WebConferencingService implements Startable {
   }
 
   /**
+   * Tx update participants.
+   *
+   * @param call the call
+   * @param participants the participants
+   * @throws IllegalArgumentException the illegal argument exception
+   * @throws IllegalStateException the illegal state exception
+   * @throws PersistenceException the persistence exception
+   */
+  @ExoTransactional
+  protected void txUpdateParticipants(CallInfo call, List<UserInfo> participants) throws IllegalArgumentException,
+                                                                                  IllegalStateException,
+                                                                                  PersistenceException {
+
+    if (participants != null && !participants.isEmpty()) {
+
+      List<ParticipantEntity> currentParts = participantsStorage.findCallParts(call.getId());
+      for (ParticipantEntity p : currentParts) {
+        participantsStorage.delete(p);
+      }
+      for (UserInfo p : participants) {
+        participantsStorage.create(createParticipantEntity(call.getId(), p));
+        call.addParticipant(p);
+      }
+    }
+  }
+
+  /**
    * Delete all user calls (not group ones) within a single transaction.
    *
    * @return number of deleted calls
@@ -2048,6 +2150,49 @@ public class WebConferencingService implements Startable {
       return txDeleteCall(id);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       throw new StorageException("Error deleting call " + id, e);
+    }
+  }
+
+  /**
+   * Return object if it's String instance or null if it is not.
+   *
+   * @param obj the obj
+   * @return the string or null
+   */
+  @SuppressWarnings("unchecked")
+  protected List<UserInfo> getParticipantsFromJson(Object obj) {
+    if (obj != null && Object[].class.isAssignableFrom(obj.getClass())) {
+      Object[] members = Object[].class.cast(obj);
+      List<UserInfo> participants = new ArrayList<>();
+      for (Object memberObj : members) {
+        Map<String, Object> member = (Map<String, Object>) memberObj;
+        String id = String.valueOf(member.get("id"));
+        String state = String.valueOf(member.get("state"));
+        String avatarLink = String.valueOf(member.get("avatarLink"));
+        String clientId = String.valueOf(member.get("clientId"));
+        String firstName = String.valueOf(member.get("firstName"));
+        String lastName = String.valueOf(member.get("lastName"));
+        String profileLink = String.valueOf(member.get("profileLink"));
+        UserInfo userInfo = new UserInfo(id, firstName, lastName);
+        userInfo.setClientId(clientId);
+        userInfo.setState(state);
+        userInfo.setProfileLink(profileLink);
+        userInfo.setAvatarLink(avatarLink);
+        org.exoplatform.social.core.identity.model.Identity userIdentity =
+                                                                         socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME,
+                                                                                                                   id,
+                                                                                                                   true);
+        if (userIdentity != null) {
+          getUserIMs(userIdentity.getProfile()).forEach(im -> userInfo.addImAccount(im));
+        } else {
+          LOG.warn("Cannot load user IM accounts. User identity is null. userId: {}", id);
+        }
+        participants.add(userInfo);
+      }
+      return participants;
+    } else {
+      LOG.warn("Cannot parse participants JSON - the object is not an instanse of Object[]");
+      return null;
     }
   }
 
@@ -2084,6 +2229,20 @@ public class WebConferencingService implements Startable {
       txUpdateCallAndParticipants(call);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       throw new StorageException("Error updating call and participants: " + call.getId(), e);
+    }
+  }
+
+  /**
+   * Sync members and participants.
+   *
+   * @param call the call
+   * @throws StorageException the storage exception
+   */
+  protected void syncMembersAndParticipants(CallInfo call) throws StorageException {
+    try {
+      txSyncMembersAndParticipants(call);
+    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+      throw new StorageException("Error sync call members and participants: " + call.getId(), e);
     }
   }
 

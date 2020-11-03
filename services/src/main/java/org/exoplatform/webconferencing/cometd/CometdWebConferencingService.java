@@ -32,6 +32,7 @@ import static org.exoplatform.webconferencing.support.CallLog.validate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -86,6 +87,7 @@ import org.exoplatform.webconferencing.CallInfoException;
 import org.exoplatform.webconferencing.CallNotFoundException;
 import org.exoplatform.webconferencing.CallState;
 import org.exoplatform.webconferencing.UserCallListener;
+import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.client.ErrorInfo;
@@ -1019,40 +1021,54 @@ public class CometdWebConferencingService implements Startable {
                             caller.failure(ErrorInfo.serverError("Error reading call").asJSON());
                           }
                         } else if (COMMAND_UPDATE.equals(command)) {
-                          String state = asString(arguments.get("state"));
-                          if (isValidArg(state)) {
+                          Object participantsJson = arguments.get("participants");
+                          if (participantsJson != null) {
                             try {
-                              boolean stateRecognized = true;
-                              CallInfo call;
-                              if (CallState.STARTED.equals(state)) {
-                                call = webConferencing.startCall(id, exoClientId);
-                              } else if (CallState.STOPPED.equals(state)) {
-                                call = webConferencing.stopCall(id, false);
-                              } else if (UserState.JOINED.equals(state)) {
-                                call = webConferencing.joinCall(id, currentUserId, exoClientId);
-                              } else if (UserState.LEAVED.equals(state)) {
-                                call = webConferencing.leaveCall(id, currentUserId, exoClientId);
-                              } else {
-                                call = null;
-                                stateRecognized = false;
-                              }
-                              if (stateRecognized) {
-                                if (call != null) {
-                                  caller.result(asJSON(call));
-                                } else {
-                                  caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
-                                }
-                              } else {
-                                caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized").asJSON());
-                              }
-                            } catch (CallNotFoundException e) { // aka BAD_REQUEST
+                              CallInfo call = webConferencing.updateParticipants(id, participantsJson);
+                              caller.result(asJSON(call));
+                            } catch (CallNotFoundException e) {
                               caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
                             } catch (Throwable e) {
                               LOG.error("Error updating call '" + id + "' by '" + currentUserId + "'", e);
                               caller.failure(ErrorInfo.serverError("Error updating call record").asJSON());
                             }
                           } else {
-                            caller.failure(ErrorInfo.clientError("Wrong request parameters: state").asJSON());
+                            String state = asString(arguments.get("state"));
+                            if (isValidArg(state)) {
+                              try {
+                                boolean stateRecognized = true;
+                                CallInfo call;
+                                if (CallState.STARTED.equals(state)) {
+                                  call = webConferencing.startCall(id, exoClientId);
+                                } else if (CallState.STOPPED.equals(state)) {
+                                  call = webConferencing.stopCall(id, false);
+                                } else if (UserState.JOINED.equals(state)) {
+                                  call = webConferencing.joinCall(id, currentUserId, exoClientId);
+                                } else if (UserState.LEAVED.equals(state)) {
+                                  call = webConferencing.leaveCall(id, currentUserId, exoClientId);
+                                } else {
+                                  call = null;
+                                  stateRecognized = false;
+                                }
+                                if (stateRecognized) {
+                                  if (call != null) {
+                                    caller.result(asJSON(call));
+                                  } else {
+                                    caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
+                                  }
+                                } else {
+                                  caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized")
+                                                          .asJSON());
+                                }
+                              } catch (CallNotFoundException e) { // aka BAD_REQUEST
+                                caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
+                              } catch (Throwable e) {
+                                LOG.error("Error updating call '" + id + "' by '" + currentUserId + "'", e);
+                                caller.failure(ErrorInfo.serverError("Error updating call record").asJSON());
+                              }
+                            } else {
+                              caller.failure(ErrorInfo.clientError("Wrong request parameters: state").asJSON());
+                            }
                           }
                         } else if (COMMAND_CREATE.equals(command)) {
                           String ownerId = asString(arguments.get("owner"));
@@ -1065,7 +1081,7 @@ public class CometdWebConferencingService implements Startable {
                             try {
                               CallInfo call = webConferencing.addCall(id, ownerId, ownerType, title, providerType, participants);
                               caller.result(asJSON(call));
-                            } catch (CallInfoException e) { 
+                            } catch (CallInfoException e) {
                               // aka BAD_REQUEST - user did bad input, need to retry or reuse existing call
                               caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
                             } catch (Throwable e) {

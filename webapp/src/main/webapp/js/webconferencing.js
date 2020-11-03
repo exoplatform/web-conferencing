@@ -2073,6 +2073,33 @@
 			}
 		};
 		
+		
+	  /**
+     * Update call participants in server side database.
+     */
+    this.updateParticipants = function(id, participants) {
+      if (cometd) {
+        var process = $.Deferred();
+        var callProps = cometdParams({
+          command : "update",
+          id : id,
+          participants : participants
+        });
+        cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
+          var result = tryParseJson(response);
+          if (response.successful) {
+            process.resolve(result);
+          } else {
+            process.reject(result);
+          }
+        });
+        return process.promise();
+      } else {
+        log.trace("Updating call requires CometD. Was call: " + id);
+        return $.Deferred().reject("CometD required").promise();
+      }
+    };
+		
 		/**
 		 * Update call state in server side database.
 		 */
