@@ -1665,7 +1665,7 @@
 		 */
 		var initUsers = function() {
 			// user popovers
-			onTiptipUpdate(function($tiptip, $tipName) {
+			/*onTiptipUpdate(function($tiptip, $tipName) {
 				var $profileLink = $tipName.find("td>a[href*='\\/profile\\/']");
 				if ($profileLink.length > 0) {
 					// Find user ID for a tip
@@ -1682,7 +1682,7 @@
 						}
 					}
 				}
-			});
+			});*/
 
 			// single user profile;
 			/*var $userProfileMenu = $(".uiProfileMenu:first");
@@ -1814,7 +1814,7 @@
 		
 		this.update = function() {
 			if (currentUser) { 
-				initUsers();
+				//initUsers();
 				initSpacePopups();
 				//initSpace();
 				//initChat();
