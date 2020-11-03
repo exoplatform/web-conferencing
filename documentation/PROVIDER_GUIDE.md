@@ -121,7 +121,7 @@ Finally configure connector extension, provider plugin and its portlet as descri
 Implement Javascript SPI
 ==============
 
-Client side of a connector contains a logic to build a call button and return it to Web Conferencing core. Add an own `callButton` function to your provider module code. This method should be public in provider object and return a [promise](http://api.jquery.com/deferred.promise/) object which will be resolved with a JQuery element of a button container. When clicked, this button will open a call user interface. There are also other mandatory function of Connector SPI to get the provider type, with all supported types (which contains a single type in our case) and a title. 
+Client side of a connector contains a logic to build a call button and return it to Web Conferencing core. Add an own `callButton` function to your provider module code. This method should be public in provider object and return a [promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) object which will be resolved with a DOM element of a button container. When clicked, this button will open a call user interface. There are also other mandatory function of Connector SPI to get the provider type, with all supported types (which contains a single type in our case) and a title. 
 
 ```javascript
 /**
@@ -160,7 +160,7 @@ Client side of a connector contains a logic to build a call button and return it
      */
     this.callButton = function(context) {
       var button = $.Deferred();
-      context.details().done(function(target) {
+      context.details().then(function(target) {
         var $button = $("<a title='" + target.title + "' href='javascript:void(0)' class='myCallAction'>"
               + "<i class='uiIconMyCall uiIconVideoPortlet uiIconLightGray'></i>"
               + "<span class='callTitle'>My Call</span></a>");
@@ -169,14 +169,14 @@ Client side of a connector contains a logic to build a call button and return it
           // When user click the button - create an actual call by ID you know or just built.
           var callId = "my_call_2we34aldfg9876cdasqwdd";
           // Ensure this call not yet already started (e.g. by another party)
-          webConferencing.getCall(callId).done(function(call) {
+          webConferencing.getCall(callId).then(function(call) {
             // Call already running - we join it
-            webConferencing.updateUserCall(callId, "joined").done(function() {
+            webConferencing.updateUserCall(callId, "joined").then(function() {
               // TODO Show call UI to an user
-            }).fail(function(err) {
+            }).catch(function(err) {
               webConferencing.showError("Joining call error", webConferencing.errorText(err));
             });
-          }).fail(function(err) {
+          }).catch(function(err) {
             if (err && err.code == "NOT_FOUND_ERROR") {
               // this call not found - start a new one,
               var callInfo = {
@@ -186,7 +186,7 @@ Client side of a connector contains a logic to build a call button and return it
                 title : target.title,
                 participants : "john;marry" // users separated by ';'
               };
-              webConferencing.addCall(callId, callInfo).done(function(call) {
+              webConferencing.addCall(callId, callInfo).then(function(call) {
                 log.info("Call created: " + callId); 
                 // TODO Show call UI to an user
               });
@@ -196,12 +196,12 @@ Client side of a connector contains a logic to build a call button and return it
           });
         });
         // Resolve with our button
-        button.resolve($button);
-      }).fail(function(err) {
+        button.resolve($button[0]);
+      }).catch(function(err) {
         // On error, we don't show the button
         button.reject("Error getting context details", err);
       });
-      // Return a promise, when resolved it will be used by Web Conferencing core to add a button to a required places
+      // Return a promise, when resolved with a button element, it will be used by Web Conferencing core to add a button to a required places
       return button.promise();
     };
   }

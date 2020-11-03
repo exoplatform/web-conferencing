@@ -70,11 +70,11 @@
 			 *                or to build connector URLs where need refer a room by its name (in addition to the ID).
 			 *                NOTE: in case of space room, the name will contain the space's pretty name prefixed with 'space-' text.
 			 * - isGroup - if true, it's a group call, false then 1-one-1
-			 * - details - it's asynchronous function to call, it returns jQuery promise which when resolved (done) 
-			 *             will provide an object with call information. In general it is a serialized to JSON 
-			 *             Java class, extended from IdentityInfo - consult related classes for full set of available bean fields.
+			 * - details - it's asynchronous function to call, it returns a promise which when resolved 
+			 *             will provide an object with call information. In general it is a serialized Java class to JSON, 
+			 *             extended from IdentityInfo - consult related classes for full set of available bean fields.
 			 *             
-			 * This method returns a jQuery promise. When it resolved (done) it should offer a jQuery element of a button(s) container.
+			 * This method returns a promise. When it resolved (done) it should offer a DOM element of a button(s) container.
 			 * When rejected (failed), need return an error description text (it may be shown directly to an user), the connector
 			 * will not be added to the call button and user will not see it.
 			 */
@@ -88,7 +88,7 @@
 					// In the code below, it's assumed that My Connector has IM type 'myconnector' and calls only possible with 
 					// users having the same IM type in their profiles.
 					if (currentUserIMID) {
-						context.details().done(function(target) {
+						context.details().then(function(target) {
 							var ims = [];
 							var addParticipant = function(user) {
 								var uim = webConferencing.imAccount(user, "myconnector");
@@ -112,16 +112,23 @@
 							}
 							if (ims.length > 1) {
 								// If we have more than single user, then we have participants for a call.
-								// Build jQuery element of the call button:
-								// It can be an anchor or button. It may use any custom CSS class (like myCallAction) we know that 
-								// Web Conferencing may add btn class (from PLF's styles) if this connector will be a single compatible 
-								// for an user. 
+								// Build HTML element of the call button:
+								// It can be any control you like, e.g. an anchor or button. It may use any custom CSS class (like myCallAction). 
+								// Web Conferencing may add extra classes (from PLF's styles) to this connector button depending on an UI context. 
 								// You need provide an icon and title for the button. 
 								// An icon should have 'uiIconLightGray' class to look like other buttons of the Platform; 
 								// any other style starting with 'uiIcon' will also inherit style settings of the Platform. 
 								// Here we use 'uiIconVideoPortlet' class from Platform UI, it provides actual icon of the button.
 								// A title should be in non-block element marked by a class 'callTitle'. This will let remove 
 								// a title when button should appear without it. You may add any other styles to the title.
+                //
+                // Below we build a buton using jQuery, but it can be any web framework. 
+                // An idea of callButton() method that it should return a promise resolved with a DOM element of the button. 
+                // That element will be added to the buttons container in all points of call presense in the Platform. 
+                // In case of progressive frameworks use, like React.js or Vue.js, you can implement the button in a dedicated AMD module 
+                // and add the depenedency on it to the provider module. Here you will have an extra argument in outer IIFE and 
+                // in gatein-resources.xml define that depenency for this provider module. Next, you refer to that progressive app module 
+                // and invoke a method on it to build and return your call button DOM element. 
 								var $button = $("<a title='" + target.title + "' href='javascript:void(0)' class='myCallAction'>"
 											+ "<i class='uiIconMyCall uiIconVideoPortlet uiIconLightGray'></i>"
 											+ "<span class='callTitle'>" + self.getCallTitle() + "</span></a>");
@@ -169,10 +176,10 @@
 										// depending on asynchronous requests to the server.
 										var callProcess = $.Deferred();
 										// Open call window before asynchronous requests to avoid browser's popup blocker
-										var callWindow = callWindow = webConferencing.showCallPopup(callUrl, target.title);
+										var callWindow = callWindow = webConferencing.showCallWindow(callUrl, self.getTitle() + " " + callId);
 										callWindow.document.title = target.title; // window title visible to user
 										// Try get a call by the ID to know is it exists already - it why we need stable ID clearly defining the target
-										webConferencing.getCall(callId).done(function(call) {
+										webConferencing.getCall(callId).then(function(call) {
 											// Call already running - join it
 											log.info("Joining call: " + callId);
 											callProcess.resolve(call, false);
@@ -191,7 +198,7 @@
 														// In general, not all group members can be participants, see above ims variable
 														participants : ims.join(";") // string build from array separated by ';'
 													};
-													webConferencing.addCall(callId, callInfo).done(function(call) {
+													webConferencing.addCall(callId, callInfo).then(function(call) {
 														log.info("Call created: " + callId);
 														callProcess.resolve(call, true);
 													});
@@ -205,7 +212,7 @@
 											}
 										});
 										// We wait for call readiness and invoke start it in the popup window 
-										callProcess.done(function(call, isNew) {
+										callProcess.then(function(call, isNew) {
 											// Next, we invoke a call window to initialize the call. 
 											// Note: it's assumed below that startCall() method added by the call page script, 
 											// it is not defined in Web Conferencing module. You can use any namespace and way to invoke your 
@@ -213,7 +220,7 @@
 											// Ensure the call window loaded before calling it.
 											$(callWindow).on("load", function() {
 												if (callWindow.startCall) {
-													callWindow.startCall(call, isNew).done(function(state) {
+													callWindow.startCall(call, isNew).then(function(state) {
 														log.info("Call " + state + ": " + callId);
 														$button.addClass("callDisabled"); // should be removed on stop/leaved event in init()
 														$button.data("callid", callId); // Assign call ID to the button for later use (see above)
@@ -233,15 +240,15 @@
 								});
 								// Assign target ID to the button for later use on started event in init()
 								$button.data("targetid", target.id);
-								// Resolve with our button - return jQuery object here, so it will be appended to Call Button UI in the Platform
-								button.resolve($button);
+								// Resolve with our button - return DOM element here, so it will be appended to Call Button UI in the Platform
+								button.resolve($button[0]);
 							} else {
 								// If not users compatible with My Connector IM type found, we reject, thus don't show the button for this context
 								var msg = "No " + self.getTitle() + " users found for " + target.id;
 								log.warn(msg);
 								button.reject(msg);
 							}
-						}).fail(function(err) {
+						}).catch(function(err) {
 							// On error, we don't show the button for this context
 							if (err && err.code == "NOT_FOUND_ERROR") {
 								// If target not found, for any reason, we don't need tell it's an error - just no button for the target
@@ -267,6 +274,8 @@
 					button.reject(msg);
 				}
 				// Return a promise, when resolved it will be used by Web Conferencing core to add a button to a required places
+        // Here it should Javascript Promise returned, we use jQuery implementation (Deferred object), 
+        // but it can any Promise-compartible instance.
 				return button.promise();
 			};
 			
@@ -387,7 +396,7 @@
 							}
 						});
 					};
-					// Subscribe to user updates (incoming calls will be notified here)
+					// Subscribe to user updates (you will be able to notify incoming calls here)
 					webConferencing.onUserUpdate(currentUserId, function(update) {
 						// This connector cares only about own provider events
 						if (update.providerType == self.getType()) {
@@ -401,7 +410,7 @@
 	                // When call started it means we have an incoming call for this particular user
 									log.info("Incoming call: " + callId);
 									// Get call details by ID
-									webConferencing.getCall(callId).done(function(call) {
+									webConferencing.getCall(callId).then(function(call) {
 										var callerId = call.owner.id;
 										var callerLink = call.owner.profileLink;
 										var callerAvatar = call.owner.avatarLink;
@@ -410,7 +419,7 @@
 										call.title = call.owner.title; // for callee the call title is a caller name
 										// Get current user status, we need this to figure out a need of playing ringtone 
 										// we'll do for users with status 'Available' or 'Away', but ones with 'Do Not Disturb' will not hear an incoming ring. 
-										webConferencing.getUserStatus(currentUserId).done(function(user) {
+										webConferencing.getUserStatus(currentUserId).then(function(user) {
 											// Build a call popover
 											var popover = acceptCallPopover(callerLink, callerAvatar, callerMessage, !user || user.status == "available" || user.status == "away");
 											// We use the popover promise to finish initialization on its progress state, on resolved (done)
@@ -425,10 +434,9 @@
 											popover.done(function(msg) {
 												// User accepted the call... 
 												log.info("User " + msg + " call: " + callId);
-												var longTitle = self.getTitle() + " " + self.getCallTitle();
 												var callUrl = self.getUrl() + "/call?apiClientId=" + self.getApiClientId() 
 													+ "&id=" + encodeURIComponent(callId);
-												var callWindow = webConferencing.showCallPopup(callUrl, longTitle);
+												var callWindow = webConferencing.showCallWindow(callUrl, self.getTitle() + " " + callId);
 												callWindow.document.title = call.title;
 												// Optionally, we may invoke a call window to initialize the call.
 												// First wait the call window loaded
@@ -436,10 +444,10 @@
 													log.debug("Call page loaded: " + callId);
 													// And tell the window to start a call
 													if (callWindow.startCall) {
-														callWindow.startCall(call).done(function(state) {
+														callWindow.startCall(call).then(function(state) {
 															log.info("Call " + state + ": " + callId);
 															lockCallButton(update.owner.id, callId);
-														}).fail(function(err) {
+														}).catch(function(err) {
 															log.error("Failed to start/join call: " + callId, err);
 															webConferencing.showError("Error starting call", webConferencing.errorText(err));
 														});	
@@ -455,9 +463,9 @@
 													// Delete the call if it is not group one, not already stopped and wasn't joined -
 													// a group call will be deleted automatically when last party leave it.
 													log.trace("<<< User " + err + ($callPopup.callState ? " just " + $callPopup.callState : "") + " call " + callId + ", deleting it.");
-													webConferencing.deleteCall(callId).done(function() {
+													webConferencing.deleteCall(callId).then(function() {
 														log.info("Call deleted: " + callId);
-													}).fail(function(err) {
+													}).catch(function(err) {
 														if (err && (err.code == "NOT_FOUND_ERROR")) {
 															// already deleted
 															log.trace("<< Call not found " + callId);
@@ -468,7 +476,7 @@
 													});
 												}
 											});
-										}).fail(function(err) {
+										}).catch(function(err) {
 											log.error("Failed to get user status: " + currentUserId, err);
 											if (err) {
 												webConferencing.showError("Incoming call error", webConferencing.errorText(err));
@@ -476,7 +484,7 @@
 												webConferencing.showError("Incoming call error", "Error read user status information from the server");
 											}
 										});
-									}).fail(function(err) {
+									}).catch(function(err) {
 										log.error("Failed to get call info: " + callId, err);
 										if (err) {
 											webConferencing.showError("Incoming call error", webConferencing.errorText(err));

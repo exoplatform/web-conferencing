@@ -410,7 +410,7 @@ Provider object *must* implement following SPI methods:
  * getType() - required, a major call type name
  * getSupportedTypes() - required, all supported call types (at least a major type here)
  * getTitle() - required, human-readable title for UI
- * callButton(context) - required, provider should offer an implementation of a Call button and call invoker in it, it returns a promise, it should be resolved with a JQuery element of a button container. 
+ * callButton(context) - required, provider should offer an implementation of a Call button and call invoker in it, it returns a promise, it should be resolved with a DOM element of a button. 
  
  A provider *may* support following SPI methods:
 * init() - if available, it will be called when eXo user will be initialized, this method returns a promise, when resolved it means provider successfully initialized and can be used by Web Conferencing core. It's optional method, but very handy for doing provider initialization after the core will be loaded.
@@ -465,11 +465,11 @@ It is an example how a connector module code could look (simplified Template con
      *                or to build connector URLs where need refer a room by its name (in addition to the ID).
      *                NOTE: in case of space room, the name will contain the space's pretty name prefixed with 'space-' text.
      * - isGroup - if true, it's a group call, false then 1-one-1
-     * - details - it's asynchronous function to call, it returns jQuery promise which when resolved (done) 
-     *             will provide an object with call information. In general it is a serialized to JSON 
-     *             Java class, extended from IdentityInfo - consult related classes for full set of available bean fields.
+     * - details - it's asynchronous function to call, it returns a promise which when resolved 
+     *             will provide an object with call information. In general it is a serialized Java class to JSON, 
+     *             extended from IdentityInfo - consult related classes for full set of available bean fields.
      *             
-     * This method returns a jQuery promise. When it resolved (done) it should offer a jQuery element of a button(s) container.
+     * This method returns a promise. When it resolved it should offer a DOM element of a button(s) container.
      * When rejected (failed), need return an error description text (it may be shown directly to an user), the connector
      * will not be added to the call button and user will not see it.
      */
@@ -571,8 +571,8 @@ It is an example how a connector module code could look (simplified Template con
                   }
                 });
               });
-              // Resolve with our button - return jQuery object here, so it will be appended to Call Button UI in the Platform
-              button.resolve($button);
+              // Resolve with our button - return DOM element here, so it will be appended to Call Button UI in the Platform
+              button.resolve($button[0]);
             } else {
               // If not users compatible with My Connector IM type found, we reject, thus don't show the button for this context
               var msg = "No " + self.getTitle() + " users found for " + target.id;
