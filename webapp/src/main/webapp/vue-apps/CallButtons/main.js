@@ -2,8 +2,6 @@ Vue.config.devtools = true;
 
 import CallButtons from "./components/CallButtons.vue";
 
-// import Vuex from "vuex";
-// Vue.use(Vuex);
 Vue.use(Vuetify);
 
 const vuetify = new Vuetify({
@@ -11,7 +9,6 @@ const vuetify = new Vuetify({
   iconfont: "",
 });
 
-//const comp = Vue.component("call-button", CallButtons);
 
 Vue.directive("click-outside", {
   priority: 700,
@@ -38,16 +35,6 @@ const log = webConferencing.getLog("webconferencing-call-buttons");
 export function create(context, target) {
   const result = new Promise((resolve, reject) => {
     if (target) {
-      // const localStore = new Vuex.Store({
-      //   state: {
-      //     callContext: {},
-      //   },
-      //   mutations: {
-      //     initButton(state, payload) {
-      //       Vue.set(state, "callContext", payload.context);
-      //     },
-      //   }
-      // });
 
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
         const vmComp = new Vue({
@@ -57,30 +44,21 @@ export function create(context, target) {
           },
           data() {
             return {
-              // store: localStore,
               language: lang,
               resourceBundleName,
-              callCntext: {}
+              callContext: {}
             }
           },
-          created() {
-            this.getCallContext(context, this)
-            // console.log("CREATED MAIN")
-          },
-          // eslint-disable-next-line quotes
           mounted() {
-            // console.log(this.store, "STORE")
-            this.getCallContext(context, this)
-            // console.log("MOUNTED MAIN")
-            // localStore.commit("initButton", {context});
+            this.setCallContext(context, this)
           },
           methods: {
-            getCallContext(context, vmcomp) {
-              this.$set(vmcomp, "callCntext", context)
+            setCallContext(context, vmcomp) {
+              this.$set(vmcomp, "callContext", context)
             }
           },
           // eslint-disable-next-line quotes
-          // template: `<CallButtons :language="lang" :resourceBundleName="resourceBundleName" :callCntext="callCntext"></CallButtons>`,
+          // template: `<CallButtons :language="lang" :resourceBundleName="resourceBundleName" :callContext="callContext"></CallButtons>`,
           i18n,
           vuetify,  
           render: function(h) {
@@ -90,19 +68,15 @@ export function create(context, target) {
                 props: {
                  language: lang,
                   resourceBundleName,
-                  callCntext: this.callCntext
-                  // store: localStore
+                  callContext: this.callContext
                },
              }
            )
           },
         });
         resolve({
-          // store: localStore,
-          callCntext: {},
           update: function(context) {
-            vmComp.getCallContext(context,vmComp)
-            // this.store.commit("initButton", {context});
+            vmComp.setCallContext(context, vmComp)
           },
         });
       });

@@ -35,22 +35,10 @@ export default {
       type: String,
       required: true
     }, 
-    // store: {
-    //   type: Object,
-    //   required: true
-    // },
-
-
-    callCntext: {
+    callContext: {
       type: Object,
       required: true
     },
-    // providersButton: {
-    //   type: Array,
-    //   required: true
-    // }
-
-
   },
   data() {
     return {
@@ -62,12 +50,6 @@ export default {
     };
   },
   computed: {
-    // callContext() {
-    //   console.log(this, "THIS IN COMPONENT")
-    //   // if (this) {
-    //     return this.callCntext;
-    //   // }
-    // },
     header() {
       const parentClass = Object.values(this.$refs.callbutton.parentElement.classList).join("");
       const condition = parentClass.includes("mini") || parentClass.includes("popup");
@@ -77,30 +59,17 @@ export default {
     },
   },
   watch: {
-    callCntext(newContext, oldContext) {
-      // if (this.initFinished && newContext.roomId !== oldContext.roomId) {
-      //  console.log("INSIDE WATCH", newContext, oldContext)
-        // this.initFinished = false;
-        // this.providersButton.splice(0);
-        // this.$refs.callbutton.classList.remove("single");
+    callContext(newContext, oldContext) {
+      if (this.initFinished) {
         this.setProvidersButtons(newContext);
-      // }
+      }
     },
-    // callCntext
-  },
-  // created() {
-  //   console.log("CREATED COMPONENT");
-  //   this.setProvidersButtons(this.callCntext);
-  // },
-  mounted() {
-    console.log("MOUNTED COMPONENT");
   },
   methods: {
     setProvidersButtons(context) {
       this.initFinished = false;
       this.providersButton.splice(0);
       this.$refs.callbutton.classList.remove("single");
-      console.log("IN setProvidersButtons")
       this.isOpen = false;
       const thevue = this;
       try {
@@ -154,6 +123,9 @@ export default {
           if (pb instanceof Vue) {
             // add vue button
             vm = pb.$mount(); // TODO why we need vm globaly?
+            const parentClass = Object.values(this.$refs.callbutton.parentElement.classList).join("");
+            const condition = parentClass.includes("mini") || parentClass.includes("popup");
+            const singleBtnContainer = condition ? vm.$el.childNodes[0].removeChild(vm.$el.childNodes[0].childNodes[1]) : vm.$el.childNodes[0]
             callButton.appendChild(vm.$el);
           } else {
             // add button from DOM Element
@@ -192,9 +164,11 @@ export default {
       border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
       padding: 0 5px;
+      background-color: #ffffff;
       &:hover {
         background-color: @primaryColor;
         opacity: 1;
+        border-color: @primaryColor
       }
     }
     a:hover,
@@ -247,10 +221,27 @@ export default {
   }
 }
 .call-button-mini {
+  width: min-content;
   .call-button-container {
     left: -19px;
     top: 0;
     width: unset;
+    &.single {
+      border: none;
+      width: inherit;
+      .single-btn-container {
+        width: inherit;
+        button {
+           width: inherit;
+           margin-right: 0;
+           border: none;
+           background: #ffffff;
+           span {
+             width: inherit
+           }
+        }
+      }
+    }
   }
 }
 .call-button--profile {
@@ -260,6 +251,9 @@ export default {
     .call-button-container {
       left: -129px;
       top: -38px;
+      &.single {
+        left: -105px;
+      }
     }
 }
 .space-action-menu {

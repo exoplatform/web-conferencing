@@ -32,7 +32,7 @@ export default {
       required: true
     },
     header: {
-      type: String,
+      type: Object,
       required: true
     }
   },

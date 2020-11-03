@@ -23,7 +23,7 @@ const webconferencingExts = [
     // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
     component: {
       // name should be the name registered via Vue.component (https://vuejs.org/v2/guide/components-registration.html#Component-Names)
-      name: "call-button",
+      name: "CallButtons",
       // events are passed to custom DynamicEvents directive (https://vuejs.org/v2/guide/custom-directive.html)
       events: [],
       // props: {
@@ -72,7 +72,7 @@ const webconferencingExts = [
     // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
     component: {
       // name should be the name registered via Vue.component (https://vuejs.org/v2/guide/components-registration.html#Component-Names)
-      name: "call-button",
+      name: "CallButtons",
       // events are passed to custom DynamicEvents directive (https://vuejs.org/v2/guide/custom-directive.html)
       events: [],
     },
@@ -120,7 +120,7 @@ const webconferencingExts = [
     // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
     component: {
       // name should be the name registered via Vue.component (https://vuejs.org/v2/guide/components-registration.html#Component-Names)
-      name: "call-button",
+      name: "CallButtons",
       // events are passed to custom DynamicEvents directive (https://vuejs.org/v2/guide/custom-directive.html)
       events: [],
     },
@@ -155,7 +155,7 @@ const webconferencingExts = [
     appClass: "call-button",
     typeClass: "call-button-mini call-button--tiptip",
     component: {
-      name: "call-button",
+      name: "CallButtons",
       events: [],
     },
     // init call button context in user profile popup
@@ -178,7 +178,7 @@ const webconferencingExts = [
       });
     },
     // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
-    enabled: false,
+    enabled: true,
   },
   {
     target : "profile-header",
