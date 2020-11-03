@@ -10,7 +10,8 @@
         v-for="(button, index) in providersbutton"
         :key="index"
         :class="`call-button-container-${index}`"
-        :ref="`callbutton`"></div>
+        :ref="`callbutton`">
+      </div>
     </div>
   </div>
 </template>
@@ -34,11 +35,29 @@ export default {
     header: {
       type: Object,
       required: true
+    },
+    // initialized: {
+    //   type: Boolean,
+    //   required: true
+    // }
+  },
+  // watch: {
+  //   // providersbutton(newc, oldc) {
+  //   //   console.log(oldc, newc)
+  //   //    this.$emit("updated")
+  //   // }
+  // }, 
+
+  updated() {
+    // console.log(this.$parent.isInitialized(), "INITIAL")
+    if (!this.$parent.isInitialized()) {
+      this.$emit("updated")
+      this.$parent.initialized()
     }
   },
-  updated() {
-    this.$emit("updated")
-  },
+  // created() {
+  //   console.log("CREATED DROPDOWN")
+  // },
   methods: {
     showDropdownComponent(isOpen) {
       this.$emit("showDropdown", isOpen);

@@ -6,8 +6,10 @@
       :providersbutton="providersButton"
       :isopen="isOpen"
       :header="header"
+
       @updated="createButtons"
       @getRefs="getRef($event)"
+      @switchBoolean="switchBool($event)"
       @showDropdown="showDropdown($event)" />
     <singlebtn 
       v-else 
@@ -18,8 +20,8 @@
 <script>
 import dropdown from "./Dropdown.vue";
 import singlebtn from "./SingleButton.vue";
-
 const log = webConferencing.getLog("webconferencing-call-buttons");
+let initialized = false;
 export default {
   name: "CallButtons",
   components: {
@@ -46,7 +48,6 @@ export default {
       error: null,
       isOpen: false,
       childRef: null,
-      initFinished: true
     };
   },
   computed: {
@@ -60,14 +61,17 @@ export default {
   },
   watch: {
     callContext(newContext, oldContext) {
-      if (this.initFinished) {
         this.setProvidersButtons(newContext);
-      }
     },
   },
   methods: {
+    isInitialized() {
+      return initialized;
+    },
+    initialized() {
+      initialized = true;
+    },
     setProvidersButtons(context) {
-      this.initFinished = false;
       this.providersButton.splice(0);
       this.$refs.callbutton.classList.remove("single");
       this.isOpen = false;
@@ -90,15 +94,14 @@ export default {
               thevue.createButtons();
             });
           });
-        } else {
-          this.initFinished = true;
+          initialized = false;
         }
       } catch (err) {
         log.error("Error building call buttons", err);
-        this.initFinished = true;
       }
     },
     createButtons() {
+      console.log("CREATE BUTTONS")
       let ref;
       let vm = null;
       for (const [index, pb] of this.providersButton.entries()) {
@@ -133,10 +136,10 @@ export default {
           }
         }
       }
-      this.initFinished = true;
     },
     showDropdown() {
       this.isOpen = !this.isOpen;
+      //initialized = this.isOpen === false ? true : false;
     },
     hideDropdown() {
       this.isOpen = false;
