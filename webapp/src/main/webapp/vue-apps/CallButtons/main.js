@@ -32,6 +32,10 @@ const log = webConferencing.getLog("webconferencing-call-buttons");
 export function create(context, target) {
   const result = new Promise((resolve, reject) => {
     if (target) {
+      if (target.classList.length) {
+        target.appendChild(document.createElement("div"));// div for vue mounting
+        target = target.firstElementChild;
+      }
 
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
         const vmComp = new Vue({
@@ -47,15 +51,13 @@ export function create(context, target) {
             }
           },
           mounted() {
-            this.setCallContext(context, this)
+            this.setCallContext(context, this);
           },
           methods: {
             setCallContext(context, vmcomp) {
-              this.$set(vmcomp, "callContext", context)
+              this.$set(vmcomp, "callContext", context);
             }
           },
-          // eslint-disable-next-line quotes
-          // template: `<CallButtons :language="lang" :resourceBundleName="resourceBundleName" :callContext="callContext"></CallButtons>`,
           i18n,
           vuetify,  
           render: function(h) {
@@ -66,15 +68,23 @@ export function create(context, target) {
                  language: lang,
                   resourceBundleName,
                   callContext: this.callContext
-               },
-             }
-           )
-          },
-
-        });
-        resolve({
-          update: function(context) {
-            vmComp.setCallContext(context, vmComp)
+                },
+                on: {
+                  created: function() {
+                    log.trace("Handle cull buttons creation: resolve");
+                    resolve({
+                      vm: vmComp,
+                      update: function(context) {
+                        vmComp.setCallContext(context, vmComp);
+                      },
+                      getElement: function() {
+                        return this.vm.$el;
+                      },
+                    });
+                  }
+                }
+              }
+            );
           },
         });
       });

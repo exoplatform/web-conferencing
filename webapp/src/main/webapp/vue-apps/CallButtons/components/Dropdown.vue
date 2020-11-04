@@ -41,17 +41,9 @@ export default {
     //   required: true
     // }
   },
-
   updated() {
-    // console.log(this.$parent.isInitialized(), "INITIAL")
-    if (!this.$parent.isInitialized()) {
-      this.$emit("updated")
-      this.$parent.initialized()
-    }
+    this.$emit("updated");
   },
-  // created() {
-  //   console.log("CREATED DROPDOWN")
-  // },
   methods: {
     showDropdownComponent(isOpen) {
       this.$emit("showDropdown", isOpen);

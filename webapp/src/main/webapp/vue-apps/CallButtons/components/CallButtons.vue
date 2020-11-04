@@ -20,7 +20,7 @@ import dropdown from "./Dropdown.vue";
 import singlebtn from "./SingleButton.vue";
 // import NotificationPopUp from "./NotificationPopUp.vue";
 const log = webConferencing.getLog("webconferencing-call-buttons");
-let initialized = false;
+
 export default {
   name: "CallButtons",
   components: {
@@ -47,7 +47,8 @@ export default {
       providersButton: [],
       error: null,
       isOpen: false,
-      childRef: null
+      childRef: null,
+      isFirstInitialization: true,
     };
   },
   computed: {
@@ -72,12 +73,6 @@ export default {
     }
   },
   methods: {
-    isInitialized() {
-      return initialized;
-    },
-    initialized() {
-      initialized = true;
-    },
     setProvidersButtons(context) {
       this.providersButton.splice(0);
       this.$refs.callbutton.classList.remove("single");
@@ -101,65 +96,70 @@ export default {
               thevue.createButtons();
             });
           });
-          initialized = false;
         }
       } catch (err) {
         log.error("Error building call buttons", err);
       }
     },
     createButtons() {
-      console.log("CREATE BUTTONS");
+      log.trace("CREATE BUTTONS");
       let ref;
       let vm = null;
-      for (const [index, pb] of this.providersButton.entries()) {
-        if (this.providersButton.length > 1) {
-          //add buttons to dropdown component
-          if (this.isOpen) {
-            ref = this.childRef.callbutton[index];
-            // add vue button
+      if (this.providersButton.length !== 0) {
+        for (const [index, pb] of this.providersButton.entries()) {
+          if (this.providersButton.length > 1) {
+            //add buttons to dropdown component
+            if (this.isOpen) {
+              ref = this.childRef.callbutton[index];
+              // add vue button
+              if (pb instanceof Vue) {
+                vm = pb.$mount(); // TODO why we need vm globaly?
+                ref.appendChild(vm.$el);
+              } else {
+                // add button from DOM Element
+                ref.appendChild(pb.get(0));
+              }
+            }
+          } else {
+            //add a single button
+            const callButton = this.$refs.callbutton.childNodes[0];
+            this.$refs.callbutton.classList.add("single");
+            callButton.innerHTML = "";
             if (pb instanceof Vue) {
+              // add vue button
               vm = pb.$mount(); // TODO why we need vm globaly?
-              ref.appendChild(vm.$el);
+              const parentClass = Object.values(this.$refs.callbutton.parentElement.classList).join("");
+              const condition = parentClass.includes("mini") || parentClass.includes("popup");
+              const singleBtnContainer = condition ? vm.$el.childNodes[0].removeChild(vm.$el.childNodes[0].childNodes[1]) : vm.$el.childNodes[0]
+              callButton.appendChild(vm.$el);
             } else {
               // add button from DOM Element
-              ref.appendChild(pb.get(0));
+              callButton.appendChild(pb.get(0));
             }
           }
-        } else {
-          //add a single button
-          const callButton = this.$refs.callbutton.childNodes[0];
-          this.$refs.callbutton.classList.add("single");
-          callButton.innerHTML = "";
-          if (pb instanceof Vue) {
-            // add vue button
-            vm = pb.$mount(); // TODO why we need vm globaly?
-            const parentClass = Object.values(
-              this.$refs.callbutton.parentElement.classList
-            ).join("");
-            const condition =
-              parentClass.includes("mini") || parentClass.includes("popup");
-            const singleBtnContainer = condition
-              ? vm.$el.childNodes[0].removeChild(
-                  vm.$el.childNodes[0].childNodes[1]
-                )
-              : vm.$el.childNodes[0];
-            callButton.appendChild(vm.$el);
-          } else {
-            // add button from DOM Element
-            callButton.appendChild(pb.get(0));
-          }
         }
+      } else {
+        const callButton = this.$refs.callbutton.childNodes[0];
+        callButton.innerHTML = "";
+      }
+
+      if (this.isFirstInitialization) {
+        this.isFirstInitialization = false;
+        log.trace("Call buttons are initialized first time");
+        this.fireCreated();
       }
     },
     showDropdown() {
       this.isOpen = !this.isOpen;
-      //initialized = this.isOpen === false ? true : false;
     },
     hideDropdown() {
       this.isOpen = false;
     },
     getRef(ref) {
       this.childRef = ref;
+    },
+    fireCreated() {
+      this.$emit("created");
     }
   }
 };
