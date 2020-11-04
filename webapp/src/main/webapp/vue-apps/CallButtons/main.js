@@ -36,14 +36,12 @@ const log = webConferencing.getLog("webconferencing-call-buttons");
 export function create(context, target) {
   const result = new Promise((resolve, reject) => {
     if (target) {
-      if (target.classList.length) {
-        target.appendChild(document.createElement("div")); // div for vue mounting
-        target = target.firstElementChild;
-      }
+      const mountEl = document.createElement("div"); // div for vue mounting
+      target.appendChild(mountEl);
 
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
         const vmComp = new Vue({
-          el: target,
+          el: mountEl,
           components: {
             CallButtons,
           },
