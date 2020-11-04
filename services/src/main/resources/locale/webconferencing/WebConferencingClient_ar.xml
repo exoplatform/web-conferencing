@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>موافق</ok>
     <cancel>الغاء</cancel>
-    <callHeader>Start Call</callHeader>
+    <callHeader>بدء المكالمة</callHeader>
     <notConfigured>لم يتم تشكيله</notConfigured>
     <errorReference>مرجع الخطأ:</errorReference>
   </webconferencing>
