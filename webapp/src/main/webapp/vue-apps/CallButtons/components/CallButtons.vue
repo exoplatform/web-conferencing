@@ -96,6 +96,13 @@ export default {
               thevue.createButtons();
             });
           });
+        } else if (context && !context.details) {
+          // mini chat
+          if (this.isFirstInitialization) {
+            this.isFirstInitialization = false;
+            log.trace("Call buttons are initialized first time");
+            this.fireCreated();
+          }
         }
       } catch (err) {
         log.error("Error building call buttons", err);
