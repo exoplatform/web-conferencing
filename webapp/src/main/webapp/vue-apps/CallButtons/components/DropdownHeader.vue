@@ -45,6 +45,7 @@ export default {
       font-size: 12px;
     }
     .dropdown-heading {
+      padding-left: 5px;
       flex: 3;
       text-align: center;
     }
@@ -65,6 +66,12 @@ export default {
       flex: 10;
       text-align: right;
     }
+    .uiIconArrowDownMini {
+        height: 14px;
+        font-size: 10px;
+        top: 5px;
+        padding-top: 4px;
+      }
   }
 }
 </style>

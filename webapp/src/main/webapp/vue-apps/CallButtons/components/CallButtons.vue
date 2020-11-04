@@ -266,9 +266,9 @@ export default {
   }
   .room-actions-container {
     [class^="uiIcon"] {
-      &.callButtonIconVideo {
-        top: 6px;
-      }
+      // &.callButtonIconVideo {
+      //   top: 6px;
+      // }
       &:before {
         color: unset;
         height: 16px;
@@ -284,6 +284,20 @@ export default {
     left: -19px;
     top: 0;
     width: unset;
+    &:hover {
+      background-color: unset;
+      #dropdown-vue{
+        background-color: unset;
+        .dropdown-header {
+           background-color: unset;
+          .uiIconArrowDownMini {
+        background-color: var(--allPagesGreyColor, #e1e8ee);
+        border-radius: 50%
+      }
+        }
+      }
+      
+    }
     &.single {
       border: none;
       width: inherit;
