@@ -4,7 +4,7 @@
       <i class="uiIconSocPhone uiIconSocBlue"></i>
       {{ header.placeholder }}
     </div>
-    <i class="uiIconArrowDown"></i>
+    <i class="uiIconArrowDownMini"></i>
   </div>
 </template>
 
@@ -33,6 +33,7 @@ export default {
 .VuetifyApp {
   
   .dropdown-header {
+    // padding: 0;
     display: inline-flex;
     align-items: center;
     background-color: white;
@@ -40,6 +41,9 @@ export default {
     border-radius: 3px;
     width: 100%;
     min-height: 36px;
+    [class^="uiIcon"] {
+      font-size: 12px;
+    }
     .dropdown-heading {
       flex: 3;
       text-align: center;

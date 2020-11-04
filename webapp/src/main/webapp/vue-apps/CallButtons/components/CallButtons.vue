@@ -6,27 +6,27 @@
       :providersbutton="providersButton"
       :isopen="isOpen"
       :header="header"
-
       @updated="createButtons"
       @getRefs="getRef($event)"
       @switchBoolean="switchBool($event)"
-      @showDropdown="showDropdown($event)" />
-    <singlebtn 
-      v-else 
-      :providersbutton="providersButton" />
+      @showDropdown="showDropdown($event)"/>
+    <singlebtn v-else :providersbutton="providersButton" />
+    <!-- <notification-pop-up></notification-pop-up> -->
   </div>
 </template>
 
 <script>
 import dropdown from "./Dropdown.vue";
 import singlebtn from "./SingleButton.vue";
+// import NotificationPopUp from "./NotificationPopUp.vue";
 const log = webConferencing.getLog("webconferencing-call-buttons");
 let initialized = false;
 export default {
   name: "CallButtons",
   components: {
     dropdown,
-    singlebtn
+    singlebtn,
+    // NotificationPopUp
   },
   props: {
     language: {
@@ -36,33 +36,40 @@ export default {
     resourceBundleName: {
       type: String,
       required: true
-    }, 
+    },
     callContext: {
       type: Object,
       required: true
-    },
+    }
   },
   data() {
     return {
       providersButton: [],
       error: null,
       isOpen: false,
-      childRef: null,
+      childRef: null
     };
   },
   computed: {
     header() {
-      const parentClass = Object.values(this.$refs.callbutton.parentElement.classList).join("");
-      const condition = parentClass.includes("mini") || parentClass.includes("popup");
-      return condition ? {placeholder: ""} : {placeholder: this.$i18n.te("webconferencing.callHeader")
-        ? this.$i18n.t("webconferencing.callHeader")
-      : "Start Call"}
-    },
+      const parentClass = Object.values(
+        this.$refs.callbutton.parentElement.classList
+      ).join("");
+      const condition =
+        parentClass.includes("mini") || parentClass.includes("popup");
+      return condition
+        ? { placeholder: "" }
+        : {
+            placeholder: this.$i18n.te("webconferencing.callHeader")
+              ? this.$i18n.t("webconferencing.callHeader")
+              : "Start Call"
+          };
+    }
   },
   watch: {
     callContext(newContext, oldContext) {
-        this.setProvidersButtons(newContext);
-    },
+      this.setProvidersButtons(newContext);
+    }
   },
   methods: {
     isInitialized() {
@@ -82,7 +89,7 @@ export default {
           webConferencing.getAllProviders().then(providers => {
             providers.map(provider => {
               if (provider.isInitialized) {
-                 callButtons.push(provider.callButton(context));
+                callButtons.push(provider.callButton(context));
               }
             });
             Promise.allSettled(callButtons).then(resCallButtons => {
@@ -101,7 +108,7 @@ export default {
       }
     },
     createButtons() {
-      console.log("CREATE BUTTONS")
+      console.log("CREATE BUTTONS");
       let ref;
       let vm = null;
       for (const [index, pb] of this.providersButton.entries()) {
@@ -126,9 +133,16 @@ export default {
           if (pb instanceof Vue) {
             // add vue button
             vm = pb.$mount(); // TODO why we need vm globaly?
-            const parentClass = Object.values(this.$refs.callbutton.parentElement.classList).join("");
-            const condition = parentClass.includes("mini") || parentClass.includes("popup");
-            const singleBtnContainer = condition ? vm.$el.childNodes[0].removeChild(vm.$el.childNodes[0].childNodes[1]) : vm.$el.childNodes[0]
+            const parentClass = Object.values(
+              this.$refs.callbutton.parentElement.classList
+            ).join("");
+            const condition =
+              parentClass.includes("mini") || parentClass.includes("popup");
+            const singleBtnContainer = condition
+              ? vm.$el.childNodes[0].removeChild(
+                  vm.$el.childNodes[0].childNodes[1]
+                )
+              : vm.$el.childNodes[0];
             callButton.appendChild(vm.$el);
           } else {
             // add button from DOM Element
@@ -147,31 +161,25 @@ export default {
     getRef(ref) {
       this.childRef = ref;
     }
-  },
   }
+};
 </script>
 
 <style lang="less">
 @import "../../../skin/less/variables.less";
 .VuetifyApp {
   .call-button-container {
+    // &.btn {
+    //   padding: 0;
+    // }
+    &:hover {
+      .dropdown-header {
+        background-color: var(--allPagesGreyColor, #e1e8ee);
+      }
+    }
     button {
       .v-btn__content {
         letter-spacing: 0.1px;
-      }
-    }
-    &.single {
-      width: @width - 14px;
-      height: 36px;
-      left: 0px;
-      border: 1px solid rgb(232, 238, 242);
-      border-radius: 3px;
-      padding: 0 5px;
-      background-color: #ffffff;
-      &:hover {
-        background-color: @primaryColor;
-        opacity: 1;
-        border-color: @primaryColor
       }
     }
     a:hover,
@@ -183,6 +191,46 @@ export default {
         color: white;
       }
     }
+    &.single {
+      width: @width - 14px;
+      height: 36px;
+      left: 0px;
+      border: 1px solid rgb(232, 238, 242);
+      border-radius: 3px;
+      padding: 0 5px;
+      background-color: #ffffff;
+      &:hover {
+        background-color: var(--allPagesGreyColor, #e1e8ee);
+        // background-color: @primaryColor;
+        .single-btn-container {
+          background-color: var(--allPagesGreyColor, #e1e8ee);
+          button {
+          background-color: var(--allPagesGreyColor, #e1e8ee);
+          }
+        }
+        // opacity: 1;
+        // border-color: @primaryColor
+
+        a:hover,
+        button:hover {
+          i {
+            color: @primaryColor;
+          }
+          span {
+            color: unset;
+          }
+        }
+      }
+    }
+    // a:hover,
+    // button:hover {
+    //   i {
+    //     color: white;
+    //   }
+    //   span {
+    //     color: white;
+    //   }
+    // }
     a,
     a:hover,
     a:focus {
@@ -195,11 +243,11 @@ export default {
     top: 0;
     min-height: 36px;
     width: @width + 20px;
-    [class^="uiIcon"] {
-      font-size: 12px;
-    }
+    //[class^="uiIcon"] {
+    // font-size: 12px;
+    //}
   }
-  .single:hover,
+  // .single:hover,
   [class^="call-button-container-"]:hover,
   button:hover {
     i {
@@ -235,37 +283,37 @@ export default {
       .single-btn-container {
         width: inherit;
         button {
-           width: inherit;
-           margin-right: 0;
-           border: none;
-           background: #ffffff;
-           span {
-             width: inherit
-           }
+          width: inherit;
+          margin-right: 0;
+          border: none;
+          background: #ffffff;
+          span {
+            width: inherit;
+          }
         }
       }
     }
   }
 }
 .call-button--profile {
-      width: 120px;
-      height: 36px;
-      position: relative;
-    .call-button-container {
-      left: -129px;
-      top: -38px;
-      &.single {
-        left: -105px;
-      }
+  width: 120px;
+  height: 36px;
+  position: relative;
+  .call-button-container {
+    left: -129px;
+    top: -38px;
+    &.single {
+      left: -105px;
     }
+  }
 }
 .space-action-menu {
-    width: 86px;
-    height: 36px;
-    position: absolute;
+  width: 86px;
+  height: 36px;
+  position: absolute;
   .call-button.call-button--space {
     .call-button-container {
-      &.single{
+      &.single {
         top: 14px;
         left: -100px;
       }

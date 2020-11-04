@@ -1,9 +1,7 @@
 Vue.config.devtools = true;
 
 import CallButtons from "./components/CallButtons.vue";
-
 Vue.use(Vuetify);
-
 const vuetify = new Vuetify({
   dark: true,
   iconfont: "",
@@ -24,7 +22,6 @@ Vue.directive("click-outside", {
     document.body.removeEventListener("click", el.clickOutside);
   },
 });
-
 // getting language of user
 const lang = (eXo && eXo.env && eXo.env.portal && eXo.env.portal.language) || "en";
 const localePortlet = "locale.webconferencing";
@@ -40,7 +37,7 @@ export function create(context, target) {
         const vmComp = new Vue({
           el: target,
           components: {
-            "CallButtons" : CallButtons
+            CallButtons,
           },
           data() {
             return {
@@ -63,7 +60,7 @@ export function create(context, target) {
           vuetify,  
           render: function(h) {
             return h(
-             CallButtons,
+              CallButtons,
               {
                 props: {
                  language: lang,
@@ -73,6 +70,7 @@ export function create(context, target) {
              }
            )
           },
+
         });
         resolve({
           update: function(context) {

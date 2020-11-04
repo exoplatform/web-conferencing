@@ -41,12 +41,6 @@ export default {
     //   required: true
     // }
   },
-  // watch: {
-  //   // providersbutton(newc, oldc) {
-  //   //   console.log(oldc, newc)
-  //   //    this.$emit("updated")
-  //   // }
-  // }, 
 
   updated() {
     // console.log(this.$parent.isInitialized(), "INITIAL")
@@ -87,7 +81,9 @@ export default {
     height: 36px;
     border-radius: 3px;
     &:hover {
-      background-color: @primaryColor;
+      background-color: #476a9c;
+      background-position: 0 -45px;
+      // background-color: @primaryColor;
     }
   }
 }
