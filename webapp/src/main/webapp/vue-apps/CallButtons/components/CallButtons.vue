@@ -8,8 +8,7 @@
       :header="header"
       @updated="createButtons"
       @getRefs="getRef($event)"
-      @showDropdown="showDropdown($event)"
-    />
+      @showDropdown="showDropdown($event)"/>
     <singlebtn v-else :providersbutton="providersButton" />
   </div>
 </template>
@@ -45,16 +44,23 @@ export default {
       error: null,
       isOpen: false,
       childRef: null,
-      isFirstInitialization: true
+      isFirstInitialization: true,
+      screenWidth: window.innerWidth,
+      // parentClass: ""
     };
   },
   computed: {
+    // parentClass() {
+    //   return Object.values(
+    //     this.$refs.callbutton.parentElement.parentElement.classList
+    //   ).join("")
+    // },
     header() {
       const parentClass = Object.values(
-        this.$refs.callbutton.parentElement.classList
+        this.$refs.callbutton.parentElement.parentElement.classList
       ).join("");
       const condition =
-        parentClass.includes("mini") || parentClass.includes("tip-tip");
+        parentClass.includes("mini") || parentClass.includes("tiptip");
       return condition
         ? { placeholder: "" }
         : {
@@ -67,10 +73,14 @@ export default {
   watch: {
     callContext(newContext, oldContext) {
       this.setProvidersButtons(newContext);
-    }
+    },
+    // screenWidth(newWidth, oldWidth) {
+
+    // }
   },
-  // created(){
-  // },
+  created(){
+    console.log(window.innerWidth)
+  },
   methods: {
     setProvidersButtons(context) {
       this.providersButton.splice(0);
@@ -140,7 +150,7 @@ export default {
               vm = pb.$mount(); // TODO why we need vm globaly?
               // vm.$el.innerHTML = "<span class='v-btn__content'><i class='uiIconSocPhone uiIconBlue'></i>Start Call</span>"
               const parentClass = Object.values(
-                this.$refs.callbutton.parentElement.classList
+                this.$refs.callbutton.parentElement.parentElement.classList
               ).join("");
               const condition =
                 parentClass.includes("mini") || parentClass.includes("tiptip");
@@ -263,7 +273,7 @@ export default {
     min-height: 36px;
     width: @width + 20px;
     [class^="uiIcon"] {
-    font-size: 12px !important;
+      font-size: 12px !important;
     }
   }
   // .single:hover,
@@ -340,11 +350,29 @@ export default {
   }
 }
 .call-button-mini.call-button--tiptip {
-   .call-button-container {
-  .buttons-container { 
-    left: 109px;
-    top: 165px;
-  }
+  .call-button-container {
+    #dropdown-vue {
+      .dropdown-header {
+        position: relative;
+        .dropdown-heading {
+          [class^="uiIcon"]  {
+            font-size: 16px !important;
+          }
+        }
+        .uiIconArrowDownMini {
+          position: absolute;
+          top: 8px;
+          left: 16px;
+        }
+      }
+    }
+    .buttons-container {
+      left: @width + 60px;
+      top: @width + 16px;
+      [class^="call-button-container-"] {
+        text-align: left;
+      }
+    }
   }
 }
 .call-button--profile {
