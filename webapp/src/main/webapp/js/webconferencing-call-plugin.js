@@ -160,8 +160,8 @@
             ], function(webConferencing, callButtons) {
               webConferencing.createUserContext(userId).then((context) => {
                 callButtons.create(context, target).then((button) => {
-                  const buttonDOM = button.getElement();
-                  resolve(target);
+                  const buttonElement = button.getElement();
+                  resolve(buttonElement);
                 });
               });
             });

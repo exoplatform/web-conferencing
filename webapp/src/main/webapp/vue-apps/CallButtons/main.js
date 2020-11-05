@@ -37,6 +37,7 @@ export function create(context, target) {
   const result = new Promise((resolve, reject) => {
     if (target) {
       const mountEl = document.createElement("div"); // div for vue mounting
+      // we need the target as the parent container to use that classes for call button settings
       target.appendChild(mountEl);
 
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
