@@ -8,7 +8,7 @@
       :header="header"
       @updated="createButtons"
       @getRefs="getRef($event)"
-      @showDropdown="showDropdown($event)"/>
+      @showDropdown="showDropdown($event)" />
     <singlebtn v-else :providersbutton="providersButton" />
   </div>
 </template>
@@ -45,22 +45,22 @@ export default {
       isOpen: false,
       childRef: null,
       isFirstInitialization: true,
-      screenWidth: window.innerWidth,
-      // parentClass: ""
+      // screenWidth: window.innerWidth
     };
   },
   computed: {
-    // parentClass() {
-    //   return Object.values(
-    //     this.$refs.callbutton.parentElement.parentElement.classList
-    //   ).join("")
-    // },
-    header() {
-      const parentClass = Object.values(
-        this.$refs.callbutton.parentElement.parentElement.classList
+    parentClass() {
+      return Object.values(
+        this.$refs.callbutton.parentElement.classList
       ).join("");
+    },
+    header() {
+      // const parentClass = Object.values(
+      //   this.$refs.callbutton.parentElement.parentElement.classList
+      // ).join("");
       const condition =
-        parentClass.includes("mini") || parentClass.includes("tiptip");
+        this.parentClass.includes("call-button-mini") ||
+        this.parentClass.includes("call-button--tiptip");
       return condition
         ? { placeholder: "" }
         : {
@@ -75,13 +75,22 @@ export default {
       this.setProvidersButtons(newContext);
     },
     // screenWidth(newWidth, oldWidth) {
-
+    //   if (newWidth <= 980) {
+    //     // console.log("WIIDTH")
+    //   }
     // }
   },
-  created(){
-    console.log(window.innerWidth)
-  },
+  // created() {
+  // },
+  // mounted() {
+  //   this.$nextTick(() => {
+  //     window.addEventListener("resize", this.onResize);
+  //   });
+  // },
   methods: {
+    // onResize() {
+    //   this.screenWidth = window.innerWidth;
+    // },
     setProvidersButtons(context) {
       this.providersButton.splice(0);
       this.$refs.callbutton.classList.remove("single");
@@ -149,11 +158,12 @@ export default {
               // add vue button
               vm = pb.$mount(); // TODO why we need vm globaly?
               // vm.$el.innerHTML = "<span class='v-btn__content'><i class='uiIconSocPhone uiIconBlue'></i>Start Call</span>"
-              const parentClass = Object.values(
-                this.$refs.callbutton.parentElement.parentElement.classList
-              ).join("");
+              // const parentClass = Object.values(
+              //   this.$refs.callbutton.parentElement.parentElement.classList
+              // ).join("");
               const condition =
-                parentClass.includes("mini") || parentClass.includes("tiptip");
+                this.parentClass.includes("mini") ||
+                this.parentClass.includes("tiptip");
               const singleBtnContainer = condition
                 ? vm.$el.childNodes[0].removeChild(
                     vm.$el.childNodes[0].childNodes[1]
@@ -306,6 +316,7 @@ export default {
     left: -19px;
     top: 0;
     width: unset;
+
     #dropdown-vue {
       .buttons-container {
         [class^="call-button-container-"] {
@@ -315,6 +326,15 @@ export default {
             border: none;
             margin-top: 4px;
           }
+        }
+      }
+    }
+    &.single {
+      width: unset;
+      border: none;
+      .single-btn-container {
+        button {
+          margin-right: 0;
         }
       }
     }
@@ -355,7 +375,7 @@ export default {
       .dropdown-header {
         position: relative;
         .dropdown-heading {
-          [class^="uiIcon"]  {
+          [class^="uiIcon"] {
             font-size: 16px !important;
           }
         }
