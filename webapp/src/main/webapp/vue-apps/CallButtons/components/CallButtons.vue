@@ -76,7 +76,9 @@ export default {
     },
     // screenWidth(newWidth, oldWidth) {
     //   if (newWidth <= 980) {
-    //     // console.log("WIIDTH")
+    //     console.log("WIIDTH")
+    //     // this.parentClass = this.parentClass + "call-button-mini";
+
     //   }
     // }
   },
@@ -162,8 +164,8 @@ export default {
               //   this.$refs.callbutton.parentElement.parentElement.classList
               // ).join("");
               const condition =
-                this.parentClass.includes("mini") ||
-                this.parentClass.includes("tiptip");
+                this.parentClass.includes("call-button-mini") ||
+                this.parentClass.includes("call-button--tiptip");
               const singleBtnContainer = condition
                 ? vm.$el.childNodes[0].removeChild(
                     vm.$el.childNodes[0].childNodes[1]
@@ -313,7 +315,7 @@ export default {
 .call-button-mini {
   width: min-content;
   .call-button-container {
-    left: -19px;
+    left: 0px;
     top: 0;
     width: unset;
 
@@ -388,7 +390,7 @@ export default {
     }
     .buttons-container {
       left: @width + 60px;
-      top: @width + 16px;
+      top: @width + 6px;
       [class^="call-button-container-"] {
         text-align: left;
       }
