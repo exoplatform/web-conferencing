@@ -96,3 +96,37 @@ export function create(context, target) {
 
   return result;
 }
+
+// export function initNotificationPopup(target) {
+//   // let data = {};
+//   const comp = new Vue({
+//     el: target,
+//     components: {
+//       NotificationPopUp,
+//     },
+//     data() {
+//       return {
+//         callInfo: {
+
+//         }
+//       };
+//     },
+//     vuetify,
+//     render: function(h) {
+//       return h(NotificationPopUp, {
+//         props: {
+//           dialog: this.callInfo.dialog
+//           // language: lang,
+          
+//         }
+//       });
+//     }
+//   })
+//   return {
+//     show: function(args) {
+//       comp.callInfo.dialog = true
+//       comp.callInfo.callerId = args.callerId
+//       // etc
+//     }
+//   }
+// }

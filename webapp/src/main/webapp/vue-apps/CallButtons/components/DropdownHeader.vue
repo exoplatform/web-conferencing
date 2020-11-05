@@ -68,7 +68,7 @@ export default {
     }
     .uiIconArrowDownMini {
         height: 14px;
-        font-size: 10px;
+        font-size: 10px !important;
         top: 5px;
         padding-top: 4px;
       }

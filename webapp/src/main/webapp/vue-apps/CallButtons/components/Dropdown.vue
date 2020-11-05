@@ -3,15 +3,16 @@
     <dropdown-header
       :header="header"
       :showdropdowncomponent="showDropdownComponent"
-      :passrefs="passRefs"/>
-    <div v-if="isopen" class="buttons-container">
+      :passrefs="passRefs"
+    />
+    <div v-show="isopen" class="buttons-container">
       <!-- TODO why we need IDs for them?? a class will not work? -->
       <div
         v-for="(button, index) in providersbutton"
         :key="index"
         :class="`call-button-container-${index}`"
-        :ref="`callbutton`">
-      </div>
+        :ref="`callbutton`"
+      ></div>
     </div>
   </div>
 </template>
@@ -35,18 +36,14 @@ export default {
     header: {
       type: Object,
       required: true
-    },
-    // initialized: {
-    //   type: Boolean,
-    //   required: true
-    // }
+    }
   },
   updated() {
     this.$emit("updated");
   },
   methods: {
-    showDropdownComponent(isOpen) {
-      this.$emit("showDropdown", isOpen);
+    showDropdownComponent() {
+      this.$emit("showDropdown");
     },
     passRefs() {
       this.$emit("getRefs", this.$refs);

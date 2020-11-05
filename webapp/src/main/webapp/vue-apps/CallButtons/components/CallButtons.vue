@@ -8,25 +8,22 @@
       :header="header"
       @updated="createButtons"
       @getRefs="getRef($event)"
-      @switchBoolean="switchBool($event)"
-      @showDropdown="showDropdown($event)"/>
+      @showDropdown="showDropdown($event)"
+    />
     <singlebtn v-else :providersbutton="providersButton" />
-    <!-- <notification-pop-up></notification-pop-up> -->
   </div>
 </template>
 
 <script>
 import dropdown from "./Dropdown.vue";
 import singlebtn from "./SingleButton.vue";
-// import NotificationPopUp from "./NotificationPopUp.vue";
 const log = webConferencing.getLog("webconferencing-call-buttons");
 
 export default {
   name: "CallButtons",
   components: {
     dropdown,
-    singlebtn,
-    // NotificationPopUp
+    singlebtn
   },
   props: {
     language: {
@@ -48,7 +45,7 @@ export default {
       error: null,
       isOpen: false,
       childRef: null,
-      isFirstInitialization: true,
+      isFirstInitialization: true
     };
   },
   computed: {
@@ -57,7 +54,7 @@ export default {
         this.$refs.callbutton.parentElement.classList
       ).join("");
       const condition =
-        parentClass.includes("mini") || parentClass.includes("popup");
+        parentClass.includes("mini") || parentClass.includes("tip-tip");
       return condition
         ? { placeholder: "" }
         : {
@@ -72,6 +69,8 @@ export default {
       this.setProvidersButtons(newContext);
     }
   },
+  // created(){
+  // },
   methods: {
     setProvidersButtons(context) {
       this.providersButton.splice(0);
@@ -91,6 +90,9 @@ export default {
               resCallButtons.forEach(button => {
                 if (button.status === "fulfilled") {
                   this.providersButton.push(button.value);
+                  if (button.value.$data) {
+                    button.value.$data.header = "CALL";
+                  }
                 }
               });
               thevue.createButtons();
@@ -121,6 +123,7 @@ export default {
               // add vue button
               if (pb instanceof Vue) {
                 vm = pb.$mount(); // TODO why we need vm globaly?
+                // vm.$el.innerHTML = "<span class='v-btn__content'><i class='uiIconSocPhone uiIconBlue'></i>Jitsi Call</span>";
                 ref.appendChild(vm.$el);
               } else {
                 // add button from DOM Element
@@ -135,9 +138,17 @@ export default {
             if (pb instanceof Vue) {
               // add vue button
               vm = pb.$mount(); // TODO why we need vm globaly?
-              const parentClass = Object.values(this.$refs.callbutton.parentElement.classList).join("");
-              const condition = parentClass.includes("mini") || parentClass.includes("popup");
-              const singleBtnContainer = condition ? vm.$el.childNodes[0].removeChild(vm.$el.childNodes[0].childNodes[1]) : vm.$el.childNodes[0]
+              // vm.$el.innerHTML = "<span class='v-btn__content'><i class='uiIconSocPhone uiIconBlue'></i>Start Call</span>"
+              const parentClass = Object.values(
+                this.$refs.callbutton.parentElement.classList
+              ).join("");
+              const condition =
+                parentClass.includes("mini") || parentClass.includes("tiptip");
+              const singleBtnContainer = condition
+                ? vm.$el.childNodes[0].removeChild(
+                    vm.$el.childNodes[0].childNodes[1]
+                  )
+                : vm.$el.childNodes[0];
               callButton.appendChild(vm.$el);
             } else {
               // add button from DOM Element
@@ -161,6 +172,7 @@ export default {
     },
     hideDropdown() {
       this.isOpen = false;
+      // this.$el.blur();
     },
     getRef(ref) {
       this.childRef = ref;
@@ -212,7 +224,7 @@ export default {
         .single-btn-container {
           background-color: var(--allPagesGreyColor, #e1e8ee);
           button {
-          background-color: var(--allPagesGreyColor, #e1e8ee);
+            background-color: var(--allPagesGreyColor, #e1e8ee);
           }
         }
         // opacity: 1;
@@ -250,9 +262,9 @@ export default {
     top: 0;
     min-height: 36px;
     width: @width + 20px;
-    //[class^="uiIcon"] {
-    // font-size: 12px;
-    //}
+    [class^="uiIcon"] {
+    font-size: 12px !important;
+    }
   }
   // .single:hover,
   [class^="call-button-container-"]:hover,
@@ -284,19 +296,30 @@ export default {
     left: -19px;
     top: 0;
     width: unset;
-    &:hover {
-      background-color: unset;
-      #dropdown-vue{
-        background-color: unset;
-        .dropdown-header {
-           background-color: unset;
-          .uiIconArrowDownMini {
-        background-color: var(--allPagesGreyColor, #e1e8ee);
-        border-radius: 50%
-      }
+    #dropdown-vue {
+      .buttons-container {
+        [class^="call-button-container-"] {
+          button {
+            background: transparent;
+            box-shadow: none;
+            border: none;
+            margin-top: 4px;
+          }
         }
       }
-      
+    }
+  }
+  &:hover {
+    background-color: unset;
+    #dropdown-vue {
+      background-color: unset;
+      .dropdown-header {
+        background-color: unset;
+        .uiIconArrowDownMini {
+          background-color: var(--allPagesGreyColor, #e1e8ee);
+          border-radius: 50%;
+        }
+      }
     }
     &.single {
       border: none;
@@ -314,6 +337,14 @@ export default {
         }
       }
     }
+  }
+}
+.call-button-mini.call-button--tiptip {
+   .call-button-container {
+  .buttons-container { 
+    left: 109px;
+    top: 165px;
+  }
   }
 }
 .call-button--profile {
