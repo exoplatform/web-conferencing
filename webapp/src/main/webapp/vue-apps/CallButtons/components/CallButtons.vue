@@ -306,6 +306,20 @@ export default {
     width: unset;
 
     #dropdown-vue {
+      .dropdown-header {
+        .uiIconArrowDownMini {
+         // position: absolute;
+          //top: 3px;
+          //left: 20px;
+          //font-size: 8px !important;
+         // padding-top: 3px;
+          //height: 11px;
+          &::before {
+            color: @primaryColor;
+           // padding: 2px 4px;
+          }
+        }
+      }
       .buttons-container {
         [class^="call-button-container-"] {
           button {
@@ -334,7 +348,9 @@ export default {
       .dropdown-header {
         background-color: unset;
         .uiIconArrowDownMini {
-          background-color: var(--allPagesGreyColor, #e1e8ee);
+          // background-color: var(--allPagesGreyColor, #e1e8ee);
+          var(--allPagesGreyColorLighten1, #a8b3c5);
+          // background: #d3d6db;
           border-radius: 50%;
         }
       }
