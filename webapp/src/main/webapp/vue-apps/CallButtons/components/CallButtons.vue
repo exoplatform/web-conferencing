@@ -8,7 +8,7 @@
       :header="header"
       @updated="createButtons"
       @getRefs="getRef($event)"
-      @showDropdown="showDropdown($event)" />
+      @showDropdown="showDropdown($event)"/>
     <singlebtn v-else :providersbutton="providersButton" />
   </div>
 </template>
@@ -44,15 +44,15 @@ export default {
       error: null,
       isOpen: false,
       childRef: null,
-      isFirstInitialization: true,
+      isFirstInitialization: true
       // screenWidth: window.innerWidth
     };
   },
   computed: {
     parentClass() {
-      return Object.values(
-        this.$refs.callbutton.parentElement.classList
-      ).join("");
+      return Object.values(this.$refs.callbutton.parentElement.classList).join(
+        ""
+      );
     },
     header() {
       // const parentClass = Object.values(
@@ -73,7 +73,7 @@ export default {
   watch: {
     callContext(newContext, oldContext) {
       this.setProvidersButtons(newContext);
-    },
+    }
     // screenWidth(newWidth, oldWidth) {
     //   if (newWidth <= 980) {
     //     console.log("WIIDTH")
@@ -210,9 +210,6 @@ export default {
 @import "../../../skin/less/variables.less";
 .VuetifyApp {
   .call-button-container {
-    // &.btn {
-    //   padding: 0;
-    // }
     &:hover {
       .dropdown-header {
         background-color: var(--allPagesGreyColor, #e1e8ee);
@@ -249,8 +246,6 @@ export default {
             background-color: var(--allPagesGreyColor, #e1e8ee);
           }
         }
-        // opacity: 1;
-        // border-color: @primaryColor
 
         a:hover,
         button:hover {
@@ -263,15 +258,6 @@ export default {
         }
       }
     }
-    // a:hover,
-    // button:hover {
-    //   i {
-    //     color: white;
-    //   }
-    //   span {
-    //     color: white;
-    //   }
-    // }
     a,
     a:hover,
     a:focus {
@@ -379,20 +365,58 @@ export default {
         .dropdown-heading {
           [class^="uiIcon"] {
             font-size: 16px !important;
+            margin-right: 10px;
           }
         }
         .uiIconArrowDownMini {
           position: absolute;
-          top: 8px;
-          left: 16px;
+          top: 3px;
+          left: 20px;
+          font-size: 8px !important;
+          padding-top: 3px;
+          height: 11px;
+          &::before {
+            color: @primaryColor;
+            padding: 2px 4px;
+          }
         }
       }
     }
     .buttons-container {
       left: @width + 60px;
-      top: @width + 6px;
+      top: @width + 8px;
+      box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.15);
       [class^="call-button-container-"] {
         text-align: left;
+        a,
+        a:hover,
+        a:focus {
+          color: black;
+        }
+        a:hover,
+        button:hover {
+          i {
+            color: #e1e8ee;
+          }
+          span {
+            color: #e1e8ee;
+          }
+        }
+        &:hover {
+          i {
+            color: #e1e8ee;
+          }
+          span {
+            color: #e1e8ee;
+          }
+        }
+        button {
+          .v-btn__content {
+            [class^="uiIconSoc"] {
+              font-size: 16px !important;
+            }
+          }
+        }
       }
     }
   }

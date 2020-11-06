@@ -3,16 +3,14 @@
     <dropdown-header
       :header="header"
       :showdropdowncomponent="showDropdownComponent"
-      :passrefs="passRefs"
-    />
+      :passrefs="passRefs"/>
     <div v-show="isopen" class="buttons-container">
       <!-- TODO why we need IDs for them?? a class will not work? -->
       <div
         v-for="(button, index) in providersbutton"
         :key="index"
         :class="`call-button-container-${index}`"
-        :ref="`callbutton`"
-      ></div>
+        :ref="`callbutton`" ></div>
     </div>
   </div>
 </template>
