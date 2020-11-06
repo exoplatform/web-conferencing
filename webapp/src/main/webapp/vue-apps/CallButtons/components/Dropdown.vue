@@ -67,6 +67,8 @@ export default {
     padding: 0 10px;
     height: 36px;
     border-radius: 3px;
+    display: flex;
+    align-items: center;
     &:hover {
       background-color: #476a9c;
       background-position: 0 -45px;

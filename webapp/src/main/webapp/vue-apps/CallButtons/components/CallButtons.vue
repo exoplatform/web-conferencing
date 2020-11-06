@@ -272,6 +272,7 @@ export default {
     width: @width + 20px;
     [class^="uiIcon"] {
       font-size: 12px !important;
+      margin-bottom: 2px;
     }
   }
   // .single:hover,
@@ -294,7 +295,11 @@ export default {
         height: 16px;
         width: 16px;
         margin-right: 4px;
+        vertical-align: middle;
       }
+    }
+    span.callTitle {
+      vertical-align: middle;
     }
   }
 }
@@ -313,6 +318,21 @@ export default {
             box-shadow: none;
             border: none;
             margin-top: 4px;
+            [class^="uiIcon"] {
+              // &.callButtonIconVideo {
+              //   top: 6px;
+              // }
+              &:before {
+                color: unset;
+                height: 16px;
+                width: 16px;
+                margin-right: 4px;
+                vertical-align: middle;
+              }
+            }
+            span.callTitle {
+              vertical-align: middle;
+            }
           }
         }
       }
@@ -334,7 +354,6 @@ export default {
       .dropdown-header {
         background-color: unset;
         .uiIconArrowDownMini {
-          // background-color: var(--allPagesGreyColor, #e1e8ee);
           background: #d3d6db;
           border-radius: 50%;
         }
@@ -385,7 +404,7 @@ export default {
     }
     .buttons-container {
       left: @width + 60px;
-      top: @width + 8px;
+      top: @width + 5px;
       box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.15);
       [class^="call-button-container-"] {
         text-align: left;
@@ -445,6 +464,23 @@ export default {
         left: -100px;
       }
     }
+  }
+}
+.room-actions-container {
+  [class^="uiIcon"] {
+    // &.callButtonIconVideo {
+    //   top: 6px;
+    // }
+    &:before {
+      color: unset;
+      height: 16px;
+      width: 16px;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+  }
+  span.callTitle {
+    vertical-align: middle;
   }
 }
 #UIProfileHeaderContainer {
