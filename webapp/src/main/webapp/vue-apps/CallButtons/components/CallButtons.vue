@@ -147,8 +147,8 @@ export default {
                 // vm.$el.innerHTML = "<span class='v-btn__content'><i class='uiIconSocPhone uiIconBlue'></i>Jitsi Call</span>";
                 ref.appendChild(vm.$el);
               } else {
-                // add button from DOM Element
-                ref.appendChild(pb.get(0));
+                // add button as DOM Element
+                ref.appendChild(pb);
               }
             }
           } else {
@@ -173,8 +173,8 @@ export default {
                 : vm.$el.childNodes[0];
               callButton.appendChild(vm.$el);
             } else {
-              // add button from DOM Element
-              callButton.appendChild(pb.get(0));
+              // add button as DOM Element
+              callButton.appendChild(pb);
             }
           }
         }

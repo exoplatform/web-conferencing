@@ -1240,7 +1240,8 @@
 									// even if adding will fail, we treat it as 'canceled' and mark the provider as added
 									$container.data(providerFlag + p.getType(), true);
 									var b = p.callButton(context, "element");
-									addProviderButton(p, b);
+									const $b = $(b);
+									addProviderButton(p, $b);
 								}								
 							}
 						}

@@ -337,7 +337,7 @@
 									// Wait for promise done handlers outside and enable tooltip for added by them preferred (default) button
 									$button.filter(".webrtcCallAction.preferred").tooltip();
 								}, 200);
-								button.resolve($button);
+								button.resolve($button[0]);
 							}).fail(function(err) {
 								if (err && err.code == "NOT_FOUND_ERROR") {
 									button.reject(err.message);
