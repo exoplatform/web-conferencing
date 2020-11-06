@@ -139,6 +139,9 @@ public class CometdWebConferencingService implements Startable {
   /** The Constant COMMAND_DELETE. */
   public static final String             COMMAND_DELETE                        = "delete";
 
+  /** The Constant COMMAND_ADD_GUEST. */
+  public static final String             COMMAND_ADD_GUEST                     = "add_guest";
+
   /** The Constant COMMAND_GET_CALLS_STATE. */
   public static final String             COMMAND_GET_CALLS_STATE               = "get_calls_state";
 
@@ -1104,6 +1107,19 @@ public class CometdWebConferencingService implements Startable {
                           } catch (Throwable e) {
                             LOG.error("Error deleting call '" + id + "' by '" + currentUserId + "'", e);
                             caller.failure(ErrorInfo.serverError("Error deleting call record").asJSON());
+                          }
+                        } else if (COMMAND_ADD_GUEST.equals(command)) {
+                          Object guestJson = arguments.get("guest");
+                          if (guestJson != null) {
+                            try {
+                              CallInfo call = webConferencing.addGuest(id, guestJson);
+                              caller.result(asJSON(call));
+                            } catch (CallNotFoundException e) {
+                              caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
+                            } catch (Throwable e) {
+                              LOG.error("Error adding guest to call '" + id + "' by '" + currentUserId + "'", e);
+                              caller.failure(ErrorInfo.serverError("Error adding guest to call").asJSON());
+                            }
                           }
                         } else if (COMMAND_GET_CALLS_STATE.equals(command)) {
                           if (id.equals(currentUserId)) { // id it's user name for this command

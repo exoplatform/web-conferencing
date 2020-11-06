@@ -2074,6 +2074,32 @@
 			}
 		};
 		
+    /**
+     * Update add guest to call.
+     */
+    this.addGuest = function(id, guestInfo) {
+      if (cometd) {
+        var process = $.Deferred();
+        var callProps = cometdParams({
+          command : "add_guest",
+          id : id,
+          guest : guestInfo
+        });
+        cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
+          var result = tryParseJson(response);
+          if (response.successful) {
+            process.resolve(result);
+          } else {
+            process.reject(result);
+          }
+        });
+        return process.promise();
+      } else {
+        log.trace("Updating call requires CometD. Was call: " + id);
+        return $.Deferred().reject("CometD required").promise();
+      }
+    };
+		
 		
 	  /**
      * Update call participants in server side database.

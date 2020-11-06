@@ -45,7 +45,6 @@ import javax.jcr.Session;
 import javax.persistence.PersistenceException;
 import javax.servlet.http.HttpServletRequest;
 
-import org.antlr.grammar.v3.ANTLRParser.throwsSpec_return;
 import org.apache.commons.fileupload.FileUploadException;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -804,7 +803,7 @@ public class WebConferencingService implements Startable {
     if (call.getOwner().isGroup()) {
       String callId = call.getId();
       for (UserInfo part : call.getParticipants()) {
-        if (UserInfo.TYPE_NAME.equals(part.getType())) {
+        if (UserInfo.TYPE_NAME.equals(part.getType()) || GuestInfo.TYPE_NAME.equals(part.getType())) {
           // It's eXo user: fire user listener for stopped call,
           // but, in case if stopped with removal (deleted call), don't fire to the initiator (of deletion) -
           // a given user.
@@ -823,7 +822,18 @@ public class WebConferencingService implements Startable {
     } else {
       notifyUserCallStateChanged(call, userId, CallState.STOPPED);
     }
+    removeGuests(call.getId());
     return call;
+  }
+
+  /**
+   * Removes the guests from call.
+   *
+   * @param callId the call id
+   */
+  protected void removeGuests(String callId) {
+    List<ParticipantEntity> participants = participantsStorage.findCallParts(callId);
+    participants.stream().filter(part -> part.getType().equals(GuestInfo.TYPE_NAME)).forEach(participantsStorage::delete);
   }
 
   /**
@@ -962,6 +972,47 @@ public class WebConferencingService implements Startable {
   }
 
   /**
+   * Adds the guest.
+   *
+   * @param id the id
+   * @param guest the guest
+   * @return the call info
+   * @throws InvalidCallException the invalid call exception
+   * @throws CallNotFoundException the call not found exception
+   */
+  public CallInfo addGuest(String id, Object guestJson) throws InvalidCallException, CallNotFoundException {
+    UserInfo userInfo = getParticipantFromJson(guestJson);
+    GuestInfo guestInfo = new GuestInfo(userInfo);
+    CallInfo call = getCall(id);
+    if (call != null) {
+      txAddParticipant(id, guestInfo);
+      call.addParticipant(guestInfo);
+      return call;
+    } else {
+      throw new CallNotFoundException("Call not found: " + id);
+    }
+  }
+
+  /**
+   * Adds the guest.
+   *
+   * @param id the id
+   * @param guest the guest
+   * @return the call info
+   * @throws InvalidCallException the invalid call exception
+   * @throws CallNotFoundException the call not found exception
+   */
+  public CallInfo addGuest(String id, GuestInfo guest) throws InvalidCallException, CallNotFoundException {
+    CallInfo call = getCall(id);
+    if (call != null) {
+      txAddParticipant(id, guest);
+    } else {
+      throw new CallNotFoundException("Call not found: " + id);
+    }
+    return null;
+  }
+
+  /**
    * Join a call if it is started or start already stopped one.
    *
    * @param id the id
@@ -982,7 +1033,7 @@ public class WebConferencingService implements Startable {
           UserInfo joined = null;
           // save Joined first
           for (UserInfo part : call.getParticipants()) {
-            if (UserInfo.TYPE_NAME.equals(part.getType()) && partId.equals(part.getId())) {
+            if ((UserInfo.TYPE_NAME.equals(part.getType()) || GuestInfo.TYPE_NAME.equals(part.getType())) && partId.equals(part.getId())) {
               part.setState(UserState.JOINED);
               part.setClientId(clientId);
               joined = part;
@@ -1044,7 +1095,7 @@ public class WebConferencingService implements Startable {
           int leavedNum = 0;
           // save Joined first
           for (UserInfo part : call.getParticipants()) {
-            if (UserInfo.TYPE_NAME.equals(part.getType())) {
+            if (UserInfo.TYPE_NAME.equals(part.getType()) || GuestInfo.TYPE_NAME.equals(part.getType())) {
               if (partId.equals(part.getId())) {
                 // Leave should not be called on a call session started after stopping an one previous of this
                 // call.
@@ -1708,7 +1759,7 @@ public class WebConferencingService implements Startable {
    */
   protected void notifyUserCallStateChanged(CallInfo call, String initiatorId, String state) {
     for (UserInfo part : call.getParticipants()) {
-      if (UserInfo.TYPE_NAME.equals(part.getType())) {
+      if (UserInfo.TYPE_NAME.equals(part.getType()) || GuestInfo.TYPE_NAME.equals(part.getType())) {
         // We notify to other part, and in case of deletion including to one who may caused the update
         // for a case if several user clients listening.
         if (initiatorId == null || !initiatorId.equals(part.getId()) || CallState.STOPPED.equals(state)) {
@@ -1779,8 +1830,11 @@ public class WebConferencingService implements Startable {
         // TODO should we add all current members as participants (and update their state from the DB) or
         // better to do this on client side?
         for (ParticipantEntity p : participantsStorage.findCallParts(savedCall.getId())) {
-          if (UserInfo.TYPE_NAME.equals(p.getType())) {
+          if (UserInfo.TYPE_NAME.equals(p.getType()) || GuestInfo.TYPE_NAME.equals(p.getType())) {
             UserInfo user = getUserInfo(p.getId());
+            if (GuestInfo.TYPE_NAME.equals(user.getType())) {
+              user = new GuestInfo(user);
+            }
             if (user == null) {
               // If user not found we treat it as external participant to work correctly
               // with what addCall() does.
@@ -1924,6 +1978,22 @@ public class WebConferencingService implements Startable {
     for (UserInfo p : call.getParticipants()) {
       participantsStorage.create(createParticipantEntity(callId, p));
     }
+  }
+
+  /**
+   * Tx add participant.
+   *
+   * @param callId the call id
+   * @param participant the participant
+   */
+  @ExoTransactional
+  protected void txAddParticipant(String callId, UserInfo participant) {
+    if (participantsStorage.find(new ParticipantId(participant.getId(), callId)) == null) {
+      participantsStorage.create(createParticipantEntity(callId, participant));
+    } else {
+      LOG.warn("Cannot add participant with id {} for call {}. Participant already exists", participant.getId(), callId);
+    }
+
   }
 
   /**
@@ -2156,37 +2226,16 @@ public class WebConferencingService implements Startable {
   /**
    * Return object if it's String instance or null if it is not.
    *
-   * @param obj the obj
+   * @param jsonObject the json
    * @return the string or null
    */
   @SuppressWarnings("unchecked")
-  protected List<UserInfo> getParticipantsFromJson(Object obj) {
-    if (obj != null && Object[].class.isAssignableFrom(obj.getClass())) {
-      Object[] members = Object[].class.cast(obj);
+  protected List<UserInfo> getParticipantsFromJson(Object jsonObject) {
+    if (jsonObject != null && Object[].class.isAssignableFrom(jsonObject.getClass())) {
+      Object[] members = Object[].class.cast(jsonObject);
       List<UserInfo> participants = new ArrayList<>();
-      for (Object memberObj : members) {
-        Map<String, Object> member = (Map<String, Object>) memberObj;
-        String id = String.valueOf(member.get("id"));
-        String state = String.valueOf(member.get("state"));
-        String avatarLink = String.valueOf(member.get("avatarLink"));
-        String clientId = String.valueOf(member.get("clientId"));
-        String firstName = String.valueOf(member.get("firstName"));
-        String lastName = String.valueOf(member.get("lastName"));
-        String profileLink = String.valueOf(member.get("profileLink"));
-        UserInfo userInfo = new UserInfo(id, firstName, lastName);
-        userInfo.setClientId(clientId);
-        userInfo.setState(state);
-        userInfo.setProfileLink(profileLink);
-        userInfo.setAvatarLink(avatarLink);
-        org.exoplatform.social.core.identity.model.Identity userIdentity =
-                                                                         socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME,
-                                                                                                                   id,
-                                                                                                                   true);
-        if (userIdentity != null) {
-          getUserIMs(userIdentity.getProfile()).forEach(im -> userInfo.addImAccount(im));
-        } else {
-          LOG.warn("Cannot load user IM accounts. User identity is null. userId: {}", id);
-        }
+      for (Object participantObj : members) {
+        UserInfo userInfo = getParticipantFromJson(participantObj);
         participants.add(userInfo);
       }
       return participants;
@@ -2194,6 +2243,39 @@ public class WebConferencingService implements Startable {
       LOG.warn("Cannot parse participants JSON - the object is not an instanse of Object[]");
       return null;
     }
+  }
+
+  /**
+   * Gets the participant from json.
+   *
+   * @param jsonObject the json object
+   * @return the participant from json
+   */
+  protected UserInfo getParticipantFromJson(Object jsonObject) {
+    // TODO: Check class cast exeption
+    Map<String, Object> participant = (Map<String, Object>) jsonObject;
+    String id = String.valueOf(participant.get("id"));
+    String state = String.valueOf(participant.get("state"));
+    String avatarLink = String.valueOf(participant.get("avatarLink"));
+    String clientId = String.valueOf(participant.get("clientId"));
+    String firstName = String.valueOf(participant.get("firstName"));
+    String lastName = String.valueOf(participant.get("lastName"));
+    String profileLink = String.valueOf(participant.get("profileLink"));
+    UserInfo userInfo = new UserInfo(id, firstName, lastName);
+    userInfo.setClientId(clientId);
+    userInfo.setState(state);
+    userInfo.setProfileLink(profileLink);
+    userInfo.setAvatarLink(avatarLink);
+    org.exoplatform.social.core.identity.model.Identity userIdentity =
+                                                                     socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME,
+                                                                                                               id,
+                                                                                                               true);
+    if (userIdentity != null) {
+      getUserIMs(userIdentity.getProfile()).forEach(im -> userInfo.addImAccount(im));
+    } else {
+      LOG.warn("Cannot load user IM accounts. User identity is null. userId: {}", id);
+    }
+    return userInfo;
   }
 
   /**
