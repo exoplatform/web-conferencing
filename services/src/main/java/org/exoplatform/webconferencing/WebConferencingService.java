@@ -975,7 +975,7 @@ public class WebConferencingService implements Startable {
    * Adds the guest.
    *
    * @param id the id
-   * @param guest the guest
+   * @param guestJson the guest json
    * @return the call info
    * @throws InvalidCallException the invalid call exception
    * @throws CallNotFoundException the call not found exception
