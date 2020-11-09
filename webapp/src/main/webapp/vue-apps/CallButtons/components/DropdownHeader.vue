@@ -1,5 +1,8 @@
 <template>
-  <div :style="{backgroundColor: isopen ? 'var(--allPagesGreyColor, #e1e8ee)' : 'white'}" class="dropdown-header" @click="showdropdowncomponent(); passrefs()">
+  <div 
+    :style="{backgroundColor: isopen && (!parentclass.includes('call-button-mini') || !parentclass.includes('call-button--tiptip')) ? 'var(--allPagesGreyColor, #e1e8ee)' : 'white'}" 
+    class="dropdown-header" 
+    @click="showdropdowncomponent(); passrefs()">
     <div class="dropdown-heading">
       <i class="uiIconSocPhone uiIconSocBlue"></i>
       {{ header.placeholder }}
@@ -26,6 +29,10 @@ export default {
     isopen: {
       type: Boolean,
       required: true
+    },
+    parentclass: {
+      type: String,
+      required: true
     }
   }
 };
@@ -47,19 +54,19 @@ export default {
     // }
     .uiIconMiniArrowDown {
       color: var(--allPagesDarkGrey, #4d5466) !important;
-      ::before {
-        color: var(--allPagesDarkGrey, #4d5466) !important;
-      }
+      top: 3px;
+      // ::before {
+      //   color: var(--allPagesDarkGrey, #4d5466) !important;
+      // }
     }
     .dropdown-heading {
       padding-left: 5px;
       flex: 3;
       text-align: center;
-      [class^="uiIcon"] {
+      .uiIconSocPhone {
         &::before {
           content: "\e92b";
         }
-        // font-size: 14px;
       }
     }
     i {

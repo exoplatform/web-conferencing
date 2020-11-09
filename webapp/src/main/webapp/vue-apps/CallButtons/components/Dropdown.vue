@@ -4,7 +4,8 @@
       :header="header"
       :showdropdowncomponent="showDropdownComponent"
       :passrefs="passRefs"
-      :isopen="isopen"/>
+      :isopen="isopen"
+      :parentclass="parentclass"/>
     <div v-show="isopen" class="buttons-container">
       <!-- TODO why we need IDs for them?? a class will not work? -->
       <div
@@ -35,6 +36,10 @@ export default {
     },
     header: {
       type: Object,
+      required: true
+    },
+    parentclass: {
+      type: String,
       required: true
     }
   },

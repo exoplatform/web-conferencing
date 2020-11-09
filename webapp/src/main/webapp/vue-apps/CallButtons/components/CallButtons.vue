@@ -6,6 +6,7 @@
       :providersbutton="providersButton"
       :isopen="isOpen"
       :header="header"
+      :parentclass="parentClass"
       @updated="createButtons"
       @getRefs="getRef($event)"
       @showDropdown="showDropdown($event)"/>
@@ -274,11 +275,9 @@ export default {
     min-height: 36px;
     width: @width + 20px;
     [class^="uiIcon"] {
-      // font-size: 14px !important;
       margin-bottom: 2px;
     }
   }
-  // .single:hover,
   [class^="call-button-container-"]:hover,
   button:hover {
     i {
@@ -290,20 +289,13 @@ export default {
   }
   .room-actions-container {
     [class^="uiIcon"] {
-      // &.callButtonIconVideo {
-      //   top: 6px;
-      // }
       &:before {
         color: unset;
         height: 16px;
         width: 16px;
         margin-right: 4px;
-        // vertical-align: middle;
       }
     }
-    // span.callTitle {
-    //   // vertical-align: middle;
-    // }
   }
 }
 .call-button-mini {
@@ -322,15 +314,12 @@ export default {
             border: none;
             margin-top: 4px;
             [class^="uiIcon"] {
-              // &.callButtonIconVideo {
-              //   top: 6px;
-              // }
               &:before {
                 color: unset;
                 height: 16px;
                 width: 16px;
                 margin-right: 4px;
-                // vertical-align: middle;
+                content: "\e92b";
               }
             }
           }
@@ -387,6 +376,9 @@ export default {
           [class^="uiIcon"] {
             font-size: 16px !important;
             margin-right: 10px;
+            &::before {
+              content: "\e92b";
+            }
           }
         }
         .uiIconMiniArrowDown {
@@ -418,18 +410,18 @@ export default {
         a:hover,
         button:hover {
           i {
-            color: #e1e8ee;
+            color: white;
           }
           span {
-            color: #e1e8ee;
+            color: white;
           }
         }
         &:hover {
           i {
-            color: #e1e8ee;
+            color: white;
           }
           span {
-            color: #e1e8ee;
+            color: white;
           }
         }
         button {
@@ -468,23 +460,7 @@ export default {
     }
   }
 }
-.room-actions-container {
-  [class^="uiIcon"] {
-    // &.callButtonIconVideo {
-    //   top: 6px;
-    // }
-    &:before {
-      color: unset;
-      height: 16px;
-      width: 16px;
-      margin-right: 4px;
-      // vertical-align: middle;
-    }
-  }
-  span.callTitle {
-    // vertical-align: middle;
-  }
-}
+
 #UIProfileHeaderContainer {
   position: relative;
   z-index: 100;
