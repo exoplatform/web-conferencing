@@ -11,7 +11,8 @@
         v-for="(button, index) in providersbutton"
         :key="index"
         :class="`call-button-container-${index}`"
-        :ref="`callbutton`" ></div>
+        :ref="`callbutton`"
+        @click="isopen=false"></div>
     </div>
   </div>
 </template>

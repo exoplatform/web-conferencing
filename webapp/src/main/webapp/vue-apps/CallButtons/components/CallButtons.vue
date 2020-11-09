@@ -235,7 +235,7 @@ export default {
     &.single {
       width: @width - 14px;
       height: 36px;
-      left: 0px;
+      left: 3px;
       border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
       padding: 0 5px;
@@ -269,7 +269,7 @@ export default {
     cursor: pointer !important;
     position: relative;
     z-index: 100;
-    left: 0;
+    left: 3px;
     top: 0;
     min-height: 36px;
     width: @width + 20px;
@@ -332,9 +332,6 @@ export default {
                 margin-right: 4px;
                 // vertical-align: middle;
               }
-            }
-            span.callTitle {
-              // vertical-align: middle;
             }
           }
         }
@@ -401,14 +398,14 @@ export default {
           height: 11px;
           &::before {
             color: @primaryColor;
-            padding: 2px 4px;
+            //padding: 2px 4px;
           }
         }
       }
     }
     .buttons-container {
       position: absolute;
-      top: 25px;
+      top: 23px;
       left: -32px;
       box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.15);
       [class^="call-button-container-"] {

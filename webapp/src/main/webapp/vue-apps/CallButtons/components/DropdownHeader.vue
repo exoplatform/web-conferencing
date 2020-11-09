@@ -59,7 +59,7 @@ export default {
         &::before {
           content: "\e92b";
         }
-        font-size: 14px;
+        // font-size: 14px;
       }
     }
     i {
@@ -80,10 +80,10 @@ export default {
       text-align: right;
     }
     .uiIconMiniArrowDown {
-      height: 14px;
-      font-size: 10px !important;
+      height: 11px;
+      font-size: 9px !important;
       top: 5px;
-      padding-top: 4px;
+      padding: 2px 3px 0 3px;
     }
   }
 }
