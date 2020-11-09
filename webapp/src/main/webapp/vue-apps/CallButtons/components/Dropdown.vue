@@ -3,7 +3,8 @@
     <dropdown-header
       :header="header"
       :showdropdowncomponent="showDropdownComponent"
-      :passrefs="passRefs"/>
+      :passrefs="passRefs"
+      :isopen="isopen"/>
     <div v-show="isopen" class="buttons-container">
       <!-- TODO why we need IDs for them?? a class will not work? -->
       <div
@@ -70,9 +71,9 @@ export default {
     display: flex;
     align-items: center;
     &:hover {
-      background-color: #476a9c;
+      // background-color: #476a9c;
       background-position: 0 -45px;
-      // background-color: @primaryColor;
+      background-color: @primaryColor;
     }
   }
 }

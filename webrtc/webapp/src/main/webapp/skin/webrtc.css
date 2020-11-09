@@ -8,6 +8,11 @@
 	position: relative;
 	margin-right: 3px;
 }
+/* .callButtonIconVideo::before {
+	content: "\e900";
+	font-size: 24px;
+	vertical-align: middle;
+} */
 
 /* Incoming call popover BEGIN */
 

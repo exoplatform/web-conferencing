@@ -1,15 +1,14 @@
 <template>
-  <div class="dropdown-header" @click="showdropdowncomponent(); passrefs()">
+  <div :style="{backgroundColor: isopen ? 'var(--allPagesGreyColor, #e1e8ee)' : 'white'}" class="dropdown-header" @click="showdropdowncomponent(); passrefs()">
     <div class="dropdown-heading">
       <i class="uiIconSocPhone uiIconSocBlue"></i>
       {{ header.placeholder }}
     </div>
-    <i class="uiIconArrowDownMini"></i>
+    <i class="uiIconMiniArrowDown uiIconLightGray"></i>
   </div>
 </template>
 
 <script>
-
 export default {
   props: {
     header: {
@@ -23,15 +22,17 @@ export default {
     passrefs: {
       type: Function,
       required: true
+    },
+    isopen: {
+      type: Boolean,
+      required: true
     }
   }
 };
 </script>
 
 <style scoped lang="less">
-
 .VuetifyApp {
-  
   .dropdown-header {
     // padding: 0;
     display: inline-flex;
@@ -41,13 +42,25 @@ export default {
     border-radius: 3px;
     width: 100%;
     min-height: 36px;
-    [class^="uiIcon"] {
-      font-size: 12px;
+    // &:focus {
+    //   background-color: var(--allPagesGreyColor, #e1e8ee);
+    // }
+    .uiIconMiniArrowDown {
+      color: var(--allPagesDarkGrey, #4d5466) !important;
+      ::before {
+        color: var(--allPagesDarkGrey, #4d5466) !important;
+      }
     }
     .dropdown-heading {
       padding-left: 5px;
       flex: 3;
       text-align: center;
+      [class^="uiIcon"] {
+        &::before {
+          content: "\e92b";
+        }
+        font-size: 14px;
+      }
     }
     i {
       flex: 1;
@@ -66,12 +79,12 @@ export default {
       flex: 10;
       text-align: right;
     }
-    .uiIconArrowDownMini {
-        height: 14px;
-        font-size: 10px !important;
-        top: 5px;
-        padding-top: 4px;
-      }
+    .uiIconMiniArrowDown {
+      height: 14px;
+      font-size: 10px !important;
+      top: 5px;
+      padding-top: 4px;
+    }
   }
 }
 </style>

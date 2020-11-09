@@ -210,6 +210,9 @@ export default {
 @import "../../../skin/less/variables.less";
 .VuetifyApp {
   .call-button-container {
+    [class^="call-button-container-"] {
+      vertical-align: middle;
+    }
     &:hover {
       .dropdown-header {
         background-color: var(--allPagesGreyColor, #e1e8ee);
@@ -271,7 +274,7 @@ export default {
     min-height: 36px;
     width: @width + 20px;
     [class^="uiIcon"] {
-      font-size: 12px !important;
+      // font-size: 14px !important;
       margin-bottom: 2px;
     }
   }
@@ -295,12 +298,12 @@ export default {
         height: 16px;
         width: 16px;
         margin-right: 4px;
-        vertical-align: middle;
+        // vertical-align: middle;
       }
     }
-    span.callTitle {
-      vertical-align: middle;
-    }
+    // span.callTitle {
+    //   // vertical-align: middle;
+    // }
   }
 }
 .call-button-mini {
@@ -327,11 +330,11 @@ export default {
                 height: 16px;
                 width: 16px;
                 margin-right: 4px;
-                vertical-align: middle;
+                // vertical-align: middle;
               }
             }
             span.callTitle {
-              vertical-align: middle;
+              // vertical-align: middle;
             }
           }
         }
@@ -353,7 +356,7 @@ export default {
       background-color: unset;
       .dropdown-header {
         background-color: unset;
-        .uiIconArrowDownMini {
+        .uiIconMiniArrowDown {
           background: #d3d6db;
           border-radius: 50%;
         }
@@ -380,6 +383,7 @@ export default {
 .call-button-mini.call-button--tiptip {
   .call-button-container {
     #dropdown-vue {
+      position: relative;
       .dropdown-header {
         position: relative;
         .dropdown-heading {
@@ -388,7 +392,7 @@ export default {
             margin-right: 10px;
           }
         }
-        .uiIconArrowDownMini {
+        .uiIconMiniArrowDown {
           position: absolute;
           top: 3px;
           left: 20px;
@@ -403,8 +407,9 @@ export default {
       }
     }
     .buttons-container {
-      left: @width + 60px;
-      top: @width + 5px;
+      position: absolute;
+      top: 25px;
+      left: -32px;
       box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.15);
       [class^="call-button-container-"] {
         text-align: left;
@@ -476,11 +481,11 @@ export default {
       height: 16px;
       width: 16px;
       margin-right: 4px;
-      vertical-align: middle;
+      // vertical-align: middle;
     }
   }
   span.callTitle {
-    vertical-align: middle;
+    // vertical-align: middle;
   }
 }
 #UIProfileHeaderContainer {
