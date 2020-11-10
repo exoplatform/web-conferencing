@@ -2075,7 +2075,59 @@
 		};
 		
     /**
-     * Update add guest to call.
+     * Check invitation
+     */
+    this.checkInvite = function(id, inviteId, userId) {
+      if (cometd) {
+        var process = $.Deferred();
+        var callProps = cometdParams({
+          command : "check_invite",
+          id : id,
+          inviteId : inviteId
+        });
+        cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
+          var result = tryParseJson(response);
+          if (response.successful) {
+            process.resolve(result);
+          } else {
+            process.reject(result);
+          }
+        });
+        return process.promise();
+      } else {
+        log.trace("Check invite requires CometD. Was call: " + id);
+        return $.Deferred().reject("CometD required").promise();
+      }
+    };
+		
+    /**
+     * Update invites for the call.
+     */
+    this.updateInvites = function(id, invites) {
+      if (cometd) {
+        var process = $.Deferred();
+        var callProps = cometdParams({
+          command : "update_invites",
+          id : id,
+          invites : invites
+        });
+        cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
+          var result = tryParseJson(response);
+          if (response.successful) {
+            process.resolve(result);
+          } else {
+            process.reject(result);
+          }
+        });
+        return process.promise();
+      } else {
+        log.trace("Updating invites for the call requires CometD. Was call: " + id);
+        return $.Deferred().reject("CometD required").promise();
+      }
+    };
+		
+    /**
+     * Add guest to call.
      */
     this.addGuest = function(id, guestInfo) {
       if (cometd) {
@@ -2095,7 +2147,7 @@
         });
         return process.promise();
       } else {
-        log.trace("Updating call requires CometD. Was call: " + id);
+        log.trace("Adding guests to the call requires CometD. Was call: " + id);
         return $.Deferred().reject("CometD required").promise();
       }
     };
@@ -2177,6 +2229,7 @@
 				return $.Deferred().reject("CometD required").promise();
 			}
 		};
+		
 		
 		/**
 		 * Register call in server side database.

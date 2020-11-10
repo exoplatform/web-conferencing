@@ -88,4 +88,30 @@
       referencedTableName="WBC_CALLS" referencedColumnNames="ID" constraintName="FK_WBC_PARTCALL" onDelete="CASCADE" onUpdate="CASCADE" />
   </changeSet>
   
+  <!-- Definition of WBC_INVITES table -->
+  <changeSet author="web-conferencing" id="1.0.0-5">
+    <createTable tableName="WBC_INVITES">
+      <column name="CALL_ID" type="NVARCHAR(255)">
+        <constraints nullable="false" />
+      </column>
+      <column name="IDENTITY" type="NVARCHAR(255)">
+        <constraints nullable="false" />
+      </column>
+      <column name="IDENTITY_TYPE" type="NVARCHAR(32)">
+        <constraints nullable="false" />
+      </column>
+      <column name="INVITATION_ID" type="NVARCHAR(32)">
+        <constraints nullable="true" />
+      </column>
+    </createTable>
+    <modifySql dbms="mysql">
+      <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci" />
+    </modifySql>
+  </changeSet>
+  
+  <!-- Definition of WBC_INVITES primary key -->
+  <changeSet author="web-conferencing" id="1.0.0-6">
+    <addPrimaryKey columnNames="CALL_ID, IDENTITY" constraintName="PK_WBC_INVITES" tableName="WBC_INVITES" />
+  </changeSet>
+  
 </databaseChangeLog>

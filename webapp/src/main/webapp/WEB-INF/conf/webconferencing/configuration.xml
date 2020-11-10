@@ -54,6 +54,9 @@
   <component>
     <type>org.exoplatform.webconferencing.dao.ParticipantDAO</type>
   </component>
+  <component>
+    <type>org.exoplatform.webconferencing.dao.InviteDAO</type>
+  </component>
   
   <!-- Calls storage layout (Liquebase initializer) -->
   <external-component-plugins>

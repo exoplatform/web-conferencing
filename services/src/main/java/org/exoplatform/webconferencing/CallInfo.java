@@ -53,6 +53,9 @@ public class CallInfo {
   /** The last date. */
   protected Date                lastDate;
 
+  /** The invite id. */
+  protected String              inviteId;
+
   /**
    * Instantiates a new call info.
    *
@@ -144,7 +147,7 @@ public class CallInfo {
       removeParticipant(part);
     }
   }
-  
+
   /**
    * Removes the participant.
    *
@@ -189,4 +192,24 @@ public class CallInfo {
   public void setLastDate(Date lastDate) {
     this.lastDate = lastDate;
   }
+
+  /**
+   * Gets the invite id.
+   *
+   * @return the invite id
+   */
+  public String getInviteId() {
+    return inviteId;
+  }
+
+  /**
+   * Sets the invite id.
+   *
+   * @param inviteId the new invite id
+   */
+  public void setInviteId(String inviteId) {
+    this.inviteId = inviteId;
+  }
+  
+  
 }

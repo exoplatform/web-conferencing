@@ -70,6 +70,9 @@ import org.cometd.bayeux.server.ServerChannel.SubscriptionListener;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.eclipse.jetty.util.component.LifeCycle;
+import org.mortbay.cometd.continuation.EXoContinuationBayeux;
+import org.picocontainer.Startable;
+
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
@@ -87,15 +90,12 @@ import org.exoplatform.webconferencing.CallInfoException;
 import org.exoplatform.webconferencing.CallNotFoundException;
 import org.exoplatform.webconferencing.CallState;
 import org.exoplatform.webconferencing.UserCallListener;
-import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.client.ErrorInfo;
 import org.exoplatform.webconferencing.cometd.CometdWebConferencingService.CallService.CallChannelContext.CallClient;
 import org.exoplatform.webconferencing.support.CallLog;
 import org.exoplatform.webconferencing.support.CallLogService;
-import org.mortbay.cometd.continuation.EXoContinuationBayeux;
-import org.picocontainer.Startable;
 
 /**
  * Created by The eXo Platform SAS.
@@ -141,6 +141,12 @@ public class CometdWebConferencingService implements Startable {
 
   /** The Constant COMMAND_ADD_GUEST. */
   public static final String             COMMAND_ADD_GUEST                     = "add_guest";
+
+  /** The Constant COMMAND_UPDATE_INVITES. */
+  public static final String             COMMAND_UPDATE_INVITES                = "update_invites";
+
+  /** The Constant COMMAND_CHECK_INVITE. */
+  public static final String             COMMAND_CHECK_INVITE                  = "check_invite";
 
   /** The Constant COMMAND_GET_CALLS_STATE. */
   public static final String             COMMAND_GET_CALLS_STATE               = "get_calls_state";
@@ -226,6 +232,12 @@ public class CometdWebConferencingService implements Startable {
       this.namePrefix = namePrefix;
     }
 
+    /**
+     * New thread.
+     *
+     * @param r the r
+     * @return the thread
+     */
     public Thread newThread(Runnable r) {
       Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0) {
 
@@ -427,8 +439,11 @@ public class CometdWebConferencingService implements Startable {
        * The Class CallClient.
        */
       class CallClient {
+
+        /** The user id. */
         final String userId;
 
+        /** The client id. */
         final String clientId;
 
         /**
@@ -465,6 +480,7 @@ public class CometdWebConferencingService implements Startable {
       /** The container name. */
       final String                  containerName;
 
+      /** The clients. */
       final Map<String, CallClient> clients = new ConcurrentHashMap<>();
 
       /**
@@ -1121,6 +1137,28 @@ public class CometdWebConferencingService implements Startable {
                               caller.failure(ErrorInfo.serverError("Error adding guest to call").asJSON());
                             }
                           }
+                        } else if (COMMAND_UPDATE_INVITES.equals(command)) {
+                          List<String> invites = asList(arguments.get("invites"), String.class);
+                          if (invites != null) {
+                            try {
+                              CallInfo call = webConferencing.updateInvites(id, invites);
+                              caller.result(asJSON(call));
+                            } catch (CallNotFoundException e) {
+                              caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
+                            } catch (Throwable e) {
+                              LOG.error("Error adding guest to call '" + id + "' by '" + currentUserId + "'", e);
+                              caller.failure(ErrorInfo.serverError("Error adding guest to call").asJSON());
+                            }
+                          }
+                        } else if (COMMAND_CHECK_INVITE.equals(command)) {
+                          String inviteId = asString(arguments.get("inviteId"));
+                          try {
+                            boolean allowed = webConferencing.checkInvite(id, inviteId, currentUserId);
+                            caller.result("{\"allowed\" : " + allowed + "}");
+                          } catch (Throwable e) {
+                            LOG.error("Error adding guest to call '" + id + "' by '" + currentUserId + "'", e);
+                            caller.failure(ErrorInfo.serverError("Error adding guest to call").asJSON());
+                          }
                         } else if (COMMAND_GET_CALLS_STATE.equals(command)) {
                           if (id.equals(currentUserId)) { // id it's user name for this command
                             try {
@@ -1480,6 +1518,26 @@ public class CometdWebConferencingService implements Startable {
       return String.class.cast(obj);
     }
     return null;
+  }
+
+  /**
+   * As list.
+   *
+   * @param <T> the generic type
+   * @param obj the obj
+   * @param type the type
+   * @return the list
+   */
+  protected <T> List<T> asList(Object obj, Class<T> type) {
+    List<T> list = new ArrayList<>();
+    Object[] arr = (Object[]) obj;
+    for (Object elem : arr) {
+      if (type.isAssignableFrom(elem.getClass())) {
+        T item = type.cast(elem);
+        list.add(item);
+      }
+    }
+    return list;
   }
 
   /**
