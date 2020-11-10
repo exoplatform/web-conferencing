@@ -69,6 +69,8 @@ import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.Group;
+import org.exoplatform.services.organization.Membership;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserStatus;
@@ -1011,8 +1013,9 @@ public class WebConferencingService implements Startable {
    * @return the call info
    * @throws StorageException 
    */
-  public CallInfo updateInvites(String callId,
-                                List<String> identities) throws CallNotFoundException, InvalidCallException, StorageException {
+  public CallInfo updateInvites(String callId, List<InvitedIdentity> identities) throws CallNotFoundException,
+                                                                                 InvalidCallException,
+                                                                                 StorageException {
     CallInfo call = getCall(callId);
     if (call != null) {
       try {
@@ -1355,12 +1358,21 @@ public class WebConferencingService implements Startable {
    * @param inviteId the invite id
    * @param identity the identity
    * @return true, if successful
+   * @throws Exception 
    */
-  public boolean checkInvite(String callId, String inviteId, String identity) {
-    // TODO: check membership in groups
+  public boolean checkInvite(String callId, String inviteId, String identity) throws Exception {
     for (InviteEntity invite : inviteStorage.findCallInvites(callId)) {
-      if (invite.getIdentity().equals(identity) && invite.getInvitationId().equals(inviteId)) {
-        return true;
+      if (invite.getInvitationId().equals(inviteId)) {
+        if (USER.equals(invite.getIdentityType()) && invite.getIdentity().equals(identity)) {
+          return true;
+        }
+        if (GROUP.equals(invite.getIdentityType())) {
+          Collection<Membership> membersips = organization.getMembershipHandler()
+                                                          .findMembershipsByUserAndGroup(identity, invite.getIdentity());
+          if (membersips.size() > 0) {
+            return true;
+          }
+        }
       }
     }
     return false;
@@ -2193,16 +2205,16 @@ public class WebConferencingService implements Startable {
    * @throws PersistenceException the persistence exception
    */
   @ExoTransactional
-  protected void txUpdateInvites(String callId, List<String> identities) throws IllegalArgumentException,
-                                                                         IllegalStateException,
-                                                                         PersistenceException {
+  protected void txUpdateInvites(String callId, List<InvitedIdentity> identities) throws IllegalArgumentException,
+                                                                                  IllegalStateException,
+                                                                                  PersistenceException {
     identities = identities.stream().distinct().collect(Collectors.toList());
     List<InviteEntity> invites = inviteStorage.findCallInvites(callId);
     String inviteId = !invites.isEmpty() ? invites.get(0).getInvitationId() : RandomStringUtils.randomAlphabetic(12);
     inviteStorage.deleteCallInvites(callId);
-    for (String identity : identities) {
+    for (InvitedIdentity identity : identities) {
       // TODO: add check GROUP/USER in org service
-      txCreateInvite(new InviteEntity(callId, identity, USER, inviteId));
+      txCreateInvite(new InviteEntity(callId, identity.getIdentity(), identity.getType(), inviteId));
     }
   }
 

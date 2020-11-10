@@ -89,6 +89,7 @@ import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.CallInfoException;
 import org.exoplatform.webconferencing.CallNotFoundException;
 import org.exoplatform.webconferencing.CallState;
+import org.exoplatform.webconferencing.InvitedIdentity;
 import org.exoplatform.webconferencing.UserCallListener;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;
@@ -1138,7 +1139,7 @@ public class CometdWebConferencingService implements Startable {
                             }
                           }
                         } else if (COMMAND_UPDATE_INVITES.equals(command)) {
-                          List<String> invites = asList(arguments.get("invites"), String.class);
+                          List<InvitedIdentity> invites = asList(arguments.get("invites"), InvitedIdentity.class);
                           if (invites != null) {
                             try {
                               CallInfo call = webConferencing.updateInvites(id, invites);
