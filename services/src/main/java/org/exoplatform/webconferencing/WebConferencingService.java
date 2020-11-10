@@ -1008,10 +1008,12 @@ public class WebConferencingService implements Startable {
   /**
    * Update invites.
    *
-   * @param id the id
+   * @param callId the call id
    * @param identities the invites
    * @return the call info
-   * @throws StorageException 
+   * @throws CallNotFoundException the call not found exception
+   * @throws InvalidCallException the invalid call exception
+   * @throws StorageException the storage exception
    */
   public CallInfo updateInvites(String callId, List<InvitedIdentity> identities) throws CallNotFoundException,
                                                                                  InvalidCallException,
@@ -1358,7 +1360,7 @@ public class WebConferencingService implements Startable {
    * @param inviteId the invite id
    * @param identity the identity
    * @return true, if successful
-   * @throws Exception 
+   * @throws Exception the exception
    */
   public boolean checkInvite(String callId, String inviteId, String identity) throws Exception {
     for (InviteEntity invite : inviteStorage.findCallInvites(callId)) {
@@ -1975,9 +1977,7 @@ public class WebConferencingService implements Startable {
   /**
    * Tx create invite.
    *
-   * @param callId the call id
-   * @param identity the identity
-   * @param identityType the identity type
+   * @param invite the invate
    * @return the invite entity
    * @throws IllegalArgumentException the illegal argument exception
    * @throws IllegalStateException the illegal state exception
