@@ -10,7 +10,7 @@
       @updated="createButtons"
       @getRefs="getRef($event)"
       @showDropdown="showDropdown($event)"/>
-    <singlebtn v-else :providersbutton="providersButton" />
+    <singlebtn v-else />
   </div>
 </template>
 
@@ -51,14 +51,9 @@ export default {
   },
   computed: {
     parentClass() {
-      return Object.values(this.$refs.callbutton.parentElement.classList).join(
-        ""
-      );
+      return Object.values(this.$refs.callbutton.parentElement.classList).join("");
     },
     header() {
-      // const parentClass = Object.values(
-      //   this.$refs.callbutton.parentElement.parentElement.classList
-      // ).join("");
       const condition =
         this.parentClass.includes("call-button-mini") ||
         this.parentClass.includes("call-button--tiptip");
@@ -161,9 +156,6 @@ export default {
               // add vue button
               vm = pb.$mount(); // TODO why we need vm globaly?
               // vm.$el.innerHTML = "<span class='v-btn__content'><i class='uiIconSocPhone uiIconBlue'></i>Start Call</span>"
-              // const parentClass = Object.values(
-              //   this.$refs.callbutton.parentElement.parentElement.classList
-              // ).join("");
               const condition =
                 this.parentClass.includes("call-button-mini") ||
                 this.parentClass.includes("call-button--tiptip");
@@ -236,7 +228,7 @@ export default {
     &.single {
       width: @width - 14px;
       height: 36px;
-      left: 3px;
+      // left: 3px;
       border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
       padding: 0 5px;
@@ -270,7 +262,7 @@ export default {
     cursor: pointer !important;
     position: relative;
     z-index: 100;
-    left: 3px;
+    // left: 3px;
     top: 0;
     min-height: 36px;
     width: @width + 20px;
@@ -432,18 +424,6 @@ export default {
           }
         }
       }
-    }
-  }
-}
-.call-button--profile {
-  width: 120px;
-  height: 36px;
-  position: relative;
-  .call-button-container {
-    left: -129px;
-    top: -38px;
-    &.single {
-      left: -105px;
     }
   }
 }

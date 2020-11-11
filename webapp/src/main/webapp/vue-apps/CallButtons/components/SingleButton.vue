@@ -4,14 +4,10 @@
 
 <script>
 export default {
-  props: {
-    providersbutton: {
-      type: Array,
-      required: true
-    },
-  },
-  methods: {
-  }
+  // props: {
+  // },
+  // methods: {
+  // }
 };
 </script>
 
