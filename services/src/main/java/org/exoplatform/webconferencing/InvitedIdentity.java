@@ -6,7 +6,7 @@ package org.exoplatform.webconferencing;
 public class InvitedIdentity {
   
   /** The identity. */
-  private String identity;
+  private String id;
   
   /** The type. */
   private String type;
@@ -21,11 +21,11 @@ public class InvitedIdentity {
   /**
    * Instantiates a new invited identity.
    *
-   * @param identity the identity
+   * @param id the identity
    * @param type the type
    */
-  public InvitedIdentity(String identity, String type) {
-    this.identity = identity;
+  public InvitedIdentity(String id, String type) {
+    this.id = id;
     this.type = type;
   }
 
@@ -35,16 +35,16 @@ public class InvitedIdentity {
    * @return the identity
    */
   public String getIdentity() {
-    return identity;
+    return id;
   }
 
   /**
    * Sets the identity.
    *
-   * @param identity the new identity
+   * @param id the new identity
    */
-  public void setIdentity(String identity) {
-    this.identity = identity;
+  public void setIdentity(String id) {
+    this.id = id;
   }
 
   /**

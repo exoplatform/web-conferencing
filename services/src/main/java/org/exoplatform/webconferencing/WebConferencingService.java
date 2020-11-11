@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -57,6 +58,7 @@ import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
+import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
@@ -76,11 +78,12 @@ import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserStatus;
 import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
-import org.exoplatform.services.security.Identity;
+import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.social.core.identity.model.Profile;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
 import org.exoplatform.social.core.manager.IdentityManager;
+import org.exoplatform.social.core.profile.ProfileFilter;
 import org.exoplatform.social.core.service.LinkProvider;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
@@ -115,6 +118,9 @@ public class WebConferencingService implements Startable {
 
   /** The Constant DATA_MAX_LENGTH. */
   public static final int       DATA_MAX_LENGTH              = 2000;
+
+  /** The Constant MAX_RESULT_SIZE. */
+  public static final int       MAX_RESULT_SIZE              = 30;
 
   /** The Constant SPACE_TYPE_NAME. */
   public static final String    SPACE_TYPE_NAME              = "space".intern();
@@ -1497,6 +1503,81 @@ public class WebConferencingService implements Startable {
   }
 
   /**
+   * Find groups and users.
+   *
+   * @param name the name
+   * @return the list
+   * @throws Exception the exception
+   */
+  public List<IdentityData> findGroupsAndUsers(String name) throws Exception {
+    List<IdentityData> identitiesData = findUsers(name, MAX_RESULT_SIZE / 2);
+    int remain = MAX_RESULT_SIZE - identitiesData.size();
+    identitiesData.addAll(findGroups(name, remain));
+    Collections.sort(identitiesData, new Comparator<IdentityData>() {
+      public int compare(IdentityData s1, IdentityData s2) {
+        return s1.getDisplayName().compareTo(s2.getDisplayName());
+      }
+    });
+    return identitiesData;
+  }
+
+  /**
+   * Find users.
+   *
+   * @param name the name
+   * @param count the count
+   * @return the list
+   * @throws Exception the exception
+   */
+  protected List<IdentityData> findUsers(String name, int count) throws Exception {
+    List<IdentityData> results = new ArrayList<>();
+    ProfileFilter identityFilter = new ProfileFilter();
+    identityFilter.setName(name);
+    ListAccess<Identity> identitiesList = socialIdentityManager.getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME,
+                                                                                             identityFilter,
+                                                                                             false);
+    int size = identitiesList.getSize() >= count ? count : identitiesList.getSize();
+    if (size > 0) {
+      Identity[] identities = identitiesList.load(0, size);
+      for (Identity id : identities) {
+        Profile profile = id.getProfile();
+        String fullName = profile.getFullName();
+        String userName = (String) profile.getProperty(Profile.USERNAME);
+        String avatarUrl = profile.getAvatarUrl() != null ? profile.getAvatarUrl() : LinkProvider.PROFILE_DEFAULT_AVATAR_URL;
+        results.add(new IdentityData(userName, fullName, USER, avatarUrl));
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Find groups.
+   *
+   * @param name the name
+   * @param count the count
+   * @return the list
+   * @throws Exception the exception
+   */
+  protected List<IdentityData> findGroups(String name, int count) throws Exception {
+    List<IdentityData> results = new ArrayList<>();
+    ListAccess<Group> groupsAccess = organization.getGroupHandler().findGroupsByKeyword(name);
+    int size = groupsAccess.getSize() >= count ? count : groupsAccess.getSize();
+    if (size > 0) {
+      Group[] groups = groupsAccess.load(0, size);
+      for (Group group : groups) {
+        Space space = spaceService.getSpaceByGroupId(group.getId());
+        if (space != null) {
+          String avatarUrl = space.getAvatarUrl() != null ? space.getAvatarUrl() : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
+          results.add(new IdentityData(space.getGroupId(), space.getDisplayName(), GROUP, avatarUrl));
+        } else {
+          results.add(new IdentityData(group.getId(), group.getLabel(), GROUP, LinkProvider.SPACE_DEFAULT_AVATAR_URL));
+        }
+      }
+    }
+    return results;
+  }
+
+  /**
    * Upload recording of the call.
    *
    * @param uploadInfo the upload info
@@ -1619,7 +1700,7 @@ public class WebConferencingService implements Startable {
    * @return the conversation state
    */
   private ConversationState createState(String userId) {
-    Identity userIdentity = userIdentity(userId);
+    org.exoplatform.services.security.Identity userIdentity = userIdentity(userId);
 
     if (userIdentity != null) {
       ConversationState state = new ConversationState(userIdentity);
@@ -1638,8 +1719,8 @@ public class WebConferencingService implements Startable {
    * @return the identity can be null if not found and cannot be created via
    *         current authenticator
    */
-  protected Identity userIdentity(String userId) {
-    Identity userIdentity = identityRegistry.getIdentity(userId);
+  protected org.exoplatform.services.security.Identity userIdentity(String userId) {
+    org.exoplatform.services.security.Identity userIdentity = identityRegistry.getIdentity(userId);
     if (userIdentity == null) {
       // We create user identity by authenticator, but not register it in the
       // registry
@@ -2211,7 +2292,9 @@ public class WebConferencingService implements Startable {
     identities = identities.stream().distinct().collect(Collectors.toList());
     List<InviteEntity> invites = inviteStorage.findCallInvites(callId);
     String inviteId = !invites.isEmpty() ? invites.get(0).getInvitationId() : RandomStringUtils.randomAlphabetic(12);
-    inviteStorage.deleteCallInvites(callId);
+    for (InviteEntity invite : invites) {
+      inviteStorage.delete(invite);
+    }
     for (InvitedIdentity identity : identities) {
       // TODO: add check GROUP/USER in org service
       txCreateInvite(new InviteEntity(callId, identity.getIdentity(), identity.getType(), inviteId));

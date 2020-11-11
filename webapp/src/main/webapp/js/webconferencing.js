@@ -2074,8 +2074,35 @@
 			}
 		};
 		
+		/**
+		 * Find identities by name in org service. Includes groups and users.
+		 */
+	  this.findIdentities = function(id, name) {
+      if (cometd) {
+        var process = $.Deferred();
+        var callProps = cometdParams({
+          id: id,
+          name : name,
+          command : "get_org_identities"
+        });
+        cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
+          var result = tryParseJson(response);
+          if (response.successful) {
+            process.resolve(result);
+          } else {
+            process.reject(result);
+          }
+        });
+        return process.promise();
+      } else {
+        log.trace("Finding identities requires CometD");
+        return $.Deferred().reject("CometD required").promise();
+      }
+    };
+		
     /**
-     * Check invitation
+     * Check if user is invited to the call by provided inviteId.
+     * Retuns JSON {"allowed" : true} or {"allowed" : false}
      */
     this.checkInvite = function(id, inviteId, userId) {
       if (cometd) {
@@ -2102,6 +2129,8 @@
 		
     /**
      * Update invites for the call.
+     * Accepts array of invited users or groups in form of
+     * [ {"id": "john", "type": "user"}, {"id" : "/platform/administrators", "type": "group"}]
      */
     this.updateInvites = function(id, invites) {
       if (cometd) {

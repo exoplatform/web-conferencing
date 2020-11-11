@@ -89,6 +89,7 @@ import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.CallInfoException;
 import org.exoplatform.webconferencing.CallNotFoundException;
 import org.exoplatform.webconferencing.CallState;
+import org.exoplatform.webconferencing.IdentityData;
 import org.exoplatform.webconferencing.InvitedIdentity;
 import org.exoplatform.webconferencing.UserCallListener;
 import org.exoplatform.webconferencing.UserState;
@@ -151,6 +152,9 @@ public class CometdWebConferencingService implements Startable {
 
   /** The Constant COMMAND_GET_CALLS_STATE. */
   public static final String             COMMAND_GET_CALLS_STATE               = "get_calls_state";
+
+  /** The Constant COMMAND_GET_ORG_IDENTITIES. */
+  public static final String             COMMAND_GET_ORG_IDENTITIES            = "get_org_identities";
 
   /** The Constant LOG_OK. */
   public static final String             LOG_OK                                = "{}";
@@ -1139,9 +1143,8 @@ public class CometdWebConferencingService implements Startable {
                             }
                           }
                         } else if (COMMAND_UPDATE_INVITES.equals(command)) {
-                          List<InvitedIdentity> invites = asList(arguments.get("invites"), InvitedIdentity.class);
-                          if (invites != null) {
                             try {
+                              List<InvitedIdentity> invites = invitedIdentitiesList(arguments.get("invites"));
                               CallInfo call = webConferencing.updateInvites(id, invites);
                               caller.result(asJSON(call));
                             } catch (CallNotFoundException e) {
@@ -1150,12 +1153,21 @@ public class CometdWebConferencingService implements Startable {
                               LOG.error("Error adding guest to call '" + id + "' by '" + currentUserId + "'", e);
                               caller.failure(ErrorInfo.serverError("Error adding guest to call").asJSON());
                             }
-                          }
+                          
                         } else if (COMMAND_CHECK_INVITE.equals(command)) {
                           String inviteId = asString(arguments.get("inviteId"));
                           try {
                             boolean allowed = webConferencing.checkInvite(id, inviteId, currentUserId);
                             caller.result("{\"allowed\" : " + allowed + "}");
+                          } catch (Throwable e) {
+                            LOG.error("Error adding guest to call '" + id + "' by '" + currentUserId + "'", e);
+                            caller.failure(ErrorInfo.serverError("Error adding guest to call").asJSON());
+                          }
+                        } else if (COMMAND_GET_ORG_IDENTITIES.equals(command)) {
+                          String name = asString(arguments.get("name"));
+                          try {
+                            List<IdentityData> identities = webConferencing.findGroupsAndUsers(name);
+                            caller.result(asJSON(identities.toArray()));
                           } catch (Throwable e) {
                             LOG.error("Error adding guest to call '" + id + "' by '" + currentUserId + "'", e);
                             caller.failure(ErrorInfo.serverError("Error adding guest to call").asJSON());
@@ -1522,20 +1534,20 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * As list.
+   * Invited identities list.
    *
-   * @param <T> the generic type
    * @param obj the obj
-   * @param type the type
    * @return the list
    */
-  protected <T> List<T> asList(Object obj, Class<T> type) {
-    List<T> list = new ArrayList<>();
+  protected List<InvitedIdentity> invitedIdentitiesList(Object obj) {
+    List<InvitedIdentity> list = new ArrayList<>();
     Object[] arr = (Object[]) obj;
     for (Object elem : arr) {
-      if (type.isAssignableFrom(elem.getClass())) {
-        T item = type.cast(elem);
-        list.add(item);
+      if (Map.class.isAssignableFrom(elem.getClass())) {
+        Map<String, Object> map = (Map<String, Object>) elem;
+        String id = asString(map.get("id"));
+        String type = asString(map.get("type"));
+        list.add(new InvitedIdentity(id, type));
       }
     }
     return list;
