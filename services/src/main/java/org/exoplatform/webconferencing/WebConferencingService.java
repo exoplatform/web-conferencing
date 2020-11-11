@@ -78,8 +78,8 @@ import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserStatus;
 import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
-import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
+import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.model.Profile;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
 import org.exoplatform.social.core.manager.IdentityManager;
@@ -946,23 +946,6 @@ public class WebConferencingService implements Startable {
    * Update participants.
    *
    * @param id the id
-   * @param participantsJson the participants json
-   * @return the call info
-   * @throws CallNotFoundException the call not found exception
-   * @throws InvalidCallException the invalid call exception
-   * @throws StorageException the storage exception
-   */
-  public CallInfo updateParticipants(String id, Object participantsJson) throws CallNotFoundException,
-                                                                         InvalidCallException,
-                                                                         StorageException {
-    List<UserInfo> participants = getParticipantsFromJson(participantsJson);
-    return updateParticipants(id, participants);
-  }
-
-  /**
-   * Update participants.
-   *
-   * @param id the id
    * @param participants the participants
    * @return the call info
    * @throws CallNotFoundException the call not found exception
@@ -993,13 +976,14 @@ public class WebConferencingService implements Startable {
    * Adds the guest.
    *
    * @param id the id
-   * @param guestJson the guest json
+   * @param guestId the guest id
    * @return the call info
    * @throws InvalidCallException the invalid call exception
    * @throws CallNotFoundException the call not found exception
+   * @throws IdentityStateException the identity state exception
    */
-  public CallInfo addGuest(String id, Object guestJson) throws InvalidCallException, CallNotFoundException {
-    UserInfo userInfo = getParticipantFromJson(guestJson);
+  public CallInfo addGuest(String id, String guestId) throws InvalidCallException, CallNotFoundException, IdentityStateException {
+    UserInfo userInfo = getUserInfo(guestId);
     GuestInfo guestInfo = new GuestInfo(userInfo);
     CallInfo call = getCall(id);
     if (call != null) {
@@ -2535,61 +2519,6 @@ public class WebConferencingService implements Startable {
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       throw new StorageException("Error removing call invites " + callId, e);
     }
-  }
-
-  /**
-   * Return object if it's String instance or null if it is not.
-   *
-   * @param jsonObject the json
-   * @return the string or null
-   */
-  @SuppressWarnings("unchecked")
-  protected List<UserInfo> getParticipantsFromJson(Object jsonObject) {
-    if (jsonObject != null && Object[].class.isAssignableFrom(jsonObject.getClass())) {
-      Object[] members = Object[].class.cast(jsonObject);
-      List<UserInfo> participants = new ArrayList<>();
-      for (Object participantObj : members) {
-        UserInfo userInfo = getParticipantFromJson(participantObj);
-        participants.add(userInfo);
-      }
-      return participants;
-    } else {
-      LOG.warn("Cannot parse participants JSON - the object is not an instanse of Object[]");
-      return null;
-    }
-  }
-
-  /**
-   * Gets the participant from json.
-   *
-   * @param jsonObject the json object
-   * @return the participant from json
-   */
-  protected UserInfo getParticipantFromJson(Object jsonObject) {
-    // TODO: Check class cast exeption
-    Map<String, Object> participant = (Map<String, Object>) jsonObject;
-    String id = String.valueOf(participant.get("id"));
-    String state = String.valueOf(participant.get("state"));
-    String avatarLink = String.valueOf(participant.get("avatarLink"));
-    String clientId = String.valueOf(participant.get("clientId"));
-    String firstName = String.valueOf(participant.get("firstName"));
-    String lastName = String.valueOf(participant.get("lastName"));
-    String profileLink = String.valueOf(participant.get("profileLink"));
-    UserInfo userInfo = new UserInfo(id, firstName, lastName);
-    userInfo.setClientId(clientId);
-    userInfo.setState(state);
-    userInfo.setProfileLink(profileLink);
-    userInfo.setAvatarLink(avatarLink);
-    org.exoplatform.social.core.identity.model.Identity userIdentity =
-                                                                     socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME,
-                                                                                                               id,
-                                                                                                               true);
-    if (userIdentity != null) {
-      getUserIMs(userIdentity.getProfile()).forEach(im -> userInfo.addImAccount(im));
-    } else {
-      LOG.warn("Cannot load user IM accounts. User identity is null. userId: {}", id);
-    }
-    return userInfo;
   }
 
   /**

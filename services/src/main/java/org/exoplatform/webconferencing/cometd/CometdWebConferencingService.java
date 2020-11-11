@@ -22,6 +22,7 @@ import static org.exoplatform.webconferencing.Utils.asJSON;
 import static org.exoplatform.webconferencing.WebConferencingService.isValidArg;
 import static org.exoplatform.webconferencing.WebConferencingService.isValidId;
 import static org.exoplatform.webconferencing.WebConferencingService.isValidText;
+import static org.exoplatform.webconferencing.WebConferencingService.isNotNullArg;
 import static org.exoplatform.webconferencing.support.CallLog.DEBUG_LEVEL;
 import static org.exoplatform.webconferencing.support.CallLog.ERROR_LEVEL;
 import static org.exoplatform.webconferencing.support.CallLog.INFO_LEVEL;
@@ -90,8 +91,10 @@ import org.exoplatform.webconferencing.CallInfoException;
 import org.exoplatform.webconferencing.CallNotFoundException;
 import org.exoplatform.webconferencing.CallState;
 import org.exoplatform.webconferencing.IdentityData;
+import org.exoplatform.webconferencing.IdentityStateException;
 import org.exoplatform.webconferencing.InvitedIdentity;
 import org.exoplatform.webconferencing.UserCallListener;
+import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.client.ErrorInfo;
@@ -1048,7 +1051,8 @@ public class CometdWebConferencingService implements Startable {
                           Object participantsJson = arguments.get("participants");
                           if (participantsJson != null) {
                             try {
-                              CallInfo call = webConferencing.updateParticipants(id, participantsJson);
+                              List<UserInfo> participants = participantsFromJson(participantsJson);
+                              CallInfo call = webConferencing.updateParticipants(id, participants);
                               caller.result(asJSON(call));
                             } catch (CallNotFoundException e) {
                               caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
@@ -1130,12 +1134,12 @@ public class CometdWebConferencingService implements Startable {
                             caller.failure(ErrorInfo.serverError("Error deleting call record").asJSON());
                           }
                         } else if (COMMAND_ADD_GUEST.equals(command)) {
-                          Object guestJson = arguments.get("guest");
-                          if (guestJson != null) {
+                          String guestId = asString(arguments.get("guestId"));
+                          if (guestId != null) {
                             try {
-                              CallInfo call = webConferencing.addGuest(id, guestJson);
+                              CallInfo call = webConferencing.addGuest(id, guestId);
                               caller.result(asJSON(call));
-                            } catch (CallNotFoundException e) {
+                            } catch (CallNotFoundException | IdentityStateException e) {
                               caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
                             } catch (Throwable e) {
                               LOG.error("Error adding guest to call '" + id + "' by '" + currentUserId + "'", e);
@@ -1143,17 +1147,16 @@ public class CometdWebConferencingService implements Startable {
                             }
                           }
                         } else if (COMMAND_UPDATE_INVITES.equals(command)) {
-                            try {
-                              List<InvitedIdentity> invites = invitedIdentitiesList(arguments.get("invites"));
-                              CallInfo call = webConferencing.updateInvites(id, invites);
-                              caller.result(asJSON(call));
-                            } catch (CallNotFoundException e) {
-                              caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
-                            } catch (Throwable e) {
-                              LOG.error("Error adding guest to call '" + id + "' by '" + currentUserId + "'", e);
-                              caller.failure(ErrorInfo.serverError("Error adding guest to call").asJSON());
-                            }
-                          
+                          try {
+                            List<InvitedIdentity> invites = invitedIdentitiesFromJson(arguments.get("invites"));
+                            CallInfo call = webConferencing.updateInvites(id, invites);
+                            caller.result(asJSON(call));
+                          } catch (CallNotFoundException e) {
+                            caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
+                          } catch (Throwable e) {
+                            LOG.error("Error adding guest to call '" + id + "' by '" + currentUserId + "'", e);
+                            caller.failure(ErrorInfo.serverError("Error adding guest to call").asJSON());
+                          }
                         } else if (COMMAND_CHECK_INVITE.equals(command)) {
                           String inviteId = asString(arguments.get("inviteId"));
                           try {
@@ -1534,12 +1537,77 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
+   * Return object if it's String instance or null if it is not.
+   *
+   * @param jsonObject the json
+   * @return the string or null
+   */
+  @SuppressWarnings("unchecked")
+  protected List<UserInfo> participantsFromJson(Object jsonObject) {
+    if (jsonObject != null && Object[].class.isAssignableFrom(jsonObject.getClass())) {
+      Object[] members = Object[].class.cast(jsonObject);
+      List<UserInfo> participants = new ArrayList<>();
+      for (Object participantObj : members) {
+        UserInfo userInfo = participantFromJson(participantObj);
+        participants.add(userInfo);
+      }
+      return participants;
+    } else {
+      LOG.warn("Cannot parse participants JSON - the object is not an instanse of Object[]");
+      return null;
+    }
+  }
+
+  /**
+   * Gets the participant from json.
+   *
+   * @param jsonObject the json object
+   * @return the participant from json
+   */
+  protected UserInfo participantFromJson(Object jsonObject) {
+    if (jsonObject == null) {
+      return null;
+    }
+    // TODO: Check class cast exeption
+    Map<String, Object> participant = (Map<String, Object>) jsonObject;
+    String id = asString(participant.get("id"));
+    String state = asString(participant.get("state"));
+    String avatarLink = asString(participant.get("avatarLink"));
+    String clientId = asString(participant.get("clientId"));
+    String firstName = asString(participant.get("firstName"));
+    String lastName = asString(participant.get("lastName"));
+    String profileLink = asString(participant.get("profileLink"));
+
+    if (isNotNullArg(id) && isNotNullArg(firstName) && isNotNullArg(lastName)) {
+      UserInfo userInfo = new UserInfo(id, firstName, lastName);
+      userInfo.setClientId(clientId);
+      userInfo.setState(state);
+      userInfo.setProfileLink(profileLink);
+      userInfo.setAvatarLink(avatarLink);
+      // TODO: parse IM accounts
+      /* org.exoplatform.social.core.identity.model.Identity userIdentity =
+                                                                       socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME,
+                                                                                                                 id,
+                                                                                                                 true);
+      if (userIdentity != null) {
+        getUserIMs(userIdentity.getProfile()).forEach(im -> userInfo.addImAccount(im));
+      } else {
+        LOG.warn("Cannot load user IM accounts. User identity is null. userId: {}", id);
+      }*/
+      return userInfo;
+    } else {
+      throw new IllegalArgumentException("Participant must have id, firstName and lastName");
+    }
+
+  }
+
+  /**
    * Invited identities list.
    *
    * @param obj the obj
    * @return the list
    */
-  protected List<InvitedIdentity> invitedIdentitiesList(Object obj) {
+  protected List<InvitedIdentity> invitedIdentitiesFromJson(Object obj) {
     List<InvitedIdentity> list = new ArrayList<>();
     Object[] arr = (Object[]) obj;
     for (Object elem : arr) {

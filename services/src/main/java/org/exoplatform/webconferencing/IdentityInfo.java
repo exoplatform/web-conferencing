@@ -97,7 +97,7 @@ public abstract class IdentityInfo {
    *
    * @param avatarLink the new avatar link
    */
-  protected void setAvatarLink(String avatarLink) {
+  public void setAvatarLink(String avatarLink) {
     this.avatarLink = avatarLink;
   }
 
@@ -106,7 +106,7 @@ public abstract class IdentityInfo {
    *
    * @param profileLink the new profile link
    */
-  protected void setProfileLink(String profileLink) {
+  public void setProfileLink(String profileLink) {
     this.profileLink = profileLink;
   }
 
