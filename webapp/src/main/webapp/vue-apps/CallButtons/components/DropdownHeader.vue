@@ -3,8 +3,8 @@
     :style="{backgroundColor: isopen && (!parentclass.includes('call-button-mini') || !parentclass.includes('call-button--tiptip')) ? 'var(--allPagesGreyColor, #e1e8ee)' : 'white'}" 
     class="dropdown-header" 
     @click="showdropdowncomponent(); passrefs()">
-    <div class="dropdown-heading">
-      <i class="uiIconSocPhone uiIconSocBlue"></i>
+    <div class="dropdown-heading px-2">
+      <i class="uiIconSocPhone uiIconSocBlue pr-2"></i>
       {{ header.placeholder }}
     </div>
     <i class="uiIconMiniArrowDown uiIconLightGray"></i>
@@ -60,8 +60,8 @@ export default {
       // }
     }
     .dropdown-heading {
-      padding-left: 5px;
-      flex: 3;
+      // padding-left: 5px;
+      // flex: 3;
       text-align: center;
       .uiIconSocPhone {
         &::before {
@@ -70,7 +70,7 @@ export default {
       }
     }
     i {
-      flex: 1;
+      // flex: 1;
       text-align: center;
     }
   }

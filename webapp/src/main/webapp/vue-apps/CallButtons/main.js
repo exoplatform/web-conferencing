@@ -33,6 +33,7 @@ const resourceBundleName = "WebConferencingClient";
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
 const log = webConferencing.getLog("webconferencing-call-buttons");
 
+
 export function create(context, target) {
   const result = new Promise((resolve, reject) => {
     if (target) {

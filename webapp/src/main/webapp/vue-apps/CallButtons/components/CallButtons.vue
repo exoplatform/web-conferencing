@@ -78,8 +78,9 @@ export default {
     //   }
     // }
   },
-  // created() {
-  // },
+  created() {
+    // console.log(webConferencing.getProvider("jitsi"))
+  },
   // mounted() {
   //   this.$nextTick(() => {
   //     window.addEventListener("resize", this.onResize);
@@ -99,6 +100,7 @@ export default {
           const callButtons = [];
           webConferencing.getAllProviders().then(providers => {
             providers.map(provider => {
+              console.log(provider)
               if (provider.isInitialized) {
                 callButtons.push(provider.callButton(context));
               }
@@ -264,8 +266,8 @@ export default {
     z-index: 100;
     // left: 3px;
     top: 0;
-    min-height: 36px;
-    width: @width + 20px;
+    // min-height: 36px;
+    // width: @width + 20px;
     [class^="uiIcon"] {
       margin-bottom: 2px;
     }
