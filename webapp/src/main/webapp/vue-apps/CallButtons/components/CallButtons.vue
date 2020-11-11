@@ -7,7 +7,6 @@
         :providersbutton="providersButton"
         :isopen="isOpen"
         :header="header"
-        :parentclass="parentClass"
         @updated="createButtons"
         @getRefs="getRef($event)"
         @showDropdown="showDropdown($event)"/>
@@ -53,7 +52,6 @@ export default {
   },
   computed: {
     parentClass() {
-      console.log(this.$refs.callbutton.parentElement.parentElement.parentElement)
       return Object.values(this.$refs.callbutton.parentElement.parentElement.parentElement.classList).join("");
     },
     header() {
@@ -61,12 +59,13 @@ export default {
         this.parentClass.includes("call-button-mini") ||
         this.parentClass.includes("call-button--tiptip");
       return condition
-        ? { placeholder: "", bgHover: "white" }
+        ? { placeholder: "", bgHover: "white", paddingClass: "pa-1", bgMini: this.isOpen ?  "#d3d6db"  : "#ffffff"}
         : {
             placeholder: this.$i18n.te("webconferencing.callHeader")
               ? this.$i18n.t("webconferencing.callHeader")
               : "Start Call",
-            bgHover: this.isOpen ? "var(--allPagesGreyColor, #e1e8ee)" : "white"
+            bgHover: this.isOpen ? "var(--allPagesGreyColor, #e1e8ee)" : "white",
+            paddingClass: "px-2"
           };
     }
   },
@@ -78,12 +77,8 @@ export default {
     //   if (newWidth <= 980) {
     //     console.log("WIIDTH")
     //     // this.parentClass = this.parentClass + "call-button-mini";
-
     //   }
     // }
-  },
-  created() {
-    // console.log(webConferencing.getProvider("jitsi"))
   },
   // mounted() {
   //   this.$nextTick(() => {
@@ -104,7 +99,6 @@ export default {
           const callButtons = [];
           webConferencing.getAllProviders().then(providers => {
             providers.map(provider => {
-              console.log(provider)
               if (provider.isInitialized) {
                 callButtons.push(provider.callButton(context));
               }
@@ -209,9 +203,6 @@ export default {
 @import "../../../skin/less/variables.less";
 .VuetifyApp {
   .call-button-container {
-    [class^="call-button-container-"] {
-      vertical-align: middle;
-    }
     &:hover {
       .dropdown-header {
         background-color: var(--allPagesGreyColor, #e1e8ee);
@@ -224,29 +215,21 @@ export default {
     }
     a:hover,
     button:hover {
-      i {
-        color: white;
-      }
-      span {
+      i, span {
         color: white;
       }
     }
     &.single {
       width: @width - 14px;
       height: 36px;
-      // left: 3px;
       border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
       padding: 0 5px;
       background-color: #ffffff;
       &:hover {
         background-color: var(--allPagesGreyColor, #e1e8ee);
-        // background-color: @primaryColor;
-        .single-btn-container {
+        .single-btn-container, button  {
           background-color: var(--allPagesGreyColor, #e1e8ee);
-          button {
-            background-color: var(--allPagesGreyColor, #e1e8ee);
-          }
         }
 
         a:hover,
@@ -268,41 +251,27 @@ export default {
     cursor: pointer !important;
     position: relative;
     z-index: 100;
-    // left: 3px;
-    top: 0;
-    // min-height: 36px;
-    // width: @width + 20px;
-    [class^="uiIcon"] {
-      margin-bottom: 2px;
-    }
+    min-height: 36px;
   }
   [class^="call-button-container-"]:hover,
   button:hover {
-    i {
-      color: white;
-    }
-    span {
+    i, span {
       color: white;
     }
   }
   .room-actions-container {
-    [class^="uiIcon"] {
-      &:before {
-        color: unset;
-        height: 16px;
-        width: 16px;
-        margin-right: 4px;
+    .call-button-container {
+      [class^="uiIcon"] {
+        &:before {
+          color: unset;
+          margin-right: 4px;
+        }
       }
     }
   }
 }
 .call-button-mini {
-  width: min-content;
   .call-button-container {
-    left: 0px;
-    top: 0;
-    width: unset;
-
     #dropdown-vue {
       .buttons-container {
         [class^="call-button-container-"] {
@@ -310,16 +279,6 @@ export default {
             background: transparent;
             box-shadow: none;
             border: none;
-            margin-top: 4px;
-            [class^="uiIcon"] {
-              &:before {
-                color: unset;
-                height: 16px;
-                width: 16px;
-                margin-right: 4px;
-                content: "\e92b";
-              }
-            }
           }
         }
       }
@@ -371,9 +330,8 @@ export default {
       .dropdown-header {
         position: relative;
         .dropdown-heading {
-          [class^="uiIcon"] {
-            font-size: 16px !important;
-            margin-right: 10px;
+          [class^="uiIconSoc"] {
+            vertical-align: text-top;
             &::before {
               content: "\e92b";
             }
@@ -381,14 +339,13 @@ export default {
         }
         .uiIconMiniArrowDown {
           position: absolute;
-          top: 3px;
-          left: 20px;
+          right: -14px;
           font-size: 8px !important;
-          padding-top: 3px;
-          height: 11px;
+          padding: 4px;
+          bottom: -2px;
+          border-radius: 50%;
           &::before {
             color: @primaryColor;
-            //padding: 2px 4px;
           }
         }
       }
@@ -407,18 +364,12 @@ export default {
         }
         a:hover,
         button:hover {
-          i {
-            color: white;
-          }
-          span {
+          i, span {
             color: white;
           }
         }
         &:hover {
-          i {
-            color: white;
-          }
-          span {
+          i, span {
             color: white;
           }
         }

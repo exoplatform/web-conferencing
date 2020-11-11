@@ -7,7 +7,10 @@
       <i class="uiIconSocPhone uiIconSocBlue"></i>
       {{ header.placeholder }}
     </div>
-    <i class="uiIconMiniArrowDown uiIconLightGray pr-2"></i>
+    <i 
+      :style="{ 'background-color': header.bgMini }" 
+      :class="header.paddingClass" 
+      class="uiIconMiniArrowDown uiIconLightGray"></i>
   </div>
 </template>
 
@@ -25,32 +28,16 @@ export default {
     passrefs: {
       type: Function,
       required: true
-    },
-    isopen: {
-      type: Boolean,
-      required: true
-    },
-    parentclass: {
-      type: String,
-      required: true
     }
-  },
-  computed: {
-    // color() {
-    //   return this.isopen && (!this.parentclass.includes("call-button-mini") || !this.parentclass.includes("call-button--tiptip")) ? "var(--allPagesGreyColor, #e1e8ee)" : "white"
-
-    // }
-  },
-  created() {
-    console.log(this.parentclass);
   }
 };
 </script>
 
 <style scoped lang="less">
+@import "../../../skin/less/variables.less";
+
 .VuetifyApp {
   .dropdown-header {
-    // padding: 0;
     display: inline-flex;
     align-items: center;
     background-color: white;
@@ -58,30 +45,22 @@ export default {
     border-radius: 3px;
     width: 100%;
     min-height: 36px;
-    // &:focus {
-    //   background-color: var(--allPagesGreyColor, #e1e8ee);
-    // }
     .uiIconMiniArrowDown {
       color: var(--allPagesDarkGrey, #4d5466) !important;
-      top: 3px;
-      // ::before {
-      //   color: var(--allPagesDarkGrey, #4d5466) !important;
-      // }
+      border-radius: 50%;
     }
     .dropdown-heading {
-      // padding-left: 5px;
-      // flex: 3;
-      text-align: center;
+      i {
+        vertical-align: text-bottom;
+        text-align: center;
+      }
       .uiIconSocPhone {
-        &::before {
+        &:before {
           content: "\e92b";
         }
       }
     }
-    i {
-      // flex: 1;
-      text-align: center;
-    }
+    
   }
   hr {
     margin: 0;
@@ -91,15 +70,14 @@ export default {
   .dropdown-header {
     border: none;
     background: transparent;
-    .dropdown-heading {
-      flex: 10;
-      text-align: right;
-    }
     .uiIconMiniArrowDown {
-      height: 11px;
-      font-size: 9px !important;
-      top: 5px;
-      padding: 2px 3px 0 3px;
+      position: absolute;
+      top: 11px;
+      right: -7px;
+      text-align: center;
+      &::before {
+        color: @primaryColor;
+      }
     }
   }
 }

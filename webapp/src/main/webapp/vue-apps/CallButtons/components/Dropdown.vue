@@ -3,9 +3,7 @@
     <dropdown-header
       :header="header"
       :showdropdowncomponent="showDropdownComponent"
-      :passrefs="passRefs"
-      :isopen="isopen"
-      :parentclass="parentclass"/>
+      :passrefs="passRefs" />
     <div v-show="isopen" class="buttons-container">
       <!-- TODO why we need IDs for them?? a class will not work? -->
       <div
@@ -37,10 +35,6 @@ export default {
     header: {
       type: Object,
       required: true
-    },
-    parentclass: {
-      type: String,
-      required: true
     }
   },
   updated() {
@@ -68,7 +62,6 @@ export default {
   width: @width + 30px;
   box-shadow: @defaultShadow;
   position: absolute;
-  top: 38px;
   left: 0;
   [class^="call-button-container-"] {
     padding: 0 10px;
@@ -77,7 +70,6 @@ export default {
     display: flex;
     align-items: center;
     &:hover {
-      // background-color: #476a9c;
       background-position: 0 -45px;
       background-color: @primaryColor;
     }
