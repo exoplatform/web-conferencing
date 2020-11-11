@@ -1,17 +1,19 @@
 <template>
-  <div ref="callbutton" :class="['call-button-container']">
-    <dropdown
-      v-click-outside="hideDropdown"
-      v-if="providersButton.length > 1"
-      :providersbutton="providersButton"
-      :isopen="isOpen"
-      :header="header"
-      :parentclass="parentClass"
-      @updated="createButtons"
-      @getRefs="getRef($event)"
-      @showDropdown="showDropdown($event)"/>
-    <singlebtn v-else />
-  </div>
+  <v-app class="ma-0">
+    <div ref="callbutton" :class="['call-button-container']">
+      <dropdown
+        v-click-outside="hideDropdown"
+        v-if="providersButton.length > 1"
+        :providersbutton="providersButton"
+        :isopen="isOpen"
+        :header="header"
+        :parentclass="parentClass"
+        @updated="createButtons"
+        @getRefs="getRef($event)"
+        @showDropdown="showDropdown($event)"/>
+      <singlebtn v-else />
+    </div>
+  </v-app>
 </template>
 
 <script>
@@ -51,18 +53,20 @@ export default {
   },
   computed: {
     parentClass() {
-      return Object.values(this.$refs.callbutton.parentElement.classList).join("");
+      console.log(this.$refs.callbutton.parentElement.parentElement.parentElement)
+      return Object.values(this.$refs.callbutton.parentElement.parentElement.parentElement.classList).join("");
     },
     header() {
       const condition =
         this.parentClass.includes("call-button-mini") ||
         this.parentClass.includes("call-button--tiptip");
       return condition
-        ? { placeholder: "" }
+        ? { placeholder: "", bgHover: "white" }
         : {
             placeholder: this.$i18n.te("webconferencing.callHeader")
               ? this.$i18n.t("webconferencing.callHeader")
-              : "Start Call"
+              : "Start Call",
+            bgHover: this.isOpen ? "var(--allPagesGreyColor, #e1e8ee)" : "white"
           };
     }
   },

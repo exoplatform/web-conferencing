@@ -1,13 +1,13 @@
 <template>
-  <div 
-    :style="{backgroundColor: isopen && (!parentclass.includes('call-button-mini') || !parentclass.includes('call-button--tiptip')) ? 'var(--allPagesGreyColor, #e1e8ee)' : 'white'}" 
-    class="dropdown-header" 
+  <div
+    :style="{ 'background-color': header.bgHover }"
+    class="dropdown-header"
     @click="showdropdowncomponent(); passrefs()">
     <div class="dropdown-heading px-2">
-      <i class="uiIconSocPhone uiIconSocBlue pr-2"></i>
+      <i class="uiIconSocPhone uiIconSocBlue"></i>
       {{ header.placeholder }}
     </div>
-    <i class="uiIconMiniArrowDown uiIconLightGray"></i>
+    <i class="uiIconMiniArrowDown uiIconLightGray pr-2"></i>
   </div>
 </template>
 
@@ -34,6 +34,15 @@ export default {
       type: String,
       required: true
     }
+  },
+  computed: {
+    // color() {
+    //   return this.isopen && (!this.parentclass.includes("call-button-mini") || !this.parentclass.includes("call-button--tiptip")) ? "var(--allPagesGreyColor, #e1e8ee)" : "white"
+
+    // }
+  },
+  created() {
+    console.log(this.parentclass);
   }
 };
 </script>
