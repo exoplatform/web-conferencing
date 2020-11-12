@@ -943,26 +943,39 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Update participants.
+   * Update participants of call.
+   * Used to update current participants of call with provided user IDs.
    *
    * @param id the id
-   * @param participants the participants
+   * @param participants the participants ids
    * @return the call info
    * @throws CallNotFoundException the call not found exception
    * @throws InvalidCallException the invalid call exception
    * @throws StorageException the storage exception
    */
 
-  public CallInfo updateParticipants(String id, List<UserInfo> participants) throws CallNotFoundException,
-                                                                             InvalidCallException,
-                                                                             StorageException {
+  public CallInfo updateParticipants(String id, List<String> participants) throws CallNotFoundException,
+                                                                           InvalidCallException,
+                                                                           StorageException {
+
     if (participants == null || participants.isEmpty()) {
       throw new IllegalArgumentException("Participants cannot be null or empty");
+    }
+    List<UserInfo> userInfos = new ArrayList<>();
+    for (String userId : participants) {
+      try {
+        UserInfo userInfo = getUserInfo(userId);
+        if (userInfo != null) {
+          userInfos.add(userInfo);
+        }
+      } catch (IdentityStateException e) {
+        LOG.warn("Cannot get userInfo for " + userId, e);
+      }
     }
     CallInfo call = getCall(id);
     if (call != null) {
       try {
-        txUpdateParticipants(call, participants);
+        txUpdateParticipants(call, userInfos);
       } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
         throw new StorageException("Error updating participants of  call " + id, e);
       }
@@ -973,7 +986,8 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Adds the guest.
+   * Adds the guest to call.
+   * Adds guest as a participant to the call.
    *
    * @param id the id
    * @param guestId the guest id
@@ -997,6 +1011,7 @@ public class WebConferencingService implements Startable {
 
   /**
    * Update invites.
+   * Updates list of invited users/groups for the call that can join by invite link.
    *
    * @param callId the call id
    * @param identities the invites
@@ -1016,30 +1031,6 @@ public class WebConferencingService implements Startable {
       } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
         throw new StorageException("Error updating invites of call " + callId, e);
       }
-    } else {
-      throw new CallNotFoundException("Call not found: " + callId);
-    }
-  }
-
-  /**
-   * Adds the guest.
-   *
-   * @param callId the call id
-   * @param guest the guest
-   * @return the call info
-   * @throws InvalidCallException the invalid call exception
-   * @throws CallNotFoundException the call not found exception
-   * @throws StorageException the storage exception
-   */
-  public CallInfo addGuest(String callId, GuestInfo guest) throws InvalidCallException, CallNotFoundException, StorageException {
-    CallInfo call = getCall(callId);
-    if (call != null) {
-      try {
-        txAddParticipant(callId, guest);
-      } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
-        throw new StorageException("Error adding participant to call " + callId, e);
-      }
-      return call;
     } else {
       throw new CallNotFoundException("Call not found: " + callId);
     }

@@ -2158,13 +2158,13 @@
     /**
      * Add guest to call.
      */
-    this.addGuest = function(id, guestInfo) {
+    this.addGuest = function(id, guestId) {
       if (cometd) {
         var process = $.Deferred();
         var callProps = cometdParams({
           command : "add_guest",
           id : id,
-          guest : guestInfo
+          guestId : guestId
         });
         cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
           var result = tryParseJson(response);

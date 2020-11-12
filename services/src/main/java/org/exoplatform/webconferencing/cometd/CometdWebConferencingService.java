@@ -1051,7 +1051,7 @@ public class CometdWebConferencingService implements Startable {
                           Object participantsJson = arguments.get("participants");
                           if (participantsJson != null) {
                             try {
-                              List<UserInfo> participants = participantsFromJson(participantsJson);
+                              List<String> participants = asList(participantsJson, String.class);
                               CallInfo call = webConferencing.updateParticipants(id, participants);
                               caller.result(asJSON(call));
                             } catch (CallNotFoundException e) {
@@ -1537,68 +1537,23 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * Return object if it's String instance or null if it is not.
+   * As list.
    *
-   * @param jsonObject the json
-   * @return the string or null
+   * @param <T> the generic type
+   * @param obj the obj
+   * @param type the type
+   * @return the list
    */
-  @SuppressWarnings("unchecked")
-  protected List<UserInfo> participantsFromJson(Object jsonObject) {
-    if (jsonObject != null && Object[].class.isAssignableFrom(jsonObject.getClass())) {
-      Object[] members = Object[].class.cast(jsonObject);
-      List<UserInfo> participants = new ArrayList<>();
-      for (Object participantObj : members) {
-        UserInfo userInfo = participantFromJson(participantObj);
-        participants.add(userInfo);
+  protected <T> List<T> asList(Object obj, Class<T> type) {
+    List<T> list = new ArrayList<>();
+    Object[] arr = (Object[]) obj;
+    for (Object elem : arr) {
+      if (type.isAssignableFrom(elem.getClass())) {
+        T item = type.cast(elem);
+        list.add(item);
       }
-      return participants;
-    } else {
-      LOG.warn("Cannot parse participants JSON - the object is not an instanse of Object[]");
-      return null;
     }
-  }
-
-  /**
-   * Gets the participant from json.
-   *
-   * @param jsonObject the json object
-   * @return the participant from json
-   */
-  protected UserInfo participantFromJson(Object jsonObject) {
-    if (jsonObject == null) {
-      return null;
-    }
-    // TODO: Check class cast exeption
-    Map<String, Object> participant = (Map<String, Object>) jsonObject;
-    String id = asString(participant.get("id"));
-    String state = asString(participant.get("state"));
-    String avatarLink = asString(participant.get("avatarLink"));
-    String clientId = asString(participant.get("clientId"));
-    String firstName = asString(participant.get("firstName"));
-    String lastName = asString(participant.get("lastName"));
-    String profileLink = asString(participant.get("profileLink"));
-
-    if (isNotNullArg(id) && isNotNullArg(firstName) && isNotNullArg(lastName)) {
-      UserInfo userInfo = new UserInfo(id, firstName, lastName);
-      userInfo.setClientId(clientId);
-      userInfo.setState(state);
-      userInfo.setProfileLink(profileLink);
-      userInfo.setAvatarLink(avatarLink);
-      // TODO: parse IM accounts
-      /* org.exoplatform.social.core.identity.model.Identity userIdentity =
-                                                                       socialIdentityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME,
-                                                                                                                 id,
-                                                                                                                 true);
-      if (userIdentity != null) {
-        getUserIMs(userIdentity.getProfile()).forEach(im -> userInfo.addImAccount(im));
-      } else {
-        LOG.warn("Cannot load user IM accounts. User identity is null. userId: {}", id);
-      }*/
-      return userInfo;
-    } else {
-      throw new IllegalArgumentException("Participant must have id, firstName and lastName");
-    }
-
+    return list;
   }
 
   /**
