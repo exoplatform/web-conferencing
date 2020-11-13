@@ -392,7 +392,7 @@ export default {
     .call-button-container {
       &.single {
         top: 14px;
-        left: -100px;
+        left: -112px;
       }
     }
   }
