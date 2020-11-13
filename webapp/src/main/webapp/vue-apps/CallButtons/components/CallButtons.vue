@@ -4,6 +4,7 @@
       <dropdown
         v-click-outside="hideDropdown"
         v-if="providersButton.length > 1"
+        :positionclass="positionClass"
         :providersbutton="providersButton"
         :isopen="isOpen"
         :header="header"
@@ -46,11 +47,21 @@ export default {
       error: null,
       isOpen: false,
       childRef: null,
-      isFirstInitialization: true
+      isFirstInitialization: true,
       // screenWidth: window.innerWidth
     };
   },
   computed: {
+    dropdown: function (x, y) {
+      const el = this.$refs.callbutton && this.$refs.callbutton;
+      return el.getBoundingClientRect().x;
+    },
+    client: function (x, y) {
+      return document.body.getBoundingClientRect().width;
+    },
+    positionClass: function () {
+      return (this.dropdown / this.client < 0.85) ? "right" : "left";
+    },
     parentClass() {
       return Object.values(this.$refs.callbutton.parentElement.parentElement.parentElement.classList).join("");
     },
@@ -203,6 +214,7 @@ export default {
 @import "../../../skin/less/variables.less";
 .VuetifyApp {
   .call-button-container {
+    min-width: 36px;
     &:hover {
       .dropdown-header {
         background-color: var(--allPagesGreyColor, #e1e8ee);
@@ -224,8 +236,15 @@ export default {
       height: 36px;
       border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
-      padding: 0 5px;
+      padding: 0 10px;
       background-color: #ffffff;
+      .single-btn-container {
+        height: inherit;
+        a {
+          display: flex;
+          height: inherit;
+        }
+      }
       &:hover {
         background-color: var(--allPagesGreyColor, #e1e8ee);
         .single-btn-container, button  {
@@ -274,6 +293,7 @@ export default {
   .call-button-container {
     #dropdown-vue {
       .buttons-container {
+        // left: -85px;
         [class^="call-button-container-"] {
           button {
             background: transparent;
@@ -339,7 +359,7 @@ export default {
         }
         .uiIconMiniArrowDown {
           position: absolute;
-          right: -14px;
+          right: -16px;
           font-size: 8px !important;
           padding: 4px;
           bottom: -2px;
@@ -353,7 +373,7 @@ export default {
     .buttons-container {
       position: absolute;
       top: 23px;
-      left: -32px;
+      // left: -32px;
       box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.15);
       [class^="call-button-container-"] {
         text-align: left;
@@ -374,6 +394,10 @@ export default {
           }
         }
         button {
+          padding-left: 0;
+          .logo {
+            margin-bottom: -5px;
+          }
           .v-btn__content {
             [class^="uiIconSoc"] {
               font-size: 16px !important;

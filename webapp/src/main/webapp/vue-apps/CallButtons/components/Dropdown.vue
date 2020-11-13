@@ -1,10 +1,14 @@
 <template>
   <div id="dropdown-vue">
     <dropdown-header
+      ref="buttonsheader"
       :header="header"
       :showdropdowncomponent="showDropdownComponent"
-      :passrefs="passRefs" />
-    <div v-show="isopen" class="buttons-container">
+      :passrefs="passRefs"/>
+    <div 
+      v-show="isopen" 
+      :class="positionclass" 
+      class="buttons-container">
       <!-- TODO why we need IDs for them?? a class will not work? -->
       <div
         v-for="(button, index) in providersbutton"
@@ -18,6 +22,7 @@
 
 <script>
 import DropdownHeader from "./DropdownHeader.vue";
+import VueDraggableResizable from "vue-draggable-resizable";
 
 export default {
   components: {
@@ -34,6 +39,10 @@ export default {
     },
     header: {
       type: Object,
+      required: true
+    },
+    positionclass: {
+      type: String,
       required: true
     }
   },
@@ -62,7 +71,12 @@ export default {
   width: @width + 30px;
   box-shadow: @defaultShadow;
   position: absolute;
-  left: 0;
+  &.left {
+    right: -3px;
+  }
+  &.right {
+    left: 20px;
+  }
   [class^="call-button-container-"] {
     padding: 0 10px;
     height: 36px;
