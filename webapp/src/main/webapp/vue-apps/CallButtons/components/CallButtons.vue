@@ -416,7 +416,7 @@ export default {
     .call-button-container {
       &.single {
         top: 14px;
-        left: -112px;
+        left: -126px;
       }
     }
   }
