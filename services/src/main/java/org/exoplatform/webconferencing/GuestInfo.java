@@ -42,6 +42,15 @@ public class GuestInfo extends UserInfo {
    * Instantiates a new user info.
    *
    * @param userId the user id in the system
+   */
+  public GuestInfo(String userId) {
+    super(userId, EMPTY, EMPTY);
+  }
+  
+  /**
+   * Instantiates a new user info.
+   *
+   * @param userId the user id in the system
    * @param firstName the first type
    * @param lastName the last type
    */

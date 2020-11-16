@@ -240,8 +240,8 @@ public class WebConferencingService implements Startable {
     }
   }
 
-  /** The Constant PLATFORM_USERS. */
-  public static final String                         PLATFORM_USERS         = "/platform/users";
+  /** The Constant ALL_USERS. */
+  public static final String                         ALL_USERS              = "*";
 
   /** The Constant GROUP. */
   public static final String                         GROUP                  = "group";
@@ -474,8 +474,8 @@ public class WebConferencingService implements Startable {
       } else if (LOG.isDebugEnabled()) {
         LOG.debug("Ignore disabled user (treat as not found): " + id);
       }
-    } else {
-      LOG.warn("User not found: " + id);
+    } else if (LOG.isDebugEnabled()) {
+      LOG.debug("User not found: " + id);
     }
     return null;
   }
@@ -998,7 +998,7 @@ public class WebConferencingService implements Startable {
    */
   public CallInfo addGuest(String id, String guestId) throws InvalidCallException, CallNotFoundException, IdentityStateException {
     UserInfo userInfo = getUserInfo(guestId);
-    GuestInfo guestInfo = new GuestInfo(userInfo);
+    GuestInfo guestInfo = userInfo == null ? new GuestInfo(guestId) : new GuestInfo(userInfo);
     CallInfo call = getCall(id);
     if (call != null) {
       txAddParticipant(id, guestInfo);
@@ -1346,15 +1346,16 @@ public class WebConferencingService implements Startable {
   public boolean checkInvite(String callId, String inviteId, String identity) throws Exception {
     for (InviteEntity invite : inviteStorage.findCallInvites(callId)) {
       if (invite.getInvitationId().equals(inviteId)) {
+        if (invite.getIdentity().equals(ALL_USERS)) {
+          return true;
+        }
         if (USER.equals(invite.getIdentityType()) && invite.getIdentity().equals(identity)) {
           return true;
         }
         if (GROUP.equals(invite.getIdentityType())) {
           Collection<Membership> membersips = organization.getMembershipHandler()
                                                           .findMembershipsByUserAndGroup(identity, invite.getIdentity());
-          if (membersips.size() > 0) {
-            return true;
-          }
+          return membersips.size() > 0;
         }
       }
     }
@@ -1955,7 +1956,7 @@ public class WebConferencingService implements Startable {
       try {
         String inviteId = getInviteId(callId);
         if (inviteId == null) {
-          inviteId = createInvite(callId, PLATFORM_USERS, GROUP).getInvitationId();
+          inviteId = createInvite(callId, ALL_USERS, GROUP).getInvitationId();
         }
         call.setInviteId(inviteId);
       } catch (StorageException e) {
@@ -1969,13 +1970,13 @@ public class WebConferencingService implements Startable {
         for (ParticipantEntity p : participantsStorage.findCallParts(savedCall.getId())) {
           if (UserInfo.TYPE_NAME.equals(p.getType()) || GuestInfo.TYPE_NAME.equals(p.getType())) {
             UserInfo user = getUserInfo(p.getId());
-            if (GuestInfo.TYPE_NAME.equals(user.getType())) {
-              user = new GuestInfo(user);
-            }
             if (user == null) {
-              // If user not found we treat it as external participant to work correctly
-              // with what addCall() does.
-              user = new ParticipantInfo(savedCall.getProviderType(), p.getId());
+              // external guest or undefined participant
+              user = GuestInfo.TYPE_NAME.equals(p.getType()) ? new GuestInfo(p.getId())
+                                                             : new ParticipantInfo(savedCall.getProviderType(), p.getId());
+            } else if (GuestInfo.TYPE_NAME.equals(user.getType())) {
+              // eXo user as guest
+              user = new GuestInfo(user);
             }
             user.setState(p.getState());
             user.setClientId(p.getClientId());
@@ -2058,24 +2059,6 @@ public class WebConferencingService implements Startable {
     CallEntity entity = new CallEntity();
     syncCallEntity(call, entity);
     return entity;
-  }
-
-  /**
-   * Checks if is guest allowed.
-   *
-   * @param callId the call id
-   * @param userId the user id
-   * @return true, if is guest allowed
-   */
-  protected boolean isGuestAllowed(String callId, String userId) {
-    List<InviteEntity> invites = inviteStorage.findCallInvites(callId);
-    for (InviteEntity invite : invites) {
-      // TODO: add group support via org service.
-      if (InviteEntity.USER_TYPE.equals(invite.getIdentityType()) && invite.getIdentity().equals(userId)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /**
