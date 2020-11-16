@@ -22,7 +22,6 @@
 
 <script>
 import DropdownHeader from "./DropdownHeader.vue";
-import VueDraggableResizable from "vue-draggable-resizable";
 
 export default {
   components: {
