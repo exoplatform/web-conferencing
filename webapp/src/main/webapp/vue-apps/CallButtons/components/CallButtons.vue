@@ -4,13 +4,16 @@
       <dropdown
         v-click-outside="hideDropdown"
         v-if="providersButton.length > 1"
+        ref="dropdown"
         :positionclass="positionClass"
         :providersbutton="providersButton"
         :isopen="isOpen"
         :header="header"
         @updated="createButtons"
         @getRefs="getRef($event)"
-        @showDropdown="showDropdown($event)"/>
+        @showDropdown="showDropdown($event)"
+        @dropdownIsVisualized="fireDropdownIsVisualized()"
+        @selectedProvider="hideDropdown()"/>
       <singlebtn v-else />
     </div>
   </v-app>
@@ -46,24 +49,36 @@ export default {
       providersButton: [],
       error: null,
       isOpen: false,
+      isDropdownVisualized: false, // is added to DOM
       childRef: null,
       isFirstInitialization: true,
-      // screenWidth: window.innerWidth
     };
   },
   computed: {
-    dropdown: function (x, y) {
-      const el = this.$refs.callbutton && this.$refs.callbutton;
-      return el.getBoundingClientRect().x;
+    dropdown: function() {
+      return this.$refs.callbutton.getBoundingClientRect();
     },
-    client: function (x, y) {
-      return document.body.getBoundingClientRect().width;
+    dropdownContainer: function() {
+      return this.$refs.dropdown.$refs.buttonsContainer.getBoundingClientRect();
     },
-    positionClass: function () {
-      return (this.dropdown / this.client < 0.85) ? "right" : "left";
+    client: function() {
+      return document.body.getBoundingClientRect();
+    },
+    positionClass: function() {
+      let position = "right";
+      if (this.isDropdownVisualized) {
+        const widthRelation = (this.client.width - this.dropdown.left) / this.dropdownContainer.width;
+        if (widthRelation < 1.1) {
+          position = "left";
+        }
+      }
+      return position;
+    },
+    parentContainerElement() {
+      return this.$refs.callbutton.parentElement.parentElement.parentElement;
     },
     parentClass() {
-      return Object.values(this.$refs.callbutton.parentElement.parentElement.parentElement.classList).join("");
+      return Object.values(this.parentContainerElement.classList).join("");
     },
     header() {
       const condition =
@@ -103,7 +118,7 @@ export default {
     setProvidersButtons(context) {
       this.providersButton.splice(0);
       this.$refs.callbutton.classList.remove("single");
-      this.isOpen = false;
+      this.hideDropdown();
       const thevue = this;
       try {
         if (context && context.details && this.providersButton.length === 0) {
@@ -194,17 +209,23 @@ export default {
       }
     },
     showDropdown() {
-      this.isOpen = !this.isOpen;
+      this.isOpen = true;
     },
     hideDropdown() {
-      this.isOpen = false;
-      // this.$el.blur();
+      if (this.isOpen) {
+        this.isOpen = false;
+        this.isDropdownVisualized = false;
+        this.parentContainerElement.blur();
+      }
     },
     getRef(ref) {
       this.childRef = ref;
     },
     fireCreated() {
       this.$emit("created");
+    },
+    fireDropdownIsVisualized() {
+      this.isDropdownVisualized = true;
     }
   }
 };
@@ -267,6 +288,10 @@ export default {
     a:focus {
       color: unset;
     }
+    [class^="call-button-container-"] {
+      min-width: 130px;
+      width: max-content;
+    }
     cursor: pointer !important;
     position: relative;
     z-index: 100;
@@ -293,7 +318,9 @@ export default {
   .call-button-container {
     #dropdown-vue {
       .buttons-container {
-        // left: -85px;
+        &.left {
+          right: -10px;
+        }
         [class^="call-button-container-"] {
           button {
             background: transparent;
@@ -347,6 +374,11 @@ export default {
   .call-button-container {
     #dropdown-vue {
       position: relative;
+      .buttons-container {
+        &.left {
+          right: -16px;
+        }
+      }
       .dropdown-header {
         position: relative;
         .dropdown-heading {
@@ -373,7 +405,6 @@ export default {
     .buttons-container {
       position: absolute;
       top: 23px;
-      // left: -32px;
       box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.15);
       [class^="call-button-container-"] {
         text-align: left;
@@ -407,6 +438,9 @@ export default {
       }
     }
   }
+}
+.call-button-mini.call-button--chat-drawer {
+  margin-right: 11px;
 }
 .space-action-menu {
   width: 86px;

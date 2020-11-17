@@ -5,9 +5,10 @@
       :header="header"
       :showdropdowncomponent="showDropdownComponent"
       :passrefs="passRefs"/>
-    <div 
-      v-show="isopen" 
-      :class="positionclass" 
+    <div
+      v-show="isopen"
+      ref="buttonsContainer"
+      :class="positionclass"
       class="buttons-container">
       <!-- TODO why we need IDs for them?? a class will not work? -->
       <div
@@ -15,7 +16,7 @@
         :key="index"
         :class="`call-button-container-${index}`"
         :ref="`callbutton`"
-        @click="isopen=false"></div>
+        @click.prevent.self="selectProvider"></div>
     </div>
   </div>
 </template>
@@ -45,6 +46,14 @@ export default {
       required: true
     }
   },
+  watch: {
+    async isopen(value) {
+      if (value) {
+        await this.$nextTick()
+        this.$emit("dropdownIsVisualized");
+      }
+    }
+  },
   updated() {
     this.$emit("updated");
   },
@@ -54,6 +63,12 @@ export default {
     },
     passRefs() {
       this.$emit("getRefs", this.$refs);
+    },
+    selectProvider(event) {
+      if (event && event.target && event.target.children[0]) {
+        event.target.children[0].click(); // fire click on the provider button
+      }
+      this.$emit("selectedProvider");
     }
   }
 };
@@ -67,15 +82,9 @@ export default {
   border: @defaultBorder;
   border-radius: 3px;
   margin-top: 3px;
-  width: @width + 30px;
+  min-width: @width + 30px;
   box-shadow: @defaultShadow;
   position: absolute;
-  &.left {
-    right: -3px;
-  }
-  &.right {
-    left: 20px;
-  }
   [class^="call-button-container-"] {
     padding: 0 10px;
     height: 36px;
