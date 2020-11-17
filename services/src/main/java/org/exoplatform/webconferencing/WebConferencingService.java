@@ -992,16 +992,24 @@ public class WebConferencingService implements Startable {
    * @param id the id
    * @param guestId the guest id
    * @return the call info
-   * @throws InvalidCallException the invalid call exception
+   * @throws StorageException the storage exception
    * @throws CallNotFoundException the call not found exception
+   * @throws InvalidCallException the invalid call exception
    * @throws IdentityStateException the identity state exception
    */
-  public CallInfo addGuest(String id, String guestId) throws InvalidCallException, CallNotFoundException, IdentityStateException {
+  public CallInfo addGuest(String id, String guestId) throws StorageException,
+                                                      CallNotFoundException,
+                                                      InvalidCallException,
+                                                      IdentityStateException {
     UserInfo userInfo = getUserInfo(guestId);
     GuestInfo guestInfo = userInfo == null ? new GuestInfo(guestId) : new GuestInfo(userInfo);
     CallInfo call = getCall(id);
     if (call != null) {
-      txAddParticipant(id, guestInfo);
+      try {
+        txAddParticipant(id, guestInfo);
+      } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+        throw new StorageException("Error adding participant to call " + id, e);
+      }
       call.addParticipant(guestInfo);
       return call;
     } else {
@@ -1355,7 +1363,7 @@ public class WebConferencingService implements Startable {
         if (GROUP.equals(invite.getIdentityType())) {
           Collection<Membership> membersips = organization.getMembershipHandler()
                                                           .findMembershipsByUserAndGroup(identity, invite.getIdentity());
-          return membersips.size() > 0;
+          return !membersips.isEmpty();
         }
       }
     }
@@ -2179,9 +2187,14 @@ public class WebConferencingService implements Startable {
    *
    * @param callId the call id
    * @param participant the participant
+   * @throws IllegalArgumentException the illegal argument exception
+   * @throws IllegalStateException the illegal state exception
+   * @throws PersistenceException the persistence exception
    */
   @ExoTransactional
-  protected void txAddParticipant(String callId, UserInfo participant) {
+  protected void txAddParticipant(String callId, UserInfo participant) throws IllegalArgumentException,
+                                                                       IllegalStateException,
+                                                                       PersistenceException {
     if (participantsStorage.find(new ParticipantId(participant.getId(), callId)) == null) {
       participantsStorage.create(createParticipantEntity(callId, participant));
     } else {
