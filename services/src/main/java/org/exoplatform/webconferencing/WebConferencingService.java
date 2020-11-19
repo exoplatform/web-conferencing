@@ -336,6 +336,7 @@ public class WebConferencingService implements Startable {
   /** The authenticator. */
   protected final Authenticator                      authenticator;
 
+
   /**
    * Checks is ID valid (not null, not empty and not longer of {@value #ID_MAX_LENGTH} chars).
    *
@@ -1582,12 +1583,13 @@ public class WebConferencingService implements Startable {
     UploadResource resource = uploadService.getUploadResource(uploadId);
     if (resource.getStatus() == UploadResource.UPLOADED_STATUS) {
       String owner = null;
-      if (!uploadInfo.isSpace() && !uploadInfo.getIdentity().equals(uploadInfo.getUser())) {
+      // Owner is user if it's not a space, otherwise use space identity
+      if (!uploadInfo.getType().equals(OWNER_TYPE_SPACE) && !uploadInfo.getIdentity().equals(uploadInfo.getUser())) {
         owner = uploadInfo.getUser();
       } else {
         owner = uploadInfo.getIdentity();
       }
-      Node rootNode = getRootFolderNode(owner, uploadInfo.isSpace());
+      Node rootNode = getRootFolderNode(owner, uploadInfo.getType());
       saveFile(rootNode, resource, uploadInfo.getUser());
       uploadService.removeUploadResource(uploadId); // TODO should this be in try-finally for a cleanup in case of saving failure?
       // TODO Log metrics - call recording uploaded
@@ -1650,16 +1652,16 @@ public class WebConferencingService implements Startable {
    * Gets the root folder node.
    *
    * @param identity the identity
-   * @param isSpace the is space
+   * @param type the type
    * @return the root folder node
    * @throws RepositoryException the repository exception
    */
-  private Node getRootFolderNode(String identity, boolean isSpace) throws RepositoryException {
+  private Node getRootFolderNode(String identity, String type) throws RepositoryException {
     Node folderNode = null;
     ManageableRepository repository = repositoryService.getCurrentRepository();
     SessionProvider sessionProvider = sessionProviders.getSystemSessionProvider(null);
     Session session = sessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
-    if (isSpace) {
+    if (OWNER_TYPE_SPACE.equals(type)) {
       Node rootSpace = null;
       rootSpace = (Node) session.getItem(nodeCreator.getJcrPath(CMS_GROUPS_PATH) + "/spaces/" + identity);
       folderNode = rootSpace.getNode("Documents");

@@ -1,35 +1,42 @@
 package org.exoplatform.webconferencing;
 
+import java.util.List;
+
 /**
  * The Class UploadFileInfo.
  */
 public class UploadFileInfo {
 
   /** The call id. */
-  private final String  callId;
+  private final String       callId;
 
   /** The identity. */
-  private final String  identity;
+  private final String       identity;
 
   /** The is space. */
-  private final boolean isSpace;
+  private final String      type;
 
   /** The user. */
-  private final String  user;
+  private final String       user;
+
+  /** The participants. */
+  private final List<String> participants;
 
   /**
    * Instantiates a new upload file info.
    *
    * @param callId the call id
    * @param identity the identity
-   * @param isSpace the is space
+   * @param type the is type
    * @param user the user
+   * @param participants the participants
    */
-  public UploadFileInfo(String callId, String identity, boolean isSpace, String user) {
+  public UploadFileInfo(String callId, String identity, String type, String user, List<String> participants) {
     this.callId = callId;
     this.identity = identity;
-    this.isSpace = isSpace;
+    this.type = type;
     this.user = user;
+    this.participants = participants;
   }
 
   /**
@@ -51,12 +58,12 @@ public class UploadFileInfo {
   }
 
   /**
-   * Checks if is space.
+   * Gets the type.
    *
-   * @return true, if is space
+   * @return the type
    */
-  public boolean isSpace() {
-    return isSpace;
+  public String getType() {
+    return type;
   }
 
   /**
@@ -66,6 +73,15 @@ public class UploadFileInfo {
    */
   public String getUser() {
     return user;
+  }
+
+  /**
+   * Gets the participants.
+   *
+   * @return the participants
+   */
+  public List<String> getParticipants() {
+    return participants;
   }
 
 }
