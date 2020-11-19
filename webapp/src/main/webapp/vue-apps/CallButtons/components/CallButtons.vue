@@ -14,7 +14,8 @@
         @showDropdown="showDropdown($event)"
         @dropdownIsVisualized="fireDropdownIsVisualized()"
         @selectedProvider="hideDropdown()"/>
-      <singlebtn v-else />
+      <singlebtn 
+        v-else />
     </div>
   </v-app>
 </template>
@@ -382,7 +383,7 @@ export default {
       .dropdown-header {
         position: relative;
         .dropdown-heading {
-          [class^="uiIconSoc"] {
+          .uiIconSocPhone {
             vertical-align: text-top;
             &::before {
               content: "\e92b";
@@ -430,8 +431,11 @@ export default {
             margin-bottom: -5px;
           }
           .v-btn__content {
-            [class^="uiIconSoc"] {
+            .uiIconSocPhone  {
               font-size: 16px !important;
+                &::before {
+                content: "\e92b";
+              }
             }
           }
         }
