@@ -12,8 +12,8 @@
         @updated="createButtons"
         @getRefs="getRef($event)"
         @showDropdown="showDropdown($event)"
-        @dropdownIsVisualized="fireDropdownIsVisualized()"
-        @selectedProvider="hideDropdown()"/>
+        @dropdownIsVisualized="fireDropdownIsVisualized"
+        @selectedProvider="hideDropdown"/>
       <singlebtn 
         v-else />
     </div>
