@@ -89,6 +89,13 @@
         <scope>import</scope>
       </dependency>
       <dependency>
+        <groupId>org.exoplatform.ecms</groupId>
+        <artifactId>ecms</artifactId>
+        <version>${addon.exo.ecms.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
         <groupId>org.exoplatform.platform-ui</groupId>
         <artifactId>platform-ui</artifactId>
         <version>${org.exoplatform.platform-ui.version}</version>

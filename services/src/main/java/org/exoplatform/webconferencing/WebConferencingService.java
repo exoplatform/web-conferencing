@@ -64,6 +64,7 @@ import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.services.jcr.RepositoryService;
+import org.exoplatform.services.jcr.access.PermissionType;
 import org.exoplatform.services.jcr.core.ManageableRepository;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
@@ -89,6 +90,7 @@ import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.upload.UploadResource;
 import org.exoplatform.upload.UploadService;
+import org.exoplatform.wcm.ext.component.document.service.ShareDocumentService;
 import org.exoplatform.webconferencing.UserInfo.IMInfo;
 import org.exoplatform.webconferencing.dao.CallDAO;
 import org.exoplatform.webconferencing.dao.InviteDAO;
@@ -315,6 +317,9 @@ public class WebConferencingService implements Startable {
   /** The space service. */
   protected SpaceService                             spaceService;
 
+  /** The share service. */
+  protected ShareDocumentService                     shareService;
+
   /** The user listeners. */
   protected final Map<String, Set<UserCallListener>> userListeners          = new ConcurrentHashMap<>();
 
@@ -335,7 +340,6 @@ public class WebConferencingService implements Startable {
 
   /** The authenticator. */
   protected final Authenticator                      authenticator;
-
 
   /**
    * Checks is ID valid (not null, not empty and not longer of {@value #ID_MAX_LENGTH} chars).
@@ -405,6 +409,7 @@ public class WebConferencingService implements Startable {
    * @param nodeCreator the node creator
    * @param identityRegistry the identity registry
    * @param authenticator the authenticator
+   * @param shareService the share service
    * @param initParams the initParams
    */
   public WebConferencingService(OrganizationService organization,
@@ -420,6 +425,7 @@ public class WebConferencingService implements Startable {
                                 NodeHierarchyCreator nodeCreator,
                                 IdentityRegistry identityRegistry,
                                 Authenticator authenticator,
+                                ShareDocumentService shareService,
                                 InitParams initParams) {
     this.organization = organization;
     this.socialIdentityManager = socialIdentityManager;
@@ -436,6 +442,7 @@ public class WebConferencingService implements Startable {
     this.authenticator = authenticator;
     PropertiesParam jwtSecretParam = initParams.getPropertiesParam(JWT_CONFIGURATION_PROPERTIES);
     this.secretKey = jwtSecretParam.getProperty(SECRET_KEY);
+    this.shareService = shareService;
   }
 
   /**
@@ -1590,7 +1597,14 @@ public class WebConferencingService implements Startable {
         owner = uploadInfo.getIdentity();
       }
       Node rootNode = getRootFolderNode(owner, uploadInfo.getType());
-      saveFile(rootNode, resource, uploadInfo.getUser());
+      // If it's 1-1 or chat-room call, we pass participants to share the file.
+      // Otherwise we just upload to the space docs
+      if (uploadInfo.getType().equals(OWNER_TYPE_CHATROOM) || uploadInfo.getType().equals(USER)) {
+        saveFile(rootNode, resource, uploadInfo.getUser(), uploadInfo.getParticipants());
+      } else {
+        saveFile(rootNode, resource, uploadInfo.getUser(), null);
+      }
+
       uploadService.removeUploadResource(uploadId); // TODO should this be in try-finally for a cleanup in case of saving failure?
       // TODO Log metrics - call recording uploaded
       // LOG.info(metricMessage(userId, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null));
@@ -1607,10 +1621,12 @@ public class WebConferencingService implements Startable {
    * @param parent the parent
    * @param resource the recording
    * @param user the user
+   * @param shareToUsers the users to share file with
    * @throws RepositoryException the repository exception
    * @throws UploadFileException the upload file exception
    */
-  private void saveFile(Node parent, UploadResource resource, String user) throws RepositoryException, UploadFileException {
+  private void saveFile(Node parent, UploadResource resource, String user, List<String> shareToUsers) throws RepositoryException,
+                                                                                                      UploadFileException {
     ConversationState state = null;
     try {
       state = createState(user);
@@ -1641,6 +1657,19 @@ public class WebConferencingService implements Startable {
     content.setProperty(JCR_MIME_TYPE, resource.getMimeType());
     content.setProperty(JCR_LAST_MODIFIED_PROP, new GregorianCalendar());
     folder.save();
+    String perm = new StringBuilder(PermissionType.READ).append(",")
+                                                        .append(PermissionType.ADD_NODE)
+                                                        .append(",")
+                                                        .append(PermissionType.SET_PROPERTY)
+                                                        .toString();
+    // Share file to other users
+    if (shareToUsers != null) {
+      for (String participant : shareToUsers) {
+        if (!participant.equals(user)) {
+          shareService.publishDocumentToUser(participant, fileNode, null, perm);
+        }
+      }
+    }
     try {
       ConversationState.setCurrent(null);
     } catch (Exception e) {
