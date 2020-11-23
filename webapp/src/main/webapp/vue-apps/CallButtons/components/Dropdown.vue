@@ -65,11 +65,6 @@ export default {
       this.$emit("getRefs", this.$refs);
     },
     selectProvider(event) {
-      console.log(event.target, event.target.children[0])
-      //if (event && event.target && event.target.children[0]) {
-      //  console.log("CLICK EVENT")
-      //  event.target.children[0].click(); // fire click on the provider button
-      //}
       this.$emit("selectedProvider");
     }
   }
@@ -84,7 +79,7 @@ export default {
   border: @defaultBorder;
   border-radius: 3px;
   margin-top: 3px;
-  min-width: @width + 30px;
+  min-width: @width + 10px;
   box-shadow: @defaultShadow;
   position: absolute;
   [class^="call-button-container-"] {
