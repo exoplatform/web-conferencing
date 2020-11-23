@@ -16,7 +16,7 @@
         :key="index"
         :class="`call-button-container-${index}`"
         :ref="`callbutton`"
-        @click.prevent.self="selectProvider"></div>
+        @click="selectProvider"></div>
     </div>
   </div>
 </template>
@@ -65,9 +65,11 @@ export default {
       this.$emit("getRefs", this.$refs);
     },
     selectProvider(event) {
-      if (event && event.target && event.target.children[0]) {
-        event.target.children[0].click(); // fire click on the provider button
-      }
+      console.log(event.target, event.target.children[0])
+      //if (event && event.target && event.target.children[0]) {
+      //  console.log("CLICK EVENT")
+      //  event.target.children[0].click(); // fire click on the provider button
+      //}
       this.$emit("selectedProvider");
     }
   }

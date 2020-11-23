@@ -211,7 +211,7 @@ export default {
       }
     },
     showDropdown() {
-      this.isOpen = true;
+      this.isOpen = !this.isOpen;
     },
     hideDropdown() {
       if (this.isOpen) {
