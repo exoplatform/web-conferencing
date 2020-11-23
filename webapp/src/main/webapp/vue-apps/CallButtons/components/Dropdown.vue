@@ -79,11 +79,10 @@ export default {
   border: @defaultBorder;
   border-radius: 3px;
   margin-top: 3px;
-  min-width: @width + 10px;
+  width: @width + 30px;
   box-shadow: @defaultShadow;
   position: absolute;
   [class^="call-button-container-"] {
-    padding: 0 10px;
     height: 36px;
     border-radius: 3px;
     display: flex;

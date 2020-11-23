@@ -246,6 +246,7 @@ export default {
     button {
       .v-btn__content {
         letter-spacing: 0.1px;
+        padding: 0 10px;
       }
     }
     a:hover,
@@ -259,7 +260,7 @@ export default {
       height: 36px;
       border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
-      padding: 0 10px;
+      // padding: 0 10px;
       background-color: #ffffff;
       .single-btn-container {
         height: inherit;
@@ -291,8 +292,7 @@ export default {
       color: unset;
     }
     [class^="call-button-container-"] {
-      min-width: 130px;
-      width: max-content;
+      width: 100%;
     }
     cursor: pointer !important;
     position: relative;
