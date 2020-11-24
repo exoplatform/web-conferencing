@@ -335,6 +335,11 @@ export default {
           border: none;
           background: transparent;
           .v-btn__content {
+             .uiIconSocPhone {
+                &::before {
+                  content: "\e92b";
+                }
+              }
             span {
               display: none;
             }
