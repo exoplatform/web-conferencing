@@ -844,14 +844,15 @@ public class WebConferencingService implements Startable {
           // a given user.
           // A given user also can be null when not possible to define it (e.g. on CometD channel removal, or
           // other server side action) - then we notify to all participants.
-          if (userId == null || !(remove && userId.equals(part.getId()))) {
-            fireUserCallStateChanged(part.getId(),
-                                     callId,
-                                     call.getProviderType(),
-                                     CallState.STOPPED,
-                                     call.getOwner().getId(),
-                                     call.getOwner().getType());
-          }
+          // Nov 24, 2020 - Inform all parties
+          // TODO Nov 24, 2020 - cleanup after tests
+          //if (userId == null || !(remove && userId.equals(part.getId()))) {
+          fireUserCallStateChanged(part.getId(),
+                                   callId,
+                                   call.getProviderType(),
+                                   CallState.STOPPED,
+                                   call.getOwner().getId(),
+                                   call.getOwner().getType());
         }
       }
     } else {
@@ -938,15 +939,14 @@ public class WebConferencingService implements Startable {
     Collection<UserInfo> parts = call.getOwner().isGroup() ? GroupInfo.class.cast(call.getOwner()).getMembers().values()
                                                            : call.getParticipants();
     for (UserInfo part : parts) {
-      if (!partId.equals(part.getId())) {
-        // Inform all except of the user who started the call
-        fireUserCallStateChanged(part.getId(),
-                                 callId,
-                                 call.getProviderType(),
-                                 CallState.STARTED,
-                                 call.getOwner().getId(),
-                                 call.getOwner().getType());
-      }
+      // Nov 24, 2020 - Inform all parties
+      //if (!partId.equals(part.getId())) { // TODO cleanup after tests
+      fireUserCallStateChanged(part.getId(),
+                               callId,
+                               call.getProviderType(),
+                               CallState.STARTED,
+                               call.getOwner().getId(),
+                               call.getOwner().getType());
     }
   }
 
