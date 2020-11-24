@@ -81,11 +81,12 @@ export default {
     parentClass() {
       return Object.values(this.parentContainerElement.classList).join("");
     },
+    condition() {
+      return this.parentClass.includes("call-button-mini") 
+        || this.parentClass.includes("call-button--tiptip");
+    },
     header() {
-      const condition =
-        this.parentClass.includes("call-button-mini") ||
-        this.parentClass.includes("call-button--tiptip");
-      return condition
+      return this.condition
         ? { placeholder: "", bgHover: "white", paddingClass: "pa-1", bgMini: this.isOpen ?  "#d3d6db"  : "#ffffff"}
         : {
             placeholder: this.$i18n.te("webconferencing.callHeader")
@@ -183,14 +184,9 @@ export default {
             if (pb instanceof Vue) {
               // add vue button
               vm = pb.$mount(); // TODO why we need vm globaly?
-              // vm.$el.innerHTML = "<span class='v-btn__content'><i class='uiIconSocPhone uiIconBlue'></i>Start Call</span>"
-              const condition =
-                this.parentClass.includes("call-button-mini") ||
-                this.parentClass.includes("call-button--tiptip");
-              const singleBtnContainer = condition
-                ? vm.$el.childNodes[0].removeChild(
-                    vm.$el.childNodes[0].childNodes[1]
-                  )
+              const container = vm.$children[0].$el.childNodes[0].childNodes[2];
+              const singleBtnContainer = this.condition
+                ? container.classList.add("display-hidden")
                 : vm.$el.childNodes[0];
               callButton.appendChild(vm.$el);
             } else {
@@ -235,6 +231,7 @@ export default {
 
 <style lang="less">
 @import "../../../skin/less/variables.less";
+@import "../../../skin/less/mixins.less";
 .VuetifyApp {
   .call-button-container {
     min-width: 36px;
@@ -340,6 +337,8 @@ export default {
       .single-btn-container {
         button {
           margin-right: 0;
+          border: none;
+          background: transparent;
         }
       }
     }

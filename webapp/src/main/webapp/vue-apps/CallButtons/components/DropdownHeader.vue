@@ -56,6 +56,7 @@ export default {
       }
       .uiIconSocPhone {
         &:before {
+          color: unset;
           content: "\e92b";
         }
       }
