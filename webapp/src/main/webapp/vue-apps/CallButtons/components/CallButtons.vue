@@ -13,9 +13,8 @@
         @getRefs="getRef($event)"
         @showDropdown="showDropdown($event)"
         @dropdownIsVisualized="fireDropdownIsVisualized"
-        @selectedProvider="hideDropdown"/>
-      <singlebtn 
-        v-else />
+        @selectedProvider="hideDropdown" />
+      <singlebtn v-else />
     </div>
   </v-app>
 </template>
@@ -52,7 +51,7 @@ export default {
       isOpen: false,
       isDropdownVisualized: false, // is added to DOM
       childRef: null,
-      isFirstInitialization: true,
+      isFirstInitialization: true
     };
   },
   computed: {
@@ -68,7 +67,9 @@ export default {
     positionClass: function() {
       let position = "right";
       if (this.isDropdownVisualized) {
-        const widthRelation = (this.client.width - this.dropdown.left) / this.dropdownContainer.width;
+        const widthRelation =
+          (this.client.width - this.dropdown.left) /
+          this.dropdownContainer.width;
         if (widthRelation < 1.1) {
           position = "left";
         }
@@ -81,21 +82,19 @@ export default {
     parentClass() {
       return Object.values(this.parentContainerElement.classList).join("");
     },
-    condition() {
-      return this.parentClass.includes("call-button-mini") 
-        || this.parentClass.includes("call-button--tiptip");
-    },
+    // condition() {
+    //   return this.parentClass.includes("call-button-mini")
+    //     || this.parentClass.includes("call-button--tiptip");
+    // },
     header() {
-      return this.condition
-        ? { placeholder: "", bgHover: "white", paddingClass: "pa-1", bgMini: this.isOpen ?  "#d3d6db"  : "#ffffff"}
-        : {
-            placeholder: this.$i18n.te("webconferencing.callHeader")
-              ? this.$i18n.t("webconferencing.callHeader")
-              : "Start Call",
-            bgHover: this.isOpen ? "var(--allPagesGreyColor, #e1e8ee)" : "white",
-            paddingClass: "px-2"
-          };
-    }
+        return this.condition
+          ? { bgHover: "white",
+              // paddingClass: "pa-1",
+              bgMini: this.isOpen ?  "#d3d6db"  : "#ffffff"}
+          : { bgHover: this.isOpen ? "var(--allPagesGreyColor, #e1e8ee)" : "white",
+              // paddingClass: "px-2"
+            };
+      }
   },
   watch: {
     callContext(newContext, oldContext) {
@@ -244,7 +243,8 @@ export default {
     }
     a:hover,
     button:hover {
-      i, span {
+      i,
+      span {
         color: white;
       }
     }
@@ -264,11 +264,10 @@ export default {
       }
       &:hover {
         background-color: var(--allPagesGreyColor, #e1e8ee);
-        .single-btn-container, button  {
+        .single-btn-container {
           background-color: var(--allPagesGreyColor, #e1e8ee);
         }
-        a:hover,
-        button:hover {
+        a:hover {
           i {
             color: @primaryColor;
           }
@@ -293,7 +292,8 @@ export default {
   }
   [class^="call-button-container-"]:hover,
   button:hover {
-    i, span {
+    i,
+    span {
       color: white;
     }
   }
@@ -312,45 +312,21 @@ export default {
 }
 .call-button-mini {
   .call-button-container {
-    #dropdown-vue {
+    .dropdown-vue {
       .buttons-container {
         &.left {
           right: -10px;
-        }
-        [class^="call-button-container-"] {
-          button {
-            background: transparent;
-            box-shadow: none;
-            border: none;
-          }
         }
       }
     }
     &.single {
       width: unset;
       border: none;
-      .single-btn-container {
-        button {
-          margin-right: 0;
-          border: none;
-          background: transparent;
-          .v-btn__content {
-             .uiIconSocPhone {
-                &::before {
-                  content: "\e92b";
-                }
-              }
-            span {
-              display: none;
-            }
-          }
-        }
-      }
     }
   }
   &:hover {
     background-color: unset;
-    #dropdown-vue {
+    .dropdown-vue {
       background-color: unset;
       .dropdown-header {
         background-color: unset;
@@ -365,22 +341,13 @@ export default {
       width: inherit;
       .single-btn-container {
         width: inherit;
-        button {
-          width: inherit;
-          margin-right: 0;
-          border: none;
-          background: #ffffff;
-          span {
-            width: inherit;
-          }
-        }
       }
     }
   }
 }
 .call-button-mini.call-button--tiptip {
   .call-button-container {
-    #dropdown-vue {
+    .dropdown-vue {
       position: relative;
       .buttons-container {
         &.left {
@@ -421,31 +388,29 @@ export default {
         a:focus {
           color: black;
         }
-        a:hover,
-        button:hover {
-          i, span {
+        a:hover {
+          i,
+          span {
             color: white;
           }
         }
         &:hover {
-          i, span {
+          i,
+          span {
             color: white;
           }
         }
-        button {
-          padding-left: 0;
-          .logo {
-            margin-bottom: -5px;
-          }
-          .v-btn__content {
-            .uiIconSocPhone  {
-              font-size: 16px !important;
-                &::before {
-                content: "\e92b";
-              }
-            }
-          }
-        }
+        // button {
+        //   padding-left: 0;
+        //   .v-btn__content {
+        //     .uiIconSocPhone  {
+        //       font-size: 16px !important;
+        //         &::before {
+        //         content: "\e92b";
+        //       }
+        //     }
+        //   }
+        // }
       }
     }
   }
