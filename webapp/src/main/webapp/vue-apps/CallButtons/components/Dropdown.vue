@@ -79,7 +79,7 @@ export default {
   border: @defaultBorder;
   border-radius: 3px;
   margin-top: 3px;
-  min-width: @width + 35px;
+  min-width: @width + 30px;
   max-width: @width + @width;
   box-shadow: @defaultShadow;
   position: absolute;
