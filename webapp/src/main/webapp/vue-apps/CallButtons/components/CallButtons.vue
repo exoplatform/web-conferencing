@@ -184,10 +184,6 @@ export default {
             if (pb instanceof Vue) {
               // add vue button
               vm = pb.$mount(); // TODO why we need vm globaly?
-              const container = vm.$children[0].$el.childNodes[0].childNodes[2];
-              const singleBtnContainer = this.condition
-                ? container.classList.add("display-hidden")
-                : vm.$el.childNodes[0];
               callButton.appendChild(vm.$el);
             } else {
               // add button as DOM Element
@@ -271,7 +267,6 @@ export default {
         .single-btn-container, button  {
           background-color: var(--allPagesGreyColor, #e1e8ee);
         }
-
         a:hover,
         button:hover {
           i {
@@ -339,6 +334,11 @@ export default {
           margin-right: 0;
           border: none;
           background: transparent;
+          .v-btn__content {
+            span {
+              display: none;
+            }
+          }
         }
       }
     }
