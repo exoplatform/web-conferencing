@@ -1816,7 +1816,7 @@
 		this.update = function() {
 			if (currentUser) { 
 				//initUsers();
-				initSpacePopups();
+				//initSpacePopups();
 				//initSpace();
 				//initChat();
 				//initMiniChat();
