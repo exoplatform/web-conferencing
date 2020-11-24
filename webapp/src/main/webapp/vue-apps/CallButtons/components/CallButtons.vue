@@ -1,5 +1,5 @@
 <template>
-  <v-app class="ma-0">
+  <v-app class="VuetifyApp ma-0">
     <div ref="callbutton" :class="['call-button-container']">
       <dropdown
         v-click-outside="hideDropdown"
