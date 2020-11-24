@@ -5,12 +5,14 @@
     @click="showdropdowncomponent(); passrefs()">
     <div class="dropdown-heading px-2">
       <i class="uiIconSocPhone uiIconSocBlue"></i>
-      {{ header.placeholder }}
+      <span>
+        {{ $i18n.te("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
+        : "Start Call" }}</span>
     </div>
-    <i 
-      :style="{ 'background-color': header.bgMini }" 
-      :class="header.paddingClass" 
-      class="uiIconMiniArrowDown uiIconLightGray"></i>
+    <i
+      :style="{ 'background-color': header.bgMini }"
+      :class="header.paddingClass"
+      class="uiIconMiniArrowDown uiIconLightGray pa-1"></i>
   </div>
 </template>
 
@@ -61,7 +63,6 @@ export default {
         }
       }
     }
-    
   }
   hr {
     margin: 0;
@@ -71,6 +72,11 @@ export default {
   .dropdown-header {
     border: none;
     background: transparent;
+    .dropdown-heading {
+      span {
+        display: none;
+      }
+    }
     .uiIconMiniArrowDown {
       position: absolute;
       top: 11px;

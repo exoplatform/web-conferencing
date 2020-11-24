@@ -1,5 +1,5 @@
 <template>
-  <div id="dropdown-vue">
+  <div class="dropdown-vue">
     <dropdown-header
       ref="buttonsheader"
       :header="header"
@@ -79,7 +79,8 @@ export default {
   border: @defaultBorder;
   border-radius: 3px;
   margin-top: 3px;
-  width: @width + 30px;
+  min-width: @width + 35px;
+  max-width: @width + @width;
   box-shadow: @defaultShadow;
   position: absolute;
   [class^="call-button-container-"] {
