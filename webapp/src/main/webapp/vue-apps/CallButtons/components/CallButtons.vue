@@ -307,10 +307,12 @@ export default {
   }
   .room-actions-container {
     .call-button-container {
-      [class^="uiIcon"] {
-        &:before {
-          color: unset;
-          margin-right: 4px;
+      a {
+        [class^="uiIcon"] {
+          &:before {
+            color: unset;
+            margin-right: 4px;
+          }
         }
       }
     }
@@ -455,7 +457,7 @@ export default {
     .call-button-container {
       &.single {
         top: 14px;
-        left: -126px;
+        left: -117%;
       }
     }
   }
