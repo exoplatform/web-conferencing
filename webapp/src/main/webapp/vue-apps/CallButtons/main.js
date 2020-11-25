@@ -31,8 +31,6 @@ const lang =
 const localePortlet = "locale.webconferencing";
 const resourceBundleName = "WebConferencingClient";
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
-const log = webConferencing.getLog("webconferencing-call-buttons");
-
 
 export function create(context, target) {
   const result = new Promise((resolve, reject) => {
@@ -73,7 +71,6 @@ export function create(context, target) {
               },
               on: {
                 created: function() {
-                  log.trace("Handle cull buttons creation: resolve");
                   resolve({
                     vm: vmComp,
                     update: function(context) {
@@ -90,6 +87,7 @@ export function create(context, target) {
         });
       });
     } else {
+      const log = webConferencing.getLog("webconferencing");
       log.error("Error getting the extension container");
       reject(new Error("Error getting the extension container"));
     }

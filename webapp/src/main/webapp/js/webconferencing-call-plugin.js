@@ -39,7 +39,6 @@
         ], function(webConferencing, callButtons) {
           webConferencing.createChatContext(chat).then((context) => {
             callButtons.create(context, target, typeClass).then((button) => {
-              // context.details().then(contex => console.log(contex, "context"));
               document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
                 webConferencing.createChatContext(chat, target).then((context) => {
                   button.update(context);

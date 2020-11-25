@@ -22,7 +22,6 @@
 <script>
 import dropdown from "./Dropdown.vue";
 import singlebtn from "./SingleButton.vue";
-const log = webConferencing.getLog("webconferencing-call-buttons");
 
 export default {
   name: "CallButtons",
@@ -51,7 +50,8 @@ export default {
       isOpen: false,
       isDropdownVisualized: false, // is added to DOM
       childRef: null,
-      isFirstInitialization: true
+      isFirstInitialization: true,
+      log: null
     };
   },
   computed: {
@@ -107,6 +107,9 @@ export default {
     //   }
     // }
   },
+  created() {
+    this.log = webConferencing.getLog("webconferencing");
+  },
   // mounted() {
   //   this.$nextTick(() => {
   //     window.addEventListener("resize", this.onResize);
@@ -145,18 +148,19 @@ export default {
           });
         } else if (context && !context.details) {
           // mini chat
+          // TODO copypasted code - why we need it here??
           if (this.isFirstInitialization) {
             this.isFirstInitialization = false;
-            log.trace("Call buttons are initialized first time");
+            this.log.trace(">> Call buttons are initialized first time >> setProvidersButtons()");
             this.fireCreated();
           }
         }
       } catch (err) {
-        log.error("Error building call buttons", err);
+        this.log.error("Error building call buttons", err);
       }
     },
     createButtons() {
-      log.trace("CREATE BUTTONS");
+      this.log.trace(">> createButtons()");
       let ref;
       let vm = null;
       if (this.providersButton.length !== 0) {
@@ -197,7 +201,7 @@ export default {
 
       if (this.isFirstInitialization) {
         this.isFirstInitialization = false;
-        log.trace("Call buttons are initialized first time");
+        this.log.trace(">> Call buttons are initialized first time >> createButtons()");
         this.fireCreated();
       }
     },

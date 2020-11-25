@@ -2451,6 +2451,9 @@
 		// common utilities
 		this.getLog = function(providerType) {
 			if (providerType) {
+        if (providerType === "webconferencing") {
+          return log;
+        }
 				if (providersConfig) {
 					var conf = providerConfig(providerType);
 					if (conf) {
@@ -2479,7 +2482,7 @@
 			}
 			return new Logger().get(); // default logger: without prefix and remote not enabled  
 		};
-		
+    
 		this.getRandom = getRandomArbitrary;
 		this.message = message;
 		this.showWarn = showWarn;
