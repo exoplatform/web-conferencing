@@ -114,7 +114,7 @@
       iconName: "callButton",
       // appClass is a class of container which consist of action button and WebConferencingCall component
       appClass: CALL_BUTTON,
-      typeClass: "call-button--space",
+      typeClass: "call-button-mini call-button--space",
       // component has property which will be passed to dynamic component inside parent
       // (https://vuejs.org/v2/guide/components.html#Dynamic-Components)
       component: {
