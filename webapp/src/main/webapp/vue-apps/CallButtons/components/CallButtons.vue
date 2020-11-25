@@ -233,7 +233,7 @@ export default {
 @import "../../../skin/less/mixins.less";
 .VuetifyApp {
   .call-button-container {
-    min-width: 36px;
+    // min-width: 36px;
     &:hover {
       .dropdown-header {
         background-color: var(--allPagesGreyColor, #e1e8ee);
@@ -316,6 +316,7 @@ export default {
 }
 .call-button-mini {
   .call-button-container {
+    min-height: 10px;
     .dropdown-vue {
       .buttons-container {
         &.left {
@@ -324,8 +325,9 @@ export default {
       }
     }
     &.single {
-      width: unset;
+      width: 20px;
       border: none;
+      height: 20px;
     }
   }
   &:hover {
@@ -362,7 +364,7 @@ export default {
         position: relative;
         .dropdown-heading {
           .uiIconSocPhone {
-            vertical-align: text-top;
+            vertical-align: unset;
             &::before {
               content: "\e92b";
             }
@@ -373,7 +375,7 @@ export default {
           right: -16px;
           font-size: 8px !important;
           padding: 4px;
-          bottom: -2px;
+          bottom: 2px;
           border-radius: 50%;
           &::before {
             color: @primaryColor;

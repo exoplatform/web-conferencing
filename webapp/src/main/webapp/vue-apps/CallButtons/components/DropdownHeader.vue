@@ -70,6 +70,7 @@ export default {
 }
 .call-button-mini {
   .dropdown-header {
+    min-height: 10px;
     border: none;
     background: transparent;
     .dropdown-heading {
@@ -79,7 +80,7 @@ export default {
     }
     .uiIconMiniArrowDown {
       position: absolute;
-      top: 11px;
+      top: 7px;
       right: -7px;
       text-align: center;
       &::before {
