@@ -2,7 +2,7 @@
   <div 
     ref="singlebtn" 
     class="single-btn-container" 
-    @click.prevent.self="selectProvider">
+    @click="selectProvider">
   </div>
 </template>
 
@@ -10,11 +10,6 @@
 export default {
   props: {
   },
-  // computed: {
-  //   parentClass() {
-  //     return Object.values(this.$refs.singlebtn.parentElement.parentElement.parentElement.parentElement.classList).join("");
-  //   }
-  // },
   methods: {
     selectProvider(event) {
       if (event && event.target && event.target.children[0]) {
@@ -22,10 +17,6 @@ export default {
       }
     }
   }
-  // props: {
-  // },
-  // methods: {
-  // }
 };
 </script>
 

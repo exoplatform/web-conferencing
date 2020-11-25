@@ -13,8 +13,9 @@
         @getRefs="getRef($event)"
         @showDropdown="showDropdown($event)"
         @dropdownIsVisualized="fireDropdownIsVisualized"
-        @selectedProvider="hideDropdown" />
-      <singlebtn v-else />
+        @selectedProvider="hideDropdown"
+      />
+      <singlebtn v-else ref="singlebtn" />
     </div>
   </v-app>
 </template>
@@ -82,19 +83,24 @@ export default {
     parentClass() {
       return Object.values(this.parentContainerElement.classList).join("");
     },
-    // condition() {
-    //   return this.parentClass.includes("call-button-mini")
-    //     || this.parentClass.includes("call-button--tiptip");
-    // },
+    condition() {
+      return (
+        this.parentClass.includes("call-button-mini") ||
+        this.parentClass.includes("call-button--tiptip")
+      );
+    },
     header() {
-        return this.condition
-          ? { bgHover: "white",
-              // paddingClass: "pa-1",
-              bgMini: this.isOpen ?  "#d3d6db"  : "#ffffff"}
-          : { bgHover: this.isOpen ? "var(--allPagesGreyColor, #e1e8ee)" : "white",
-              // paddingClass: "px-2"
-            };
-      }
+      return this.condition
+        ? {
+            bgHover: "white",
+            // paddingClass: "pa-1",
+            bgMini: this.isOpen ? "#d3d6db" : "#ffffff"
+          }
+        : {
+            bgHover: this.isOpen ? "var(--allPagesGreyColor, #e1e8ee)" : "white"
+            // paddingClass: "px-2"
+          };
+    }
   },
   watch: {
     callContext(newContext, oldContext) {
@@ -151,7 +157,9 @@ export default {
           // TODO copypasted code - why we need it here??
           if (this.isFirstInitialization) {
             this.isFirstInitialization = false;
-            this.log.trace(">> Call buttons are initialized first time >> setProvidersButtons()");
+            this.log.trace(
+              ">> Call buttons are initialized first time >> setProvidersButtons()"
+            );
             this.fireCreated();
           }
         }
@@ -201,7 +209,9 @@ export default {
 
       if (this.isFirstInitialization) {
         this.isFirstInitialization = false;
-        this.log.trace(">> Call buttons are initialized first time >> createButtons()");
+        this.log.trace(
+          ">> Call buttons are initialized first time >> createButtons()"
+        );
         this.fireCreated();
       }
     },
@@ -268,9 +278,9 @@ export default {
       }
       &:hover {
         background-color: var(--allPagesGreyColor, #e1e8ee);
-        .single-btn-container {
-          background-color: var(--allPagesGreyColor, #e1e8ee);
-        }
+        // .single-btn-container {
+        background-color: var(--allPagesGreyColor, #e1e8ee);
+        // }
         a:hover {
           i {
             color: @primaryColor;
@@ -316,6 +326,12 @@ export default {
 }
 .call-button-mini {
   .call-button-container {
+    padding-bottom: 7px;
+    &:hover {
+      .dropdown-header {
+        background-color: transparent;
+      }
+    }
     min-height: 10px;
     .dropdown-vue {
       .buttons-container {
@@ -328,6 +344,12 @@ export default {
       width: 20px;
       border: none;
       height: 20px;
+      &:hover {
+        background-color: transparent;
+        .single-btn-container {
+          background-color: transparent;
+        }
+      }
     }
   }
   &:hover {
@@ -350,9 +372,13 @@ export default {
       }
     }
   }
+  .buttons-container {
+    top: 26px;
+  }
 }
 .call-button-mini.call-button--tiptip {
   .call-button-container {
+    padding-bottom: 0px;
     .dropdown-vue {
       position: relative;
       .buttons-container {
@@ -385,7 +411,6 @@ export default {
     }
     .buttons-container {
       position: absolute;
-      top: 23px;
       box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.15);
       [class^="call-button-container-"] {
         text-align: left;
@@ -422,7 +447,7 @@ export default {
   }
 }
 .call-button-mini.call-button--chat-drawer {
-  margin-right: 11px;
+  margin-right: 6px;
 }
 .space-action-menu {
   width: 86px;
@@ -432,7 +457,9 @@ export default {
     .call-button-container {
       &.single {
         top: 14px;
-        left: -117%;
+        left: -130px;
+        margin-left: 20px;
+        margin-right: 20px;
       }
     }
   }
