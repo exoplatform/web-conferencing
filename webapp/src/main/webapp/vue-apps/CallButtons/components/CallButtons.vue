@@ -13,8 +13,7 @@
         @getRefs="getRef($event)"
         @showDropdown="showDropdown($event)"
         @dropdownIsVisualized="fireDropdownIsVisualized"
-        @selectedProvider="hideDropdown"
-      />
+        @selectedProvider="hideDropdown" />
       <singlebtn v-else ref="singlebtn" />
     </div>
   </v-app>
@@ -341,6 +340,7 @@ export default {
       }
     }
     &.single {
+      padding-bottom: 10px;
       width: 20px;
       border: none;
       height: 20px;
@@ -373,12 +373,15 @@ export default {
     }
   }
   .buttons-container {
-    top: 26px;
+    top: 23px;
   }
 }
 .call-button-mini.call-button--tiptip {
   .call-button-container {
     padding-bottom: 0px;
+    &.single {
+      padding-bottom: 3px;
+    }
     .dropdown-vue {
       position: relative;
       .buttons-container {
@@ -411,6 +414,7 @@ export default {
     }
     .buttons-container {
       position: absolute;
+      top: 28px;
       box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.15);
       [class^="call-button-container-"] {
         text-align: left;
