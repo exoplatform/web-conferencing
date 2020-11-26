@@ -461,9 +461,14 @@ export default {
     .call-button-container {
       &.single {
         top: 14px;
-        left: -130px;
+        left: -136px;
         margin-left: 20px;
         margin-right: 20px;
+        .single-btn-container {
+          .v-btn {
+            vertical-align: -webkit-baseline-middle;
+          }
+        }
       }
     }
   }
