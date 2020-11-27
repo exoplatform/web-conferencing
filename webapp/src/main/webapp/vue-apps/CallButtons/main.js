@@ -10,7 +10,7 @@ const vuetify = new Vuetify({
 Vue.directive("click-outside", {
   priority: 700,
   bind: function(el, binding, vnode) {
-    if (el.class === "dropdown-vue") {
+    if (el.classList.value.includes("dropdown-vue")) {
       el.clickOutside = function(e) {
         if (!(el === e.target || el.contains(e.target))) {
           vnode.context[binding.expression](e);
