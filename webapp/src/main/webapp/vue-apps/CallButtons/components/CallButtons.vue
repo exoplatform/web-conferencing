@@ -275,9 +275,8 @@ export default {
     }
     a:hover,
     button:hover {
-      i,
-      span {
-        color: white;
+      i {
+        // color: white;
       }
     }
     &.single {
@@ -311,7 +310,8 @@ export default {
     a,
     a:hover,
     a:focus {
-      color: unset;
+      color: var(--allPagesDarkGrey, #4d5466) !important;
+      letter-spacing: 0.0892857143em;
     }
     [class^="call-button-container-"] {
       width: 100%;
@@ -322,12 +322,12 @@ export default {
     min-height: 36px;
   }
   [class^="call-button-container-"]:hover,
-  button:hover {
-    i,
-    span {
-      color: white;
-    }
-  }
+  // button:hover {
+  //   i,
+  //   span {
+  //     color: white;
+  //   }
+  // }
   .room-actions-container {
     .call-button-container {
       a {
