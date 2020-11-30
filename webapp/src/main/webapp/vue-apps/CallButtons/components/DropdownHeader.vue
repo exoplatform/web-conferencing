@@ -47,6 +47,8 @@ export default {
     border-radius: 3px;
     width: 100%;
     min-height: 36px;
+    color: var(--allPagesDarkGrey, #4d5466) !important;
+    letter-spacing: 0.0892857143em;
     .uiIconMiniArrowDown {
       color: var(--allPagesDarkGrey, #4d5466) !important;
       border-radius: 50%;

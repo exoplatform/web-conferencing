@@ -270,7 +270,6 @@ export default {
     }
     button {
       .v-btn__content {
-        letter-spacing: 0.1px;
         padding: 0 10px;
       }
     }
@@ -286,7 +285,6 @@ export default {
       height: 36px;
       border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
-      // padding: 0 10px;
       background-color: #ffffff;
       .single-btn-container {
         height: inherit;
