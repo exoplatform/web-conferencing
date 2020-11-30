@@ -474,16 +474,13 @@ export default {
   margin-right: 6px;
 }
 .space-action-menu {
-  width: 86px;
-  height: 36px;
-  position: absolute;
   .call-button.call-button--space {
     .call-button-container {
+      top: 12px;
+      margin: 0 15px;
       &.single {
-        top: 14px;
-        left: -136px;
-        margin-left: 20px;
-        margin-right: 20px;
+        top: 12px;
+        margin: 0 15px;
         .single-btn-container {
           .v-btn {
             vertical-align: -webkit-baseline-middle;
