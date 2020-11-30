@@ -1307,7 +1307,7 @@
               });
             } else if (context.isRoom) {
               let roomUsers = context.participants;
-              if (roomUsers && roomUsers.length) {
+              if (roomUsers && roomUsers.length > 0) {
                 var unames = [];
                 for (var i = 0; i < roomUsers.length; i++) {
                   var u = roomUsers[i];
@@ -1322,8 +1322,9 @@
                   data.reject(err);
                 });
               } else {
-                log.trace("Error getting Chat room users for " + context.roomId);
-                data.reject("Error reading Chat room users for " + context.roomId);
+                const msg = "Error getting Chat room users for " + context.roomId + " - empty room in the context";
+                log.trace(msg + " roomUsers: " + roomUsers.length);
+                data.reject(msg);
               }
             } else {
               data.reject("Unexpected context chat type for " + context.roomTitle);
