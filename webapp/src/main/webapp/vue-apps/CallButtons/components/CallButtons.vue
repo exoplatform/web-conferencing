@@ -20,14 +20,34 @@
 </template>
 
 <script>
-import dropdown from "./Dropdown.vue";
+import Dropdown from "./Dropdown.vue";
 import singlebtn from "./SingleButton.vue";
 
 export default {
   name: "CallButtons",
   components: {
-    dropdown,
+    Dropdown,
     singlebtn
+  },
+   directives: {
+    "click-outside": {
+      priority: 700,
+      bind: function(el, binding, vnode) {
+        if (el.classList.value.includes("dropdown-vue")) {
+          el.clickOutside = function(e) {
+            if (!(el === e.target || el.contains(e.target))) {
+              vnode.context[binding.expression](e);
+            }
+          };
+          document.body.addEventListener("click", el.clickOutside);
+        }
+      },
+      unbind: function(el) {
+        if (el) {
+          document.body.removeEventListener("click", el.clickOutside);
+        }
+      }
+    }
   },
   props: {
     language: {

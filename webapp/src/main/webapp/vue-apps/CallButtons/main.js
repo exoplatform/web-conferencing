@@ -7,24 +7,24 @@ const vuetify = new Vuetify({
   iconfont: "",
 });
 
-Vue.directive("click-outside", {
-  priority: 700,
-  bind: function(el, binding, vnode) {
-    if (el.classList.value.includes("dropdown-vue")) {
-      el.clickOutside = function(e) {
-        if (!(el === e.target || el.contains(e.target))) {
-          vnode.context[binding.expression](e);
-        }
-      };
-      document.body.addEventListener("click", el.clickOutside);
-    }
-  },
-  unbind: function(el) {
-    if (el) {
-      document.body.removeEventListener("click", el.clickOutside);
-    }
-  },
-});
+// Vue.directive("click-outside", {
+//   priority: 700,
+//   bind: function(el, binding, vnode) {
+//     if (el.classList.value.includes("dropdown-vue")) {
+//       el.clickOutside = function(e) {
+//         if (!(el === e.target || el.contains(e.target))) {
+//           vnode.context[binding.expression](e);
+//         }
+//       };
+//       document.body.addEventListener("click", el.clickOutside);
+//     }
+//   },
+//   unbind: function(el) {
+//     if (el) {
+//       document.body.removeEventListener("click", el.clickOutside);
+//     }
+//   },
+// });
 // getting language of user
 const lang =
   (eXo && eXo.env && eXo.env.portal && eXo.env.portal.language) || "en";

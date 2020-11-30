@@ -4,11 +4,11 @@
       ref="buttonsheader"
       :header="header"
       :showdropdowncomponent="showDropdownComponent"
-      :passrefs="passRefs"/>
-    <div
-      v-show="isopen"
-      ref="buttonsContainer"
-      :class="positionclass"
+      :passrefs="passRefs" />
+    <div 
+      v-show="isopen" 
+      ref="buttonsContainer" 
+      :class="positionclass" 
       class="buttons-container">
       <!-- TODO why we need IDs for them?? a class will not work? -->
       <div
@@ -25,6 +25,7 @@
 import DropdownHeader from "./DropdownHeader.vue";
 
 export default {
+  name: "Dropdown",
   components: {
     DropdownHeader
   },
@@ -49,7 +50,7 @@ export default {
   watch: {
     async isopen(value) {
       if (value) {
-        await this.$nextTick()
+        await this.$nextTick();
         this.$emit("dropdownIsVisualized");
       }
     }
