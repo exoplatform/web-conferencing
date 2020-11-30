@@ -263,6 +263,8 @@ export default {
 .VuetifyApp {
   .call-button-container {
     // min-width: 36px;
+    max-width: fit-content;
+
     &:hover {
       .dropdown-header {
         background-color: var(--allPagesGreyColor, #e1e8ee);
@@ -270,7 +272,7 @@ export default {
     }
     button {
       .v-btn__content {
-        padding: 0 10px;
+        // padding: 0 10px;
       }
     }
     a:hover,
@@ -280,11 +282,12 @@ export default {
       }
     }
     &.single {
-      width: @width - 14px;
+      // width: @width - 14px;
       height: 36px;
       border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
       background-color: #ffffff;
+      padding: 0 10px;
       .single-btn-container {
         height: inherit;
         a {
