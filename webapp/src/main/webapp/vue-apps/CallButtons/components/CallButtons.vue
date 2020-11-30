@@ -473,14 +473,12 @@ export default {
 .call-button-mini.call-button--chat-drawer {
   margin-right: 6px;
 }
-.space-action-menu {
+.space-title-action-components {
   .call-button.call-button--space {
     .call-button-container {
-      top: 12px;
       margin: 0 15px;
       &.single {
-        top: 12px;
-        margin: 0 15px;
+        height: unset;
         .single-btn-container {
           .v-btn {
             vertical-align: -webkit-baseline-middle;

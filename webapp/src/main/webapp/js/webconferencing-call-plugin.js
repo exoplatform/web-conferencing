@@ -100,7 +100,7 @@
       enabled: true,
     },
     {
-      target: "space-action-menu",
+      target: "space-title-action-components",
       type: "action-component",
       // configuration defined here is used in exo-addons\web-conferencing\webapp\src\main\webapp\vue-apps
       // \Call\components\CallButtons.vue with
