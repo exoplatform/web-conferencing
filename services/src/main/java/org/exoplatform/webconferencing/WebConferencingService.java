@@ -1643,11 +1643,11 @@ public class WebConferencingService implements Startable {
     // Get node under user session
     Node folder = (Node) session.getItem(parent.getPath());
     Node callRecordFolder;
-    if (!folder.hasNode("Recordings")) {
-      callRecordFolder = folder.addNode("Recordings", "nt:folder");
+    if (!folder.hasNode("recordings")) {
+      callRecordFolder = folder.addNode("recordings", "nt:folder");
       callRecordFolder.setProperty("exo:title", "Recordings");
     } else {
-      callRecordFolder = folder.getNode("Recordings");
+      callRecordFolder = folder.getNode("recordings");
     }
     Node fileNode = callRecordFolder.addNode(resource.getFileName(), "nt:file");
     if (!fileNode.hasProperty(EXO_TITLE_PROP)) {
