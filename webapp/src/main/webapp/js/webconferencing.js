@@ -1323,7 +1323,7 @@
                 });
               } else {
                 const msg = "Error getting Chat room users for " + context.roomId + " - empty room in the context";
-                log.trace(msg + " roomUsers: " + roomUsers.length);
+                log.trace(msg + " roomUsers: " + roomUsers);
                 data.reject(msg);
               }
             } else {
@@ -1382,7 +1382,7 @@
 
     // Create the chat context from events target (selected room data)
     // target - the data from the exo-chat-selected-contact-changed event
-    var createChatContextForSelectedRoom = function(target) {
+    var createChatContextForChatRoom = function(target) {
       var chatContext;
       if (target) {
         if (target.detail) {
@@ -2520,7 +2520,7 @@
       const localContext = $.Deferred();
       contextInitializer.then(() => {
         if (target) {
-          localContext.resolve(createChatContextForSelectedRoom(target));
+          localContext.resolve(createChatContextForChatRoom(target));
         } else if (chat) {
           localContext.resolve(createChatContext(chat));
         } else {
