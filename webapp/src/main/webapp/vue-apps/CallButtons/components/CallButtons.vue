@@ -34,7 +34,7 @@ export default {
     "click-outside": {
       priority: 700,
       bind: function(el, binding, vnode) {
-        if (el.classList.value.includes("dropdown-vue")) {
+        if (el.classList.value.includes("dropdown-vue")) { // TODO too general text 'dropdown-vue' to detect exactky our dropdown
           el.clickOutside = function(e) {
             if (!(el === e.target || el.contains(e.target))) {
               vnode.context[binding.expression](e);
