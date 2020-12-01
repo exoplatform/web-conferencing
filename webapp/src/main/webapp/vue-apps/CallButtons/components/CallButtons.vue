@@ -295,6 +295,13 @@ export default {
           display: flex;
           height: inherit;
         }
+        button {
+          [class^="uiIcon"] {
+            &::before {
+              vertical-align: super;
+            }
+          }
+        }
       }
       &:hover {
         background-color: var(--allPagesGreyColor, #e1e8ee);
@@ -363,10 +370,19 @@ export default {
       }
     }
     &.single {
-      padding: 0 0 6px 0;
+      padding: 0 10px 10px 0;
       width: unset;
       border: none;
       height: 20px;
+      &.single-btn-container {
+        button {
+          [class^="uiIcon"] {
+            &::before {
+              vertical-align: inherit;
+            }
+          }
+        }
+      }
       &:hover {
         background-color: transparent;
         .single-btn-container {
@@ -401,6 +417,9 @@ export default {
 }
 .call-button-mini.call-button--tiptip {
   .call-button-container {
+    &.single {
+      padding: 0 0 6px 0;
+    }
     .dropdown-vue {
       position: relative;
       .buttons-container {
