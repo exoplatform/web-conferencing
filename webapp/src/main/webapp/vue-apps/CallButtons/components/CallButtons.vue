@@ -262,8 +262,8 @@ export default {
 @import "../../../skin/less/mixins.less";
 .VuetifyApp {
   .call-button-container {
-    // min-width: 36px;
-    max-width: fit-content;
+    min-width: 64px;
+    max-width: 240px;
 
     &:hover {
       .dropdown-header {
@@ -272,15 +272,16 @@ export default {
     }
     button {
       .v-btn__content {
+        letter-spacing: normal;
         // padding: 0 10px;
       }
     }
-    a:hover,
-    button:hover {
-      i {
+    // a:hover,
+    // button:hover {
+     // i {
         // color: white;
-      }
-    }
+     // }
+   // }
     &.single {
       // width: @width - 14px;
       height: 36px;
@@ -314,7 +315,7 @@ export default {
     a:hover,
     a:focus {
       color: var(--allPagesDarkGrey, #4d5466) !important;
-      letter-spacing: 0.0892857143em;
+      letter-spacing: normal;
     }
     [class^="call-button-container-"] {
       width: 100%;
@@ -346,7 +347,8 @@ export default {
 }
 .call-button-mini {
   .call-button-container {
-    padding-bottom: 7px;
+    min-width: unset;
+    padding: 0 0 7px 0;
     &:hover {
       .dropdown-header {
         background-color: transparent;
@@ -361,8 +363,8 @@ export default {
       }
     }
     &.single {
-      padding-bottom: 10px;
-      width: 20px;
+      padding: 0 0 6px 0;
+      width: unset;
       border: none;
       height: 20px;
       &:hover {
@@ -399,10 +401,6 @@ export default {
 }
 .call-button-mini.call-button--tiptip {
   .call-button-container {
-    padding-bottom: 0px;
-    &.single {
-      padding-bottom: 3px;
-    }
     .dropdown-vue {
       position: relative;
       .buttons-container {
@@ -456,17 +454,6 @@ export default {
             color: white;
           }
         }
-        // button {
-        //   padding-left: 0;
-        //   .v-btn__content {
-        //     .uiIconSocPhone  {
-        //       font-size: 16px !important;
-        //         &::before {
-        //         content: "\e92b";
-        //       }
-        //     }
-        //   }
-        // }
       }
     }
   }

@@ -48,7 +48,7 @@ export default {
     width: 100%;
     min-height: 36px;
     color: var(--allPagesDarkGrey, #4d5466) !important;
-    letter-spacing: 0.0892857143em;
+    letter-spacing: normal;
     .uiIconMiniArrowDown {
       color: var(--allPagesDarkGrey, #4d5466) !important;
       border-radius: 50%;
