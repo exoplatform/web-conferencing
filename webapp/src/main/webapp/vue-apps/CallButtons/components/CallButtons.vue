@@ -264,7 +264,6 @@ export default {
   .call-button-container {
     min-width: 64px;
     max-width: 240px;
-
     &:hover {
       .dropdown-header {
         background-color: var(--allPagesGreyColor, #e1e8ee);
@@ -370,7 +369,7 @@ export default {
       }
     }
     &.single {
-      padding: 0 10px 10px 0;
+      padding: 0 10px 0px 0;
       width: unset;
       border: none;
       height: 20px;
@@ -418,7 +417,7 @@ export default {
 .call-button-mini.call-button--tiptip {
   .call-button-container {
     &.single {
-      padding: 0 0 6px 0;
+      padding: 0;
     }
     .dropdown-vue {
       position: relative;
@@ -479,6 +478,12 @@ export default {
 }
 .call-button-mini.call-button--chat-drawer {
   margin-right: 6px;
+  .call-button-container {
+    padding: 0 10px 7px 0;
+    &.single {
+      padding: 0 10px 7px 0;
+    }
+  }
 }
 .space-title-action-components {
   .call-button.call-button--space {
