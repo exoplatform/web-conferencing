@@ -13,7 +13,8 @@
         @getRefs="getRef($event)"
         @showDropdown="showDropdown($event)"
         @dropdownIsVisualized="fireDropdownIsVisualized"
-        @selectedProvider="hideDropdown" />
+        @selectedProvider="hideDropdown"
+      />
       <singlebtn v-else ref="singlebtn" />
     </div>
   </v-app>
@@ -29,7 +30,7 @@ export default {
     Dropdown,
     singlebtn
   },
-   directives: {
+  directives: {
     "click-outside": {
       priority: 700,
       bind: function(el, binding, vnode) {
@@ -277,10 +278,10 @@ export default {
     }
     // a:hover,
     // button:hover {
-     // i {
-        // color: white;
-     // }
-   // }
+    // i {
+    // color: white;
+    // }
+    // }
     &.single {
       // width: @width - 14px;
       height: 36px;
@@ -352,124 +353,136 @@ export default {
   }
 }
 .call-button-mini {
-  .call-button-container {
-    min-width: unset;
-    padding: 0 0 7px 0;
-    &:hover {
-      .dropdown-header {
-        background-color: transparent;
-      }
-    }
-    min-height: 10px;
-    .dropdown-vue {
-      .buttons-container {
-        &.left {
-          right: -10px;
-        }
-      }
-    }
-    &.single {
-      padding: 0 10px 0px 0;
-      width: unset;
-      border: none;
-      height: 20px;
-      &.single-btn-container {
-        button {
-          [class^="uiIcon"] {
-            &::before {
-              vertical-align: inherit;
-            }
-          }
-        }
-      }
+  .VuetifyApp {
+    .call-button-container {
+      min-width: unset;
+      padding: 0 0 7px 0;
       &:hover {
-        background-color: transparent;
-        .single-btn-container {
+        .dropdown-header {
           background-color: transparent;
         }
       }
-    }
-  }
-  &:hover {
-    background-color: unset;
-    .dropdown-vue {
-      background-color: unset;
-      .dropdown-header {
-        background-color: unset;
-        .uiIconMiniArrowDown {
-          background: #d3d6db;
-          border-radius: 50%;
+      min-height: 10px;
+      .dropdown-vue {
+        .buttons-container {
+          &.left {
+            right: -10px;
+          }
         }
       }
-    }
-    &.single {
-      border: none;
-      width: inherit;
-      .single-btn-container {
-        width: inherit;
-      }
-    }
-  }
-  .buttons-container {
-    top: 23px;
-  }
-}
-.call-button-mini.call-button--tiptip {
-  .call-button-container {
-    &.single {
-      padding: 0;
-    }
-    .dropdown-vue {
-      position: relative;
-      .buttons-container {
-        &.left {
-          right: -16px;
-        }
-      }
-      .dropdown-header {
-        position: relative;
-        .dropdown-heading {
-          .uiIconSocPhone {
-            vertical-align: unset;
+      &.single {
+        padding: 0 10px 0px 0;
+        width: unset;
+        border: none;
+        height: 20px;
+        // &.single-btn-container {
+        button {
+          [class^="uiIcon"] {
             &::before {
-              content: "\e92b";
+              vertical-align: baseline;
             }
           }
         }
-        .uiIconMiniArrowDown {
-          position: absolute;
-          right: -16px;
-          font-size: 8px !important;
-          padding: 4px;
-          bottom: 2px;
-          border-radius: 50%;
-          &::before {
-            color: @primaryColor;
+        // }
+        &:hover {
+          background-color: transparent;
+          .single-btn-container {
+            background-color: transparent;
           }
         }
       }
     }
-    .buttons-container {
-      position: absolute;
-      top: 28px;
-      box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.15);
-      [class^="call-button-container-"] {
-        text-align: left;
-        a,
-        a:hover,
-        a:focus {
-          color: black;
-        }
-        a:hover {
-          i,
-          span {
-            color: white;
+    &:hover {
+      background-color: unset;
+      .dropdown-vue {
+        background-color: unset;
+        .dropdown-header {
+          background-color: unset;
+          .uiIconMiniArrowDown {
+            background: #d3d6db;
+            border-radius: 50%;
           }
         }
-        &:hover {
-          i,
-          span {
-            color: white;
+      }
+      &.single {
+        border: none;
+        width: inherit;
+        .single-btn-container {
+          width: inherit;
+        }
+      }
+    }
+
+    .buttons-container {
+      top: 23px;
+    }
+  }
+}
+.call-button-mini.call-button--tiptip {
+  .VuetifyApp {
+    .call-button-container {
+      &.single {
+        padding: 0;
+        button {
+          [class^="uiIcon"] {
+            &::before {
+              vertical-align: super;
+            }
+          }
+        }
+      }
+      .dropdown-vue {
+        position: relative;
+        .buttons-container {
+          &.left {
+            right: -16px;
+          }
+        }
+        .dropdown-header {
+          position: relative;
+          .dropdown-heading {
+            .uiIconSocPhone {
+              vertical-align: unset;
+              &::before {
+                content: "\e92b";
+              }
+            }
+          }
+          .uiIconMiniArrowDown {
+            position: absolute;
+            right: -16px;
+            font-size: 8px !important;
+            padding: 4px;
+            bottom: 2px;
+            border-radius: 50%;
+            &::before {
+              color: @primaryColor;
+            }
+          }
+        }
+      }
+      .buttons-container {
+        position: absolute;
+        top: 28px;
+        box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.15);
+        [class^="call-button-container-"] {
+          text-align: left;
+          a,
+          a:hover,
+          a:focus {
+            color: black;
+          }
+          a:hover {
+            i,
+            span {
+              color: white;
+            }
+          }
+          &:hover {
+            i,
+            span {
+              color: white;
+            }
           }
         }
       }
@@ -479,9 +492,9 @@ export default {
 .call-button-mini.call-button--chat-drawer {
   margin-right: 6px;
   .call-button-container {
-    padding: 0 10px 7px 0;
+    padding: 0 10px 10px 0;
     &.single {
-      padding: 0 10px 7px 0;
+      padding: 0 10px 10px 0;
     }
   }
 }
