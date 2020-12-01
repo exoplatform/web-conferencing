@@ -1407,7 +1407,7 @@
             prettyName: target.detail.prettyName,
             participants: target.detail.participants
           };
-          context.details = createContextDetails(chatContext);
+          context.details = createContextDetails(context);
         } else {
           log.warn("No details provided for the selected contact");
         }
