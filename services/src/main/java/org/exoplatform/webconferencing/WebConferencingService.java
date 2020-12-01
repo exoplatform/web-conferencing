@@ -1642,7 +1642,14 @@ public class WebConferencingService implements Startable {
     Session session = userProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
     // Get node under user session
     Node folder = (Node) session.getItem(parent.getPath());
-    Node fileNode = folder.addNode(resource.getFileName(), "nt:file");
+    Node callRecordFolder;
+    if (!folder.hasNode("Recordings")) {
+      callRecordFolder = folder.addNode("Recordings", "nt:folder");
+      callRecordFolder.setProperty("exo:title", "Recordings");
+    } else {
+      callRecordFolder = folder.getNode("Recordings");
+    }
+    Node fileNode = callRecordFolder.addNode(resource.getFileName(), "nt:file");
     if (!fileNode.hasProperty(EXO_TITLE_PROP)) {
       fileNode.addMixin(EXO_RSS_ENABLE_PROP);
     }
