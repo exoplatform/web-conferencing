@@ -1382,8 +1382,8 @@
 
     // Create the chat context from events target (selected room data)
     // target - the data from the exo-chat-selected-contact-changed event
-    var createChatContextForChatRoom = function(target) {
-      var chatContext;
+    var createChatContextForRoom = function(target) {
+      var context;
       if (target) {
         if (target.detail) {
           var roomTitle = target.detail.fullName;
@@ -1392,7 +1392,7 @@
           var isSpace = target.detail.type === "s"; // roomId && roomId.startsWith("space-");
           var isRoom = target.detail.type === "t"; // roomId && roomId.startsWith("team-");
           var isGroup = isSpace || isRoom;
-          chatContext = {
+          context = {
             currentUser: currentUser,
             roomId: target.detail.user,
             roomName: roomName, // has no sense for team rooms, but for spaces it's pretty_name
@@ -1407,12 +1407,12 @@
             prettyName: target.detail.prettyName,
             participants: target.detail.participants
           };
-          chatContext.details = createContextDetails(chatContext);
+          context.details = createContextDetails(chatContext);
         } else {
           log.warn("No details provided for the selected contact");
         }
       }
-      return chatContext;
+      return context;
     };
 
     /**
@@ -2520,7 +2520,7 @@
       const localContext = $.Deferred();
       contextInitializer.then(() => {
         if (target) {
-          localContext.resolve(createChatContextForChatRoom(target));
+          localContext.resolve(createChatContextForRoom(target));
         } else if (chat) {
           localContext.resolve(createChatContext(chat));
         } else {
