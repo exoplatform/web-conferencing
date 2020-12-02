@@ -845,8 +845,6 @@ public class WebConferencingService implements Startable {
           // A given user also can be null when not possible to define it (e.g. on CometD channel removal, or
           // other server side action) - then we notify to all participants.
           // Nov 24, 2020 - Inform all parties
-          // TODO Nov 24, 2020 - cleanup after tests
-          //if (userId == null || !(remove && userId.equals(part.getId()))) {
           fireUserCallStateChanged(part.getId(),
                                    callId,
                                    call.getProviderType(),
@@ -940,7 +938,6 @@ public class WebConferencingService implements Startable {
                                                            : call.getParticipants();
     for (UserInfo part : parts) {
       // Nov 24, 2020 - Inform all parties
-      //if (!partId.equals(part.getId())) { // TODO cleanup after tests
       fireUserCallStateChanged(part.getId(),
                                callId,
                                call.getProviderType(),
@@ -1578,7 +1575,7 @@ public class WebConferencingService implements Startable {
    * @throws RepositoryException the repository exception
    */
   public void uploadFile(UploadFileInfo uploadInfo, HttpServletRequest request) throws UploadFileException, RepositoryException {
-
+    final long opStart = System.currentTimeMillis();
     // final long opStart = System.currentTimeMillis();
     String uploadId = String.valueOf((long) (Math.random() * 100000L));
     try {
@@ -1589,10 +1586,11 @@ public class WebConferencingService implements Startable {
     }
     UploadResource resource = uploadService.getUploadResource(uploadId);
     if (resource.getStatus() == UploadResource.UPLOADED_STATUS) {
+      final String uploadingUser = uploadInfo.getUser();
       String owner = null;
       // Owner is user if it's not a space, otherwise use space identity
-      if (!uploadInfo.getType().equals(OWNER_TYPE_SPACE) && !uploadInfo.getIdentity().equals(uploadInfo.getUser())) {
-        owner = uploadInfo.getUser();
+      if (!uploadInfo.getType().equals(OWNER_TYPE_SPACE) && !uploadInfo.getIdentity().equals(uploadingUser)) {
+        owner = uploadingUser;
       } else {
         owner = uploadInfo.getIdentity();
       }
@@ -1600,14 +1598,19 @@ public class WebConferencingService implements Startable {
       // If it's 1-1 or chat-room call, we pass participants to share the file.
       // Otherwise we just upload to the space docs
       if (uploadInfo.getType().equals(OWNER_TYPE_CHATROOM) || uploadInfo.getType().equals(USER)) {
-        saveFile(rootNode, resource, uploadInfo.getUser(), uploadInfo.getParticipants());
+        saveFile(rootNode, resource, uploadingUser, uploadInfo.getParticipants());
       } else {
-        saveFile(rootNode, resource, uploadInfo.getUser(), null);
+        saveFile(rootNode, resource, uploadingUser, null);
       }
 
       uploadService.removeUploadResource(uploadId); // TODO should this be in try-finally for a cleanup in case of saving failure?
-      // TODO Log metrics - call recording uploaded
-      // LOG.info(metricMessage(userId, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+      
+      try {
+        CallInfo call = getCall(uploadInfo.getCallId());
+        LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+      } catch (InvalidCallException e) {
+        LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
+      }
     } else {
       uploadService.removeUploadResource(uploadId);
       throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: "
@@ -1701,6 +1704,7 @@ public class WebConferencingService implements Startable {
   private Node getRootFolderNode(String identity, String type) throws RepositoryException {
     Node folderNode = null;
     ManageableRepository repository = repositoryService.getCurrentRepository();
+    // TODO use the user session, not a system session
     SessionProvider sessionProvider = sessionProviders.getSystemSessionProvider(null);
     Session session = sessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
     if (OWNER_TYPE_SPACE.equals(type)) {
@@ -2835,7 +2839,6 @@ public class WebConferencingService implements Startable {
    *         https://community.exoplatform.com/portal/g/:spaces:exo_itop/exo_itop/wiki/SPEC_-_logging_for_monitoring
    */
   protected String metricMessage(String userId,
-                                 // String clientId,
                                  CallInfo call,
                                  String operation,
                                  String status,
@@ -2846,7 +2849,6 @@ public class WebConferencingService implements Startable {
     res.append(" status=").append(status);
     res.append(" parameters=");
     res.append("\"userId:").append(userId);
-    // res.append(", clientId:").append(clientId);
     res.append(", isGroup:").append(call.getOwner().isGroup());
     res.append(", owner:").append(call.getOwner().getId());
     res.append(", ownerType:").append(call.getOwner().getType());
