@@ -1642,14 +1642,20 @@ public class WebConferencingService implements Startable {
     Session session = userProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
     // Get node under user session
     Node folder = (Node) session.getItem(parent.getPath());
-    Node callRecordFolder;
+    Node recordingsFolder;
     if (!folder.hasNode("recordings")) {
-      callRecordFolder = folder.addNode("recordings", "nt:folder");
-      callRecordFolder.setProperty("exo:title", "Recordings");
+      recordingsFolder = folder.addNode("recordings", "nt:folder");
+      recordingsFolder.setProperty("exo:title", "Recordings");
+      recordingsFolder.addMixin("exo:recordingsFolder");
     } else {
-      callRecordFolder = folder.getNode("recordings");
+      recordingsFolder = folder.getNode("recordings");
+      if (recordingsFolder.isNodeType("nt:unstructured") || recordingsFolder.isNodeType("nt:folder")) {
+        recordingsFolder.addMixin("exo:recordingsFolder");
+      } else {
+        //TO DO add "recordings" node and handle errors
+      }
     }
-    Node fileNode = callRecordFolder.addNode(resource.getFileName(), "nt:file");
+    Node fileNode = recordingsFolder.addNode(resource.getFileName(), "nt:file");
     if (!fileNode.hasProperty(EXO_TITLE_PROP)) {
       fileNode.addMixin(EXO_RSS_ENABLE_PROP);
     }
