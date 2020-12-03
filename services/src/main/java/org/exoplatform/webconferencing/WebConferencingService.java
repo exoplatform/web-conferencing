@@ -1067,6 +1067,7 @@ public class WebConferencingService implements Startable {
     if (call != null) {
       try {
         if (CallState.STARTED.equals(call.getState())) {
+          // Call already started - join the participant to it
           UserInfo joined = null;
           // save Joined first
           for (UserInfo part : call.getParticipants()) {
@@ -1078,7 +1079,7 @@ public class WebConferencingService implements Startable {
               break;
             }
           }
-          // then save if someone joined (it should but we preserve the logic)
+          // then save if have the joined (it should but we preserve the logic)
           if (joined != null) {
             // First save the call with joined participant (in single tx)
             updateParticipant(id, joined);
@@ -1091,10 +1092,13 @@ public class WebConferencingService implements Startable {
                                  partId,
                                  part.getId());
             }
+            // Log metrics - call joined
+            LOG.info(metricMessage(partId, call, OPERATION_CALL_JOINED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+          } else {
+            LOG.warn("Call join invoked but no participant was found for actual join. Call ID: " + id + ", part ID: " + partId);
           }
-          // Log metrics - call joined
-          LOG.info(metricMessage(partId, call, OPERATION_CALL_JOINED, STATUS_OK, System.currentTimeMillis() - opStart, null));
         } else {
+          // Auto-start logic here, if someone joins a not started call - we start the call.
           // TODO check should we use partId instead of the current user for the start
           // the partId it's current exo user in the request (Comet)
           String userId = currentUserId();
