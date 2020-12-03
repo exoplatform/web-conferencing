@@ -42,6 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.persistence.PersistenceException;
@@ -49,6 +50,10 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.lang.RandomStringUtils;
+import org.exoplatform.ecm.utils.permission.PermissionUtil;
+import org.exoplatform.services.cms.link.LinkManager;
+import org.exoplatform.services.jcr.core.ExtendedNode;
+import org.exoplatform.services.wcm.core.NodetypeConstant;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -284,6 +289,9 @@ public class WebConferencingService implements Startable {
   /** The Constant NT_RESOURCE. */
   public static final String                         NT_RESOURCE            = "nt:resource";
 
+  /** The Constant MIX_PRIVILEGEABLE. */
+  public static final String                         MIX_PRIVILEGEABLE      = "exo:privilegeable";
+
   /** The Constant LOG. */
   protected static final Log                         LOG                    = ExoLogger.getLogger(WebConferencingService.class);
 
@@ -340,6 +348,9 @@ public class WebConferencingService implements Startable {
 
   /** The authenticator. */
   protected final Authenticator                      authenticator;
+
+  /** The Link manager. */
+  protected final LinkManager                        linkManager;
 
   /**
    * Checks is ID valid (not null, not empty and not longer of {@value #ID_MAX_LENGTH} chars).
@@ -426,7 +437,8 @@ public class WebConferencingService implements Startable {
                                 IdentityRegistry identityRegistry,
                                 Authenticator authenticator,
                                 ShareDocumentService shareService,
-                                InitParams initParams) {
+                                InitParams initParams,
+                                LinkManager linkManager) {
     this.organization = organization;
     this.socialIdentityManager = socialIdentityManager;
     this.listenerService = listenerService;
@@ -443,6 +455,7 @@ public class WebConferencingService implements Startable {
     PropertiesParam jwtSecretParam = initParams.getPropertiesParam(JWT_CONFIGURATION_PROPERTIES);
     this.secretKey = jwtSecretParam.getProperty(SECRET_KEY);
     this.shareService = shareService;
+    this.linkManager = linkManager;
   }
 
   /**
@@ -1634,6 +1647,15 @@ public class WebConferencingService implements Startable {
    */
   private void saveFile(Node parent, UploadResource resource, String user, List<String> shareToUsers) throws RepositoryException,
                                                                                                       UploadFileException {
+    if (parent == null) {
+      throw new UploadFileException("Cannot save the file because parent node empty for user: " + user);
+    }
+    if (resource == null) {
+      throw new UploadFileException("Cannot save the file because upload resources are empty for user: " + user);
+    }
+    if (user == null) {
+      throw new UploadFileException("Cannot save the file because user is undefined");
+    }
     ConversationState state = null;
     try {
       state = createState(user);
@@ -1649,52 +1671,180 @@ public class WebConferencingService implements Startable {
     Session session = userProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
     // Get node under user session
     Node folder = (Node) session.getItem(parent.getPath());
-    Node recordingsFolder;
+    Node recordingsFolder = getRecordingsFolder(folder);
+
+    if (recordingsFolder != null) {
+      Node fileNode = recordingsFolder.addNode(resource.getFileName(), "nt:file");
+      if (!fileNode.hasProperty(EXO_TITLE_PROP)) {
+        fileNode.addMixin(EXO_RSS_ENABLE_PROP);
+      }
+      fileNode.setProperty(EXO_TITLE_PROP, resource.getFileName());
+      Node content = fileNode.addNode(JCR_CONTENT, NT_RESOURCE);
+      try (FileInputStream fis = new FileInputStream(resource.getStoreLocation())) {
+        content.setProperty(JCR_DATA, fis);
+      } catch (IOException e) {
+        LOG.error("Cannot set JCR_DATA to created node.", e.getMessage());
+        throw new UploadFileException("Cannot set JCR_DATA for file node " + resource.getFileName());
+      }
+      content.setProperty(JCR_MIME_TYPE, resource.getMimeType());
+      content.setProperty(JCR_LAST_MODIFIED_PROP, new GregorianCalendar());
+      folder.save();
+      String perm = new StringBuilder(PermissionType.READ).append(",")
+                                                          .append(PermissionType.ADD_NODE)
+                                                          .append(",")
+                                                          .append(PermissionType.SET_PROPERTY)
+                                                          .toString();
+      // Share file to other users
+      if (shareToUsers != null) {
+        for (String participant : shareToUsers) {
+          if (!participant.equals(user)) {
+            shareRecordToUser(participant, fileNode, perm);
+          }
+        }
+      }
+      cleanConversationState();
+    } else {
+      cleanConversationState();
+      throw new UploadFileException("Cannot get the node for recorings folder to upload the record (" + resource.getFileName()
+          + ") for user:" + user);
+    }
+  }
+
+  /**
+   * Gets recordings folder (create if it's absent).
+   *
+   * @param folder the folder
+   * @return the recordings folder
+   * @throws RepositoryException the repository exception
+   */
+  private Node getRecordingsFolder(Node folder) throws RepositoryException {
+    Node recordingsFolder = null;
     if (!folder.hasNode("recordings")) {
-      recordingsFolder = folder.addNode("recordings", "nt:folder");
-      recordingsFolder.setProperty("exo:title", "Recordings");
-      recordingsFolder.addMixin("exo:recordingsFolder");
+      recordingsFolder = addRecordingsFolder(folder);
     } else {
       recordingsFolder = folder.getNode("recordings");
       if (recordingsFolder.isNodeType("nt:unstructured") || recordingsFolder.isNodeType("nt:folder")) {
         recordingsFolder.addMixin("exo:recordingsFolder");
       } else {
-        //TO DO add "recordings" node and handle errors
-      }
-    }
-    Node fileNode = recordingsFolder.addNode(resource.getFileName(), "nt:file");
-    if (!fileNode.hasProperty(EXO_TITLE_PROP)) {
-      fileNode.addMixin(EXO_RSS_ENABLE_PROP);
-    }
-    fileNode.setProperty(EXO_TITLE_PROP, resource.getFileName());
-    Node content = fileNode.addNode(JCR_CONTENT, NT_RESOURCE);
-    try (FileInputStream fis = new FileInputStream(resource.getStoreLocation())) {
-      content.setProperty(JCR_DATA, fis);
-    } catch (IOException e) {
-      LOG.error("Cannot set JCR_DATA to created node.", e.getMessage());
-      throw new UploadFileException("Cannot set JCR_DATA for file node " + resource.getFileName());
-    }
-    content.setProperty(JCR_MIME_TYPE, resource.getMimeType());
-    content.setProperty(JCR_LAST_MODIFIED_PROP, new GregorianCalendar());
-    folder.save();
-    String perm = new StringBuilder(PermissionType.READ).append(",")
-                                                        .append(PermissionType.ADD_NODE)
-                                                        .append(",")
-                                                        .append(PermissionType.SET_PROPERTY)
-                                                        .toString();
-    // Share file to other users
-    if (shareToUsers != null) {
-      for (String participant : shareToUsers) {
-        if (!participant.equals(user)) {
-          shareService.publishDocumentToUser(participant, fileNode, null, perm);
+        /*
+         * try to add "recordings" node if any other node exists with the same name but
+         * wrong type and handle errors
+         */
+        try {
+          recordingsFolder = addRecordingsFolder(folder);
+        } catch (Exception e) {
+          LOG.warn("An error occured while adding the recordings folder when the 'recordings' node already exists", e);
         }
       }
     }
+    return recordingsFolder;
+  }
+
+  /**
+   * Add recordings folder node.
+   *
+   * @param folder the folder
+   * @return the node
+   */
+  private Node addRecordingsFolder(Node folder) throws RepositoryException {
+    Node recordingsFolder = folder.addNode("recordings", "nt:folder");
+    recordingsFolder.setProperty("exo:title", "Recordings");
+    recordingsFolder.addMixin("exo:recordingsFolder");
+    return recordingsFolder;
+  }
+
+  /**
+   * Clean conversation state.
+   */
+  private void cleanConversationState() {
     try {
       ConversationState.setCurrent(null);
     } catch (Exception e) {
       LOG.warn("An error occured while cleaning the ConversationState", e);
     }
+  }
+
+  /**
+   * Gets private user node.
+   *
+   * @param sessionProvider the session provider
+   * @param user the user
+   * @return the private user node
+   * @throws Exception the exception
+   * @throws PathNotFoundException the path not found exception
+   * @throws RepositoryException the repository exception
+   */
+  private Node getPrivateUserNode(SessionProvider sessionProvider,
+                                  String user) throws Exception, PathNotFoundException, RepositoryException {
+    String privateRelativePath = nodeCreator.getJcrPath("userPrivate");
+    Node userNode = nodeCreator.getUserNode(sessionProvider, user);
+    return userNode.getNode(privateRelativePath);
+  }
+
+  /**
+   * Share to user records.
+   *
+   * @param user the user
+   * @param recordNode the record node
+   * @param perm the perm
+   */
+  private void shareRecordToUser(String user, Node recordNode, String perm) {
+    Node userPrivateNode = null;
+    try {
+      SessionProvider sessionProvider = sessionProviders.getSystemSessionProvider(null);
+      ManageableRepository repository = repositoryService.getCurrentRepository();
+      Session session = sessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
+      // add symlink to destination user
+      userPrivateNode = getPrivateUserNode(sessionProvider, user);
+      Node recordingsFolder = getRecordingsFolder(userPrivateNode);
+      if (recordNode.isNodeType(NodetypeConstant.EXO_SYMLINK))
+        recordNode = linkManager.getTarget(recordNode);
+      // Update permission
+      String tempPerms = perm.toString();// Avoid ref back to UIFormSelectBox options
+      if (!tempPerms.equals(PermissionType.READ))
+        tempPerms = PermissionType.READ + "," + PermissionType.ADD_NODE + "," + PermissionType.SET_PROPERTY + ","
+            + PermissionType.REMOVE;
+      if (PermissionUtil.canChangePermission(recordNode)) {
+        setUserPermission(recordNode, user, tempPerms.split(","));
+      } else if (PermissionUtil.canRead(recordNode)) {
+        SessionProvider systemSessionProvider = SessionProvider.createSystemProvider();
+        Session systemSession = systemSessionProvider.getSession(session.getWorkspace().getName(), repository);
+        Node _node = (Node) systemSession.getItem(recordNode.getPath());
+        setUserPermission(_node, user, tempPerms.split(","));
+      }
+      recordNode.getSession().save();
+      Node link = linkManager.createLink(recordingsFolder, recordNode);
+      String nodeMimeType = org.exoplatform.wcm.ext.component.activity.listener.Utils.getMimeType(recordNode);
+      link.addMixin(NodetypeConstant.MIX_FILE_TYPE);
+      link.setProperty(NodetypeConstant.EXO_FILE_TYPE, nodeMimeType);
+      userPrivateNode.save();
+    } catch (RepositoryException e) {
+      if (LOG.isErrorEnabled()) {
+        LOG.error(e.getMessage(), e);
+      }
+    } catch (Exception e) {
+      if (LOG.isErrorEnabled()) {
+        LOG.error(e.getMessage(), e);
+      }
+    }
+  }
+
+  /**
+   * Grant view for parent folder when share a document We need grant assess right
+   * for parent in case editing the shared documents
+   * 
+   * @param currentNode
+   * @param username
+   * @param permissions
+   * @throws Exception
+   */
+  private void setUserPermission(Node currentNode, String username, String[] permissions) throws Exception {
+    ExtendedNode node = (ExtendedNode) currentNode;
+    if (node.canAddMixin(MIX_PRIVILEGEABLE)) {
+      node.addMixin(MIX_PRIVILEGEABLE);
+    }
+    node.setPermission(username, permissions);
+    node.save();
   }
 
   /**
