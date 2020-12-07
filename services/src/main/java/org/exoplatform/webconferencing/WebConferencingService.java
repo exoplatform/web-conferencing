@@ -468,7 +468,7 @@ public class WebConferencingService implements Startable {
   public UserInfo getUserInfo(String id) throws IdentityStateException {
     User user;
     try {
-      user = organization.getUserHandler().findUserByName(id, UserStatus.ANY);
+      user = organization.getUserHandler().findUserByName(id, UserStatus.ANY); // TODO ANY?
     } catch (Exception e) {
       throw new IdentityStateException("Error finding user in organization service", e);
     }
@@ -852,12 +852,7 @@ public class WebConferencingService implements Startable {
       String callId = call.getId();
       for (UserInfo part : call.getParticipants()) {
         if (UserInfo.TYPE_NAME.equals(part.getType()) || GuestInfo.TYPE_NAME.equals(part.getType())) {
-          // It's eXo user: fire user listener for stopped call,
-          // but, in case if stopped with removal (deleted call), don't fire to the initiator (of deletion) -
-          // a given user.
-          // A given user also can be null when not possible to define it (e.g. on CometD channel removal, or
-          // other server side action) - then we notify to all participants.
-          // Nov 24, 2020 - Inform all parties
+          // It's eXo user: fire user listener for stopped call: we notify to all participants.
           fireUserCallStateChanged(part.getId(),
                                    callId,
                                    call.getProviderType(),
@@ -869,7 +864,9 @@ public class WebConferencingService implements Startable {
     } else {
       notifyUserCallStateChanged(call, userId, CallState.STOPPED);
     }
+    // it should be no guests already if all leaved correctly, but we do for a case of failures
     removeCallGuests(call.getId());
+    // as we as cancel invitations on the call end
     removeCallInvites(call.getId());
     return call;
   }
@@ -891,7 +888,7 @@ public class WebConferencingService implements Startable {
       try {
         // TODO use current user from the request (Comet) not an one system
         String userId = currentUserId();
-        startCall(call, userId, clientId);
+        startCall(call, userId, clientId, true);
 
         // Log metrics - call started
         LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null));
@@ -911,12 +908,13 @@ public class WebConferencingService implements Startable {
    * @param call the call
    * @param partId the participant id who started the call
    * @param clientId the client id
+   * @param notifyStarted if <code>true</code> then all participants will be notified about the started call
    * @throws ParticipantNotFoundException if call or its participants not found in storage
    * @throws CallSettingsException if call entry has wrong settings (room title, owner type etc)
    * @throws StorageException if storage exception happen
    * @throws CallNotFoundException if call not found in storage
    */
-  protected void startCall(CallInfo call, String partId, String clientId) throws ParticipantNotFoundException,
+  protected void startCall(CallInfo call, String partId, String clientId, boolean notifyStarted) throws ParticipantNotFoundException,
                                                                           CallSettingsException,
                                                                           StorageException,
                                                                           CallNotFoundException {
@@ -945,18 +943,20 @@ public class WebConferencingService implements Startable {
 
     updateCallAndParticipants(call);
 
-    // Jul 26, 2020: Inform all group members about the call
-    // For P2P call we need only inform another peer and this loop does the work perfectly
-    Collection<UserInfo> parts = call.getOwner().isGroup() ? GroupInfo.class.cast(call.getOwner()).getMembers().values()
-                                                           : call.getParticipants();
-    for (UserInfo part : parts) {
-      // Nov 24, 2020 - Inform all parties
-      fireUserCallStateChanged(part.getId(),
-                               callId,
-                               call.getProviderType(),
-                               CallState.STARTED,
-                               call.getOwner().getId(),
-                               call.getOwner().getType());
+    // Dec 3, 2020: Optionally notify the call started
+    if (notifyStarted) {
+      // Inform all group members about the call
+      // For P2P call we need only inform another peer and this loop does the work perfectly
+      Collection<UserInfo> parts = call.getOwner().isGroup() ? GroupInfo.class.cast(call.getOwner()).getMembers().values()
+                                                             : call.getParticipants();
+      for (UserInfo part : parts) {
+        fireUserCallStateChanged(part.getId(),
+                                 callId,
+                                 call.getProviderType(),
+                                 CallState.STARTED,
+                                 call.getOwner().getId(),
+                                 call.getOwner().getType());
+      }
     }
   }
 
@@ -1111,11 +1111,11 @@ public class WebConferencingService implements Startable {
             LOG.warn("Call join invoked but no participant was found for actual join. Call ID: " + id + ", part ID: " + partId);
           }
         } else {
-          // Auto-start logic here, if someone joins a not started call - we start the call.
+          // Auto-start logic here, if someone joins a not started call - we start the call, but do this without notification of its parties.
           // TODO check should we use partId instead of the current user for the start
           // the partId it's current exo user in the request (Comet)
           String userId = currentUserId();
-          startCall(call, userId, clientId);
+          startCall(call, userId, clientId, false); // We will not notify parties about the auto-start
           // Log metrics - call started
           LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null));
         }
@@ -1147,20 +1147,21 @@ public class WebConferencingService implements Startable {
       try {
         if (CallState.STARTED.equals(call.getState()) || CallState.PAUSED.equals(call.getState())) {
           UserInfo leaved = null;
+          boolean isGuestLeaved = false;
           int leavedNum = 0;
-          // save Joined first
           for (UserInfo part : call.getParticipants()) {
-            if (UserInfo.TYPE_NAME.equals(part.getType()) || GuestInfo.TYPE_NAME.equals(part.getType())) {
+            boolean partIsGuest = GuestInfo.TYPE_NAME.equals(part.getType());
+            if (UserInfo.TYPE_NAME.equals(part.getType()) || partIsGuest) {
+              // Users will leave the call, but guests will go (removed) from participants
               if (partId.equals(part.getId())) {
-                // Leave should not be called on a call session started after stopping an one previous of this
-                // call.
-                // if (part.hasSameClientId(clientId)) {
+                // Leave should not be called on a call session started after stopping an one previous of this call.
                 part.setState(UserState.LEAVED);
                 part.setClientId(null);
                 leaved = part;
+                if (partIsGuest) {
+                  isGuestLeaved = true; 
+                }
                 leavedNum++;
-                // } // otherwise we may meet this user running a new same call too quickly (before CometD will
-                // unsubscribe this call previous channel), we ignore this leave so
               } else {
                 // if null - user hasn't joined
                 if (part.getState() == null || part.getState().equals(UserState.LEAVED)) {
@@ -1171,8 +1172,12 @@ public class WebConferencingService implements Startable {
           }
           // then save if someone leaved
           if (leaved != null) {
-            // First save the call with the participant (in single tx)
-            updateParticipant(id, leaved);
+            // First update the call with leaved participant
+            if (isGuestLeaved) {
+              removeParticipant(id, leaved);
+            } else {
+              updateParticipant(id, leaved);
+            }
             // Fire user leaved to all parts, including the user itself
             for (UserInfo part : call.getParticipants()) {
               // Fire user leaved to all parts, including the user itself
@@ -1188,8 +1193,11 @@ public class WebConferencingService implements Startable {
             // Check if don't need stop the call if all parts leaved already
             if (call.getOwner().isGroup()) {
               if (leavedNum == call.getParticipants().size() || call.getParticipants().size() == 0
-                  || call.getParticipants().stream().allMatch(p -> p.getState() == UserState.LEAVED)) {
+                  || call.getParticipants().stream().allMatch(p -> p.getState() == null || p.getState() == UserState.LEAVED)
+                  /*|| call.getParticipants().stream().allMatch(p -> p.getType() == GuestInfo.TYPE_NAME)*/) {
                 // Stop when all group members leave the call
+                // TODO it would be better UX when we let guest to run the call even without exo users,
+                // but then need find a proper way of stopping the call if guests will not leave finally via API (network errors, server crashes etc).
                 stopCall(call, partId, false);
                 // Log metrics - call stopped
                 LOG.info(metricMessage(partId,
@@ -2548,15 +2556,30 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Tx remove guests.
+   * Remove all call guests.
    *
    * @param callId the call id
-   * @throws StorageException the storage exception
    */
   @ExoTransactional
-  protected void txRemoveCallGuests(String callId) throws StorageException {
+  protected void txRemoveCallGuests(String callId) {
     List<ParticipantEntity> participants = participantsStorage.findCallParts(callId);
     participants.stream().filter(part -> part.getType().equals(GuestInfo.TYPE_NAME)).forEach(participantsStorage::delete);
+  }
+  
+  /**
+   * Remove call participant.
+   *
+   * @param callId the call id
+   * @param partId the participant id
+   * @throws ParticipantNotFoundException if participant not found
+   */
+  protected void txRemoveCallParticipant(String callId, String partId) throws ParticipantNotFoundException {
+    ParticipantEntity entity = participantsStorage.find(new ParticipantId(partId, callId));
+    if (entity != null) {
+      participantsStorage.delete(entity);
+    } else {
+      throw new ParticipantNotFoundException("Call participant " + partId + " not found for " + callId);
+    }
   }
 
   /**
@@ -2637,8 +2660,8 @@ public class WebConferencingService implements Startable {
 
     if (participants != null && !participants.isEmpty()) {
 
-      List<ParticipantEntity> currentParts = participantsStorage.findCallParts(call.getId());
-      for (ParticipantEntity p : currentParts) {
+      List<ParticipantEntity> savedParts = participantsStorage.findCallParts(call.getId());
+      for (ParticipantEntity p : savedParts) {
         participantsStorage.delete(p);
       }
       for (UserInfo p : participants) {
@@ -2686,7 +2709,6 @@ public class WebConferencingService implements Startable {
    * @param callId the call id
    * @throws StorageException the storage exception
    */
-
   protected void removeCallGuests(String callId) throws StorageException {
     try {
       txRemoveCallGuests(callId);
@@ -2773,6 +2795,22 @@ public class WebConferencingService implements Startable {
       txUpdateParticipant(callId, participant);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       throw new StorageException("Error updating participant " + participant.getId() + " of call " + callId, e);
+    }
+  }
+  
+  /**
+   * Remove call participant (for leaved state) in a single transaction.
+   *
+   * @param callId the call id
+   * @param participant the participant
+   * @throws ParticipantNotFoundException if call participant not found in storage
+   * @throws StorageException if storage exception happen
+   */
+  protected void removeParticipant(String callId, UserInfo participant) throws ParticipantNotFoundException, StorageException {
+    try {
+      txRemoveCallParticipant(callId, participant.getId());
+    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+      throw new StorageException("Error removing participant " + participant.getId() + " from call " + callId, e);
     }
   }
 
