@@ -813,7 +813,7 @@ public class WebConferencingService implements Startable {
           LOG.info(metricMessage(userId, call, OPERATION_CALL_DELETED, STATUS_OK, System.currentTimeMillis() - opStart, null));
         } else {
           // Log metrics - call stopped
-          LOG.info(metricMessage(userId, call, OPERATION_CALL_JOINED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+          LOG.info(metricMessage(userId, call, OPERATION_CALL_STOPPED, STATUS_OK, System.currentTimeMillis() - opStart, null));
         }
         return call;
       } catch (StorageException e) {
