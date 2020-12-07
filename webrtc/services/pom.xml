@@ -24,7 +24,7 @@
   <parent>
     <groupId>org.exoplatform.addons.web-conferencing</groupId>
     <artifactId>webrtc-connector</artifactId>
-    <version>1.4.x-SNAPSHOT</version>
+    <version>1.4.6-RC01</version>
   </parent>
   
   <artifactId>web-conferencing-webrtc-services</artifactId>
