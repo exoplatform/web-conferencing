@@ -16,8 +16,10 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
 @Entity(name = "WebConfInvite")
 @ExoEntity
 @Table(name = "WBC_INVITES")
-@NamedQueries({ @NamedQuery(name = "WebConfInvite.deleteCallInvites", query = "DELETE FROM WebConfInvite WHERE callId = :callId"),
-    @NamedQuery(name = "WebConfInvite.findCallInvites", query = "SELECT i FROM WebConfInvite i WHERE i.callId = :callId ORDER BY i.identity") })
+@NamedQueries({ 
+  @NamedQuery(name = "WebConfInvite.deleteCallInvites", query = "DELETE FROM WebConfInvite WHERE callId = :callId"),
+  @NamedQuery(name = "WebConfInvite.findCallInvites", query = "SELECT i FROM WebConfInvite i WHERE i.callId = :callId ORDER BY i.identity")
+})
 @IdClass(InviteId.class)
 public class InviteEntity {
 

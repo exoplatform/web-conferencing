@@ -49,5 +49,12 @@ public class InviteDAO extends GenericDAOJPAImpl<InviteEntity, InviteId> {
   public int deleteCallInvites(String callId) throws PersistenceException, IllegalStateException, IllegalArgumentException {
     return getEntityManager().createNamedQuery("WebConfInvite.deleteCallInvites").setParameter("callId", callId).executeUpdate();
   }
+  
+  /**
+   * Clear the storage.
+   */
+  public void clear() {
+    getEntityManager().clear();
+  }
 
 }

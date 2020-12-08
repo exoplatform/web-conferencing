@@ -725,6 +725,7 @@ public class WebConferencingService implements Startable {
               try {
                 participantsStorage.clear();
                 callStorage.clear();
+                inviteStorage.clear();
               } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
                 LOG.warn("Call storage cleanup failed before creating call: " + call.getId(), e);
               }
@@ -2573,6 +2574,7 @@ public class WebConferencingService implements Startable {
    * @param partId the participant id
    * @throws ParticipantNotFoundException if participant not found
    */
+  @ExoTransactional
   protected void txRemoveCallParticipant(String callId, String partId) throws ParticipantNotFoundException {
     ParticipantEntity entity = participantsStorage.find(new ParticipantId(partId, callId));
     if (entity != null) {
@@ -2683,10 +2685,6 @@ public class WebConferencingService implements Startable {
   protected int txDeleteAllUserCalls() throws IllegalArgumentException, IllegalStateException, PersistenceException {
     return callStorage.deleteAllUsersCalls();
   }
-
-  // <<<<<<< Call storage: ExoTransactional managed
-
-  // >>>>>>> Call storage: wrappers to catch JPA exceptions
 
   /**
    * Delete call.
