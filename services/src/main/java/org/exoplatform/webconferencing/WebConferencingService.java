@@ -50,10 +50,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.lang.RandomStringUtils;
-import org.exoplatform.ecm.utils.permission.PermissionUtil;
-import org.exoplatform.services.cms.link.LinkManager;
-import org.exoplatform.services.jcr.core.ExtendedNode;
-import org.exoplatform.services.wcm.core.NodetypeConstant;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -68,8 +64,11 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
+import org.exoplatform.ecm.utils.permission.PermissionUtil;
+import org.exoplatform.services.cms.link.LinkManager;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.access.PermissionType;
+import org.exoplatform.services.jcr.core.ExtendedNode;
 import org.exoplatform.services.jcr.core.ManageableRepository;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
@@ -85,6 +84,7 @@ import org.exoplatform.services.organization.UserStatus;
 import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.IdentityRegistry;
+import org.exoplatform.services.wcm.core.NodetypeConstant;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.model.Profile;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
@@ -2592,7 +2592,11 @@ public class WebConferencingService implements Startable {
    */
   @ExoTransactional
   protected int txRemoveCallInvites(String callId) {
-    return inviteStorage.deleteCallInvites(callId);
+    List<InviteEntity> savedInvites = inviteStorage.findCallInvites(callId);
+    for (InviteEntity i : savedInvites) {
+      inviteStorage.delete(i);
+    }
+    return savedInvites.size();
   }
 
   /**
