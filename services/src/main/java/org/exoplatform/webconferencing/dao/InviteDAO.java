@@ -7,6 +7,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceException;
 import javax.persistence.TypedQuery;
 
+import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.persistence.impl.GenericDAOJPAImpl;
 import org.exoplatform.webconferencing.domain.InviteEntity;
 import org.exoplatform.webconferencing.domain.InviteId;
@@ -46,6 +47,7 @@ public class InviteDAO extends GenericDAOJPAImpl<InviteEntity, InviteId> {
    * @throws IllegalStateException the illegal state exception
    * @throws IllegalArgumentException the illegal argument exception
    */
+  @ExoTransactional
   public int deleteCallInvites(String callId) throws PersistenceException, IllegalStateException, IllegalArgumentException {
     return getEntityManager().createNamedQuery("WebConfInvite.deleteCallInvites").setParameter("callId", callId).executeUpdate();
   }
