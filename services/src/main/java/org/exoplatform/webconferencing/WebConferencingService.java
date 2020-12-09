@@ -716,19 +716,8 @@ public class WebConferencingService implements Startable {
               call.setState(CallState.STARTED);
               call.setLastDate(Calendar.getInstance().getTime());
 
-              // Clear storage session:
-              // XXX It is REQUIRED stuff (actual when something were deleted above), otherwise
-              // ExoTx/Hibernate will fail to enter into the transaction in createCall() with an exception:
-              // javax.persistence.EntityExistsException: a different object with the same identifier value
-              // was already associated with the session, e.g.:
-              // [org.exoplatform.webconferencing.domain.ParticipantEntity#org.exoplatform.webconferencing.domain.ParticipantId@4aa63de3]
-              try {
-                participantsStorage.clear();
-                callStorage.clear();
-                inviteStorage.clear();
-              } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
-                LOG.warn("Call storage cleanup failed before creating call: " + call.getId(), e);
-              }
+              // Clear storage session
+              clearStorage();
 
               // Create the call in storage, handle conflicts if required
               createCall(call);
@@ -926,12 +915,13 @@ public class WebConferencingService implements Startable {
     call.setState(CallState.STARTED);
     call.setLastDate(Calendar.getInstance().getTime());
 
-    // On call start we mark all parts LEAVED and then each of them will join and be marked as JOINED in
-    // joinCall()
-
-    // update participants
+    // Clear storage session before the work
+    clearStorage();
+    
+    // Sync call participants
     syncMembersAndParticipants(call);
 
+    // On call start we mark all parts LEAVED and then each of them will join and be marked as JOINED in joinCall()
     for (UserInfo part : call.getParticipants()) {
       if (UserInfo.TYPE_NAME.equals(part.getType()) && partId.equals(part.getId())) {
         part.setState(UserState.JOINED);
@@ -941,7 +931,6 @@ public class WebConferencingService implements Startable {
         part.setClientId(null);
       }
     }
-
     updateCallAndParticipants(call);
 
     // Dec 3, 2020: Optionally notify the call started
@@ -2689,6 +2678,27 @@ public class WebConferencingService implements Startable {
   protected int txDeleteAllUserCalls() throws IllegalArgumentException, IllegalStateException, PersistenceException {
     return callStorage.deleteAllUsersCalls();
   }
+  
+  
+  /**
+   * Clear JPA storage from stale/cached objects.
+   *
+   */
+  protected void clearStorage() {
+    //Clear storage session:
+    // XXX It is REQUIRED stuff (actual when something were deleted above), otherwise
+    // ExoTx/Hibernate will fail to enter into the transaction in createCall() with an exception:
+    // javax.persistence.EntityExistsException: a different object with the same identifier value
+    // was already associated with the session, e.g.:
+    // [org.exoplatform.webconferencing.domain.ParticipantEntity#org.exoplatform.webconferencing.domain.ParticipantId@4aa63de3]
+    try {
+      participantsStorage.clear();
+      callStorage.clear();
+      inviteStorage.clear();
+    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+      LOG.warn("Call storage cleanup failed", e);
+    }
+  }
 
   /**
    * Delete call.
@@ -3018,7 +3028,7 @@ public class WebConferencingService implements Startable {
       LOG.warn("Error reading call by ID: " + id, e);
     }
   }
-
+  
   /**
    * Metric message for reporting to the stats logger.
    *
