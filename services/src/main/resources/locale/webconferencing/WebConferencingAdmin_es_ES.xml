@@ -12,9 +12,9 @@
         <UnableGetData>Error al leer los datos.</UnableGetData>
         <UnablePostData>Error al guardar los datos.</UnablePostData>
       </error>
-      <page>Conferencia Web</page>
-      <title>Administración de Conferencia Web</title>
-      <info>La Conferencia Web puede ser manejada por diferentes proveedores. Puedes habilitar el proveedor que necesites y configurar los ajustes.</info>
+      <page>Conferencia web</page>
+      <title>Administración de conferencias web</title>
+      <info>Las conferencias web pueden ser manejadas por distintos proveedores. Puedes activar el proveedor que necesites y configurar los ajustes.</info>
       <table>
         <Provider>Proveedor</Provider>
         <Description>Descripción</Description>
