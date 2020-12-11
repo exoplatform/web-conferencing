@@ -7,30 +7,12 @@ const vuetify = new Vuetify({
   iconfont: "",
 });
 
-// Vue.directive("click-outside", {
-//   priority: 700,
-//   bind: function(el, binding, vnode) {
-//     if (el.classList.value.includes("dropdown-vue")) {
-//       el.clickOutside = function(e) {
-//         if (!(el === e.target || el.contains(e.target))) {
-//           vnode.context[binding.expression](e);
-//         }
-//       };
-//       document.body.addEventListener("click", el.clickOutside);
-//     }
-//   },
-//   unbind: function(el) {
-//     if (el) {
-//       document.body.removeEventListener("click", el.clickOutside);
-//     }
-//   },
-// });
 // getting language of user
-const lang =
-  (eXo && eXo.env && eXo.env.portal && eXo.env.portal.language) || "en";
+const lang = (eXo && eXo.env && eXo.env.portal && eXo.env.portal.language) || "en";
 const localePortlet = "locale.webconferencing";
 const resourceBundleName = "WebConferencingClient";
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
+const log = webConferencing.getLog("webconferencing");
 
 export function create(context, target) {
   const result = new Promise((resolve, reject) => {
@@ -40,25 +22,25 @@ export function create(context, target) {
       target.appendChild(mountEl);
 
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
-        const vmComp = new Vue({
+        const comp = new Vue({
           el: mountEl,
           components: {
-            CallButtons,
+            CallButtons
           },
           data() {
             return {
               language: lang,
               resourceBundleName,
-              callContext: {},
-            };
+              callContext: {}
+            }
           },
           mounted() {
-            this.setCallContext(context, this);
+            this.setCallContext(context);
           },
           methods: {
-            setCallContext(context, vmcomp) {
-              this.$set(vmcomp, "callContext", context);
-            },
+            setCallContext(context) {
+              Vue.set(this, "callContext", context);
+            }
           },
           i18n,
           vuetify,
@@ -72,18 +54,24 @@ export function create(context, target) {
               on: {
                 created: function() {
                   resolve({
-                    vm: vmComp,
+                    vm: comp,
                     update: function(context) {
-                      vmComp.setCallContext(context, vmComp);
+                      const targetId = context.isUser ? context.userId : context.isSpace ? context.spaceId : context.isRoom ? context.roomName : null;
+                      if (targetId) {
+                        log.trace(">> update target: " + targetId);
+                      } else {
+                        log.trace(">> update >> cannot find target from context: " + JSON.stringify(context));
+                      }
+                      comp.setCallContext(context);
                     },
                     getElement: function() {
                       return this.vm.$el;
-                    },
+                    }
                   });
-                },
-              },
+                }
+              }
             });
-          },
+          }
         });
       });
     } else {

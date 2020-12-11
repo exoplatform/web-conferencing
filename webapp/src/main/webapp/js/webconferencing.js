@@ -1347,6 +1347,7 @@
         var roomTitle = chat.selectedContact.fullName;
         // It is a logic used in Chat, so reuse it here:
         var roomName = roomTitle.toLowerCase().split(" ").join("_");
+        var isUser = target.detail.type === "u"; // roomId is an user name in system;
         var isSpace = chat.selectedContact.type === "s"; // roomId && roomId.startsWith("space-");
         var isRoom = chat.selectedContact.type === "t"; // roomId && roomId.startsWith("team-");
         var isGroup = isSpace || isRoom;
@@ -1365,6 +1366,12 @@
           prettyName: chat.selectedContact.prettyName,
           participants: chat.selectedContact.participants
         };
+        if (isSpace) {
+          context.spaceId = roomName;
+        }
+        if (isUser) {
+          context.userId = chat.selectedContact.user;
+        }
         context.details = contextDetails(context);
       } else {
         // If no room, then resolve with 'empty' context
@@ -1387,6 +1394,7 @@
           var roomTitle = target.detail.fullName;
           // It is a logic used in Chat, so reuse it here:
           var roomName = roomTitle.toLowerCase().split(" ").join("_");
+          var isUser = target.detail.type === "u"; // roomId is an user name in system;
           var isSpace = target.detail.type === "s"; // roomId && roomId.startsWith("space-");
           var isRoom = target.detail.type === "t"; // roomId && roomId.startsWith("team-");
           var isGroup = isSpace || isRoom;
@@ -1405,6 +1413,12 @@
             prettyName: target.detail.prettyName,
             participants: target.detail.participants
           };
+          if (isSpace) {
+            context.spaceId = roomName;
+          }
+          if (isUser) {
+            context.userId = target.detail.user;
+          }
           context.details = contextDetails(context);
         } else {
           log.warn("No details provided for the selected contact");
@@ -1719,7 +1733,6 @@
 		};
 
 		var spaceContext = function(spaceId) {
-			var space = null;
 			var context = {
 				currentUser : currentUser,
 				spaceId : spaceId,
@@ -1731,12 +1744,10 @@
 				isAndroid : isAndroid,
 				isWindowsMobile : isWindowsMobile,
 				details : function() {
-					if (!space) {
-						space = getSpaceInfoReq(spaceId);
-				  	space.fail(function(err) {
-				  		log.trace("Error getting space info " + spaceId + " for space context", err);
-						});	
-					}
+					const	space = getSpaceInfoReq(spaceId);
+			  	space.fail(function(err) {
+			  		log.trace("Error getting space info " + spaceId + " for space context", err);
+					});	
 					return space;
 				}
 			};
