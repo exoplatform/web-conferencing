@@ -177,9 +177,7 @@ export default {
           // TODO copypasted code - why we need it here??
           if (this.isFirstInitialization) {
             this.isFirstInitialization = false;
-            this.log.trace(
-              ">> Call buttons are initialized first time >> setProvidersButtons()"
-            );
+            this.log.trace("<< setProvidersButtons() << Call buttons are initialized first time");
             this.fireCreated();
           }
         }
@@ -229,9 +227,7 @@ export default {
 
       if (this.isFirstInitialization) {
         this.isFirstInitialization = false;
-        this.log.trace(
-          ">> Call buttons are initialized first time >> createButtons()"
-        );
+        this.log.trace("<< createButtons() << Call buttons are initialized first time");
         this.fireCreated();
       }
     },
