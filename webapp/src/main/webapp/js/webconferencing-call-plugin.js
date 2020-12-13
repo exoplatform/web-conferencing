@@ -37,10 +37,10 @@
           "SHARED/webConferencing",
           "SHARED/webConferencingCallButton",
         ], function(webConferencing, callButtons) {
-          webConferencing.createChatContext(chat).then((context) => {
-            callButtons.create(context, target, typeClass).then((button) => {
-              document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
-                webConferencing.createChatContext(chat, target).then((context) => {
+          webConferencing.createChatContext(chat).then(context => {
+            callButtons.create(context, target, typeClass).then(button => {
+              document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, target => {
+                webConferencing.createChatContext(chat, target).then(context => {
                   button.update(context);
                 });
               });
@@ -84,10 +84,10 @@
         ], function(webConferencing, callButtons) {
           if (!(eXo.env.portal.selectedNodeUri === "chat")) {
             // don't init in chat
-            webConferencing.createChatContext(chat).then((context) => {
-              callButtons.create(context, target, typeClass).then((button) => {
-                document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function(target) {
-                  webConferencing.createChatContext(chat, target).then((context) => {
+            webConferencing.createChatContext(chat).then(context => {
+              callButtons.create(context, target, typeClass).then(button => {
+                document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, target => {
+                  webConferencing.createChatContext(chat, target).then(context => {
                     button.update(context);
                   });
                 });

@@ -1347,7 +1347,7 @@
         var roomTitle = chat.selectedContact.fullName;
         // It is a logic used in Chat, so reuse it here:
         var roomName = roomTitle.toLowerCase().split(" ").join("_");
-        var isUser = target.detail.type === "u"; // roomId is an user name in system;
+        var isUser = chat.selectedContact.type === "u"; // roomId is an user name in system;
         var isSpace = chat.selectedContact.type === "s"; // roomId && roomId.startsWith("space-");
         var isRoom = chat.selectedContact.type === "t"; // roomId && roomId.startsWith("team-");
         var isGroup = isSpace || isRoom;
@@ -1359,7 +1359,7 @@
           isGroup: isGroup,
           isSpace: isSpace,
           isRoom: isRoom,
-          isUser: !isGroup && chat.selectedContact.type === "u",
+          isUser: isUser,
           isIOS: isIOS,
           isAndroid: isAndroid,
           isWindowsMobile: isWindowsMobile,
@@ -1406,7 +1406,7 @@
             isGroup: isGroup,
             isSpace: isSpace,
             isRoom: isRoom,
-            isUser: !isGroup && target.detail.type === "u",
+            isUser: isUser,
             isIOS: isIOS,
             isAndroid: isAndroid,
             isWindowsMobile: isWindowsMobile,
@@ -1421,8 +1421,19 @@
           }
           context.details = contextDetails(context);
         } else {
-          log.warn("No details provided for the selected contact");
+          log.warn("No details provided for the selected contact in chat room");
         }
+      } else {
+        log.warn("No target provided for chat room");
+      }
+      if (!context) {
+        // If no room or its details, then resolve with 'empty' context
+        context = {
+          currentUser: currentUser,
+          isIOS: isIOS,
+          isAndroid: isAndroid,
+          isWindowsMobile: isWindowsMobile
+        };
       }
       return context;
     };
@@ -1577,7 +1588,6 @@
 		};
 
 		var userContext = function(userId) {
-			var user = null;
 			var context = {
 				currentUser : currentUser,
 				userId : userId,
@@ -1589,12 +1599,10 @@
 				isAndroid : isAndroid,
 				isWindowsMobile : isWindowsMobile,
 				details : function() {
-					if (!user) {
-						user = getUserInfoReq(userId);
-						user.fail(function(err) {
-							log.trace("Error getting user info " + userId + " for user context", err);
-						});
-					}
+					const user = getUserInfoReq(userId);
+					user.fail(function(err) {
+						log.trace("Error getting user info " + userId + " for user context", err);
+					});
 					return user;
 				}
 			};

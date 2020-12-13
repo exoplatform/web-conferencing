@@ -173,7 +173,8 @@ export default {
             });
           });
         } else if (context && !context.details) {
-          // mini chat
+          // mini chat - TODO whata a logic for mini chat with context w/o details??
+          // TODO Why we need to init if no context or its details?
           // TODO copypasted code - why we need it here??
           if (this.isFirstInitialization) {
             this.isFirstInitialization = false;
