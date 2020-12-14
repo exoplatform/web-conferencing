@@ -1048,55 +1048,77 @@ public class CometdWebConferencingService implements Startable {
                             caller.failure(ErrorInfo.serverError("Error reading call").asJSON());
                           }
                         } else if (COMMAND_UPDATE.equals(command)) {
-                          Object participantsJson = arguments.get("participants");
-                          if (participantsJson != null) {
+                          Object infoJson = arguments.get("info");
+                          if (infoJson != null) {
                             try {
-                              List<String> participants = asList(participantsJson, String.class);
-                              CallInfo call = webConferencing.updateParticipants(id, participants);
+                              List<String> info = asList(infoJson, String.class);
+                              // TODO update the call info (title, dates, etc)
+                              //CallInfo call = webConferencing.updateInfo(id, info);
+                              CallInfo call = webConferencing.getCall(id);
+                              if (call != null) {
+                                caller.result(asJSON(call));
+                              } else {
+                                caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
+                              }
+                              //
                               caller.result(asJSON(call));
-                            } catch (CallNotFoundException e) {
-                              caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
+                            //} catch (CallNotFoundException e) {
+                            //  caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
                             } catch (Throwable e) {
-                              LOG.error("Error updating call '" + id + "' by '" + currentUserId + "'", e);
-                              caller.failure(ErrorInfo.serverError("Error updating call record").asJSON());
+                              LOG.error("Error updating call information '" + id + "' by '" + currentUserId + "'", e);
+                              caller.failure(ErrorInfo.serverError("Error updating call information").asJSON());
                             }
                           } else {
-                            String state = asString(arguments.get("state"));
-                            if (isValidArg(state)) {
+                            Object participantsJson = arguments.get("participants");
+                            if (participantsJson != null) {
                               try {
-                                boolean stateRecognized = true;
-                                CallInfo call;
-                                if (CallState.STARTED.equals(state)) {
-                                  call = webConferencing.startCall(id, exoClientId);
-                                } else if (CallState.STOPPED.equals(state)) {
-                                  call = webConferencing.stopCall(id, false);
-                                } else if (UserState.JOINED.equals(state)) {
-                                  call = webConferencing.joinCall(id, currentUserId, exoClientId);
-                                } else if (UserState.LEAVED.equals(state)) {
-                                  call = webConferencing.leaveCall(id, currentUserId, exoClientId);
-                                } else {
-                                  call = null;
-                                  stateRecognized = false;
-                                }
-                                if (stateRecognized) {
-                                  if (call != null) {
-                                    caller.result(asJSON(call));
-                                  } else {
-                                    caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
-                                  }
-                                } else {
-                                  caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized")
-                                                          .asJSON());
-                                }
-                              } catch (CallNotFoundException e) { // aka BAD_REQUEST
+                                List<String> participants = asList(participantsJson, String.class);
+                                CallInfo call = webConferencing.updateParticipants(id, participants);
+                                caller.result(asJSON(call));
+                              } catch (CallNotFoundException e) {
                                 caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
                               } catch (Throwable e) {
-                                LOG.error("Error updating call '" + id + "' by '" + currentUserId + "'", e);
-                                caller.failure(ErrorInfo.serverError("Error updating call record").asJSON());
+                                LOG.error("Error updating call participants '" + id + "' by '" + currentUserId + "'", e);
+                                caller.failure(ErrorInfo.serverError("Error updating call participants").asJSON());
                               }
                             } else {
-                              caller.failure(ErrorInfo.clientError("Wrong request parameters: state").asJSON());
-                            }
+                              String state = asString(arguments.get("state"));
+                              if (isValidArg(state)) {
+                                try {
+                                  boolean stateRecognized = true;
+                                  CallInfo call;
+                                  if (CallState.STARTED.equals(state)) {
+                                    call = webConferencing.startCall(id, exoClientId);
+                                  } else if (CallState.STOPPED.equals(state)) {
+                                    call = webConferencing.stopCall(id, false);
+                                  } else if (UserState.JOINED.equals(state)) {
+                                    call = webConferencing.joinCall(id, currentUserId, exoClientId);
+                                  } else if (UserState.LEAVED.equals(state)) {
+                                    call = webConferencing.leaveCall(id, currentUserId, exoClientId);
+                                  } else {
+                                    call = null;
+                                    stateRecognized = false;
+                                  }
+                                  if (stateRecognized) {
+                                    if (call != null) {
+                                      caller.result(asJSON(call));
+                                    } else {
+                                      caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
+                                    }
+                                  } else {
+                                    caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized")
+                                                            .asJSON());
+                                  }
+                                } catch (CallNotFoundException e) { // aka BAD_REQUEST
+                                  caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
+                                } catch (Throwable e) {
+                                  LOG.error("Error updating call '" + id + "' by '" + currentUserId + "'", e);
+                                  caller.failure(ErrorInfo.serverError("Error updating call record").asJSON());
+                                }
+                              } else {
+                                caller.failure(ErrorInfo.clientError("Wrong request parameters: state").asJSON());
+                              }
+                            }                            
                           }
                         } else if (COMMAND_CREATE.equals(command)) {
                           String ownerId = asString(arguments.get("owner"));
