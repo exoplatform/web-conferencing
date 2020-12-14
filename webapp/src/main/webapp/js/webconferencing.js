@@ -2091,6 +2091,45 @@
 				return $.Deferred().reject("CometD required").promise();
 			}
 		};
+    
+    /**
+     * Find a call ID by given call link (URL) and a provider. 
+     * If no provider given, this method will go over all providers to find a first matching call.
+     */
+    this.findCallId = function(link, providerName) {
+      var process = $.Deferred();
+      function findProviderCallId(link, provider) {
+        if (provider.isInitialized && provider.linkSupported && provider.findCallId && provider.hasOwnProperty("findCallId")) {
+          return provider.findCallId(link);
+        }
+        return null;
+      }
+      if (providerName && typeof providerName === "string") {
+        self.getProvider(providerName).then(provider => {
+          const callId = findProviderCallId(link, provider);
+          if (callId) {
+            process.resolve(callId);
+          } else {
+            process.reject("Cannot find call ID for link: " + link + " and provider: " + providerName);
+          }
+        }).catch(err => process.fail(err));
+      } else {
+        self.getAllProviders().then(providers => {
+          let callId = null; 
+          for (const provider of providers) {
+            callId = findProviderCallId(link, provider);
+            if (callId) {
+              process.resolve(callId);
+              break;
+            }
+          }
+          if (!callId) {
+            process.reject("Cannot find call ID for link: " + link);
+          }
+        }).catch(err => process.fail(err));        
+      }
+      return process.promise();
+    };
 		
 		/**
 		 * Find identities by name in org service. Includes groups and users.
@@ -2199,7 +2238,6 @@
       }
     };
 		
-		
 	  /**
      * Update call participants in server side database.
      */
@@ -2227,29 +2265,55 @@
     };
 		
 		/**
-		 * Update call state in server side database.
+		 * Update call state or its all information in the backend.
 		 */
-		this.updateCall = function(id, state) {
+		this.updateCall = function(id, stateInfo) {
+      let process = $.Deferred();
 			if (cometd) {
-				var process = $.Deferred();
-				var callProps = cometdParams({
-					command : "update",
-					id : id,
-					state : state
-				});
-				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
-					var result = tryParseJson(response);
-					if (response.successful) {
-					  process.resolve(result);
-					} else {
-						process.reject(result);
-					}
-				});
-				return process.promise();
-			} else {
-				log.trace("Updating call requires CometD. Was call: " + id);
-				return $.Deferred().reject("CometD required").promise();
-			}
+        function processUpdateCall(id, state, info) {
+          let callProps;
+          if (info) {
+            callProps = cometdParams({
+              command : "update",
+              id : id,
+              info : info
+            });
+          } else {
+            callProps = cometdParams({
+              command : "update",
+              id : id,
+              state : state
+            });            
+          }
+          cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
+            var result = tryParseJson(response);
+            if (response.successful) {
+              process.resolve(result);
+            } else {
+              process.reject(result);
+            }
+          });
+        }
+				// Recognize method params: differentiate second param as a state string (to update only the call state) 
+        // or a callInfo object to update the whole call
+        if (stateInfo) {
+          if (typeof stateInfo === "object") {
+            processUpdateCall(id, null, stateInfo);
+          } else if (typeof stateInfo !== "string") {
+            processUpdateCall(id, stateInfo, null);
+          } else {
+            stateInfo = null;   
+          }
+        } 
+        if (!stateInfo) {
+          log.trace("Updating call requires a state string or callInfo object");
+          process.reject("Call update requires a state or information");
+        }
+      } else {
+        log.trace("Updating call requires CometD");
+        process.reject("CometD required");
+      }
+      return process.promise();
 		};
 		
 		/**
@@ -2277,30 +2341,69 @@
 			}
 		};
 		
-		
 		/**
 		 * Register call in server side database.
 		 */
 		this.addCall = function(id, callInfo) {
+			let process = $.Deferred();
 			if (cometd) {
-				var process = $.Deferred();
-				var callProps = cometdParams($.extend(callInfo, {
-					command : "create",
-					id : id
-				}));
-				cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
-					var result = tryParseJson(response);
-					if (response.successful) {
-					  process.resolve(result);
-					} else {
-						process.reject(result);
-					}
-				});
-				return process.promise();
+        // Note: this function should be invoked once per addCall execution!
+        function processAddCall(id, callInfo) {
+          let callProps = cometdParams($.extend(callInfo, {
+            command : "create",
+            id : id
+          }));
+          cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
+            var result = tryParseJson(response);
+            if (response.successful) {
+              process.resolve(result);
+            } else {
+              process.reject(result);
+            }
+          });
+        }
+        // Recognize method params: if only a callInfo given as a first param, then generate a call ID by the provider
+        if (id && typeof id === "object" && !callInfo) {
+          callInfo = id;
+        }
+        if (!id && callInfo) {  
+          // If call ID not provided, we try to get it from the provider
+          if (callInfo.provider) {
+            getProvider(callInfo.provider).then(provider => {
+              let context = null;
+              if (callinfo.ownerType === "user") {
+                context = userContext(callinfo.owner);
+              } else if (callinfo.ownerType === "space") {
+                context = spaceContext(callinfo.owner);
+              } else if (callinfo.ownerType === "chat_room") {
+                if (callinfo.chatContact && typeof chatContact === "object") {
+                  context = chatContext(callinfo.chatContact);
+                } else {
+                  log.error("Cannot add call for chat room without callinfo.chatContact details");
+                  log.trace("> Got callinfo for chat room without callinfo.chatContact: " + JSON.stringify(callinfo));
+                }
+              }
+              if (context && provider.getCallId && provider.hasOwnProperty("getCallId")) {
+                provider.getCallId(context).then(id => {
+                  processAddCall(id, callInfo);
+                });
+              } else {
+                log.trace("Adding a call without an ID requires a provider to implement a method getCallId(): " + callInfo.provider);
+                process.reject("Provider does not support generating a call ID by a context");
+              }
+            });
+          } else {
+            log.trace("Adding a call without an ID requires a provider in callInfo: " + JSON.stringify(callinfo));
+            process.reject("Provider required in callInfo");
+          }
+        } else {
+          processAddCall(id, callInfo);
+        }
 			} else {
-				log.trace("Adding call requires CometD. Was call: " + id);
-				return $.Deferred().reject("CometD required").promise();
+				log.trace("Adding call requires CometD");
+				process.reject("CometD required");
 			}
+      return process.promise();
 		};
 				
 		this.getUserGroupCalls = function() {
