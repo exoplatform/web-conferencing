@@ -1051,7 +1051,7 @@ public class CometdWebConferencingService implements Startable {
                           Object infoJson = arguments.get("info");
                           if (infoJson != null) {
                             try {
-                              List<String> info = asList(infoJson, String.class);
+                              //List<String> info = asList(infoJson, String.class);
                               // TODO update the call info (title, dates, etc)
                               //CallInfo call = webConferencing.updateInfo(id, info);
                               CallInfo call = webConferencing.getCall(id);

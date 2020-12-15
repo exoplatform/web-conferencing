@@ -2370,18 +2370,18 @@
         if (!id && callInfo) {  
           // If call ID not provided, we try to get it from the provider
           if (callInfo.provider) {
-            getProvider(callInfo.provider).then(provider => {
+            self.getProvider(callInfo.provider).then(provider => {
               let context = null;
-              if (callinfo.ownerType === "user") {
-                context = userContext(callinfo.owner);
-              } else if (callinfo.ownerType === "space") {
-                context = spaceContext(callinfo.owner);
-              } else if (callinfo.ownerType === "chat_room") {
-                if (callinfo.chatContact && typeof chatContact === "object") {
-                  context = chatContext(callinfo.chatContact);
+              if (callInfo.ownerType === "user") {
+                context = userContext(callInfo.owner);
+              } else if (callInfo.ownerType === "space") {
+                context = spaceContext(callInfo.owner);
+              } else if (callInfo.ownerType === "chat_room") {
+                if (callInfo.chatContact && typeof chatContact === "object") {
+                  context = chatContext(callInfo.chatContact);
                 } else {
-                  log.error("Cannot add call for chat room without callinfo.chatContact details");
-                  log.trace("> Got callinfo for chat room without callinfo.chatContact: " + JSON.stringify(callinfo));
+                  log.error("Cannot add call for chat room without callInfo.chatContact details");
+                  log.trace("> Got call info for chat room without callInfo.chatContact: " + JSON.stringify(callInfo));
                 }
               }
               if (context && provider.getCallId && provider.hasOwnProperty("getCallId")) {
@@ -2394,7 +2394,7 @@
               }
             });
           } else {
-            log.trace("Adding a call without an ID requires a provider in callInfo: " + JSON.stringify(callinfo));
+            log.trace("Adding a call without an ID requires a provider in callInfo: " + JSON.stringify(callInfo));
             process.reject("Provider required in callInfo");
           }
         } else {
