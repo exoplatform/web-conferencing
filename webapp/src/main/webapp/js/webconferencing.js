@@ -2365,6 +2365,7 @@
         // Recognize method params: if only a callInfo given as a first param, then generate a call ID by the provider
         if (id && typeof id === "object" && !callInfo) {
           callInfo = id;
+          id = null;
         }
         if (!id && callInfo) {  
           // If call ID not provided, we try to get it from the provider
