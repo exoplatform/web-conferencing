@@ -2367,7 +2367,7 @@
           callInfo = id;
           id = null;
         }
-        if (!id && callInfo) {  
+        if (!id && callInfo) {
           // If call ID not provided, we try to get it from the provider
           if (callInfo.provider) {
             self.getProvider(callInfo.provider).then(provider => {
@@ -2386,7 +2386,21 @@
               }
               if (context && provider.getCallId && provider.hasOwnProperty("getCallId")) {
                 provider.getCallId(context).then(id => {
-                  processAddCall(id, callInfo);
+                  // Check if call does not exist already
+                  self.getCall(id).then(call => {
+                    // Update the call
+                    self.updateCall(id, callInfo).then(call => {
+                      process.resolve(call);
+                    }).catch(err => {
+                      process.reject(err);
+                    });
+                  }).catch(err => {
+                    if (err && err.code === "NOT_FOUND_ERROR") {
+                      processAddCall(id, callInfo);
+                    } else {
+                      process.reject(err);
+                    }
+                  });
                 });
               } else {
                 log.trace("Adding a call without an ID requires a provider to implement a method getCallId(): " + callInfo.provider);
