@@ -2299,7 +2299,7 @@
         if (stateInfo) {
           if (typeof stateInfo === "object") {
             processUpdateCall(id, null, stateInfo);
-          } else if (typeof stateInfo !== "string") {
+          } else if (typeof stateInfo === "string") {
             processUpdateCall(id, stateInfo, null);
           } else {
             stateInfo = null;   
