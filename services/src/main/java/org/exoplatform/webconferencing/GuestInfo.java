@@ -28,7 +28,7 @@ import org.exoplatform.services.log.Log;
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: ParticipantInfo.java 00000 Feb 23, 2017 pnedonosko $
+ * @version $Id: GuestInfo.java 00000 Feb 23, 2017 pnedonosko $
  */
 public class GuestInfo extends UserInfo {
 
