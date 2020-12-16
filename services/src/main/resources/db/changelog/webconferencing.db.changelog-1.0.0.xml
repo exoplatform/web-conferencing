@@ -83,7 +83,7 @@
   <!-- Definition of WBC_PARTICIPANTS constraints -->
   <changeSet author="web-conferencing" id="1.0.0-4">
     <addPrimaryKey tableName="WBC_PARTICIPANTS" columnNames="ID, CALL_ID" constraintName="PK_WBC_CALLPART" />
-    <!-- When call deleted in WBC_CALLS - all parts should be deleted. When call ID updated in WBC_CALLS -->
+    <!-- When call deleted in WBC_CALLS - all parts should be deleted. When call ID updated in WBC_CALLS - update it here. -->
     <addForeignKeyConstraint baseTableName="WBC_PARTICIPANTS" baseColumnNames="CALL_ID"
       referencedTableName="WBC_CALLS" referencedColumnNames="ID" constraintName="FK_WBC_PARTCALL" onDelete="CASCADE" onUpdate="CASCADE" />
   </changeSet>
@@ -114,4 +114,45 @@
     <addPrimaryKey columnNames="CALL_ID, IDENTITY" constraintName="PK_WBC_INVITES" tableName="WBC_INVITES" />
   </changeSet>
   
+  <!-- Definition of WBC_ORIGINS table -->
+  <changeSet author="web-conferencing" id="1.0.0-7">
+    <createTable tableName="WBC_ORIGINS">
+      <column name="ID" type="NVARCHAR(255)">
+        <constraints nullable="false" />
+      </column>
+      <column name="CALL_ID" type="NVARCHAR(255)">
+        <constraints nullable="false" />
+      </column>
+      <column name="TYPE" type="NVARCHAR(32)">
+        <constraints nullable="false" />
+      </column>
+      <column name="STATE" type="NVARCHAR(32)">
+        <constraints nullable="true" />
+      </column>
+    </createTable>
+    <modifySql dbms="mysql">
+      <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci" />
+    </modifySql>
+  </changeSet>
+
+  <!-- Definition of WBC_ORIGINS constraints -->
+  <changeSet author="web-conferencing" id="1.0.0-8">
+    <addPrimaryKey tableName="WBC_ORIGINS" columnNames="ID, CALL_ID, TYPE" constraintName="PK_WBC_ORIGINS" />
+    <!-- When call deleted in WBC_CALLS - all part origins should be deleted. When call ID updated in WBC_CALLS - update it here. -->
+    <addForeignKeyConstraint baseTableName="WBC_ORIGINS" baseColumnNames="CALL_ID"
+      referencedTableName="WBC_CALLS" referencedColumnNames="ID" constraintName="FK_WBC_ORIGINS" onDelete="CASCADE" onUpdate="CASCADE" />
+  </changeSet>
+  
+  <!-- Alter WBC_CALLS table: add call dates -->
+  <changeSet author="web-conferencing" id="1.0.0-9">
+    <addColumn tableName="WBC_CALLS">
+      <column name="START_DATE" type="TIMESTAMP">
+        <constraints nullable="true" />
+      </column>
+      <column name="END_DATE" type="TIMESTAMP">
+        <constraints nullable="true" />
+      </column>
+    </addColumn>
+  </changeSet>
+
 </databaseChangeLog>

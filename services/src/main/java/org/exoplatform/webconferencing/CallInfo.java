@@ -40,6 +40,9 @@ public class CallInfo {
 
   /** The participants. */
   protected final Set<UserInfo> participants = new LinkedHashSet<>();
+  
+  /** The origins. */
+  protected final Set<OriginInfo> origins = new LinkedHashSet<>();
 
   /** The owner. */
   protected final IdentityInfo  owner;
@@ -52,6 +55,12 @@ public class CallInfo {
 
   /** The last date. */
   protected Date                lastDate;
+  
+  /** The start date. */
+  protected Date                startDate;
+  
+  /** The end date. */
+  protected Date                endDate;
 
   /** The invite id. */
   protected String              inviteId;
@@ -91,14 +100,43 @@ public class CallInfo {
   }
 
   /**
-   * Gets the participants (users planned for the call).
+   * Gets the participants (actual users for the call).
    *
    * @return the participants
    */
   public Set<UserInfo> getParticipants() {
     return Collections.unmodifiableSet(participants);
   }
-
+  
+  /**
+   * Gets the origins (direct users and groups involved in the call).
+   *
+   * @return the origins
+   */
+  public Set<OriginInfo> getOrigins() {
+    return Collections.unmodifiableSet(origins);
+  }
+  
+  /**
+   * Adds the origins.
+   *
+   * @param origins the origins
+   */
+  public void addOrigins(Collection<OriginInfo> origins) {
+    for (OriginInfo origin : origins) {
+      addOrigin(origin);
+    }
+  }
+  
+  /**
+   * Adds the origin.
+   *
+   * @param origin the origin
+   */
+  public void addOrigin(OriginInfo origin) {
+    origins.add(origin);
+  }
+  
   /**
    * Gets the owner.
    *
@@ -118,7 +156,7 @@ public class CallInfo {
   }
 
   /**
-   * Adds the participants.
+   * Adds the participants. This method will add only if no such participant already exists (like {@link Set} works).
    *
    * @param parts the parts
    */
@@ -129,7 +167,7 @@ public class CallInfo {
   }
 
   /**
-   * Adds the participant.
+   * Adds the participant. This method will add only if no such participant already exists (like {@link Set} works).
    *
    * @param part the part
    */
@@ -156,7 +194,7 @@ public class CallInfo {
   public void removeParticipant(UserInfo part) {
     participants.remove(part);
   }
-
+  
   /**
    * Gets the state.
    *
@@ -210,6 +248,40 @@ public class CallInfo {
   public void setInviteId(String inviteId) {
     this.inviteId = inviteId;
   }
-  
-  
+
+  /**
+   * Gets the start date.
+   *
+   * @return the startDate
+   */
+  public Date getStartDate() {
+    return startDate;
+  }
+
+  /**
+   * Sets the start date.
+   *
+   * @param startDate the startDate to set
+   */
+  public void setStartDate(Date startDate) {
+    this.startDate = startDate;
+  }
+
+  /**
+   * Gets the end date.
+   *
+   * @return the endDate
+   */
+  public Date getEndDate() {
+    return endDate;
+  }
+
+  /**
+   * Sets the end date.
+   *
+   * @param endDate the endDate to set
+   */
+  public void setEndDate(Date endDate) {
+    this.endDate = endDate;
+  }
 }
