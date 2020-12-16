@@ -22,7 +22,6 @@ import static org.exoplatform.webconferencing.Utils.asJSON;
 import static org.exoplatform.webconferencing.WebConferencingService.isValidArg;
 import static org.exoplatform.webconferencing.WebConferencingService.isValidId;
 import static org.exoplatform.webconferencing.WebConferencingService.isValidText;
-import static org.exoplatform.webconferencing.WebConferencingService.isNotNullArg;
 import static org.exoplatform.webconferencing.support.CallLog.DEBUG_LEVEL;
 import static org.exoplatform.webconferencing.support.CallLog.ERROR_LEVEL;
 import static org.exoplatform.webconferencing.support.CallLog.INFO_LEVEL;
@@ -31,6 +30,7 @@ import static org.exoplatform.webconferencing.support.CallLog.WARN_LEVEL;
 import static org.exoplatform.webconferencing.support.CallLog.validate;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -94,7 +95,6 @@ import org.exoplatform.webconferencing.IdentityData;
 import org.exoplatform.webconferencing.IdentityStateException;
 import org.exoplatform.webconferencing.InvitedIdentity;
 import org.exoplatform.webconferencing.UserCallListener;
-import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.client.ErrorInfo;
@@ -137,6 +137,9 @@ public class CometdWebConferencingService implements Startable {
 
   /** The Constant COMMAND_CREATE. */
   public static final String             COMMAND_CREATE                        = "create";
+
+  /** The Constant COMMAND_CREATE_ORIGINS. */
+  public static final String             COMMAND_CREATE_ORIGINS                = "create_origins";
 
   /** The Constant COMMAND_UPDATE. */
   public static final String             COMMAND_UPDATE                        = "update";
@@ -1048,25 +1051,52 @@ public class CometdWebConferencingService implements Startable {
                             caller.failure(ErrorInfo.serverError("Error reading call").asJSON());
                           }
                         } else if (COMMAND_UPDATE.equals(command)) {
-                          Object infoJson = arguments.get("info");
-                          if (infoJson != null) {
+                          @SuppressWarnings("unchecked")
+                          Map<String, Object> info = (Map<String, Object>) arguments.get("info");
+                          if (info != null) {
+                            String ownerId = asString(info.get("owner"));
+                            String ownerType = asString(info.get("ownerType"));
+                            String providerType = asString(info.get("provider"));
+                            String title = asString(info.get("title"));
+                            String pstr = asString(info.get("participants"));
+                            String spacesstr = asString(info.get("spaces"));
+                            String startDate = asString(arguments.get("startDate"));
+                            Date startD = null;
                             try {
-                              //List<String> info = asList(infoJson, String.class);
-                              // TODO update the call info (title, dates, etc)
-                              //CallInfo call = webConferencing.updateInfo(id, info);
-                              CallInfo call = webConferencing.getCall(id);
-                              if (call != null) {
+                              startD = parseDate(startDate);
+                            } catch (Exception e) {
+                              caller.failure(ErrorInfo.clientError("Wrong parameter format for call update: startDate").asJSON());
+                            }
+                            String endDate = asString(arguments.get("endDate"));
+                            Date endD = null;
+                            try {
+                              endD = parseDate(endDate);
+                            } catch (Exception e) {
+                              caller.failure(ErrorInfo.clientError("Wrong parameter format for call update: endDate").asJSON());
+                            }
+                            if (pstr != null) { // we don't check max length here
+                              List<String> partIds = Arrays.asList(pstr.split(";"));
+                              List<String> spaceNames = spacesstr != null ? Arrays.asList(spacesstr.split(";")) : null;
+                              try {
+                                CallInfo call = webConferencing.updateCall(id,
+                                                                           ownerId,
+                                                                           ownerType,
+                                                                           title,
+                                                                           providerType,
+                                                                           partIds,
+                                                                           spaceNames,
+                                                                           startD,
+                                                                           endD);
                                 caller.result(asJSON(call));
-                              } else {
-                                caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
+                              } catch (CallInfoException e) {
+                                // aka BAD_REQUEST - user did bad input, need to retry or reuse existing call
+                                caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
+                              } catch (Throwable e) {
+                                LOG.error("Error updating call information for '" + id + "' by '" + currentUserId + "'", e);
+                                caller.failure(ErrorInfo.serverError("Error updating call information").asJSON());
                               }
-                              //
-                              caller.result(asJSON(call));
-                            //} catch (CallNotFoundException e) {
-                            //  caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
-                            } catch (Throwable e) {
-                              LOG.error("Error updating call information '" + id + "' by '" + currentUserId + "'", e);
-                              caller.failure(ErrorInfo.serverError("Error updating call information").asJSON());
+                            } else {
+                              caller.failure(ErrorInfo.clientError("Wrong info parameters: participants").asJSON());
                             }
                           } else {
                             Object participantsJson = arguments.get("participants");
@@ -1106,17 +1136,17 @@ public class CometdWebConferencingService implements Startable {
                                       caller.failure(ErrorInfo.notFoundError("Call not found").asJSON());
                                     }
                                   } else {
-                                    caller.failure(ErrorInfo.clientError("Wrong request parameters: state not recognized")
+                                    caller.failure(ErrorInfo.clientError("Wrong parameters: state not recognized")
                                                             .asJSON());
                                   }
                                 } catch (CallNotFoundException e) { // aka BAD_REQUEST
                                   caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
                                 } catch (Throwable e) {
-                                  LOG.error("Error updating call '" + id + "' by '" + currentUserId + "'", e);
-                                  caller.failure(ErrorInfo.serverError("Error updating call record").asJSON());
+                                  LOG.error("Error updating call state '" + id + "' by '" + currentUserId + "'", e);
+                                  caller.failure(ErrorInfo.serverError("Error updating call state").asJSON());
                                 }
                               } else {
-                                caller.failure(ErrorInfo.clientError("Wrong request parameters: state").asJSON());
+                                caller.failure(ErrorInfo.clientError("Wrong parameters: state").asJSON());
                               }
                             }                            
                           }
@@ -1126,20 +1156,46 @@ public class CometdWebConferencingService implements Startable {
                           String providerType = asString(arguments.get("provider"));
                           String title = asString(arguments.get("title"));
                           String pstr = asString(arguments.get("participants"));
+                          String spacesstr = asString(arguments.get("spaces"));
+                          boolean start = asBoolean(arguments.get("start"));
+                          String startDate = asString(arguments.get("startDate"));
+                          Date startD = null;
+                          try {
+                            startD = parseDate(startDate);
+                          } catch (Exception e) {
+                            caller.failure(ErrorInfo.clientError("Wrong parameter format for call creation: startDate").asJSON());
+                          }
+                          String endDate = asString(arguments.get("endDate"));
+                          Date endD = null;
+                          try {
+                            endD = parseDate(endDate);
+                          } catch (Exception e) {
+                            caller.failure(ErrorInfo.clientError("Wrong parameter format for call creation: endDate").asJSON());
+                          }
                           if (pstr != null) { // we don't check max length here
-                            List<String> participants = Arrays.asList(pstr.split(";"));
+                            List<String> partIds = Arrays.asList(pstr.split(";"));
+                            List<String> spaceNames = spacesstr != null ? Arrays.asList(spacesstr.split(";")) : null;
                             try {
-                              CallInfo call = webConferencing.addCall(id, ownerId, ownerType, title, providerType, participants);
+                              CallInfo call = webConferencing.createCall(id,
+                                                                         ownerId,
+                                                                         ownerType,
+                                                                         title,
+                                                                         providerType,
+                                                                         partIds,
+                                                                         spaceNames,
+                                                                         start,
+                                                                         startD,
+                                                                         endD);
                               caller.result(asJSON(call));
                             } catch (CallInfoException e) {
                               // aka BAD_REQUEST - user did bad input, need to retry or reuse existing call
                               caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
                             } catch (Throwable e) {
                               LOG.error("Error creating call for '" + id + "' by '" + currentUserId + "'", e);
-                              caller.failure(ErrorInfo.serverError("Error creating call record").asJSON());
+                              caller.failure(ErrorInfo.serverError("Error creating call").asJSON());
                             }
                           } else {
-                            caller.failure(ErrorInfo.clientError("Wrong request parameters: participants").asJSON());
+                            caller.failure(ErrorInfo.clientError("Wrong parameters for call creation: participants").asJSON());
                           }
                         } else if (COMMAND_DELETE.equals(command)) {
                           try {
@@ -1377,6 +1433,25 @@ public class CometdWebConferencingService implements Startable {
         caller.failure(ErrorInfo.serverError("Error processing call request: " + e.getMessage()).asJSON());
       }
     }
+
+    /**
+     * Parse date.
+     *
+     * @param date the date
+     * @return the date
+     */
+    private Date parseDate(String date) {
+      if (date != null) {
+        try {
+          return Date.from(ZonedDateTime.parse(date, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant());
+        } catch (Exception e) {
+          LOG.warn("Error parsing call date: '" + date + "'", e);
+          throw e;
+        }
+      } else {
+        return null;
+      }
+    }
   }
 
   /**
@@ -1557,6 +1632,19 @@ public class CometdWebConferencingService implements Startable {
     }
     return null;
   }
+  
+  /**
+   * Return true if it's Boolean instance of TRUE or false if it is not.
+   *
+   * @param obj the obj
+   * @return the boolean
+   */
+  protected boolean asBoolean(Object obj) {
+    if (obj != null) {
+      return Boolean.valueOf(obj.toString());
+    }
+    return false;
+  }
 
   /**
    * As list.
@@ -1589,6 +1677,7 @@ public class CometdWebConferencingService implements Startable {
     Object[] arr = (Object[]) obj;
     for (Object elem : arr) {
       if (Map.class.isAssignableFrom(elem.getClass())) {
+        @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) elem;
         String id = asString(map.get("id"));
         String type = asString(map.get("type"));
