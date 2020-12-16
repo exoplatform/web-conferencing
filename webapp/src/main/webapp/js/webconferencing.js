@@ -787,6 +787,27 @@
 	var getSpaceInfo = function(spaceId) {
 		return getCached(spaceId, cachedSpaces, getSpaceInfoReq);
 	};
+
+  var getSpaceEventInfoReq = function(spaceId, participants, spaces) {
+    var q = "";
+    if (participants) {
+      q += "participants=" + encodeURIComponent(participants);
+    }
+    if (spaces) {
+      if (q.length == 0) {
+        q += "?";
+      } else {
+        q += "&";
+      }
+      q += "?spaces=" + encodeURIComponent(spaces);
+    }
+    var request = $.ajax({
+      async : true,
+      type : "GET",
+      url : prefixUrl + "/portal/rest/webconferencing/space-event/" + spaceId + q
+    });
+    return initRequest(request);
+  };
 	
 	var cachedRooms = new Cache();
 	var getRoomInfoReq = function(roomId, title, members) {
@@ -1297,15 +1318,14 @@
         var details = $.Deferred();
         if (context.isGroup) {
           if (context.isSpace) {
-            var spaceId = context.prettyName;
-            getSpaceInfoReq(spaceId).done(function(space) {
+            getSpaceInfoReq(context.spaceId).done(function(space) {
               details.resolve(space);
             }).fail(function(err) {
-              log.trace("Error getting space info " + spaceId + " for chat context", err);
+              log.trace("Error getting space info " + context.spaceId + " for chat context", err);
               details.reject(err);
             });
           } else if (context.isRoom) {
-            let roomUsers = context.participants;
+            let roomUsers = context.roomParticipants();
             if (roomUsers && roomUsers.length > 0) {
               var unames = [];
               for (var i = 0; i < roomUsers.length; i++) {
@@ -1345,12 +1365,12 @@
       var context;
       if (chat.selectedContact) {
         var roomTitle = chat.selectedContact.fullName;
-        // It is a logic used in Chat, so reuse it here:
-        var roomName = roomTitle.toLowerCase().split(" ").join("_");
         var isUser = chat.selectedContact.type === "u"; // roomId is an user name in system;
         var isSpace = chat.selectedContact.type === "s"; // roomId && roomId.startsWith("space-");
         var isRoom = chat.selectedContact.type === "t"; // roomId && roomId.startsWith("team-");
         var isGroup = isSpace || isRoom;
+        // roomName from its title - it is a logic used in Chat, so reuse it here:
+        var roomName = isSpace ? chat.selectedContact.prettyName : roomTitle.toLowerCase().split(" ").join("_");
         context = {
           currentUser: currentUser,
           roomId: chat.selectedContact.user,
@@ -1363,8 +1383,9 @@
           isIOS: isIOS,
           isAndroid: isAndroid,
           isWindowsMobile: isWindowsMobile,
-          prettyName: chat.selectedContact.prettyName,
-          participants: chat.selectedContact.participants
+          roomParticipants: () => {
+            return chat.selectedContact.participants;
+          }
         };
         if (isSpace) {
           context.spaceId = roomName;
@@ -1392,12 +1413,12 @@
       if (target) {
         if (target.detail) {
           var roomTitle = target.detail.fullName;
-          // It is a logic used in Chat, so reuse it here:
-          var roomName = roomTitle.toLowerCase().split(" ").join("_");
           var isUser = target.detail.type === "u"; // roomId is an user name in system;
           var isSpace = target.detail.type === "s"; // roomId && roomId.startsWith("space-");
           var isRoom = target.detail.type === "t"; // roomId && roomId.startsWith("team-");
           var isGroup = isSpace || isRoom;
+          // roomName from its title - it is a logic used in Chat, so reuse it here:
+          var roomName = roomTitle.toLowerCase().split(" ").join("_");
           context = {
             currentUser: currentUser,
             roomId: target.detail.user,
@@ -1410,8 +1431,9 @@
             isIOS: isIOS,
             isAndroid: isAndroid,
             isWindowsMobile: isWindowsMobile,
-            prettyName: target.detail.prettyName,
-            participants: target.detail.participants
+            roomParticipants: () => {
+              return target.detail.participants;
+            }
           };
           if (isSpace) {
             context.spaceId = roomName;
@@ -1761,6 +1783,29 @@
 			};
 			return context;
 		};
+
+    var spaceEventContext = function(spaceId, participants, spaces) {
+      var context = {
+        currentUser : currentUser,
+        spaceId : spaceId,
+        isSpaceEvent : true,
+        isGroup : true,
+        isSpace : false,
+        isRoom : false,
+        isUser : false,
+        isIOS : isIOS,
+        isAndroid : isAndroid,
+        isWindowsMobile : isWindowsMobile,
+        details : function() {
+          const	space = getSpaceEventInfoReq(spaceId, participants, spaces);
+          space.fail(function(err) {
+            log.trace("Error getting space event info " + spaceId + " for space event context", err);
+          });
+          return space;
+        }
+      };
+      return context;
+    };
 		
 		/**
 		 * Add call button to space's on-mouse popups and panels.
@@ -2348,9 +2393,10 @@
 			let process = $.Deferred();
 			if (cometd) {
         // Note: this function should be invoked once per addCall execution!
-        function processAddCall(id, callInfo) {
+        function processAddCall(id, callInfo, start) {
           let callProps = cometdParams($.extend(callInfo, {
             command : "create",
+            start : start,
             id : id
           }));
           cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
@@ -2376,9 +2422,11 @@
                 context = userContext(callInfo.owner);
               } else if (callInfo.ownerType === "space") {
                 context = spaceContext(callInfo.owner);
+              } else if (callInfo.ownerType === "space_event") {
+                context = spaceEventContext(callInfo.owner, callInfo.participants, callInfo.spaces);
               } else if (callInfo.ownerType === "chat_room") {
                 if (callInfo.chatContact && typeof chatContact === "object") {
-                  context = chatContext(callInfo.chatContact);
+                  context = chatContextForRoom(callInfo.chatContact);
                 } else {
                   log.error("Cannot add call for chat room without callInfo.chatContact details");
                   log.trace("> Got call info for chat room without callInfo.chatContact: " + JSON.stringify(callInfo));
@@ -2397,7 +2445,7 @@
                     //  });
                   }).catch(err => {
                     if (err && err.code === "NOT_FOUND_ERROR") {
-                      processAddCall(id, callInfo);
+                      processAddCall(id, callInfo, false);
                     } else {
                       process.reject(err);
                     }
@@ -2413,7 +2461,7 @@
             process.reject("Provider required in callInfo");
           }
         } else {
-          processAddCall(id, callInfo);
+          processAddCall(id, callInfo, true);
         }
 			} else {
 				log.trace("Adding call requires CometD");
@@ -2683,6 +2731,14 @@
       });
       return localContext.promise();
     };
+
+    this.createSpaceEventContext = async function(spaceId, participants, spaces) {
+      const localContext = $.Deferred();
+      contextInitializer.then(() => {
+        localContext.resolve(spaceEventContext(spaceId, participants, spaces));
+      });
+      return localContext.promise();
+    }
 
     this.getAllProviders = async function() {
       const webConferencing = this;

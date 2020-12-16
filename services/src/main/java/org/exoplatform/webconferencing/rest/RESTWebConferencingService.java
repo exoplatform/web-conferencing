@@ -307,6 +307,90 @@ public class RESTWebConferencingService implements ResourceContainer {
   }
 
   /**
+   * Gets the space event info.
+   *
+   * @param uriInfo the uri info
+   * @param spaceName the space name
+   * @return the space event info response
+   */
+    @GET
+    @RolesAllowed("users")
+    @Path("/space-event/{spaceName}")
+    public Response getSpaceEventInfo(@Context UriInfo uriInfo,
+                                      @PathParam("spaceName") String spaceName,
+                                      @QueryParam("participants") String participants,
+                                      @QueryParam("spaces") String spaces) {
+      ConversationState convo = ConversationState.getCurrent();
+      if (convo != null) {
+        String currentUserName = convo.getIdentity().getUserId();
+        if (spaceName != null && spaceName.length() > 0) {
+          if (participants != null && participants.length() > 0) {
+            if (spaces != null && spaces.length() > 0) {
+              try {
+                GroupInfo space = webConferencing.getSpaceEventInfo(spaceName,
+                                                                    participants.trim().split(";"),
+                                                                    spaces.trim().split(";"));
+                if (space != null) {
+                  if (space.getMembers().containsKey(currentUserName)) {
+                    return Response.ok().cacheControl(cacheControl).entity(space).build();
+                  } else {
+                    return Response.status(Status.FORBIDDEN)
+                                   .cacheControl(cacheControl)
+                                   .entity(ErrorInfo.accessError("Not space member"))
+                                   .build();
+                  }
+                } else {
+                  return Response.status(Status.NOT_FOUND)
+                                 .cacheControl(cacheControl)
+                                 .entity(ErrorInfo.notFoundError("Space not found or not accessible"))
+                                 .build();
+                }
+              } catch (IdentityStateException e) {
+                LOG.error("Error reading member of space '" + spaceName + "' by '" + currentUserName + "'", e);
+                return Response.serverError()
+                               .cacheControl(cacheControl)
+                               .entity(ErrorInfo.serverError("Error reading member of space '" + spaceName + "'"))
+                               .build();
+              } catch (StorageException e) {
+                LOG.error("Storage error for space event info of '" + spaceName + "' by '" + currentUserName + "'", e);
+                return Response.serverError()
+                               .cacheControl(cacheControl)
+                               .entity(ErrorInfo.serverError("Storage error for space '" + spaceName + "'"))
+                               .build();
+              } catch (Throwable e) {
+                LOG.error("Error reading space event info of '" + spaceName + "' by '" + currentUserName + "'", e);
+                return Response.serverError()
+                               .cacheControl(cacheControl)
+                               .entity(ErrorInfo.serverError("Error reading space " + spaceName))
+                               .build();
+              }
+            } else {
+              return Response.status(Status.BAD_REQUEST)
+                             .cacheControl(cacheControl)
+                             .entity(ErrorInfo.clientError("Wrong request parameters: spaces"))
+                             .build();
+            }
+          } else {
+            return Response.status(Status.BAD_REQUEST)
+                           .cacheControl(cacheControl)
+                           .entity(ErrorInfo.clientError("Wrong request parameters: participants"))
+                           .build();
+          }
+        } else {
+          return Response.status(Status.BAD_REQUEST)
+                         .cacheControl(cacheControl)
+                         .entity(ErrorInfo.clientError("Wrong request parameters: spaceName"))
+                         .build();
+        }
+      } else {
+        return Response.status(Status.UNAUTHORIZED)
+                       .cacheControl(cacheControl)
+                       .entity(ErrorInfo.accessError("Unauthorized user"))
+                       .build();
+      }
+    }
+
+  /**
    * Gets the chat room info.
    *
    * @param uriInfo the uri info

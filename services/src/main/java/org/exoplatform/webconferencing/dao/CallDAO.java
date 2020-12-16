@@ -18,6 +18,8 @@
  */
 package org.exoplatform.webconferencing.dao;
 
+import static org.exoplatform.webconferencing.WebConferencingService.OWNER_TYPE_USER;
+
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,7 +31,6 @@ import javax.persistence.PersistenceException;
 import javax.persistence.TypedQuery;
 
 import org.exoplatform.commons.persistence.impl.GenericDAOJPAImpl;
-import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.domain.CallEntity;
 
 /**
@@ -70,6 +71,54 @@ public class CallDAO extends GenericDAOJPAImpl<CallEntity, String> {
       return null;
     }
   }
+  
+  /**
+   * Find group call by owner type and id.
+   *
+   * @param ownerId the owner id
+   * @param ownerType the owner type
+   * @return the list with call entities or empty list if nothing found
+   * @throws PersistenceException the persistence exception
+   * @throws IllegalStateException the illegal state exception
+   * @throws IllegalArgumentException the illegal argument exception
+   */
+  public CallEntity findGroupCallByOwnerTypeId(String ownerId, String ownerType) throws PersistenceException,
+                                                           IllegalStateException,
+                                                           IllegalArgumentException {
+    TypedQuery<CallEntity> query = getEntityManager().createNamedQuery("WebConfCall.findGroupCallByOwnerTypeId", CallEntity.class)
+                                                     .setParameter("ownerId", ownerId)
+                                                     .setParameter("ownerType", ownerType);
+
+    try {
+      return query.getSingleResult();
+    } catch (NoResultException e) {
+      return null;
+    }
+  }
+  
+  /**
+   * Find group calls by owner type and id.
+   *
+   * @param ownerId the owner id
+   * @param ownerType the owner type
+   * @return the list with call entities or empty list if nothing found
+   * @throws PersistenceException the persistence exception
+   * @throws IllegalStateException the illegal state exception
+   * @throws IllegalArgumentException the illegal argument exception
+   */
+  public List<CallEntity> findGroupCallsByOwnerTypeId(String ownerId, String ownerType) throws PersistenceException,
+                                                           IllegalStateException,
+                                                           IllegalArgumentException {
+    TypedQuery<CallEntity> query = getEntityManager().createNamedQuery("WebConfCall.findGroupCallByOwnerTypeId", CallEntity.class)
+                                                     .setParameter("ownerId", ownerId)
+                                                     .setParameter("ownerType", ownerType);
+
+    try {
+      return query.getResultList();
+    } catch (NoResultException e) {
+      return Collections.emptyList();
+    }
+  }
 
   /**
    * Find user group calls.
@@ -104,7 +153,7 @@ public class CallDAO extends GenericDAOJPAImpl<CallEntity, String> {
   public int deleteAllUsersCalls() throws PersistenceException, IllegalStateException, IllegalArgumentException {
     LocalDateTime expired = LocalDate.now().atStartOfDay().minusDays(USER_CALL_DAYS_LIVETIME);
     return getEntityManager().createNamedQuery("WebConfCall.deleteOwnerOlderCalls")
-                             .setParameter("ownerType", UserInfo.TYPE_NAME)
+                             .setParameter("ownerType", OWNER_TYPE_USER)
                              .setParameter("expiredDate", Timestamp.valueOf(expired))
                              .executeUpdate();
   }

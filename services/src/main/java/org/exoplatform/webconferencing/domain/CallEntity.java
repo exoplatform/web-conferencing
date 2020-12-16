@@ -18,6 +18,8 @@
  */
 package org.exoplatform.webconferencing.domain;
 
+import static org.exoplatform.webconferencing.WebConferencingService.OWNER_TYPE_SPACEEVENT;
+
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -28,6 +30,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 import org.exoplatform.commons.api.persistence.ExoEntity;
+import org.exoplatform.webconferencing.WebConferencingService;
 
 /**
  * Created by The eXo Platform SAS.
@@ -39,8 +42,10 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
 @ExoEntity
 @Table(name = "WBC_CALLS")
 @NamedQueries({
-    @NamedQuery(name = "WebConfCall.findGroupCallByOwnerId",
-                query = "SELECT c FROM WebConfCall c WHERE c.isGroup = true AND c.ownerId = :ownerId"),
+    @NamedQuery(name = "WebConfCall.findGroupCallByOwnerId", // XXX skip OWNER_TYPE_SPACEEVENT to do get only spaces and user 
+                query = "SELECT c FROM WebConfCall c WHERE c.isGroup = true AND c.ownerType != '" + OWNER_TYPE_SPACEEVENT + "' AND c.ownerId = :ownerId"),
+    @NamedQuery(name = "WebConfCall.findGroupCallByOwnerTypeId",
+                query = "SELECT c FROM WebConfCall c WHERE c.isGroup = true AND c.ownerType = :ownerType AND c.ownerId = :ownerId ORDER BY c.lastDate"), // TODO order by startDate
     @NamedQuery(name = "WebConfCall.findUserGroupCalls",
                 query = "SELECT c FROM WebConfCall c, WebConfParticipant p WHERE c.id = p.callId AND p.id = :userId ORDER BY c.lastDate"),
     @NamedQuery(name = "WebConfCall.deleteOwnerOlderCalls",
@@ -76,10 +81,17 @@ public class CallEntity {
   @Column(name = "SETTINGS")
   protected String  settings;
 
-  /** The call date. */
+  /** The call last (actual) date of call start. */
   @Column(name = "LAST_DATE")
-  // @Temporal(TemporalType.DATE)
   protected Date    lastDate;
+
+  /** The call start date as planned (for information and use by providers). */
+  @Column(name = "START_DATE")
+  protected Date    startDate;
+
+  /** The call end date as planned (for information and use by providers). */
+  @Column(name = "END_DATE")
+  protected Date    endDate;
 
   /** The is group. */
   @Column(name = "IS_GROUP")
@@ -201,6 +213,42 @@ public class CallEntity {
    */
   public void setLastDate(Date lastDate) {
     this.lastDate = lastDate;
+  }
+  
+  /**
+   * Gets the start date.
+   *
+   * @return the startDate
+   */
+  public Date getStartDate() {
+    return startDate;
+  }
+
+  /**
+   * Sets the start date.
+   *
+   * @param startDate the startDate to set
+   */
+  public void setStartDate(Date startDate) {
+    this.startDate = startDate;
+  }
+
+  /**
+   * Gets the end date.
+   *
+   * @return the endDate
+   */
+  public Date getEndDate() {
+    return endDate;
+  }
+
+  /**
+   * Sets the end date.
+   *
+   * @param endDate the endDate to set
+   */
+  public void setEndDate(Date endDate) {
+    this.endDate = endDate;
   }
 
   /**
