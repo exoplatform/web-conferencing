@@ -55,6 +55,9 @@
     <type>org.exoplatform.webconferencing.dao.ParticipantDAO</type>
   </component>
   <component>
+    <type>org.exoplatform.webconferencing.dao.OriginDAO</type>
+  </component>
+  <component>
     <type>org.exoplatform.webconferencing.dao.InviteDAO</type>
   </component>
   
