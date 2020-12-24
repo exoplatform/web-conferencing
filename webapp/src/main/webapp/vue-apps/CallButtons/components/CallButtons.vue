@@ -13,8 +13,7 @@
         @getRefs="getRef($event)"
         @showDropdown="showDropdown($event)"
         @dropdownIsVisualized="fireDropdownIsVisualized"
-        @selectedProvider="hideDropdown"
-      />
+        @selectedProvider="hideDropdown" />
       <singlebtn v-else ref="singlebtn" />
     </div>
   </v-app>
@@ -273,18 +272,12 @@ export default {
         // padding: 0 10px;
       }
     }
-    // a:hover,
-    // button:hover {
-    // i {
-    // color: white;
-    // }
-    // }
     &.single {
       // width: @width - 14px;
       height: 36px;
       border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
-      background-color: #ffffff;
+      background-color: transparent;
       padding: 0 10px;
       .single-btn-container {
         height: inherit;
@@ -330,12 +323,6 @@ export default {
     min-height: 36px;
   }
   [class^="call-button-container-"]:hover,
-  // button:hover {
-  //   i,
-  //   span {
-  //     color: white;
-  //   }
-  // }
   .room-actions-container {
     .call-button-container {
       a {
