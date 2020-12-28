@@ -277,7 +277,7 @@ export default {
       height: 36px;
       border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
-      background-color: transparent;
+      background-color: var(--allPagesBaseBackground, #ffffff) !important;;
       padding: 0 10px;
       .single-btn-container {
         height: inherit;
@@ -359,6 +359,7 @@ export default {
         width: unset;
         border: none;
         height: 20px;
+        background-color: transparent !important;
         // &.single-btn-container {
         button {
           [class^="uiIcon"] {
