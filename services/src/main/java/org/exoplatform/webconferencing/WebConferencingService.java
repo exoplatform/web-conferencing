@@ -1351,7 +1351,6 @@ public class WebConferencingService implements Startable {
    * @throws InvalidCallException the invalid call exception
    * @throws StorageException the storage exception
    */
-
   public CallInfo updateParticipants(String callId, List<String> partIds) throws CallNotFoundException,
                                                                            InvalidCallException,
                                                                            StorageException {
@@ -1382,6 +1381,28 @@ public class WebConferencingService implements Startable {
       throw new CallNotFoundException("Call not found: " + callId);
     }
   }
+  
+  /**
+   * Adds the participant to existing call.
+   *
+   * @param callId the call id
+   * @param partId the part id
+   * @throws StorageException the storage exception
+   * @throws CallNotFoundException the call not found exception
+   * @throws InvalidCallException the invalid call exception
+   * @throws IdentityStateException the identity state exception
+   */
+  public void addParticipant(String callId, String partId) throws StorageException,
+                                                           CallNotFoundException,
+                                                           InvalidCallException,
+                                                           IdentityStateException {
+    UserInfo userInfo = userInfo(partId);
+    try {
+      txAddParticipant(callId, userInfo);
+    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+      throw new StorageException("Error adding participant to call " + callId, e);
+    }
+  }
 
   /**
    * Adds the guest to call.
@@ -1406,7 +1427,7 @@ public class WebConferencingService implements Startable {
       try {
         txAddParticipant(callIId, guestInfo);
       } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
-        throw new StorageException("Error adding participant to call " + callIId, e);
+        throw new StorageException("Error adding guest to call " + callIId, e);
       }
       call.addParticipant(guestInfo);
       return call;
@@ -1414,7 +1435,7 @@ public class WebConferencingService implements Startable {
       throw new CallNotFoundException("Call not found: " + callIId);
     }
   }
-
+  
   /**
    * Update invites.
    * Updates list of invited users/groups for the call that can join by invite link.
@@ -1452,8 +1473,9 @@ public class WebConferencingService implements Startable {
    * @throws InvalidCallException if call in erroneous state and cannot be used, details are in caused
    *           exception
    * @throws CallNotFoundException if call not found
+   * @throws IdentityStateException the identity state exception
    */
-  public CallInfo joinCall(String callId, String partId, String clientId) throws InvalidCallException, CallNotFoundException {
+  public CallInfo joinCall(String callId, String partId, String clientId) throws InvalidCallException, CallNotFoundException, IdentityStateException {
     final long opStart = System.currentTimeMillis();
     CallInfo call = getCall(callId);
     if (call != null) {
@@ -1474,7 +1496,17 @@ public class WebConferencingService implements Startable {
           // then save if have the joined (it should but we preserve the logic)
           if (joined != null) {
             // First save the call with joined participant (in single tx)
-            updateParticipant(callId, joined);
+            try {
+              updateParticipant(callId, joined);
+            } catch(ParticipantNotFoundException e) {
+              // XXX check if this participant not from group's origins
+              if (call.getOwner().isGroup() && GroupInfo.class.cast(call.getOwner()).getMembers().keySet().contains(partId)) {
+                addParticipant(callId, partId);
+              } else {
+                throw new ParticipantNotFoundException("Cannot join the call with not allowed participant: " + partId 
+                                                       + ", call: " + callId, e);
+              }
+            }
             // Then fire this user joined to all parts, including the user itself
             for (UserInfo part : call.getParticipants()) {
               fireUserCallJoined(callId,
@@ -2842,12 +2874,17 @@ public class WebConferencingService implements Startable {
   protected void txAddParticipant(String callId, UserInfo participant) throws IllegalArgumentException,
                                                                        IllegalStateException,
                                                                        PersistenceException {
+    addParticipant(callId, participant);
+  }
+  
+  private void addParticipant(String callId, UserInfo participant) throws IllegalArgumentException,
+                                                                   IllegalStateException,
+                                                                   PersistenceException {
     if (participantsStorage.find(new ParticipantId(participant.getId(), callId)) == null) {
       participantsStorage.create(createParticipantEntity(callId, participant));
     } else {
       LOG.warn("Cannot add participant with id {} for call {}. Participant already exists", participant.getId(), callId);
     }
-
   }
 
   /**
@@ -2962,7 +2999,7 @@ public class WebConferencingService implements Startable {
                                                                           ParticipantNotFoundException {
     saveParticipant(callId, participant);
   }
-
+  
   /**
    * Sync group members and participants.
    *
@@ -3072,7 +3109,17 @@ public class WebConferencingService implements Startable {
     // faced in addCall() when deleted outdated call before creating a new one)
     String callId = call.getId();
     for (UserInfo p : call.getParticipants()) {
-      saveParticipant(callId, p);
+      try {
+        saveParticipant(callId, p);
+      } catch(ParticipantNotFoundException e) {
+        // XXX check if this participant not from group's origins
+        if (call.getOwner().isGroup() && GroupInfo.class.cast(call.getOwner()).getMembers().keySet().contains(p.getId())) {
+          addParticipant(callId, p);
+        } else {
+          throw new ParticipantNotFoundException("Cannot update the call with not allowed participant: " + p.getId() 
+                                                 + ", call: " + callId, e);
+        }
+      }
     }
   }
 
