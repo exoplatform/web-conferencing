@@ -850,6 +850,9 @@ public class WebConferencingService implements Startable {
                 if (isUser) {
                   call.addParticipants(createParticipants(providerType, partIds));
                 }
+              } else {
+                // XXX we need set date for non started call as it's required by the DB schema
+                call.setLastDate(Calendar.getInstance().getTime());
               }
 
               // Create the call in storage, handle conflicts if required
@@ -981,6 +984,7 @@ public class WebConferencingService implements Startable {
         }
   
         // Updated call instance
+        // TODO why not reuse existing call object and update only actually passed to this method?
         CallInfo call = new CallInfo(callId, title, owner, providerType);
   
         // We update origins not actual participants (they will be resolved on demand, e.g. in getCall())
@@ -3147,6 +3151,7 @@ public class WebConferencingService implements Startable {
     String callId = call.getId();
     // Replace all origins on the call update
     originsStorage.deleteCallOrigins(callId);
+    originsStorage.clear(); // XXX we need this as we delete origins by JQL query
     for (OriginInfo o : call.getOrigins()) {
       originsStorage.create(createOriginEntity(callId, o));
     }
@@ -3305,6 +3310,7 @@ public class WebConferencingService implements Startable {
                                                           ParticipantNotFoundException,
                                                           CallSettingsException,
                                                           CallNotFoundException {
+    // clearStorage(); // TODO is it required here?
     try {
       txUpdateCallAndParticipants(call);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
@@ -3325,6 +3331,7 @@ public class WebConferencingService implements Startable {
                                                           ParticipantNotFoundException,
                                                           CallSettingsException,
                                                           CallNotFoundException {
+    //clearStorage(); // TODO is it required here?
     try {
       txUpdateCallAndOrigins(call);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
@@ -3387,6 +3394,7 @@ public class WebConferencingService implements Startable {
    * @throws StorageException if storage exception happen
    */
   protected void updateCall(CallInfo call) throws CallNotFoundException, CallSettingsException, StorageException {
+    // clearStorage(); // TODO is it required here?
     try {
       txUpdateCall(call);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
