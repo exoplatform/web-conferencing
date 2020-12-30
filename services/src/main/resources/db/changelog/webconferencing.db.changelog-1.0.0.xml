@@ -154,5 +154,10 @@
       </column>
     </addColumn>
   </changeSet>
+  
+  <!-- Alter WBC_CALLS table: remove constraint limiting to a single call per owner by group/user flag -->
+  <changeSet author="web-conferencing" id="1.0.0-10">
+    <dropUniqueConstraint tableName="WBC_CALLS" constraintName="UK_WBC_GROUP_CALL" />
+  </changeSet>
 
 </databaseChangeLog>

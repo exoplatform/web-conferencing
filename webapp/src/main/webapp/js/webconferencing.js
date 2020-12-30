@@ -2392,8 +2392,22 @@
 		this.addCall = function(id, callInfo) {
 			let process = $.Deferred();
 			if (cometd) {
+        function isDate(date) {
+          return date && date instanceof Date && date.getTime() > 0;
+        }
         // Note: this function should be invoked once per addCall execution!
-        function processAddCall(id, callInfo, start) {
+        function processAddCall(id, callInfo, start, callUrl) {
+          // Fortmat dates to RFC-1123
+          if (isDate(callInfo.startDate)) {
+            callInfo.startDate = callInfo.startDate.toUTCString();
+          } else {
+            callInfo.startDate = undefined;
+          }
+          if (isDate(callInfo)) {
+            callInfo.endDate = callInfo.endDate.toUTCString();
+          } else {
+            callInfo.endDate = undefined;
+          }
           let callProps = cometdParams($.extend(callInfo, {
             command : "create",
             start : start,
@@ -2402,6 +2416,9 @@
           cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
             var result = tryParseJson(response);
             if (response.successful) {
+              if (callUrl && !result.url) {
+                result.url = callUrl; 
+              }
               process.resolve(result);
             } else {
               process.reject(result);
@@ -2432,9 +2449,10 @@
                   log.trace("> Got call info for chat room without callInfo.chatContact: " + JSON.stringify(callInfo));
                 }
               }
-              if (context && provider.getCallId && provider.hasOwnProperty("getCallId")) {
+              if (context && provider.getCallId && provider.hasOwnProperty("getCallId") && provider.getCallUrl && provider.hasOwnProperty("getCallUrl")) {
                 provider.getCallId(context).then(id => {
                   self.getCall(id).then(call => {
+                    call.url = provider.getCallUrl(id);
                     process.resolve(call);
                     // TODO - cleanup. Check if call does not exist already and update it
                     //  // Update the call
@@ -2445,7 +2463,7 @@
                     //  });
                   }).catch(err => {
                     if (err && err.code === "NOT_FOUND_ERROR") {
-                      processAddCall(id, callInfo, false);
+                      processAddCall(id, callInfo, false, provider.getCallUrl(id));
                     } else {
                       process.reject(err);
                     }
