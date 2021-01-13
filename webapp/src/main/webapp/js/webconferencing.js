@@ -1327,7 +1327,7 @@
           } else if (context.isRoom) {
             let roomUsers = context.roomParticipants();
             if (roomUsers && roomUsers.length > 0) {
-              var unames = [];
+              var unames = [context.currentUser.id];
               for (var i = 0; i < roomUsers.length; i++) {
                 var u = roomUsers[i];
                 if (u && u.name && u.name != "null") {
