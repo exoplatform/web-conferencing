@@ -74,6 +74,7 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
    * @throws IllegalStateException the illegal state exception
    * @throws IllegalArgumentException the illegal argument exception
    */
+  @Deprecated // TODO not used
   public int deleteCallParts(String callId) throws PersistenceException, IllegalStateException, IllegalArgumentException {
     return getEntityManager().createNamedQuery("WebConfCall.deleteCallParts").setParameter("callId", callId).executeUpdate();
   }

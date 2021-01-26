@@ -75,6 +75,7 @@ public class OriginDAO extends GenericDAOJPAImpl<OriginEntity, OriginId> {
    * @throws IllegalStateException the illegal state exception
    * @throws IllegalArgumentException the illegal argument exception
    */
+  @Deprecated // TODO not used
   public int deleteCallOrigins(String callId) throws PersistenceException, IllegalStateException, IllegalArgumentException {
     return getEntityManager().createNamedQuery("WebConfOrigin.deleteCallOrigins").setParameter("callId", callId).executeUpdate();
   }
