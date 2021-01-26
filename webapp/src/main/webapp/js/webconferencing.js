@@ -1326,15 +1326,8 @@
             });
           } else if (context.isRoom) {
             let roomUsers = context.roomParticipants();
-            if (roomUsers && roomUsers.length > 0) {
-              var unames = [context.currentUser.id];
-              for (var i = 0; i < roomUsers.length; i++) {
-                var u = roomUsers[i];
-                if (u && u.name && u.name != "null") {
-                  unames.push(u.name);
-                }
-              }
-              getRoomInfoReq(context.roomId, context.roomTitle, unames).done(function(info) {
+            if (roomUsers.length > 0) {
+              getRoomInfoReq(context.roomId, context.roomTitle, roomUsers).done(function(info) {
                 details.resolve(info);
               }).fail(function(err) {
                 log.trace("Error getting Chat room info " + context.roomName + "/" + context.roomId + " for chat context", err);
@@ -1384,7 +1377,7 @@
           isAndroid: isAndroid,
           isWindowsMobile: isWindowsMobile,
           roomParticipants: () => {
-            return chat.selectedContact.participants;
+            return chatRoomParticipants(chat.selectedContact.participants, chat.userSettings.username);
           }
         };
         if (isSpace) {
@@ -1405,10 +1398,37 @@
       }
       return context;
     };
+    
+    /** 
+     * Build an array of chat room all members (including the current user). 
+     */
+    var chatRoomParticipants = function(chatParticipants, chatUsername) {
+      const unames = [];
+      let addUser = true;
+      if (!chatUsername && eXo.chat.userSettings) {
+        chatUsername = eXo.chat.userSettings.username; // this will work only on Chat pages (incl. mini chat).
+      }
+      if (chatParticipants) {
+        chatParticipants.forEach(p => {
+          if (p && p.name && p.name != "null") {
+            unames.push(p.name);
+            if (chatUsername && p.name === chatUsername) {
+              addUser = false;
+            }
+          }
+        });
+      }
+      if (chatUsername && addUser) {
+        unames.push(chatUsername);
+      }
+      return unames;  
+    };
 
-    // Create the chat context from events target (selected room data)
-    // target - the data from the exo-chat-selected-contact-changed event
-    var chatContextForRoom = function(target) {
+    /** 
+     * Create the chat context from events target (selected room data)
+     * target - the data from the exo-chat-selected-contact-changed event
+     */
+    var chatContextForRoom = function(target, chatUsername) {
       var context;
       if (target) {
         if (target.detail) {
@@ -1432,7 +1452,7 @@
             isAndroid: isAndroid,
             isWindowsMobile: isWindowsMobile,
             roomParticipants: () => {
-              return target.detail.participants;
+              return chatRoomParticipants(target.detail.participants, chatUsername);
             }
           };
           if (isSpace) {
@@ -1875,6 +1895,23 @@
 				}
 			}
 		};
+    
+    /**
+     * Format start/end dates in the call info from Date instance to String in ISO 8601.
+     */
+    var formatCallDates = function(callInfo) {
+      // Fortmat dates to ISO 8601
+      if (isDate(callInfo.startDate)) {
+        callInfo.startDate = callInfo.startDate.toISOString();
+      } else {
+        callInfo.startDate = undefined;
+      }
+      if (isDate(callInfo.endDate)) {
+        callInfo.endDate = callInfo.endDate.toISOString();
+      } else {
+        callInfo.endDate = undefined;
+      }
+    };
 		
 		this.update = function() {
 			if (currentUser) { 
@@ -2318,6 +2355,8 @@
         function processUpdateCall(id, state, info) {
           let callProps;
           if (info) {
+            // Format dates to ISO 8601
+            formatCallDates(info);
             callProps = cometdParams({
               command : "update",
               id : id,
@@ -2385,6 +2424,13 @@
 				return $.Deferred().reject("CometD required").promise();
 			}
 		};
+
+    /**
+     * Check is the date correct.
+     */
+    function isDate(date) {
+      return date && date instanceof Date && date.getTime() > 0;
+    }
 		
 		/**
 		 * Register call in server side database.
@@ -2392,22 +2438,10 @@
 		this.addCall = function(id, callInfo) {
 			let process = $.Deferred();
 			if (cometd) {
-        function isDate(date) {
-          return date && date instanceof Date && date.getTime() > 0;
-        }
         // Note: this function should be invoked once per addCall execution!
         function processAddCall(id, callInfo, start, callUrl) {
-          // Fortmat dates to RFC-1123
-          if (isDate(callInfo.startDate)) {
-            callInfo.startDate = callInfo.startDate.toUTCString();
-          } else {
-            callInfo.startDate = undefined;
-          }
-          if (isDate(callInfo)) {
-            callInfo.endDate = callInfo.endDate.toUTCString();
-          } else {
-            callInfo.endDate = undefined;
-          }
+          // Format dates to ISO 8601
+          formatCallDates(callInfo);
           let callProps = cometdParams($.extend(callInfo, {
             command : "create",
             start : start,
@@ -2442,8 +2476,8 @@
               } else if (callInfo.ownerType === "space_event") {
                 context = spaceEventContext(callInfo.owner, callInfo.participants, callInfo.spaces);
               } else if (callInfo.ownerType === "chat_room") {
-                if (callInfo.chatContact && typeof chatContact === "object") {
-                  context = chatContextForRoom(callInfo.chatContact);
+                if (callInfo.chatContact && typeof chatContact === "object" && callInfo.chatUser && typeof chatUser === "object") {
+                  context = chatContextForRoom(callInfo.chatContact, callInfo.chatUser);
                 } else {
                   log.error("Cannot add call for chat room without callInfo.chatContact details");
                   log.trace("> Got call info for chat room without callInfo.chatContact: " + JSON.stringify(callInfo));
@@ -2722,7 +2756,7 @@
       const localContext = $.Deferred();
       contextInitializer.then(() => {
         if (target) {
-          localContext.resolve(chatContextForRoom(target));
+          localContext.resolve(chatContextForRoom(target, chat.userSettings.username));
         } else if (chat) {
           localContext.resolve(chatContext(chat));
         } else {
