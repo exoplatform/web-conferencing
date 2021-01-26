@@ -20,12 +20,10 @@ package org.exoplatform.webconferencing;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.text.ParseException;
+import java.util.*;
 
+import org.exoplatform.commons.utils.ISO8601;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.portal.application.PortalRequestContext;
@@ -50,7 +48,7 @@ import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
  */
 public class Utils {
 
-  /**
+    /**
    * Generate a space room name.
    *
    * @param spacePrettyName the space pretty name
@@ -192,7 +190,7 @@ public class Utils {
   }
 
   /**
-   * As JSON.
+   * Format specified object to JSON string.
    *
    * @param obj the obj
    * @return the string
@@ -203,11 +201,46 @@ public class Utils {
       JsonGeneratorImpl gen = new JsonGeneratorImpl();
       if (obj.getClass().isArray()) {
         return gen.createJsonArray(obj).toString();
+      } else if (CallInfo.class.isAssignableFrom(obj.getClass())) {
+        // Special handling for CallInfo to return its dates in standard format.
+        return CallInfo.class.cast(obj).toJSON();
       } else {
         return gen.createJsonObject(obj).toString();
       }
     } else {
       return "null".intern();
+    }
+  }
+  
+  /**
+   * Parses the date from a ISO-8601 formatted string.
+   *
+   * @param date the date
+   * @return the date
+   * @throws ParseException the parse exception
+   */
+  public static Date parseISODate(String date) throws ParseException {
+    if (date != null) {
+      return ISO8601.parse(date).getTime();
+    } else {
+      return null;
+    }
+  }
+  
+  /**
+   * Format date as ISO-8601 string with UTC time zone.
+   *
+   * @param date the date
+   * @return the string
+   */
+  public static String formatISODate(Date date) {
+    if (date != null) {
+      Calendar calendar = Calendar.getInstance();
+      calendar.setTime(date);
+      calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+      return ISO8601.format(calendar);
+    } else {
+      return null;
     }
   }
 
