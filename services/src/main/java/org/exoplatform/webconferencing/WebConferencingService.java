@@ -874,11 +874,7 @@ public class WebConferencingService implements Startable {
                 // Notify *actual* participants (about started call)
                 if (isGroup) {
                   // When call starts we need the following (should be similar to startCall()): 
-                  // 1) resolve origins (parts, owner's members and groups/spaces) to actual participants
-                  //     - read the origins and use them all as call's new participants (replace all existing participants if have)
-                  //     - call stop later should mark call participants LEAVED
-                  // Sync call participants with the owner members first (see above)
-                  syncMembersAndParticipants(call);
+                  // 1) resolve origins (owner's members of space/room) to actual participants (this should be done in createCall())
                   // 2) send them notifications if applicable (not for event calls)
                   // fire group's user listener for incoming, except of the caller
                   for (UserInfo part : call.getParticipants()) {
@@ -1244,47 +1240,34 @@ public class WebConferencingService implements Startable {
    * @param call the call
    * @param userId the user id
    * @param remove the remove
-   * @return the call info
    * @throws StorageException if persistence exception happen
    */
-  protected CallInfo stopCall(CallInfo call, String userId, boolean remove) throws StorageException {
-    // Delete or update in single tx
-    if (remove) {
-      deleteCall(call.getId());
-    } else {
-      call.setState(CallState.STOPPED);
-      // we don't update each participant with LEAVED state here as the call state already shows this,
-      // see also startCall()
-      try {
-        updateCall(call);
-      } catch (CallNotFoundException | CallSettingsException e) {
-        LOG.warn("Failed to save stopped call: " + call.getId(), e);
-      }
-    }
-    // Then notify users
-    if (call.getOwner().isGroup()) {
-      String callId = call.getId();
-      for (UserInfo part : call.getParticipants()) {
-        if (UserInfo.TYPE_NAME.equals(part.getType()) || GuestInfo.TYPE_NAME.equals(part.getType())) {
-          // It's eXo user: fire user listener for stopped call: we notify to all participants.
-          fireUserCallStateChanged(part.getId(),
-                                   callId,
-                                   call.getProviderType(),
-                                   CallState.STOPPED,
-                                   call.getOwner().getId(),
-                                   call.getOwner().getType());
+  protected void stopCall(CallInfo call, String userId, boolean remove) throws StorageException {
+    try {
+      // Stop the call in DB
+      txStopCall(call, remove);
+      // Then notify users
+      if (call.getOwner().isGroup()) {
+        String callId = call.getId();
+        for (UserInfo part : call.getParticipants()) {
+          if (UserInfo.TYPE_NAME.equals(part.getType()) || GuestInfo.TYPE_NAME.equals(part.getType())) {
+            // It's eXo user: fire user listener for stopped call: we notify to all participants.
+            fireUserCallStateChanged(part.getId(),
+                                     callId,
+                                     call.getProviderType(),
+                                     CallState.STOPPED,
+                                     call.getOwner().getId(),
+                                     call.getOwner().getType());
+          }
         }
+      } else {
+        notifyUserCallStateChanged(call, userId, CallState.STOPPED);
       }
-    } else {
-      notifyUserCallStateChanged(call, userId, CallState.STOPPED);
+    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+      throw new StorageException("Error stopping call " + call.getId(), e);
     }
-    // it should be no guests already if all leaved correctly, but we do for a case of failures
-    removeCallGuests(call.getId());
-    // as we as cancel invitations on the call end
-    removeCallInvites(call.getId());
-    return call;
   }
-
+  
   /**
    * Starts existing call and fires STARTED event. It's actual for group calls.
    *
@@ -1340,7 +1323,7 @@ public class WebConferencingService implements Startable {
     call.setState(CallState.STARTED);
     call.setLastDate(Calendar.getInstance().getTime());
 
-    // Sync call participants (actual for groups only)
+    // Sync call participants (actual for groups only) - this will happen in a dedicated DB tx
     syncMembersAndParticipants(call);
 
     // On call start we mark all parts LEAVED and then each of them will join and be marked as JOINED in joinCall()
@@ -1428,16 +1411,22 @@ public class WebConferencingService implements Startable {
    * @throws CallNotFoundException the call not found exception
    * @throws InvalidCallException the invalid call exception
    * @throws IdentityStateException the identity state exception
+   * @throws CallArgumentException if participant cannot be found
    */
   public void addParticipant(String callId, String partId) throws StorageException,
                                                            CallNotFoundException,
                                                            InvalidCallException,
-                                                           IdentityStateException {
+                                                           IdentityStateException, 
+                                                           CallArgumentException {
     UserInfo userInfo = userInfo(partId);
-    try {
-      txAddParticipant(callId, userInfo);
-    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
-      throw new StorageException("Error adding participant to call " + callId, e);
+    if (userInfo != null) {
+      try {
+        txAddParticipant(callId, userInfo);
+      } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+        throw new StorageException("Error adding participant to call " + callId, e);
+      }
+    } else {
+      throw new CallArgumentException("Participant user cannot be found: " + partId);
     }
   }
 
@@ -1511,8 +1500,9 @@ public class WebConferencingService implements Startable {
    *           exception
    * @throws CallNotFoundException if call not found
    * @throws IdentityStateException the identity state exception
+   * @throws CallArgumentException if participant cannot be found
    */
-  public CallInfo joinCall(String callId, String partId, String clientId) throws InvalidCallException, CallNotFoundException, IdentityStateException {
+  public CallInfo joinCall(String callId, String partId, String clientId) throws InvalidCallException, CallNotFoundException, IdentityStateException, CallArgumentException {
     final long opStart = System.currentTimeMillis();
     CallInfo call = getCall(callId);
     if (call != null) {
@@ -1616,7 +1606,7 @@ public class WebConferencingService implements Startable {
                 leavedNum++;
               } else {
                 // if null - user hasn't joined
-                if (part.getState() == null || part.getState().equals(UserState.LEAVED)) {
+                if (part.getState() == null || UserState.LEAVED.equals(part.getState())) {
                   leavedNum++;
                 }
               }
@@ -1647,7 +1637,7 @@ public class WebConferencingService implements Startable {
             // Check if don't need stop the call if all parts leaved already
             if (call.getOwner().isGroup()) {
               if (leavedNum == call.getParticipants().size() || call.getParticipants().size() == 0
-                  || call.getParticipants().stream().allMatch(p -> p.getState() == null || p.getState() == UserState.LEAVED)
+                  || call.getParticipants().stream().allMatch(p -> p.getState() == null || UserState.LEAVED.equals(p.getState()))
                   /*|| call.getParticipants().stream().allMatch(p -> p.getType() == GuestInfo.TYPE_NAME)*/) {
                 // Stop when all group members leave the call
                 // TODO it would be better UX when we let guest to run the call even without exo users,
@@ -2589,7 +2579,7 @@ public class WebConferencingService implements Startable {
    * @throws CallSettingsException if call entry has wrong settings (Chat room call
    *           title too long or has bad value)
    * @throws IdentityStateException if error reading call owner or participant
-   * @throws CallOwnerException if call owner is of wrong type
+   * @throws CallOwnerException if call owner is of wrong type or cannot be found (as an identity)
    */
   protected CallInfo readCallEntity(CallEntity savedCall, boolean withParticipants) throws CallSettingsException,
                                                                                     IdentityStateException,
@@ -2607,8 +2597,10 @@ public class WebConferencingService implements Startable {
           if (roomTitle != null && roomTitle.length() > 0) {
             // XXX In case of chat room we read participants storage ahead (see below code on withParticipants=true)
             // This could be improved by reviewing and separating logic of participants/origins
-            savedParticipants = participantsStorage.findCallParts(callId); 
+            savedParticipants = participantsStorage.findCallParts(callId);
+            // Filter only room members without guests which aren't actual room members here
             String[] members = savedParticipants.stream()
+                                                  .filter(p -> !GuestInfo.TYPE_NAME.equals(p.getType()))
                                                   .map(p -> p.getId())
                                                   .toArray(String[]::new);
             owner = roomInfo(ownerId, roomTitle, members, callId);
@@ -2638,6 +2630,9 @@ public class WebConferencingService implements Startable {
       } else {
         throw new CallOwnerException("Unexpected call owner type: " + savedCall.getOwnerType() + " for " + ownerId);
       }
+      if (owner == null) {
+        throw new CallOwnerException("Call owner cannot be found: " + ownerId);
+      }
 
       CallInfo call = new CallInfo(callId, savedCall.getTitle(), owner, savedCall.getProviderType());
       call.setState(savedCall.getState());
@@ -2646,10 +2641,18 @@ public class WebConferencingService implements Startable {
       call.setEndDate(savedCall.getEndDate());
       try {
         String inviteId = getInviteId(callId);
-        if (inviteId == null) {
-          inviteId = createInvite(callId, ALL_USERS, GROUP).getInvitationId();
+        if (inviteId != null) {
+          call.setInviteId(inviteId);
+        } else {
+          // This should not happen in normal circumstances as invite will be
+          // created within the call or on call start, 
+          // see also txCreateCall(), txUpdateCallAndParticipants()
+          if (CallState.STARTED.equals(call.getState())) {
+            LOG.warn("Cannot find inviteId for started call {}", callId);
+          } else if (LOG.isDebugEnabled()) {
+            LOG.debug("An inviteId not found for call {}", callId);
+          }
         }
-        call.setInviteId(inviteId);
       } catch (StorageException e) {
         LOG.warn("Cannot get inviteId for call {} : {}", callId, e.getMessage());
       }
@@ -2713,45 +2716,33 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Creates the invite.
+   * Create invite with given identity, type and ID.
    *
-   * @param callId the call id
+   * @param callId the call ID
    * @param identity the identity
    * @param type the type
-   * @return the invite entity
-   * @throws StorageException the storage exception
-   */
-  protected InviteEntity createInvite(String callId, String identity, String type) throws StorageException {
-    try {
-      String inviteId = RandomStringUtils.randomAlphabetic(12);
-      InviteEntity invite = new InviteEntity(callId, identity, type, inviteId);
-      return txCreateInvite(invite);
-    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
-      throw new StorageException("Error creating invite for call " + callId, e);
-    }
-  }
-
-  /**
-   * Tx create invite.
-   *
-   * @param invite the invate
-   * @return the invite entity
+   * @param inviteId the invite ID
+   * @return the invite ID
    * @throws IllegalArgumentException the illegal argument exception
    * @throws IllegalStateException the illegal state exception
    * @throws PersistenceException the persistence exception
    */
-  @ExoTransactional
-  protected InviteEntity txCreateInvite(InviteEntity invite) throws IllegalArgumentException,
+  private void createInvite(String callId, String identity, String type, String inviteId) throws IllegalArgumentException,
                                                              IllegalStateException,
                                                              PersistenceException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(">> txCreateInvite: " + invite.getIdentity() + "@" + invite.getCallId());
-    }
-    InviteEntity ie = inviteStorage.create(invite);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("<< txCreateInvite: " + invite.getIdentity() + "@" + invite.getCallId() + " -- " + invite.getInvitationId());
-    }
-    return ie;
+    inviteStorage.create(new InviteEntity(callId, identity, type, inviteId));
+  }
+  
+  /**
+   * Creates a new invite ID (of group type for all users) for the call.
+   *
+   * @param callId the call id
+   * @return the string with new invite ID
+   */
+  private String createInvite(String callId) {
+    String inviteId = RandomStringUtils.randomAlphabetic(12);
+    createInvite(callId, ALL_USERS, GROUP, inviteId);
+    return inviteId;
   }
 
   /**
@@ -2899,12 +2890,22 @@ public class WebConferencingService implements Startable {
     }
     callStorage.create(createCallEntity(call));
     String callId = call.getId();
-    for (UserInfo p : call.getParticipants()) {
-      participantsStorage.create(createParticipantEntity(callId, p));
+    if (call.getOwner().isGroup()) {
+      // For starting (on creation) group call we need sync (and save) its
+      // members and parties immediately
+      if (CallState.STARTED.equals(call.getState())) {
+        txSyncMembersAndParticipants(call);
+      }
+    } else {
+      // For 1-1 call we save its parties from the beginning
+      for (UserInfo p : call.getParticipants()) {
+        participantsStorage.create(createParticipantEntity(callId, p));
+      }
     }
     for (OriginInfo o : call.getOrigins()) {
       originsStorage.create(createOriginEntity(callId, o));
     }
+    call.setInviteId(createInvite(callId));
     if (LOG.isDebugEnabled()) {
       LOG.debug("<< txCreateCall: " + call.getId());
     }
@@ -2966,6 +2967,46 @@ public class WebConferencingService implements Startable {
       throw new CallNotFoundException("Call not found: " + call.getId());
     }
   }
+  
+  /**
+   * Tx stop call.
+   *
+   * @param call the call
+   * @param remove the remove
+   * @throws IllegalArgumentException the illegal argument exception
+   * @throws IllegalStateException the illegal state exception
+   * @throws PersistenceException the persistence exception
+   */
+  @ExoTransactional
+  protected void txStopCall(CallInfo call, boolean remove) throws IllegalArgumentException, IllegalStateException, PersistenceException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(">> txStopCall: " + call.getId());
+    }
+    // Delete or update in single tx
+    call.setState(CallState.STOPPED);
+    if (remove) {
+      // Delete the call with all its parties/origins/invitations
+      txDeleteCall(call.getId());
+      // Call removal cancels all invitation - reflect this 
+      call.setInviteId(null);
+    } else {
+      // we don't update each participant with LEAVED state here as the call state already shows this,
+      // see also startCall()
+      try {
+        saveCall(call);
+        // Remove all invitations and existing guests at the end of call stop
+        removeInvites(call.getId());
+        call.setInviteId(null);
+        removeGuests(call);
+      } catch (CallNotFoundException | CallSettingsException e) {
+        LOG.warn("Failed to save stopped call: " + call.getId(), e);
+      }
+    }
+    call.setInviteId(null);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("<< txStopCall: " + call.getId());
+    }
+  }
 
   /**
    * Update existing call (mark it started, stopped etc) in a single transaction.
@@ -3005,6 +3046,7 @@ public class WebConferencingService implements Startable {
   protected void txUpdateInvites(String callId, List<InvitedIdentity> identities) throws IllegalArgumentException,
                                                                                   IllegalStateException,
                                                                                   PersistenceException {
+    // INFO This method doesn't used as for Jan of 2021.
     if (LOG.isDebugEnabled()) {
       LOG.debug(">> txUpdateInvites: " + callId);
     }
@@ -3016,7 +3058,7 @@ public class WebConferencingService implements Startable {
     }
     for (InvitedIdentity identity : identities) {
       // TODO: add check GROUP/USER in org service
-      txCreateInvite(new InviteEntity(callId, identity.getIdentity(), identity.getType(), inviteId));
+      createInvite(callId, identity.getIdentity(), identity.getType(), inviteId);
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("<< txUpdateInvites: " + callId);
@@ -3081,17 +3123,21 @@ public class WebConferencingService implements Startable {
   @ExoTransactional
   protected void txSyncMembersAndParticipants(CallInfo call) {
     if (call.getOwner().isGroup()) {
+      // When call starts we need the following (should be similar to startCall()): 
+      // resolve origins (parts, owner's members and groups/spaces) to actual
+      // participants - read the origins and use them all as call's new
+      // participants (replace all existing in the DB).
       if (LOG.isDebugEnabled()) {
         LOG.debug(">> txSyncMembersAndParticipants: " + call.getId());
       }
       // Take a snapshot of current members of the group (an event call should include all related users already).
-      Set<UserInfo> currentMembers = new LinkedHashSet<>(GroupInfo.class.cast(call.getOwner()).getMembers().values());
-      
+      Set<UserInfo> members = new LinkedHashSet<>(GroupInfo.class.cast(call.getOwner()).getMembers().values());
+      Set<UserInfo> participants = call.getParticipants();
       // 1) Ensure participants contain only members (excluding existing external guests)
-      Set<UserInfo> deleteParts = new LinkedHashSet<>(call.getParticipants());
-      // Filter current parts (remove users already in group members), to remove not members from the parties
-      deleteParts.removeAll(currentMembers);
-      for (UserInfo p : deleteParts) {
+      Set<UserInfo> deleteParties = new LinkedHashSet<>(participants); // we need a copy of the set as it will be modified below
+      // Filter current parties (remove users already in group members), to remove not members next
+      deleteParties.removeAll(members);
+      for (UserInfo p : deleteParties) {
         if (!GuestInfo.TYPE_NAME.equals(p.getType())) {
           // Remove this part as it's not a member of the group
           ParticipantEntity entity = participantsStorage.find(new ParticipantId(p.getId(), call.getId()));
@@ -3102,12 +3148,12 @@ public class WebConferencingService implements Startable {
         } // Otherwise, it's a guest - should be removed explicitly
       }
       // 2) Ensure all members are participants as well
-      // Filter current members (remove ones not already in parts), to add add members not yet participating the call
-      currentMembers.removeAll(call.getParticipants()); 
-      for (UserInfo m : currentMembers) {
+      // Filter current members (remove ones not already in parties), to add members not yet participating the call
+      members.removeAll(participants);
+      for (UserInfo m : members) {
         // save only not already existing
         ParticipantEntity entity = participantsStorage.find(new ParticipantId(m.getId(), call.getId()));
-        if (entity != null) {
+        if (entity == null) {
           participantsStorage.create(createParticipantEntity(call.getId(), m));
         }
         call.addParticipant(m); // add also to the actual parties
@@ -3121,18 +3167,14 @@ public class WebConferencingService implements Startable {
   /**
    * Remove all call guests.
    *
-   * @param callId the call id
+   * @param call the call
    */
-  @ExoTransactional
-  protected void txRemoveGuests(String callId) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(">> txRemoveGuests: " + callId);
-    }
-    List<ParticipantEntity> participants = participantsStorage.findCallParts(callId);
-    participants.stream().filter(part -> part.getType().equals(GuestInfo.TYPE_NAME)).forEach(participantsStorage::delete);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("<< txRemoveGuests: " + callId);
-    }
+  private void removeGuests(CallInfo call) {
+    List<ParticipantEntity> participants = participantsStorage.findCallParts(call.getId());
+    participants.stream().filter(part -> part.getType().equals(GuestInfo.TYPE_NAME)).forEach(g -> {
+      participantsStorage.delete(g);
+      call.removeParticipant(new GuestInfo(g.getId()));
+    });
   }
   
   /**
@@ -3159,24 +3201,15 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Tx remove call invites.
+   * Removes the invites in DB.
    *
    * @param callId the call id
-   * @return the int
    */
-  @ExoTransactional
-  protected int txRemoveInvites(String callId) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(">> txRemoveInvites: " + callId);
-    }
+  private void removeInvites(String callId) {
     List<InviteEntity> savedInvites = inviteStorage.findCallInvites(callId);
     for (InviteEntity i : savedInvites) {
       inviteStorage.delete(i);
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("<< txRemoveInvites: " + callId);
-    }
-    return savedInvites.size();
   }
 
   /**
@@ -3202,6 +3235,10 @@ public class WebConferencingService implements Startable {
     }
     // Update call
     saveCall(call);
+    if (CallState.STARTED.equals(call.getState()) && call.getInviteId() == null) {
+      // If it's started call - generate a new invite ID
+      call.setInviteId(createInvite(call.getId()));
+    }
     // Update participants
     String callId = call.getId();
     for (UserInfo p : call.getParticipants()) {
@@ -3278,28 +3315,24 @@ public class WebConferencingService implements Startable {
    * Delete call within a transaction.
    *
    * @param id the call id
-   * @return true, if successful
    * @throws IllegalArgumentException the illegal argument exception
    * @throws IllegalStateException the illegal state exception
    * @throws PersistenceException the persistence exception
    */
   @ExoTransactional
-  protected boolean txDeleteCall(String id) throws IllegalArgumentException, IllegalStateException, PersistenceException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(">> txDeleteCall: " + id);
-    }
+  protected void txDeleteCall(String id) throws IllegalArgumentException, IllegalStateException, PersistenceException {
     CallEntity entity = callStorage.find(id);
     if (entity != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(">> txDeleteCall: " + id);
+      }
       callStorage.delete(entity);
+      // Cancel all invitations on the call removal
+      // NOTE: already existing guests will be removed by the DB's FK cascade 
+      removeInvites(id);
       if (LOG.isDebugEnabled()) {
         LOG.debug("<< txDeleteCall: " + id);
       }
-      return true;
-    } else {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("<< txDeleteCall: " + id);
-      }
-      return false;
     }
   }
 
@@ -3390,43 +3423,13 @@ public class WebConferencingService implements Startable {
    * Delete call.
    *
    * @param id the id
-   * @return true, if successful
    * @throws StorageException if storage error happens
    */
-  protected boolean deleteCall(String id) throws StorageException {
+  protected void deleteCall(String id) throws StorageException {
     try {
-      return txDeleteCall(id);
+      txDeleteCall(id);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       throw new StorageException("Error deleting call " + id, e);
-    }
-  }
-
-  /**
-   * Removes the guests from call.
-   *
-   * @param callId the call id
-   * @throws StorageException the storage exception
-   */
-  protected void removeCallGuests(String callId) throws StorageException {
-    try {
-      txRemoveGuests(callId);
-    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
-      throw new StorageException("Error removing call guests " + callId, e);
-    }
-  }
-
-  /**
-   * Remove call invites.
-   *
-   * @param callId the call id
-   * @return the int
-   * @throws StorageException the storage exception
-   */
-  protected int removeCallInvites(String callId) throws StorageException {
-    try {
-      return txRemoveInvites(callId);
-    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
-      throw new StorageException("Error removing call invites " + callId, e);
     }
   }
 
@@ -3541,6 +3544,8 @@ public class WebConferencingService implements Startable {
    * @throws StorageException if storage exception happen
    */
   protected void updateCall(CallInfo call) throws CallNotFoundException, CallSettingsException, StorageException {
+    // TODO this method not used currently but may be useful in future if need
+    // update only a call entity (w/o its participants, origins or invites)
     try {
       txUpdateCall(call);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
