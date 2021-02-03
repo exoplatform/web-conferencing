@@ -160,6 +160,18 @@ public class WebConferencingService implements Startable {
   /** The status ok. */
   public static final String          STATUS_OK                    = "ok";
 
+  public static final String    EVENT_CALL_CREATED           = "exo.webconferencing.callCreated";
+
+  public static final String    EVENT_CALL_STARTED           = "exo.webconferencing.callStarted";
+
+  public static final String    EVENT_CALL_JOINDED           = "exo.webconferencing.callJoined";
+
+  public static final String    EVENT_CALL_LEFT              = "exo.webconferencing.callLeft";
+
+  public static final String    EVENT_CALL_STOPPED           = "exo.webconferencing.callStopped";
+
+  public static final String    EVENT_CALL_RECORDED          = "exo.webconferencing.callRecorded";
+
   /** The Constant CALL_OWNER_SCOPE_NAME. */
   protected static final String CALL_OWNER_SCOPE_NAME        = "webconferencing.callOwner".intern();
 
@@ -881,6 +893,9 @@ public class WebConferencingService implements Startable {
                   notifyUserCallStateChanged(call, currentUserId, CallState.STARTED);
                 }
               }
+
+              broacastCallEvent(EVENT_CALL_CREATED, call, currentUserId);
+
               // Log metrics - call created
               // service=notifications operation=send-push-notification
               // parameters="user:thomas,token:xxxxxxxxxxxDLu-,type:android,pluginId:RelationshipReceivedRequestPlugin" status=ok
@@ -1191,6 +1206,8 @@ public class WebConferencingService implements Startable {
       String userId = currentUserId();
       try {
         stopCall(call, userId, remove);
+        broacastCallEvent(EVENT_CALL_STOPPED, call, userId);
+
         if (remove) {
           // Log metrics - call deleted
           LOG.info(metricMessage(userId, call, OPERATION_CALL_DELETED, STATUS_OK, System.currentTimeMillis() - opStart, null));
@@ -1273,9 +1290,10 @@ public class WebConferencingService implements Startable {
         String userId = currentUserId();
         startCall(call, userId, clientId, true);
 
+        broacastCallEvent(EVENT_CALL_STARTED, call, userId);
+
         // Log metrics - call started
         LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null));
-
         return call;
       } catch (StorageException | ParticipantNotFoundException | CallSettingsException e) {
         throw new InvalidCallException("Error starting call: " + callId, e);
@@ -1520,6 +1538,8 @@ public class WebConferencingService implements Startable {
                                  partId,
                                  part.getId());
             }
+            broacastCallEvent(EVENT_CALL_JOINDED, call, partId);
+
             // Log metrics - call joined
             LOG.info(metricMessage(partId, call, OPERATION_CALL_JOINED, STATUS_OK, System.currentTimeMillis() - opStart, null));
           } else {
@@ -1531,6 +1551,9 @@ public class WebConferencingService implements Startable {
           // the partId it's current exo user in the request (Comet)
           String userId = currentUserId();
           startCall(call, userId, clientId, false); // We will not notify parties about the auto-start
+
+          broacastCallEvent(EVENT_CALL_JOINDED, call, userId);
+
           // Log metrics - call started
           LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null));
         }
@@ -1602,6 +1625,8 @@ public class WebConferencingService implements Startable {
                                  partId,
                                  part.getId());
             }
+
+            broacastCallEvent(EVENT_CALL_LEFT, call, partId);
             // Log metrics - call leaved
             LOG.info(metricMessage(partId, call, OPERATION_CALL_LEAVED, STATUS_OK, System.currentTimeMillis() - opStart, null));
             // Check if don't need stop the call if all parts leaved already
@@ -1613,6 +1638,8 @@ public class WebConferencingService implements Startable {
                 // TODO it would be better UX when we let guest to run the call even without exo users,
                 // but then need find a proper way of stopping the call if guests will not leave finally via API (network errors, server crashes etc).
                 stopCall(call, partId, false);
+
+                broacastCallEvent(EVENT_CALL_STOPPED, call, partId);
                 // Log metrics - call stopped
                 LOG.info(metricMessage(partId,
                                        call,
@@ -1624,6 +1651,8 @@ public class WebConferencingService implements Startable {
             } else if (call.getParticipants().size() - leavedNum <= 1) {
               // For P2P we remove the call when one of parts stand alone
               stopCall(call, partId, true);
+
+              broacastCallEvent(EVENT_CALL_STOPPED, call, partId);
               // Log metrics - call deleted
               LOG.info(metricMessage(partId,
                                      call,
@@ -2046,6 +2075,7 @@ public class WebConferencingService implements Startable {
       
       try {
         CallInfo call = getCall(uploadInfo.getCallId());
+        broacastCallEvent(EVENT_CALL_RECORDED, call, uploadingUser);
         LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null));
       } catch (InvalidCallException e) {
         LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
@@ -3693,6 +3723,14 @@ public class WebConferencingService implements Startable {
     }
     res.append(" duration_ms=").append(duration != null ? duration : -1);
     return res.toString();
+  }
+
+  private void broacastCallEvent(String eventName, CallInfo call, String userId) {
+    try {
+      listenerService.broadcast(eventName, call, userId);
+    } catch (Exception e) {
+      LOG.error("Error while broadcasting event '{}' for user '{}'", eventName, userId, e);
+    }
   }
 
   // <<<<<<< Call storage: wrappers to catch JPA exceptions
