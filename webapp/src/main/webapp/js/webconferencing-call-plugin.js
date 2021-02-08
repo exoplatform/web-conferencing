@@ -131,8 +131,7 @@
           "SHARED/webConferencingCallButton",
         ], function(webConferencing, callButtons) {
           webConferencing.createSpaceContext(spaceId).then((context) => {
-            callButtons.create(context, target, typeClass).then((button) => {
-            });
+            callButtons.create(context, target, typeClass);
           });
         });
       },
@@ -196,47 +195,13 @@
           "SHARED/webConferencingCallButton",
         ], function(webConferencing, callButtons) {
           webConferencing.createUserContext(userId).then((context) => {
-            callButtons.create(context, target, typeClass).then((button) => {
-            });
+            callButtons.create(context, target, typeClass);
           });
         });
       },
       // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
       enabled: true,
     }
-    /*
-    // an example of the extension with DOM elements
-  ,{
-    target : "chat",
-    type : "room-action-component",
-    key : "element",
-    rank : 22,
-
-    // appClass is a class of container which consist of action button and WebConferencingCall component
-    appClass : "element-cl",
-
-    // html DOM element that will be added in the extension point
-    element : testElement,
-
-    // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
-    enabled : true
-  },
-    // an example of the extension with HTML elements
-  {
-    target : "chat",
-    type : "room-action-component",
-    key : "html",
-    rank : 23,
-
-    // appClass is a class of container which consist of action button and WebConferencingCall component
-    appClass : "html-cl",
-
-    // html code that will be added in the extension point
-    html : "<div><span>My test html</span></div>",
-
-    // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
-    enabled : true
-  }*/,
   ];
 
   require(["SHARED/extensionRegistry"], function(extensionRegistry) {
