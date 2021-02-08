@@ -22,17 +22,37 @@ import java.util.Set;
 
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
 
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
-import org.exoplatform.webconferencing.*;
+import org.exoplatform.webconferencing.CallProviderConfiguration;
+import org.exoplatform.webconferencing.GroupInfo;
+import org.exoplatform.webconferencing.IdentityStateException;
+import org.exoplatform.webconferencing.UserInfo;
+import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.client.ErrorInfo;
 import org.exoplatform.webconferencing.dao.StorageException;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 /**
  * Created by The eXo Platform SAS.
@@ -41,6 +61,7 @@ import org.exoplatform.webconferencing.dao.StorageException;
  * @version $Id: RESTWebConferencingService.java 00000 Feb 22, 2017 pnedonosko $
  */
 @Path("/webconferencing")
+@Api(tags = "/webconferencing", value = "/webconferencing", description = "Operations on call providers and participant information")
 @Produces(MediaType.APPLICATION_JSON)
 public class RESTWebConferencingService implements ResourceContainer {
 
@@ -79,9 +100,15 @@ public class RESTWebConferencingService implements ResourceContainer {
   @GET
   @RolesAllowed("administrators")
   @Path("/provider/{type}/configuration") // TODO not used
+  @ApiOperation(value = "Read a call provider configuration", httpMethod = "GET", response = CallProviderConfiguration.class, 
+    notes = "Use this method to read a call provider configuration. This operation only avalable to Administrator user.")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Request fulfilled. Provider configuration object returned.", response = CallProviderConfiguration.class),
+    @ApiResponse(code = 401, message = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+    @ApiResponse(code = 404, message = "Provider not found. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
+    @ApiResponse(code = 500, message = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
   public Response getProviderConfig(@Context UriInfo uriInfo,
                                     @Context HttpServletRequest request,
-                                    @PathParam("type") String type) {
+                                    @ApiParam(value = "Call provider type, ex: 'webrtc'", required = true) @PathParam("type") String type) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
@@ -122,10 +149,16 @@ public class RESTWebConferencingService implements ResourceContainer {
   @POST
   @RolesAllowed("administrators")
   @Path("/provider/{type}/configuration")
+  @ApiOperation(value = "Updates a call provider activation status", httpMethod = "POST", response = CallProviderConfiguration.class, 
+      notes = "Use this method to enable or disable a call provider. This operation only avalable to Administrator user.")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Request fulfilled. Updated provider config returned.", response = CallProviderConfiguration.class),
+      @ApiResponse(code = 401, message = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+      @ApiResponse(code = 404, message = "Provider not found. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
+      @ApiResponse(code = 500, message = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
   public Response postProviderConfig(@Context UriInfo uriInfo,
                                      @Context HttpServletRequest request,
-                                     @PathParam("type") String type,
-                                     @FormParam("active") String active) {
+                                     @ApiParam(value = "Call provider type, ex: 'webrtc'", required = true) @PathParam("type") String type,
+                                     @ApiParam(value = "Activation switch in form of boolean value (case insensitive), 'true' to enable, disable by any other value", required = true) @FormParam("active") String active) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
@@ -169,6 +202,11 @@ public class RESTWebConferencingService implements ResourceContainer {
   @GET
   @RolesAllowed("administrators")
   @Path("/providers/configuration")
+  @ApiOperation(value = "Read call providers configurations", httpMethod = "GET", response = Response.class, 
+    notes = "Use this method to read all providers configuration. This operation only avalable to Administrator user.")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Request fulfilled. Providers configurations returned.", response = Set.class),
+    @ApiResponse(code = 401, message = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+    @ApiResponse(code = 500, message = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
   public Response getProviderConfigs(@Context UriInfo uriInfo, @Context HttpServletRequest request) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
@@ -203,7 +241,15 @@ public class RESTWebConferencingService implements ResourceContainer {
   @GET
   @RolesAllowed("users")
   @Path("/user/{name}")
-  public Response getUserInfo(@Context UriInfo uriInfo, @PathParam("name") String userName) {
+  @ApiOperation(value = "Return user information", httpMethod = "GET", response = UserInfo.class, 
+    notes = "Use this method to read an user info used as call owner or participants. This operation is avalable to all Platform users.")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Request fulfilled. User info object returned.", response = UserInfo.class),
+    @ApiResponse(code = 400, message = "Wrong request parameters: name. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),  
+    @ApiResponse(code = 401, message = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+    @ApiResponse(code = 404, message = "User not found. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
+    @ApiResponse(code = 500, message = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
+  public Response getUserInfo(@Context UriInfo uriInfo, 
+                              @ApiParam(value = "Call provider name, ex: 'webrtc'", required = true) @PathParam("name") String userName) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
@@ -251,7 +297,16 @@ public class RESTWebConferencingService implements ResourceContainer {
   @GET
   @RolesAllowed("users")
   @Path("/space/{spaceName}")
-  public Response getSpaceInfo(@Context UriInfo uriInfo, @PathParam("spaceName") String spaceName) {
+  @ApiOperation(value = "Return social space information", httpMethod = "GET", response = GroupInfo.class, 
+    notes = "Use this method to read a Social space info used as call owner and origins. This operation is avalable to all Platform users.")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Request fulfilled. Space info object returned.", response = GroupInfo.class),
+    @ApiResponse(code = 400, message = "Wrong request parameters: spaceName. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),
+    @ApiResponse(code = 401, message = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+    @ApiResponse(code = 403, message = "Not space member. Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+    @ApiResponse(code = 404, message = "Space not found or not accessible. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
+    @ApiResponse(code = 500, message = "Internal server error due to data reading from DB, its encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
+  public Response getSpaceInfo(@Context UriInfo uriInfo, 
+                               @ApiParam(value = "Space pretty name, ex: 'sales_team'", required = true) @PathParam("spaceName") String spaceName) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
@@ -295,7 +350,7 @@ public class RESTWebConferencingService implements ResourceContainer {
       } else {
         return Response.status(Status.BAD_REQUEST)
                        .cacheControl(cacheControl)
-                       .entity(ErrorInfo.clientError("Wrong request parameters: name"))
+                       .entity(ErrorInfo.clientError("Wrong request parameters: spaceName"))
                        .build();
       }
     } else {
@@ -316,10 +371,20 @@ public class RESTWebConferencingService implements ResourceContainer {
     @GET
     @RolesAllowed("users")
     @Path("/space-event/{spaceName}")
+    @ApiOperation(value = "Return a Social space event information", httpMethod = "GET", response = GroupInfo.class, 
+      notes = "Use this method to read a Social space event used as call origin. This operation is avalable to all Platform users.")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Request fulfilled. Space event info object returned.", response = GroupInfo.class),
+      @ApiResponse(code = 400, message = "Wrong request parameters: spaceName. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),
+      @ApiResponse(code = 400, message = "Wrong request parameters: participants. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),
+      @ApiResponse(code = 400, message = "Wrong request parameters: spaces. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),
+      @ApiResponse(code = 401, message = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+      @ApiResponse(code = 403, message = "Not space member. Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+      @ApiResponse(code = 404, message = "Space not found or not accessible. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
+      @ApiResponse(code = 500, message = "Internal server error due to data reading from DB, its encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
     public Response getSpaceEventInfo(@Context UriInfo uriInfo,
-                                      @PathParam("spaceName") String spaceName,
-                                      @QueryParam("participants") String participants,
-                                      @QueryParam("spaces") String spaces) {
+                                      @ApiParam(value = "Space pretty name used as the event host, ex: 'sales_team'", required = true) @PathParam("spaceName") String spaceName,
+                                      @ApiParam(value = "Participants directly invited to the event, a string of comma-separated names, ex: 'john,mary,james'", required = true) @QueryParam("participants") String participants,
+                                      @ApiParam(value = "Space pretty names for inviting its participants to the event, a string of comma-separated names, ex: 'sales_team,acme_project,ux_pride'", required = true) @QueryParam("spaces") String spaces) {
       ConversationState convo = ConversationState.getCurrent();
       if (convo != null) {
         String currentUserName = convo.getIdentity().getUserId();
@@ -402,10 +467,20 @@ public class RESTWebConferencingService implements ResourceContainer {
   @GET
   @RolesAllowed("users")
   @Path("/room/{id}")
+  @ApiOperation(value = "Return chat room information", httpMethod = "GET", response = GroupInfo.class, 
+    notes = "Use this method to chat room info used as call owner and origins. This operation is avalable to all Platform users.")
+  @ApiResponses(value = { @ApiResponse(code = 200, message = "Request fulfilled. Chat room info object returned.", response = GroupInfo.class),
+    @ApiResponse(code = 400, message = "Wrong request parameters: id. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),
+    @ApiResponse(code = 400, message = "Wrong request parameters: title. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),
+    @ApiResponse(code = 400, message = "Wrong request parameters: members. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),
+    @ApiResponse(code = 401, message = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+    @ApiResponse(code = 403, message = "Not room member. Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+    @ApiResponse(code = 404, message = "Room not found or not accessible. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
+    @ApiResponse(code = 500, message = "Internal server error due to data reading from DB, its encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
   public Response getRoomInfo(@Context UriInfo uriInfo,
-                              @PathParam("id") String roomId,
-                              @QueryParam("title") String roomTitle,
-                              @QueryParam("members") String roomMembers) {
+                              @ApiParam(value = "Room ID, ex: 'team-ec5e257858734e40a98505475d8eedc4'", required = true) @PathParam("id") String roomId,
+                              @ApiParam(value = "Room title, ex: 'ACME meetings'", required = true) @QueryParam("title") String roomTitle,
+                              @ApiParam(value = "Room members (platform users or external Chat users), a string of comma-separated names, ex: 'john,james,julia'", required = true) @QueryParam("members") String roomMembers) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
