@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 <template>
   <v-app id="web-conferencing-admin" class="VuetifyApp">
     <v-container style="width: 95%" class="v-application--is-ltr">
@@ -28,23 +27,23 @@
                     style="width: 5%">{{ $t("webconferencing.admin.table.Permissions") }}</th>
                 </tr>
               </thead>
-              <tbody v-if="providers.length > 0">
+              <tbody v-if="providersConfig.length > 0">
                 <tr 
-                  v-for="item in providers" 
-                  :key="item.title"
+                  v-for="providerConfig in providersConfig"
+                  :key="providerConfig.title"
                   class="providersTableRow">
                   <td>
                     <div>
-                      {{ i18n.te(`webconferencing.admin.${item.title}.name`)
-                        ? $t(`webconferencing.admin.${item.title}.name`)
-                        : item.title
+                      {{ i18n.te(`webconferencing.admin.${providerConfig.title}.name`)
+                        ? $t(`webconferencing.admin.${providerConfig.title}.name`)
+                        : providerConfig.title
                       }}
                     </div>
                   </td>
                   <td>
                     <div 
-                      v-html="i18n.te(`webconferencing.admin.${item.title}.description`)
-                        ? $t(`webconferencing.admin.${item.title}.description`)
+                      v-html="i18n.te(`webconferencing.admin.${providerConfig.title}.description`)
+                        ? $t(`webconferencing.admin.${providerConfig.title}.description`)
                       : '' ">
                     </div>
                   </td>
@@ -52,17 +51,20 @@
                     <div>
                       <v-switch
                         :dense="true"
-                        :input-value="item.active"
+                        :input-value="providerConfig.active"
                         :ripple="false"
-                        v-model="item.active"
+                        v-model="providerConfig.active"
                         hide-details
                         color="#568dc9"
                         class="providersSwitcher"
-                        @change="changeActive(item)"/>
+                        @change="changeActive(providerConfig)"/>
                     </div>
                   </td>
                   <td class="center actionContainer">
-                    <i class="uiIconSetting uiIconLightGray"></i>
+                    <i
+                      v-if="providerConfig.hasSettings"
+                      class="uiIconSetting uiIconLightGray"
+                      @click="providerConfig.provider.showSettings()"></i>
                   </td>
                 </tr>
               </tbody>
@@ -75,8 +77,6 @@
 </template>
 
 <script>
-import { postData, getData } from "../AdminAPI";
-
 export default {
   components: {
   },
@@ -100,29 +100,34 @@ export default {
   },
   data() {
     return {
-      providers: [],
+      providersConfig: [],
       switcher: false,
-      error: null
+      error: null,
+      log: null
     };
   },
   created() {
+    this.log = webConferencing.getLog().prefix("webconferencing.admin");
     this.getProviders();
   },
   methods: {
-    async getProviders() {
+    getProviders() {
       // services object contains urls for requests
       try {
-        // const data = await getData(this.services.providers);
-        const response = await webConferencing.getProvidersConfig();
-        const data = webConferencing.getProvidersConfig().done(response);
+        const thisvue = this;
+        webConferencing.getProvidersConfig().then((providersConfig) => {
+          for (const providerConfig of providersConfig) {
+            webConferencing.getProvider(providerConfig.type).then((provider) => {
+              providerConfig.provider = provider;
+              // set setting visibility for the provider
+              providerConfig.hasSettings = provider.showSettings && provider.hasOwnProperty("showSettings");
+              thisvue.providersConfig.push(providerConfig);
+            }).fail(function(err) {
+              thisvue.log.warn(`Provider ${providerConfig.type} is not available`, err);
+            });
+          }
+        });
         this.error = null;
-        this.providers = await response;
-        // const resourcesPromises = this.providers.map(({ provider }) => this.getProviderResources(provider));
-        // Promise.all(resourcesPromises).then(res => {
-        //   res.map(localized => {
-        //     this.i18n.mergeLocaleMessage(this.language, localized.getLocaleMessage(this.language));
-        //   });
-        // });
       } catch (err) {
         this.error = err.message;
       }
