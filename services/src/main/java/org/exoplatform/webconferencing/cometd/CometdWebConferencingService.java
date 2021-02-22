@@ -245,50 +245,42 @@ public class CometdWebConferencingService implements Startable {
   /**
    * The Class CallEventProxy.
    */
-  static public abstract class CallEventProxy implements Externalizable {
-    
-    /** The Constant INIT - means it's initial call event type (not actual call change). */
-    public static final String INIT = "__init"; 
-    
-    /** The state. */
-    protected String type = INIT;
-    
-    /** The call id. */
-    protected String callId;
-    
-    /** The provider type. */
-    protected String providerType;
-    
-    /** The owner id. */
-    protected String ownerId;
-    
-    /** The owner type. */
-    protected String ownerType;
-    
+  static public class EventProxy implements Externalizable {
+
     /**
-     * Instantiates a new call event proxy (for serialization).
+     * The Constant INIT - means it's initial call event type (not actual call
+     * change).
      */
-    public CallEventProxy() {
-    }
-    
+    public static final String INIT = "__init";
+
+    /** The event type. */
+    protected String           type;
+
     /**
-     * Instantiates a new call event proxy.
+     * Instantiates a new event proxy.
      *
      * @param type the type
      */
-    CallEventProxy(String type) {
+    EventProxy(String type) {
       this.type = type;
     }
-    
+
     /**
-     * Checks if is initial call state.
+     * Instantiates a new event proxy of initial type (for serialization).
+     */
+    public EventProxy() {
+      this(INIT);
+    }
+
+    /**
+     * Checks if is an event of initial type.
      *
      * @return true, if is initial (i.e. user call channel established)
      */
     boolean isInitial() {
       return INIT.equals(getType());
     }
-    
+
     /**
      * Gets the event type.
      *
@@ -297,7 +289,65 @@ public class CometdWebConferencingService implements Startable {
     String getType() {
       return type;
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+      out.writeUTF(type);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void readExternal(ObjectInput in) throws IOException {
+      this.type = in.readUTF();
+    }
+  }
+
+  /**
+   * The Class CallEventProxy.
+   */
+  static public abstract class CallEventProxy extends EventProxy implements Externalizable {
+
+    /** The call id. */
+    protected String callId;
+
+    /** The provider type. */
+    protected String providerType;
+
+    /** The owner id. */
+    protected String ownerId;
+
+    /** The owner type. */
+    protected String ownerType;
+
+    /**
+     * Instantiates a new call event proxy (for serialization).
+     */
+    public CallEventProxy() {
+      super();
+    }
+
+    /**
+     * Instantiates a new call event proxy.
+     * 
+     * @param eventType
+     * @param callId
+     * @param providerType
+     * @param ownerId
+     * @param ownerType
+     */
+    CallEventProxy(String eventType, String callId, String providerType, String ownerId, String ownerType) {
+      super(eventType);
+      this.callId = callId;
+      this.providerType = providerType;
+      this.ownerId = ownerId;
+      this.ownerType = ownerType;
+    }
+
     /**
      * Gets the call id.
      *
@@ -339,11 +389,11 @@ public class CometdWebConferencingService implements Startable {
      */
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-      out.writeUTF(type);
+      super.writeExternal(out);
       out.writeUTF(callId);
       out.writeUTF(providerType);
       out.writeUTF(ownerId);
-      out.writeUTF(ownerType);      
+      out.writeUTF(ownerType);
     }
 
     /**
@@ -351,14 +401,14 @@ public class CometdWebConferencingService implements Startable {
      */
     @Override
     public void readExternal(ObjectInput in) throws IOException {
-      this.type = in.readUTF();
+      super.readExternal(in);
       this.callId = in.readUTF();
       this.providerType = in.readUTF();
       this.ownerId = in.readUTF();
       this.ownerType = in.readUTF();
     }
   }
-  
+
   /**
    * The Class CallParticipantEvent (joined and leaved participant).
    */
@@ -366,7 +416,7 @@ public class CometdWebConferencingService implements Startable {
 
     /** The part id. */
     private String partId;
-    
+
     /**
      * Instantiates a new call participant event (for serialization).
      */
@@ -385,14 +435,10 @@ public class CometdWebConferencingService implements Startable {
      * @param partId the part id
      */
     CallParticipantEvent(String eventType, String callId, String providerType, String ownerId, String ownerType, String partId) {
-      super(eventType);
-      this.callId = callId;
-      this.providerType = providerType;
-      this.ownerId = ownerId;
-      this.ownerType = ownerType;
+      super(eventType, callId, providerType, ownerId, ownerType);
       this.partId = partId;
     }
-    
+
     /**
      * Gets the part id.
      *
@@ -420,36 +466,7 @@ public class CometdWebConferencingService implements Startable {
       this.partId = in.readUTF();
     }
   }
-  
-  /**
-   * The Class UserInitEvent (for new user channel).
-   */
-  static public class UserInitEvent extends CallEventProxy implements Externalizable {
 
-    /**
-     * Instantiates a new user init event.
-     */
-    public UserInitEvent() {
-      super(INIT);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-      super.writeExternal(out);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void readExternal(ObjectInput in) throws IOException {
-      super.readExternal(in);
-    }
-  }
-  
   /**
    * The Class CallStateEvent (started, stopped calls).
    */
@@ -457,7 +474,7 @@ public class CometdWebConferencingService implements Startable {
 
     /** The state. */
     private String state;
-    
+
     /**
      * Instantiates a new call state event (for serialization).
      */
@@ -475,14 +492,10 @@ public class CometdWebConferencingService implements Startable {
      * @param state the call state
      */
     CallStateEvent(String callId, String providerType, String ownerId, String ownerType, String state) {
-      super(EVENT_CALL_STATE);
-      this.callId = callId;
-      this.providerType = providerType;
-      this.ownerId = ownerId;
-      this.ownerType = ownerType;
+      super(EVENT_CALL_STATE, callId, providerType, ownerId, ownerType);
       this.state = state;
     }
-    
+
     /**
      * Gets the state.
      *
@@ -510,27 +523,28 @@ public class CometdWebConferencingService implements Startable {
       this.state = in.readUTF();
     }
   }
-  
+
   /**
    * The Class UserCallProxy.
    */
   static public class UserCallProxy implements Externalizable {
-    
+
     /** The user id. */
-    private String userId;
-    
+    private String     userId;
+
     /** The client id. */
-    private String clientId;
-    
+    private String     clientId;
+
     /** The state - it's a payload of the call in caches. */
-    private CallEventProxy state = new UserInitEvent();
-    
+    private EventProxy state;
+
     /**
      * Instantiates a new user call proxy (for serialization).
      */
     public UserCallProxy() {
+      this.state = new EventProxy(); // initial state by default
     }
-    
+
     /**
      * Instantiates a new user call proxy.
      *
@@ -538,7 +552,7 @@ public class CometdWebConferencingService implements Startable {
      * @param clientId the client id
      */
     UserCallProxy(String userId, String clientId) {
-      super();
+      this();
       this.userId = userId;
       this.clientId = clientId;
     }
@@ -606,7 +620,7 @@ public class CometdWebConferencingService implements Startable {
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
       this.userId = in.readUTF();
       this.clientId = in.readUTF();
-      this.state = (CallEventProxy) in.readObject();
+      this.state = (EventProxy) in.readObject();
     }
 
     /**
@@ -632,7 +646,7 @@ public class CometdWebConferencingService implements Startable {
      *
      * @return the state
      */
-    CallEventProxy getState() {
+    EventProxy getState() {
       return state;
     }
 
@@ -641,7 +655,7 @@ public class CometdWebConferencingService implements Startable {
      *
      * @param state the state to set
      */
-    void setState(CallEventProxy state) {
+    void setState(EventProxy state) {
       this.state = state;
     }
   }
@@ -1298,7 +1312,8 @@ public class CometdWebConferencingService implements Startable {
           LOG.debug("< Channel removed: " + channelId);
         }
         if (channelId.startsWith(USER_SUBSCRIPTION_CHANNEL_NAME)) {
-          // Channel already doesn't exist here, ensure all its client listeners were unregistered
+          // Channel already doesn't exist here, ensure all its client listeners
+          // were unregistered
           String userId = channelUserId(channelId);
           UserChannelContext context = userChannelContext.remove(userId);
           if (context != null) {
@@ -1311,12 +1326,15 @@ public class CometdWebConferencingService implements Startable {
               LOG.debug("<< User call channel context not found for:" + channelId);
             }
           }
-        } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)
-            && channelId.length() > CALL_SUBSCRIPTION_CHANNEL_NAME.length()) {
+        } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME) && channelId.length() > CALL_SUBSCRIPTION_CHANNEL_NAME
+                                                                                                                              .length()) {
           String callId = channelId.substring(CALL_SUBSCRIPTION_CHANNEL_NAME.length() + 1);
-          // This call channel communications ended, in a normal way or by network failure - we assume all
-          // clients gone (all call parties that have been connected). And so, we stop the call and every
-          // party, including those who received incoming notification but not yet accepted/rejected it, will
+          // This call channel communications ended, in a normal way or by
+          // network failure - we assume all
+          // clients gone (all call parties that have been connected). And so,
+          // we stop the call and every
+          // party, including those who received incoming notification but not
+          // yet accepted/rejected it, will
           // be notified that the call stopped/removed.
           CallChannelContext context = callChannelContext.remove(channelId);
           if (context != null) {
@@ -1329,7 +1347,8 @@ public class CometdWebConferencingService implements Startable {
                 try {
                   CallInfo call = webConferencing.getCall(callId);
                   if (call != null) {
-                    // may be need leave all them and let that logic to stop the call?
+                    // may be need leave all them and let that logic to stop the
+                    // call?
                     webConferencing.stopCall(callId, !call.getOwner().isGroup());
                   }
                 } catch (Exception e) {
@@ -1351,7 +1370,7 @@ public class CometdWebConferencingService implements Startable {
         }
       }
     }
-    
+
     /**
      * The listener interface for receiving usersCache events and reflect local
      * {@link WebConferencingService#addUserCallListener(UserCallListener)}
@@ -1360,16 +1379,16 @@ public class CometdWebConferencingService implements Startable {
      * @see UsersCacheEvent
      */
     class UsersCacheListener implements CacheListener<String, UserCallProxy> {
-      
+
       class UserCallListenerStub extends UserCallListener {
-        
+
         final String cacheId;
-        
+
         UserCallListenerStub(String cacheId, String userId, String clientId) {
           super(userId, clientId);
           this.cacheId = cacheId;
         }
-        
+
         /**
          * Gets the cache id.
          *
@@ -1380,39 +1399,29 @@ public class CometdWebConferencingService implements Startable {
         }
 
         @Override
-        public void onPartLeaved(String callId,
-                                 String providerType,
-                                 String ownerId,
-                                 String ownerType,
-                                 String partId) {
+        public void onPartLeaved(String callId, String providerType, String ownerId, String ownerType, String partId) {
           UserCallProxy proxy = new UserCallProxy(userId, clientId);
           proxy.setState(new CallParticipantEvent(EVENT_CALL_LEAVED, callId, providerType, ownerId, ownerType, partId));
           usersCache.put(proxy.getId(), proxy);
           if (LOG.isDebugEnabled()) {
-            LOG.debug(">> Cached call participant leaved for " + callId + "[" + partId + "] to " + cacheId + " by " + currentUserId(null));
+            LOG.debug(">> Cached call participant leaved for " + callId + "[" + partId + "] to " + cacheId + " by "
+                + currentUserId(null));
           }
         }
 
         @Override
-        public void onPartJoined(String callId,
-                                 String providerType,
-                                 String ownerId,
-                                 String ownerType,
-                                 String partId) {
+        public void onPartJoined(String callId, String providerType, String ownerId, String ownerType, String partId) {
           UserCallProxy proxy = new UserCallProxy(userId, clientId);
           proxy.setState(new CallParticipantEvent(EVENT_CALL_JOINED, callId, providerType, ownerId, ownerType, partId));
           usersCache.put(proxy.getId(), proxy);
           if (LOG.isDebugEnabled()) {
-            LOG.debug(">> Cached call participant joined for " + callId + "[" + partId + "] to " + cacheId + " by " + currentUserId(null));
+            LOG.debug(">> Cached call participant joined for " + callId + "[" + partId + "] to " + cacheId + " by "
+                + currentUserId(null));
           }
         }
 
         @Override
-        public void onCallStateChanged(String callId,
-                                       String providerType,
-                                       String callState,
-                                       String ownerId,
-                                       String ownerType) {
+        public void onCallStateChanged(String callId, String providerType, String callState, String ownerId, String ownerType) {
           UserCallProxy proxy = new UserCallProxy(userId, clientId);
           proxy.setState(new CallStateEvent(callId, providerType, ownerId, ownerType, callState));
           usersCache.put(proxy.getId(), proxy);
@@ -1423,7 +1432,7 @@ public class CometdWebConferencingService implements Startable {
       }
 
       final Map<String, UserCallListenerStub> clientStubs = new ConcurrentHashMap<>();
-      
+
       void stop() {
         for (Iterator<UserCallListenerStub> siter = clientStubs.values().iterator(); siter.hasNext();) {
           UserCallListenerStub listener = siter.next();
@@ -1432,7 +1441,7 @@ public class CometdWebConferencingService implements Startable {
           usersCache.remove(listener.getCacheId());
         }
       }
-      
+
       /**
        * {@inheritDoc}
        */
@@ -1443,14 +1452,13 @@ public class CometdWebConferencingService implements Startable {
           LOG.debug("< User calls cache cleanup initiated");
         }
       }
-      
+
       /**
        * {@inheritDoc}
        */
       @Override
       public void onExpire(CacheListenerContext context, String key, UserCallProxy obj) throws Exception {
         // We don't need unregister an user listener as it actually may be connected
-        //onRemove(context, key, obj);
         if (LOG.isDebugEnabled()) {
           LOG.debug("< Expiration was initiated for " + key);
         }
@@ -1479,7 +1487,7 @@ public class CometdWebConferencingService implements Startable {
         if (obj != null) {
           String userId = obj.getUserId();
           String clientId = obj.getClientId();
-          CallEventProxy event = obj.getState();
+          EventProxy event = obj.getState();
           UserChannelContext userContext = userChannelContext.get(userId);
           if (event.isInitial()) {
             if (userContext == null || !userContext.getListener().getClientId().equals(clientId)) {
@@ -1487,46 +1495,52 @@ public class CometdWebConferencingService implements Startable {
               // Register a stub listener in WebConf to transfer call updates from this node to the client one.
               UserCallListenerStub listener = new UserCallListenerStub(key, userId, clientId);
               webConferencing.addUserCallListener(listener);
-              clientStubs.putIfAbsent(key, listener); // it's enough to have a first one as addUserCallListener does the same
+              // it's enough to have a first one as addUserCallListener does the same
+              clientStubs.putIfAbsent(key, listener);
               if (LOG.isDebugEnabled()) {
                 LOG.debug("> Registered user listener stub for " + key);
               }
-            } // ignore otherwise - it's local event 
+            } // ignore otherwise - it's local event
           } else {
             // It's a call event - check if it's from remote stub listener (another cluster node) to our local user client
             if (userContext != null && userContext.getListener().getClientId().equals(obj.getClientId())) {
-              // Handle the remote event like it's an one occurred in local WebConf service 
+              // Handle the remote event like it's an one occurred in local WebConf service
               if (LOG.isDebugEnabled()) {
-                LOG.debug("> Received call event from user listener stub for " + key + " event:" + event.getType() + " callId:"
-                    + event.getCallId() + " by " + currentUserId(null));
+                LOG.debug("> Received call event from user listener stub for " + key + " event:" + event.getType() + " by " + currentUserId(null));
               }
               switch (event.getType()) {
-              case EVENT_CALL_JOINED:
+              case EVENT_CALL_JOINED: {
+                CallParticipantEvent partEvent = CallParticipantEvent.class.cast(event);
                 userContext.getListener()
-                           .onPartJoined(event.getCallId(),
-                                         event.getProviderType(),
-                                         event.getOwnerId(),
-                                         event.getOwnerType(),
-                                         CallParticipantEvent.class.cast(event).getPartId());
+                           .onPartJoined(partEvent.getCallId(),
+                                         partEvent.getProviderType(),
+                                         partEvent.getOwnerId(),
+                                         partEvent.getOwnerType(),
+                                         partEvent.getPartId());
                 break;
-              case EVENT_CALL_LEAVED:
+              }
+              case EVENT_CALL_LEAVED: {
+                CallParticipantEvent partEvent = CallParticipantEvent.class.cast(event);
                 userContext.getListener()
-                           .onPartLeaved(event.getCallId(),
-                                         event.getProviderType(),
-                                         event.getOwnerId(),
-                                         event.getOwnerType(),
-                                         CallParticipantEvent.class.cast(event).getPartId());
+                           .onPartLeaved(partEvent.getCallId(),
+                                         partEvent.getProviderType(),
+                                         partEvent.getOwnerId(),
+                                         partEvent.getOwnerType(),
+                                         partEvent.getPartId());
                 break;
-              case EVENT_CALL_STATE:
+              }
+              case EVENT_CALL_STATE: {
+                CallStateEvent stateEvent = CallStateEvent.class.cast(event);
                 userContext.getListener()
-                           .onCallStateChanged(event.getCallId(),
-                                               event.getProviderType(),
-                                               CallStateEvent.class.cast(event).getState(),
-                                               event.getOwnerId(),
-                                               event.getOwnerType());
+                           .onCallStateChanged(stateEvent.getCallId(),
+                                               stateEvent.getProviderType(),
+                                               stateEvent.getState(),
+                                               stateEvent.getOwnerId(),
+                                               stateEvent.getOwnerType());
                 break;
+              }
               default:
-                LOG.warn("Unexpected call state in cache " + event.getType() + " for " + key + " callId: " + event.getCallId() + " by " + currentUserId(null));
+                LOG.warn("Unexpected call state in cache " + event.getType() + " for " + key + " by " + currentUserId(null));
                 break;
               }
             } // ignore otherwise - it's an event for others
