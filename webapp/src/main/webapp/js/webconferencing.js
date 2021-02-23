@@ -2372,7 +2372,13 @@
           cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
             var result = tryParseJson(response);
             if (response.successful) {
-              process.resolve(result);
+              self.getProvider(stateInfo.provider)
+                .then(provider => {
+                  if (provider.getCallUrl) {
+                    result.url = provider.getCallUrl(id);
+                  }
+                  process.resolve(result);
+                });
             } else {
               process.reject(result);
             }
