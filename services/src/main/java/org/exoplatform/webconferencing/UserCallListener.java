@@ -44,6 +44,43 @@ public abstract class UserCallListener {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((clientId == null) ? 0 : clientId.hashCode());
+    result = prime * result + ((userId == null) ? 0 : userId.hashCode());
+    return result;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    UserCallListener other = (UserCallListener) obj;
+    if (clientId == null) {
+      if (other.clientId != null)
+        return false;
+    } else if (!clientId.equals(other.clientId))
+      return false;
+    if (userId == null) {
+      if (other.userId != null)
+        return false;
+    } else if (!userId.equals(other.userId))
+      return false;
+    return true;
+  }
+
+  /**
    * Gets the user id.
    *
    * @return the user id
