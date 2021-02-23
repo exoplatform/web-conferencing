@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2017 eXo Platform SAS.
+ * Copyright (C) 2003-2021 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -18,17 +18,10 @@
  */
 package org.exoplatform.webconferencing.cometd;
 
-import static org.exoplatform.webconferencing.Utils.asJSON;
-import static org.exoplatform.webconferencing.WebConferencingService.isValidArg;
-import static org.exoplatform.webconferencing.WebConferencingService.isValidId;
-import static org.exoplatform.webconferencing.WebConferencingService.isValidText;
-import static org.exoplatform.webconferencing.support.CallLog.DEBUG_LEVEL;
-import static org.exoplatform.webconferencing.support.CallLog.ERROR_LEVEL;
-import static org.exoplatform.webconferencing.support.CallLog.INFO_LEVEL;
-import static org.exoplatform.webconferencing.support.CallLog.TRACE_LEVEL;
-import static org.exoplatform.webconferencing.support.CallLog.WARN_LEVEL;
-import static org.exoplatform.webconferencing.support.CallLog.validate;
-
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -36,11 +29,12 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,6 +49,20 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
+
+import static org.exoplatform.webconferencing.Utils.asJSON;
+import static org.exoplatform.webconferencing.Utils.parseISODate;
+import static org.exoplatform.webconferencing.WebConferencingService.isValidArg;
+import static org.exoplatform.webconferencing.WebConferencingService.isValidId;
+import static org.exoplatform.webconferencing.WebConferencingService.isValidText;
+import static org.exoplatform.webconferencing.cometd.CometdWebConferencingService.EventProxy.CLOSE;
+import static org.exoplatform.webconferencing.cometd.CometdWebConferencingService.EventProxy.INIT;
+import static org.exoplatform.webconferencing.support.CallLog.DEBUG_LEVEL;
+import static org.exoplatform.webconferencing.support.CallLog.ERROR_LEVEL;
+import static org.exoplatform.webconferencing.support.CallLog.INFO_LEVEL;
+import static org.exoplatform.webconferencing.support.CallLog.TRACE_LEVEL;
+import static org.exoplatform.webconferencing.support.CallLog.WARN_LEVEL;
+import static org.exoplatform.webconferencing.support.CallLog.validate;
 
 import org.cometd.annotation.Param;
 import org.cometd.annotation.RemoteCall;
@@ -79,6 +87,10 @@ import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.component.RequestLifeCycle;
+import org.exoplatform.services.cache.CacheListener;
+import org.exoplatform.services.cache.CacheListenerContext;
+import org.exoplatform.services.cache.CacheService;
+import org.exoplatform.services.cache.ExoCache;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
@@ -122,8 +134,8 @@ public class CometdWebConferencingService implements Startable {
   /** The Constant CALL_SUBSCRIPTION_CHANNEL_NAME_ALL. */
   public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME_ALL    = CALL_SUBSCRIPTION_CHANNEL_NAME + "/**";
 
-  /** The Constant CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS. */
-  public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS =
+  /** The Constant CALL_SUBSCRIPTION_CHANNEL_NAME_PATTERN. */
+  public static final String             CALL_SUBSCRIPTION_CHANNEL_NAME_PATTERN =
                                                                                "/eXo/Application/WebConferencing/call/{callType}/{callInfo}";
 
   /** The Constant USER_SUBSCRIPTION_CHANNEL_NAME. */
@@ -131,6 +143,9 @@ public class CometdWebConferencingService implements Startable {
 
   /** The Constant USER_SUBSCRIPTION_CHANNEL_PATTERN. */
   public static final String             USER_SUBSCRIPTION_CHANNEL_PATTERN     = USER_SUBSCRIPTION_CHANNEL_NAME + "/{userId}";
+  
+  /** The Constant USER_CACHE_NAME. */
+  public static final String             USER_CACHE_NAME            = "webconferencing.cometd.Cache".intern();
 
   /** The Constant COMMAND_GET. */
   public static final String             COMMAND_GET                           = "get";
@@ -161,6 +176,15 @@ public class CometdWebConferencingService implements Startable {
 
   /** The Constant COMMAND_GET_ORG_IDENTITIES. */
   public static final String             COMMAND_GET_ORG_IDENTITIES            = "get_org_identities";
+  
+  /** The Constant EVENT_CALL_LEAVED. */
+  public static final String             EVENT_CALL_LEAVED = "call_leaved";
+  
+  /** The Constant EVENT_CALL_JOINED. */
+  public static final String             EVENT_CALL_JOINED = "call_joined";
+  
+  /** The Constant EVENT_CALL_STATE. */
+  public static final String             EVENT_CALL_STATE = "call_state";
 
   /** The Constant LOG_OK. */
   public static final String             LOG_OK                                = "{}";
@@ -217,7 +241,458 @@ public class CometdWebConferencingService implements Startable {
 
   /** The call handlers. */
   protected final ExecutorService        callHandlers;
+  
+  /** Cache of connected users. */
+  protected final ExoCache<String, UserCallProxy>  usersCache;
 
+  /**
+   * The Class CallEventProxy.
+   */
+  static public class EventProxy implements Externalizable {
+
+    /**
+     * The Constant INIT - means it's initial event type (not actually call change, but user channel connected).
+     */
+    public static final String INIT  = "__init";
+
+    /**
+     * The Constant CLOSE - means it's closing event type (user call change, but user channel closed).
+     */
+    public static final String CLOSE = "__close";
+
+    /** The event type. */
+    protected String           type;
+
+    /**
+     * Instantiates a new event proxy.
+     *
+     * @param type the type
+     */
+    EventProxy(String type) {
+      this.type = type;
+    }
+
+    /**
+     * Instantiates a new event proxy of initial type (for serialization).
+     */
+    public EventProxy() {
+      this(INIT);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString() {
+      return super.toString() + "[" + getType() + "]";
+    }
+
+    /**
+     * Checks if is an event of initial type.
+     *
+     * @return true, if is initial (i.e. user call channel established)
+     */
+    boolean isInitial() {
+      return INIT.equals(getType());
+    }
+
+    /**
+     * Checks if is an event of closing type.
+     *
+     * @return true, if is closing (i.e. user call channel leaved)
+     */
+    boolean isClosed() {
+      return CLOSE.equals(getType());
+    }
+
+    /**
+     * Gets the event type.
+     *
+     * @return the type
+     */
+    String getType() {
+      return type;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+      out.writeUTF(type);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void readExternal(ObjectInput in) throws IOException {
+      this.type = in.readUTF();
+    }
+  }
+
+  /**
+   * The Class CallEventProxy.
+   */
+  static public abstract class CallEventProxy extends EventProxy implements Externalizable {
+
+    /** The call id. */
+    protected String callId;
+
+    /** The provider type. */
+    protected String providerType;
+
+    /** The owner id. */
+    protected String ownerId;
+
+    /** The owner type. */
+    protected String ownerType;
+
+    /**
+     * Instantiates a new call event proxy (for serialization).
+     */
+    public CallEventProxy() {
+      super();
+    }
+
+    /**
+     * Instantiates a new call event proxy.
+     *
+     * @param eventType the event type
+     * @param callId the call id
+     * @param providerType the provider type
+     * @param ownerId the owner id
+     * @param ownerType the owner type
+     */
+    CallEventProxy(String eventType, String callId, String providerType, String ownerId, String ownerType) {
+      super(eventType);
+      this.callId = callId;
+      this.providerType = providerType;
+      this.ownerId = ownerId;
+      this.ownerType = ownerType;
+    }
+
+    /**
+     * Gets the call id.
+     *
+     * @return the callId
+     */
+    String getCallId() {
+      return callId;
+    }
+
+    /**
+     * Gets the provider type.
+     *
+     * @return the providerType
+     */
+    String getProviderType() {
+      return providerType;
+    }
+
+    /**
+     * Gets the owner id.
+     *
+     * @return the ownerId
+     */
+    String getOwnerId() {
+      return ownerId;
+    }
+
+    /**
+     * Gets the owner type.
+     *
+     * @return the ownerType
+     */
+    String getOwnerType() {
+      return ownerType;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+      super.writeExternal(out);
+      out.writeUTF(callId);
+      out.writeUTF(providerType);
+      out.writeUTF(ownerId);
+      out.writeUTF(ownerType);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void readExternal(ObjectInput in) throws IOException {
+      super.readExternal(in);
+      this.callId = in.readUTF();
+      this.providerType = in.readUTF();
+      this.ownerId = in.readUTF();
+      this.ownerType = in.readUTF();
+    }
+  }
+
+  /**
+   * The Class CallParticipantEvent (joined and leaved participant).
+   */
+  static public class CallParticipantEvent extends CallEventProxy implements Externalizable {
+
+    /** The part id. */
+    private String partId;
+
+    /**
+     * Instantiates a new call participant event (for serialization).
+     */
+    public CallParticipantEvent() {
+      super();
+    }
+
+    /**
+     * Instantiates a new call participant event.
+     *
+     * @param eventType the event type
+     * @param callId the call id
+     * @param providerType the provider type
+     * @param ownerId the owner id
+     * @param ownerType the owner type
+     * @param partId the part id
+     */
+    CallParticipantEvent(String eventType, String callId, String providerType, String ownerId, String ownerType, String partId) {
+      super(eventType, callId, providerType, ownerId, ownerType);
+      this.partId = partId;
+    }
+
+    /**
+     * Gets the part id.
+     *
+     * @return the partId
+     */
+    String getPartId() {
+      return partId;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+      super.writeExternal(out);
+      out.writeUTF(partId);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void readExternal(ObjectInput in) throws IOException {
+      super.readExternal(in);
+      this.partId = in.readUTF();
+    }
+  }
+
+  /**
+   * The Class CallStateEvent (started, stopped calls).
+   */
+  static public class CallStateEvent extends CallEventProxy implements Externalizable {
+
+    /** The state. */
+    private String state;
+
+    /**
+     * Instantiates a new call state event (for serialization).
+     */
+    public CallStateEvent() {
+      super();
+    }
+
+    /**
+     * Instantiates a new call participant event.
+     *
+     * @param callId the call id
+     * @param providerType the provider type
+     * @param ownerId the owner id
+     * @param ownerType the owner type
+     * @param state the call state
+     */
+    CallStateEvent(String callId, String providerType, String ownerId, String ownerType, String state) {
+      super(EVENT_CALL_STATE, callId, providerType, ownerId, ownerType);
+      this.state = state;
+    }
+
+    /**
+     * Gets the state.
+     *
+     * @return the state
+     */
+    String getState() {
+      return state;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+      super.writeExternal(out);
+      out.writeUTF(state);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void readExternal(ObjectInput in) throws IOException {
+      super.readExternal(in);
+      this.state = in.readUTF();
+    }
+  }
+
+  /**
+   * The Class UserCallProxy.
+   */
+  static public class UserCallProxy implements Externalizable {
+
+    /** The user id. */
+    private String     userId;
+
+    /** The client id. */
+    private String     clientId;
+
+    /** The state - it's a payload of the call in caches. */
+    private EventProxy state;
+
+    /**
+     * Instantiates a new user call proxy (for serialization).
+     */
+    public UserCallProxy() {
+      this.state = new EventProxy(); // initial state by default
+    }
+
+    /**
+     * Instantiates a new user call proxy.
+     *
+     * @param userId the user id
+     * @param clientId the client id
+     * @param state the state
+     */
+    UserCallProxy(String userId, String clientId, EventProxy state) {
+      this.userId = userId;
+      this.clientId = clientId;
+      this.state = state;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString() {
+      return super.toString() + "[" + getId() + ", " + state.getType() + "]";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((clientId == null) ? 0 : clientId.hashCode());
+      result = prime * result + ((userId == null) ? 0 : userId.hashCode());
+      return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj)
+        return true;
+      if (obj == null)
+        return false;
+      if (getClass() != obj.getClass())
+        return false;
+      UserCallProxy other = (UserCallProxy) obj;
+      if (clientId == null) {
+        if (other.clientId != null)
+          return false;
+      } else if (!clientId.equals(other.clientId))
+        return false;
+      if (userId == null) {
+        if (other.userId != null)
+          return false;
+      } else if (!userId.equals(other.userId))
+        return false;
+      return true;
+    }
+
+    /**
+     * Gets user proxy id.
+     *
+     * @return the id
+     */
+    public String getId() {
+      return new StringBuilder(this.userId).append('@').append(this.clientId).toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+      out.writeUTF(userId);
+      out.writeUTF(clientId);
+      out.writeObject(state);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+      this.userId = in.readUTF();
+      this.clientId = in.readUTF();
+      this.state = (EventProxy) in.readObject();
+    }
+
+    /**
+     * Gets the user id.
+     *
+     * @return the userId
+     */
+    public String getUserId() {
+      return userId;
+    }
+
+    /**
+     * Gets the client id.
+     *
+     * @return the clientId
+     */
+    public String getClientId() {
+      return clientId;
+    }
+
+    /**
+     * Gets the state.
+     *
+     * @return the state
+     */
+    EventProxy getState() {
+      return state;
+    }
+
+    /**
+     * Sets the state.
+     *
+     * @param state the state to set
+     */
+    void setState(EventProxy state) {
+      this.state = state;
+    }
+  }
+  
   /**
    * Command thread factory adapted from {@link Executors#DefaultThreadFactory}.
    */
@@ -350,7 +825,7 @@ public class CometdWebConferencingService implements Startable {
 
       /** The listener. */
       final UserCallListener listener;
-
+      
       /**
        * Instantiates a new channel context.
        *
@@ -399,8 +874,16 @@ public class CometdWebConferencingService implements Startable {
         boolean res = clients.remove(sessionId);
         if (clients.size() == 0) {
           webConferencing.removeUserCallListener(listener);
+          UserCallProxy proxy = null;
+          if (usersCache != null) {
+            // Put closing call proxy into the cache (for clustering channel notifications)
+            // Other nodes will unregister their listener stub in its WebConf service instance
+            proxy = new UserCallProxy(listener.getUserId(), listener.getClientId(), new EventProxy(CLOSE));
+            usersCache.put(proxy.getId(), proxy);
+          }
           if (LOG.isDebugEnabled()) {
-            LOG.debug("<<< Removed user call listener for " + listener.getUserId() + ", session:" + sessionId);
+            LOG.debug("<<< Removed user call listener for " + listener.getUserId() + ", session:" + sessionId + " proxy:"
+                + proxy);
           }
         } else if (res) {
           if (LOG.isDebugEnabled()) {
@@ -425,8 +908,16 @@ public class CometdWebConferencingService implements Startable {
         boolean res = clients.add(sessionId);
         if (wasEmpty && res) {
           webConferencing.addUserCallListener(listener);
+          UserCallProxy proxy = null;
+          if (usersCache != null) {
+            // Add initial call proxy to the cache (for clustering channel notifications)
+            // Other nodes will listen on the cache onPut and register a client stub listener to their WebConf service instances
+            proxy = new UserCallProxy(listener.getUserId(), listener.getClientId(), new EventProxy(INIT));
+            usersCache.put(proxy.getId(), proxy);
+          }
           if (LOG.isDebugEnabled()) {
-            LOG.debug("<<< Added first user call listener for " + listener.getUserId() + ", session:" + sessionId);
+            LOG.debug("<<< Added first user call listener for " + listener.getUserId() + ", session:" + sessionId + " proxy:"
+                + proxy);
           }
         } else if (res) {
           if (LOG.isDebugEnabled()) {
@@ -556,10 +1047,10 @@ public class CometdWebConferencingService implements Startable {
     /**
      * The listener interface for receiving channelSubscription events.
      * The class that is interested in processing a channelSubscription
-     * event implements this interface, and the object created
+     * state implements this interface, and the object created
      * with that class is registered with a component using the
      * component's <code>addChannelSubscriptionListener<code> method. When
-     * the channelSubscription event occurs, that object's appropriate
+     * the channelSubscription state occurs, that object's appropriate
      * method is invoked.
      *
      * @see ChannelSubscriptionEvent
@@ -592,7 +1083,7 @@ public class CometdWebConferencingService implements Startable {
                 // Sep 8 2017: We need a single user listener per his channel, if add more then we'll have
                 // multiple events for a single update
 
-                userChannelContext.computeIfAbsent(channelId, k -> {
+                userChannelContext.computeIfAbsent(userId, k -> {
                   // TODO exoClientId better use in addClient()
                   UserCallListener listener = new UserCallListener(userId, exoClientId) {
                     @Override
@@ -603,7 +1094,9 @@ public class CometdWebConferencingService implements Startable {
                                              String partId) {
                       StringBuilder data = new StringBuilder();
                       data.append('{');
-                      data.append("\"eventType\": \"call_leaved\",");
+                      data.append("\"eventType\": \"");
+                      data.append(EVENT_CALL_LEAVED);
+                      data.append("\",");
                       data.append("\"callId\": \"");
                       data.append(callId);
                       data.append("\",\"providerType\": \"");
@@ -619,6 +1112,9 @@ public class CometdWebConferencingService implements Startable {
                       data.append("\"}");
                       data.append('}');
                       bayeux.getChannel(channelId).publish(serverSession, data.toString());
+                      if (LOG.isDebugEnabled()) {
+                        LOG.debug(">>> Sent call leaved to " + channelId + " call: " + callId + "[" + partId + "] by " + currentUserId(null));
+                      }
                     }
 
                     @Override
@@ -629,7 +1125,9 @@ public class CometdWebConferencingService implements Startable {
                                              String partId) {
                       StringBuilder data = new StringBuilder();
                       data.append('{');
-                      data.append("\"eventType\": \"call_joined\",");
+                      data.append("\"eventType\": \"");
+                      data.append(EVENT_CALL_JOINED);
+                      data.append("\",");
                       data.append("\"callId\": \"");
                       data.append(callId);
                       data.append("\",\"providerType\": \"");
@@ -645,6 +1143,9 @@ public class CometdWebConferencingService implements Startable {
                       data.append("\"}");
                       data.append('}');
                       bayeux.getChannel(channelId).publish(serverSession, data.toString());
+                      if (LOG.isDebugEnabled()) {
+                        LOG.debug(">>> Sent call joined to " + channelId + " call: " + callId + "[" + partId + "] by " + currentUserId(null));
+                      }
                     }
 
                     @Override
@@ -655,7 +1156,9 @@ public class CometdWebConferencingService implements Startable {
                                                    String ownerType) {
                       StringBuilder data = new StringBuilder();
                       data.append('{');
-                      data.append("\"eventType\": \"call_state\",");
+                      data.append("\"eventType\": \"");
+                      data.append(EVENT_CALL_STATE);
+                      data.append("\",");
                       data.append("\"callId\": \"");
                       data.append(callId);
                       data.append("\",\"providerType\": \"");
@@ -671,7 +1174,7 @@ public class CometdWebConferencingService implements Startable {
                       data.append('}');
                       bayeux.getChannel(channelId).publish(serverSession, data.toString());
                       if (LOG.isDebugEnabled()) {
-                        LOG.debug(">>>> Sent call state update to " + channelId + " by " + currentUserId(null));
+                        LOG.debug(">>> Sent call state update to " + channelId + " by " + currentUserId(null));
                       }
                     }
                   };
@@ -743,12 +1246,13 @@ public class CometdWebConferencingService implements Startable {
         }
         if (channelId.startsWith(USER_SUBSCRIPTION_CHANNEL_NAME)) {
           // cleanup session stuff, note that disconnected session already unsubscribed and has not channels
-          UserChannelContext context = userChannelContext.get(channelId);
+          String userId = channelUserId(channelId);
+          UserChannelContext context = userChannelContext.get(userId);
           if (context != null) {
             context.removeClient(sessionId);
           } else {
             if (LOG.isDebugEnabled()) {
-              LOG.debug("<<< User call channel context not found for session: " + sessionId + ", channel:" + channelId);
+              LOG.debug("<<< User call channel context not found for session:" + sessionId + ", channel:" + channelId);
             }
           }
         } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)
@@ -801,7 +1305,7 @@ public class CometdWebConferencingService implements Startable {
             });
           } else {
             if (LOG.isDebugEnabled()) {
-              LOG.debug("Call context not found for " + callId);
+              LOG.debug("<<< Call context not found for " + callId);
             }
           }
         }
@@ -849,8 +1353,10 @@ public class CometdWebConferencingService implements Startable {
           LOG.debug("< Channel removed: " + channelId);
         }
         if (channelId.startsWith(USER_SUBSCRIPTION_CHANNEL_NAME)) {
-          // Channel already doesn't exist here, ensure all its client listeners were unregistered
-          UserChannelContext context = userChannelContext.remove(channelId);
+          // Channel already doesn't exist here, ensure all its client listeners
+          // were unregistered
+          String userId = channelUserId(channelId);
+          UserChannelContext context = userChannelContext.remove(userId);
           if (context != null) {
             webConferencing.removeUserCallListener(context.getListener());
             if (LOG.isDebugEnabled()) {
@@ -861,13 +1367,13 @@ public class CometdWebConferencingService implements Startable {
               LOG.debug("<< User call channel context not found for:" + channelId);
             }
           }
-        } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)
-            && channelId.length() > CALL_SUBSCRIPTION_CHANNEL_NAME.length()) {
+        } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME) && channelId.length() > CALL_SUBSCRIPTION_CHANNEL_NAME
+                                                                                                                              .length()) {
           String callId = channelId.substring(CALL_SUBSCRIPTION_CHANNEL_NAME.length() + 1);
-          // This call channel communications ended, in a normal way or by network failure - we assume all
-          // clients gone (all call parties that have been connected). And so, we stop the call and every
-          // party, including those who received incoming notification but not yet accepted/rejected it, will
-          // be notified that the call stopped/removed.
+          // This call channel communications ended, in a normal way or by
+          // network failure - we assume all clients gone (all call parties that have been connected). 
+          // And so, we stop the call and every party, including those who received incoming notification 
+          // but not yet accepted/rejected it, will be notified that the call stopped/removed.
           CallChannelContext context = callChannelContext.remove(channelId);
           if (context != null) {
             callHandlers.submit(new ContainerCommand(context.getContainerName()) {
@@ -879,7 +1385,8 @@ public class CometdWebConferencingService implements Startable {
                 try {
                   CallInfo call = webConferencing.getCall(callId);
                   if (call != null) {
-                    // may be need leave all them and let that logic to stop the call?
+                    // may be need leave all them and let that logic to stop the
+                    // call?
                     webConferencing.stopCall(callId, !call.getOwner().isGroup());
                   }
                 } catch (Exception e) {
@@ -899,6 +1406,243 @@ public class CometdWebConferencingService implements Startable {
             LOG.warn("Call context not found for " + callId);
           }
         }
+      }
+    }
+
+    /**
+     * The listener interface for receiving usersCache events and reflect local
+     * {@link WebConferencingService#addUserCallListener(UserCallListener)}
+     * listeners.
+     *
+     * @see UsersCacheEvent
+     */
+    class UsersCacheListener implements CacheListener<String, UserCallProxy> {
+
+      /**
+       * The Class UserCallListenerStub.
+       */
+      class UserCallListenerStub extends UserCallListener {
+
+        /** The cache id. */
+        final String cacheId;
+
+        /**
+         * Instantiates a new user call listener stub.
+         *
+         * @param cacheId the cache id
+         * @param userId the user id
+         * @param clientId the client id
+         */
+        UserCallListenerStub(String cacheId, String userId, String clientId) {
+          super(userId, clientId);
+          this.cacheId = cacheId;
+        }
+
+        /**
+         * Gets the cache id.
+         *
+         * @return the cacheId
+         */
+        String getCacheId() {
+          return cacheId;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onPartLeaved(String callId, String providerType, String ownerId, String ownerType, String partId) {
+          UserCallProxy proxy = new UserCallProxy(userId,
+                                                  clientId,
+                                                  new CallParticipantEvent(EVENT_CALL_LEAVED,
+                                                                           callId,
+                                                                           providerType,
+                                                                           ownerId,
+                                                                           ownerType,
+                                                                           partId));
+          usersCache.put(proxy.getId(), proxy);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(">> Cached call participant leaved for " + callId + "[" + partId + "] to " + cacheId + " by "
+                + currentUserId(null));
+          }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onPartJoined(String callId, String providerType, String ownerId, String ownerType, String partId) {
+          UserCallProxy proxy = new UserCallProxy(userId,
+                                                  clientId,
+                                                  new CallParticipantEvent(EVENT_CALL_JOINED,
+                                                                           callId,
+                                                                           providerType,
+                                                                           ownerId,
+                                                                           ownerType,
+                                                                           partId));
+          usersCache.put(proxy.getId(), proxy);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(">> Cached call participant joined for " + callId + "[" + partId + "] to " + cacheId + " by "
+                + currentUserId(null));
+          }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onCallStateChanged(String callId, String providerType, String callState, String ownerId, String ownerType) {
+          UserCallProxy proxy = new UserCallProxy(userId,
+                                                  clientId,
+                                                  new CallStateEvent(callId, providerType, ownerId, ownerType, callState));
+          usersCache.put(proxy.getId(), proxy);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(">> Cached call state update for " + callId + " to " + cacheId + " by " + currentUserId(null));
+          }
+        }
+      }
+
+      /** The client stubs. */
+      final Map<String, UserCallListenerStub> clientStubs = new ConcurrentHashMap<>();
+
+      /**
+       * Stop.
+       */
+      void stop() {
+        for (Iterator<UserCallListenerStub> siter = clientStubs.values().iterator(); siter.hasNext();) {
+          UserCallListenerStub listener = siter.next();
+          webConferencing.removeUserCallListener(listener);
+          siter.remove();
+          // Remove in whole (distributed) cache as this node service stops and all its clients closed channels
+          usersCache.remove(listener.getCacheId());
+        }
+      }
+
+      /**
+       * {@inheritDoc}
+       */
+      @Override
+      public void onClearCache(CacheListenerContext context) throws Exception {
+        // We don't need unregister all user listeners as they actually may be connected
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("< User calls cache cleanup initiated");
+        }
+      }
+
+      /**
+       * {@inheritDoc}
+       */
+      @Override
+      public void onExpire(CacheListenerContext context, String key, UserCallProxy obj) throws Exception {
+        // We don't need unregister an user listener as it actually may be connected
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("< User calls cache expiration was initiated for " + key);
+        }
+      }
+
+      /**
+       * {@inheritDoc}
+       */
+      @Override
+      public void onRemove(CacheListenerContext context, String key, UserCallProxy obj) throws Exception {
+        // We don't need unregister an user listener as it actually may be connected
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("< User calls cache removal was initiated for " + key);
+        }
+      }
+
+      /**
+       * {@inheritDoc}
+       */
+      @Override
+      public void onPut(CacheListenerContext context, String key, UserCallProxy obj) throws Exception {
+        if (obj != null) {
+          String userId = obj.getUserId();
+          String clientId = obj.getClientId();
+          EventProxy event = obj.getState();
+          UserChannelContext userContext = userChannelContext.get(userId);
+          if (event.isInitial()) {
+            // This event happens on remote node where this node wants to register a stub listener
+            if (userContext == null || !userContext.getListener().getClientId().equals(clientId)) {
+              // It's an user connected to a channel somewhere (on another cluster node)
+              // Register a stub listener in the WebConf to transfer call updates from this remote to the client one.
+              UserCallListenerStub listener = new UserCallListenerStub(key, userId, clientId);
+              webConferencing.addUserCallListener(listener);
+              // it's enough to have a first one as addUserCallListener does the same
+              clientStubs.putIfAbsent(key, listener);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("> Registered user listener stub for " + key);
+              }
+            } // ignore otherwise - it's local event
+          } else if (event.isClosed()) {
+            // This event happens on remote node where this node wants to unregister its stub listener
+            // It's an user disconnected from its channel somewhere (on another cluster node)
+            UserCallListenerStub listener = clientStubs.remove(key);
+            if (listener != null) {
+              // If it found on this node - unregister its stub listener in node's WebConf service.
+              webConferencing.removeUserCallListener(listener);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("< Unregistered user listener stub for " + key);
+              }
+            }
+          } else {
+            // This event happens on local node to where its stub listeners (from remote nodes) send call events to be notified to
+            // local users
+            // It's a call event - check if it's from remote stub listener (another cluster node) to our local user client
+            if (userContext != null && userContext.getListener().getClientId().equals(obj.getClientId())) {
+              // Handle the remote event like it's an one occurred in local WebConf service
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("> Received call event from user listener stub for " + key + " event:" + event.getType() + " by "
+                    + currentUserId(null));
+              }
+              switch (event.getType()) {
+              case EVENT_CALL_JOINED: {
+                CallParticipantEvent partEvent = CallParticipantEvent.class.cast(event);
+                userContext.getListener()
+                           .onPartJoined(partEvent.getCallId(),
+                                         partEvent.getProviderType(),
+                                         partEvent.getOwnerId(),
+                                         partEvent.getOwnerType(),
+                                         partEvent.getPartId());
+                break;
+              }
+              case EVENT_CALL_LEAVED: {
+                CallParticipantEvent partEvent = CallParticipantEvent.class.cast(event);
+                userContext.getListener()
+                           .onPartLeaved(partEvent.getCallId(),
+                                         partEvent.getProviderType(),
+                                         partEvent.getOwnerId(),
+                                         partEvent.getOwnerType(),
+                                         partEvent.getPartId());
+                break;
+              }
+              case EVENT_CALL_STATE: {
+                CallStateEvent stateEvent = CallStateEvent.class.cast(event);
+                userContext.getListener()
+                           .onCallStateChanged(stateEvent.getCallId(),
+                                               stateEvent.getProviderType(),
+                                               stateEvent.getState(),
+                                               stateEvent.getOwnerId(),
+                                               stateEvent.getOwnerType());
+                break;
+              }
+              default:
+                LOG.warn("Unexpected call state in cache " + event.getType() + " for " + key + " by " + currentUserId(null));
+                break;
+              }
+            } // ignore otherwise - it's an event for others
+          }
+        } else {
+          LOG.warn("Unexpected null call state in cache for " + key + " by " + currentUserId(null));
+        }
+      }
+
+      /**
+       * {@inheritDoc}
+       */
+      @Override
+      public void onGet(CacheListenerContext context, String key, UserCallProxy obj) throws Exception {
+        // Nothing
       }
     }
 
@@ -922,6 +1666,9 @@ public class CometdWebConferencingService implements Startable {
 
     /** The subscription listener. */
     private final ChannelSubscriptionListener     subscriptionListener = new ChannelSubscriptionListener();
+    
+    /** The user cache listener. */
+    private final UsersCacheListener     usersCacheListener = new UsersCacheListener();
 
     /** The channel listener. */
     private final ClientChannelListener           channelListener      = new ClientChannelListener();
@@ -932,6 +1679,9 @@ public class CometdWebConferencingService implements Startable {
     @PostConstruct
     public void postConstruct() {
       bayeux.addListener(channelListener);
+      if (usersCache != null) {
+        usersCache.addCacheListener(usersCacheListener);
+      }
     }
 
     /**
@@ -940,6 +1690,11 @@ public class CometdWebConferencingService implements Startable {
     @PreDestroy
     public void preDestroy() {
       // cleanup listeners
+      if (usersCache != null) {
+        // XXX we cannot remove users cache listener, but
+        // we remove all client listener stubs - unregister in WebConf service
+        usersCacheListener.stop();
+      }
       bayeux.removeListener(channelListener);
       for (UserChannelContext context : userChannelContext.values()) {
         webConferencing.removeUserCallListener(context.getListener());
@@ -955,13 +1710,12 @@ public class CometdWebConferencingService implements Startable {
      * @param callType the call type
      * @param callInfo the call info
      */
-    @Subscription(CALL_SUBSCRIPTION_CHANNEL_NAME_PARAMS)
+    @Subscription(CALL_SUBSCRIPTION_CHANNEL_NAME_PATTERN)
     public void subscribeCalls(Message message, @Param("callType") String callType, @Param("callInfo") String callInfo) {
       if (LOG.isDebugEnabled()) {
         String callId = callId(callType, callInfo);
         // Should log this to a dedicated diagnostic log!
-        LOG.debug("Call published in " + message.getChannel() + " by " + message.getClientId() + " callId: " + callId + " data: "
-            + message.getJSON());
+        LOG.debug("> Call published in " + message.getChannel() + " callId: " + callId + " data: " + message.getJSON());
       }
     }
 
@@ -971,12 +1725,11 @@ public class CometdWebConferencingService implements Startable {
      * @param message the message
      * @param userId the user id
      */
-    @Subscription(USER_SUBSCRIPTION_CHANNEL_NAME)
+    @Subscription(USER_SUBSCRIPTION_CHANNEL_PATTERN)
     public void subscribeUser(Message message, @Param("userId") String userId) {
       final String channelId = message.getChannel();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("User published in " + channelId + " by " + message.getClientId() + " userId: " + userId + " data: "
-            + message.getJSON());
+        LOG.debug("> User published in " + channelId + " userId: " + userId + " data: " + message.getJSON());
       }
     }
 
@@ -990,7 +1743,7 @@ public class CometdWebConferencingService implements Startable {
     public void rcCalls(final RemoteCall.Caller caller, final Object data) {
       final ServerSession session = caller.getServerSession();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Remote call by " + session.getId() + " data: " + data);
+        LOG.debug("> RemoteCall session:" + session.getId() + " data:" + data);
       }
 
       @SuppressWarnings("unchecked")
@@ -1019,7 +1772,7 @@ public class CometdWebConferencingService implements Startable {
                   try {
                     Authenticator authenticator = exoContainer.getComponentInstanceOfType(Authenticator.class);
                     if (LOG.isDebugEnabled()) {
-                      LOG.debug("User identity not registered, trying to create it for: " + currentUserId);
+                      LOG.debug(">> User identity not registered, trying to create it for: " + currentUserId);
                     }
                     userIdentity = authenticator.createIdentity(currentUserId);
                   } catch (Exception e) {
@@ -1461,18 +2214,21 @@ public class CometdWebConferencingService implements Startable {
    * @param organization the organization
    * @param webConferencing the web conferencing
    * @param exoBayeux the exo bayeux
+   * @param cacheService the cache service
    * @param callLogs the call logs
    */
   public CometdWebConferencingService(IdentityRegistry identityRegistry,
                                       OrganizationService organization,
                                       WebConferencingService webConferencing,
                                       EXoContinuationBayeux exoBayeux,
+                                      CacheService cacheService,
                                       CallLogService callLogs) {
     this.identityRegistry = identityRegistry;
     this.organization = organization;
     this.webConferencing = webConferencing;
     this.exoBayeux = exoBayeux;
     this.callLogs = callLogs;
+    this.usersCache = ExoContainer.hasProfile("cluster") ? cacheService.getCacheInstance(USER_CACHE_NAME) : null;
     this.service = new CallService();
 
     // Thread executors
@@ -1525,7 +2281,7 @@ public class CometdWebConferencingService implements Startable {
         @Override
         public void sessionRemoved(ServerSession session, boolean timedout) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("sessionRemoved: " + session.getId() + " timedout:" + timedout + " channels: "
+            LOG.debug("< sessionRemoved: " + session.getId() + " timedout:" + timedout + " channels: "
                 + channelsAsString(session.getSubscriptions()));
           }
         }
@@ -1533,7 +2289,7 @@ public class CometdWebConferencingService implements Startable {
         @Override
         public void sessionAdded(ServerSession session, ServerMessage message) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("sessionAdded: " + session.getId() + " channels: " + channelsAsString(session.getSubscriptions()));
+            LOG.debug("> sessionAdded: " + session.getId() + " channels: " + channelsAsString(session.getSubscriptions()));
           }
         }
       });
@@ -1707,7 +2463,7 @@ public class CometdWebConferencingService implements Startable {
     int queueSize = cpus * queueFactor;
     queueSize = queueSize < queueFactor ? queueFactor : queueSize;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Creating thread executor " + threadNamePrefix + "* for " + poolThreads + ".." + maxThreads
+      LOG.debug("> Creating thread executor " + threadNamePrefix + "* for " + poolThreads + ".." + maxThreads
           + " threads, queue size " + queueSize);
     }
     return new ThreadPoolExecutor(poolThreads,
