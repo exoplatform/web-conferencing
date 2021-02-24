@@ -3,46 +3,46 @@
   <webconferencing>
     <admin>
       <error>
-        <ProviderNotRegistered>موفر المحرر غير مسجل.</ProviderNotRegistered>
-        <EmptyRequest>يجب أن يحتوي الطلب على شكل واحد على الأقل (نشط/الأذونات).</EmptyRequest>
-        <CannotGetProviders>لا يمكن الحصول على قائمة مقدمي الخدمات.</CannotGetProviders>
-        <PermissionNotValid>الإذن المحدد غير صالح. ربما المستخدم أو المجموعة غير موجودة.</PermissionNotValid>
-        <CannotLoadIdentities>لا يمكن تحميل الهويات بمعايير محددة</CannotLoadIdentities>
-        <CannotSavePreferredEditor>لا يمكن حفظ المحرر المحدد كمحرر مفضل.</CannotSavePreferredEditor>
-        <UnableGetData>حدث خطأ أثناء عمليّة إرسال البريد الإلكتروني.</UnableGetData>
-        <UnablePostData>حدث خطأ أثناء حفظ البيانات.</UnablePostData>
+        <ProviderNotRegistered>The editor provider is not registered.</ProviderNotRegistered>
+        <EmptyRequest>The request should contain at least 1 form param (active/permissions).</EmptyRequest>
+        <CannotGetProviders>Can't get providers list.</CannotGetProviders>
+        <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
+        <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
+        <UnableGetData>An error occurred while reading the data.</UnableGetData>
+        <UnablePostData>An error occurred while saving the data.</UnablePostData>
       </error>
-      <page>عقد المؤتمرات على الويب</page>
-      <title>إدارة محتوى مؤتمرات الويب</title>
-      <info>عقد المؤتمرات على الويب يمكن أن تعالج عن طريق عدة مزودي خدمات. يمكنك تفعيل مزود الخدمات الذي تحتاجه وتهيئة الإعدادات.</info>
+      <page>Web Conferencing</page>
+      <title>Web Conferencing Administration</title>
+      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
       <table>
-        <Provider>مزود الخدمة</Provider>
-        <Description>الوصف</Description>
-        <Active>ناشط</Active>
-        <Permissions>الإجراءات</Permissions>
+        <Provider>Provider</Provider>
+        <Description>Description</Description>
+        <Active>Active</Active>
+        <Permissions>Actions</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
         <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
       </WebRTC>
       <Skype>
-        <name>سكايب</name>
-        <description>موفر لسكايب. يسمح للمستخدمين بوضع  مكالمات 1:1 أو مجموعة. لا توجد إضافة مطلوبة لكن تطبيق سكايب يجب تثبيته من قبل العميل.</description>
+        <name>Skype</name>
+        <description>Provider for Skype. Let users place a group and 1:1 calls. No plugin required but the Skype application must be installed on the client side.</description>
       </Skype>
       <Jitsi>
         <name>Jitsi</name>
-        <description>مزود Jitsi لـ WebConference</description>
+        <description>Jitsi provider for WebConferencing</description>
       </Jitsi>
       <modal>
-        <title>إعدادات المزود</title>
-        <SearchLabel>العنوان:</SearchLabel>
-        <WithPermissions>تشغيل / إيقاف الخادم</WithPermissions>
-        <None>لا شَيْء</None>
-        <Everybody>الجميع</Everybody>
+        <title>Provider settings</title>
+        <SearchLabel>URL:</SearchLabel>
+        <WithPermissions>STUN / TURN servers</WithPermissions>
+        <None>None</None>
+        <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>حفظ</Save>
-        <Cancel>الغاء</Cancel>
+        <Save>Save</Save>
+        <Cancel>Cancel</Cancel>
       </buttons>
     </admin>
   </webconferencing>
