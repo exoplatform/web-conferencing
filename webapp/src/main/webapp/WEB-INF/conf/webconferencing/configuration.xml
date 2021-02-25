@@ -225,5 +225,29 @@
       </init-params>
     </component-plugin>
   </external-component-plugins>
+  
+  <!-- Cache configuration -->
+  <external-component-plugins>
+    <target-component>org.exoplatform.services.cache.CacheService</target-component>
+    <component-plugin profiles="cluster">
+      <name>addExoCacheConfig</name>
+      <set-method>addExoCacheConfig</set-method>
+      <type>org.exoplatform.services.cache.ExoCacheConfigPlugin</type>
+      <description>Cache configuration for Web Conferencing services</description>
+      <init-params>
+        <object-param>
+          <name>webconferencing.cometd.Cache</name>
+          <description>User listeners cached to be notified in distributed environments (cluster)</description>
+          <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
+            <field name="name"><string>webconferencing.cometd.Cache</string></field>
+            <field name="strategy"><string>${webconferencing.cometd.Cache.strategy:LIRS}</string></field>
+            <field name="maxSize"><int>${webconferencing.cometd.Cache.Capacity:10000}</int></field>
+            <field name="maxIdle"><int>${webconferencing.cometd.Cache.TimeToLive:300000}</int></field>
+            <field name="cacheMode"><string>${webconferencing.cometd.Cache.cacheMode:replication}</string></field>
+          </object>
+        </object-param>
+      </init-params>
+    </component-plugin>
+  </external-component-plugins>
 
 </configuration>
