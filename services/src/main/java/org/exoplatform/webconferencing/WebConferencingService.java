@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -106,7 +107,6 @@ import org.exoplatform.webconferencing.dao.StorageException;
 import org.exoplatform.webconferencing.domain.CallEntity;
 import org.exoplatform.webconferencing.domain.InviteEntity;
 import org.exoplatform.webconferencing.domain.OriginEntity;
-import org.exoplatform.webconferencing.domain.OriginId;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
 
@@ -514,7 +514,7 @@ public class WebConferencingService implements Startable {
   protected UserInfo userInfo(String id) throws IdentityStateException {
     User user;
     try {
-      user = organization.getUserHandler().findUserByName(id, UserStatus.ANY); // TODO ANY?
+      user = organization.getUserHandler().findUserByName(id, UserStatus.ANY);
     } catch (Exception e) {
       throw new IdentityStateException("Error finding user in organization service", e);
     }
@@ -540,10 +540,10 @@ public class WebConferencingService implements Startable {
               + ")");
         }
       } else if (LOG.isDebugEnabled()) {
-        LOG.debug("Ignore disabled user (treat as not found): " + id);
+        LOG.debug("Ignore disabled user (treat as not found): '" + id + "'");
       }
     } else if (LOG.isDebugEnabled()) {
-      LOG.debug("User not found: " + id);
+      LOG.debug("User not found: '" + id + "'");
     }
     return null;
   }
@@ -997,7 +997,8 @@ public class WebConferencingService implements Startable {
         // Updated call instance
         // TODO why not reuse existing call object and update only actually passed to this method?
         CallInfo call = new CallInfo(callId, title, owner, providerType);
-  
+        call.setLastDate(currentCall.getLastDate());
+        
         // We update origins not actual participants (they will be resolved on demand, e.g. in getCall())
         call.addOrigins(createOrigins(providerType, partIds, spaces));
         // We don't update actual participants here, see updateParticipants() method for such work.
@@ -1018,7 +1019,7 @@ public class WebConferencingService implements Startable {
           newEndDate = currentCall.getEndDate();
         }
         call.setEndDate(newEndDate);
-  
+
         updateCallAndOrigins(call);
         return call;
       } else {
@@ -1078,19 +1079,32 @@ public class WebConferencingService implements Startable {
     if (partIds != null) {
       for (String pid : partIds) {
         if (isValidId(pid)) {
-          origins.add(new OriginInfo(pid, OWNER_TYPE_USER));
+          UserInfo userInfo = userInfo(pid);
+          if (userInfo != null) {
+            origins.add(new OriginInfo(pid, OWNER_TYPE_USER));
+          } else {
+            // if participant user not found, should we treat it as an external user in Chat?
+            LOG.error("Cannot find call origin participant user: " + pid);
+            throw new CallArgumentException("Wrong participant name (" + pid + ")");
+          }
         } else {
-          LOG.error("Cannot add call origin (participant) with too long ID: " + pid);
-          throw new CallArgumentException("Wrong participant ID (" + pid + ")");
+          LOG.error("Cannot add call origin participant with too long name: " + pid);
+          throw new CallArgumentException("Wrong participant name (" + pid + ")");
         }
       }
     }
     if (spacePrettyNames != null) {
       for (String gid : spacePrettyNames) {
         if (isValidId(gid)) {
-          origins.add(new OriginInfo(gid, OWNER_TYPE_SPACE));
+          Space space = spaceService.getSpaceByPrettyName(gid);
+          if (space != null) {
+            origins.add(new OriginInfo(gid, OWNER_TYPE_SPACE));
+          } else {
+            LOG.error("Cannot find call origin space: " + gid);
+            throw new CallArgumentException("Wrong space name (" + gid + ")");
+          }
         } else {
-          LOG.error("Cannot add call origin (space) with too long name: " + gid);
+          LOG.error("Cannot add call origin space with too long name: " + gid);
           throw new CallArgumentException("Wrong space name (" + gid + ")");
         }
       }
@@ -1122,18 +1136,20 @@ public class WebConferencingService implements Startable {
     final IdentityInfo owner;
     if (isUser) {
       UserInfo userInfo = userInfo(ownerId);
-      if (userInfo == null) {
-        // if owner user not found, it's possibly an external user, thus treat it as a
-        // chat room
-        //owner = new RoomInfo(ownerId, title);
-        owner = new RoomInfo(ownerId, title);
-        owner.setAvatarLink(LinkProvider.PROFILE_DEFAULT_AVATAR_URL);
-      } else {
+      if (userInfo != null) {
         owner = userInfo;
         owner.setProfileLink(userInfo.getProfileLink());
         String avatar = userInfo.getAvatarLink();
         avatar = avatar != null ? avatar : LinkProvider.PROFILE_DEFAULT_AVATAR_URL;
         owner.setAvatarLink(avatar);
+      } else {
+        // if owner user not found, should we treat it as an external user in Chat, thus assume it is a chat room?
+        LOG.error("Cannot find call's owner user: " + ownerId);
+        //owner = new RoomInfo(ownerId, title);
+        //owner.setAvatarLink(LinkProvider.PROFILE_DEFAULT_AVATAR_URL);
+        // or for space/room as below
+        //owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
+        throw new CallArgumentException("Wrong call owner (" + ownerId + ")");
       }
     } else if (isSpace) {
       Space space = spaceService.getSpaceByPrettyName(ownerId);
@@ -1144,9 +1160,8 @@ public class WebConferencingService implements Startable {
         avatar = avatar != null ? avatar : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
         owner.setAvatarLink(avatar);
       } else {
-        LOG.warn("Cannot find call's owner space: " + ownerId);
-        owner = new RoomInfo(ownerId, title);
-        owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
+        LOG.error("Cannot find call's owner space: " + ownerId);
+        throw new CallArgumentException("Wrong call owner (" + ownerId + ")");
       }
     } else if (isSpaceEvent) {
       Space space = spaceService.getSpaceByPrettyName(ownerId);
@@ -1157,9 +1172,8 @@ public class WebConferencingService implements Startable {
         avatar = avatar != null ? avatar : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
         owner.setAvatarLink(avatar);
       } else {
-        LOG.warn("Cannot find call's owner space event: " + ownerId);
-        owner = new RoomInfo(ownerId, title);
-        owner.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
+        LOG.error("Cannot find call's owner event space: " + ownerId);
+        throw new CallArgumentException("Wrong call owner (" + ownerId + ")");
       }
     } else if (isRoom) {
       owner = new RoomInfo(ownerId, title);
@@ -1179,7 +1193,7 @@ public class WebConferencingService implements Startable {
    */
   public CallInfo getCall(String id) throws InvalidCallException {
     try {
-      return findCallById(id);
+      return findCallById(id, true);
     } catch (CallSettingsException | CallOwnerException | StorageException | IdentityStateException e) {
       throw new InvalidCallException("Error getting call: " + id, e);
     }
@@ -1371,16 +1385,20 @@ public class WebConferencingService implements Startable {
         LOG.warn("Cannot get userInfo for " + userId, e);
       }
     }
-    CallInfo call = getCall(callId);
-    if (call != null) {
-      try {
-        txUpdateParticipants(call, userInfos);
-      } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
-        throw new StorageException("Error updating participants of the call " + callId, e);
+    try {
+      CallInfo call = findCallById(callId, false); // don't read participants and add all new below
+      if (call != null) {
+        try {
+          txUpdateParticipants(call, userInfos);
+        } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+          throw new StorageException("Error updating participants of the call " + callId, e);
+        }
+        return call;
+      } else {
+        throw new CallNotFoundException("Call not found: " + callId);
       }
-      return call;
-    } else {
-      throw new CallNotFoundException("Call not found: " + callId);
+    } catch (CallSettingsException | CallOwnerException | IdentityStateException e) {
+      throw new StorageException("Error reading the call " + callId, e);
     }
   }
   
@@ -2040,37 +2058,36 @@ public class WebConferencingService implements Startable {
       throw new UploadFileException("Cannot create upload resource", e);
     }
     UploadResource resource = uploadService.getUploadResource(uploadId);
-    if (resource.getStatus() == UploadResource.UPLOADED_STATUS) {
-      final String uploadingUser = uploadInfo.getUser();
-      String owner = null;
-      // Owner is user if it's not a space, otherwise use space identity
-      if (!uploadInfo.getType().equals(OWNER_TYPE_SPACE) && !uploadInfo.getIdentity().equals(uploadingUser)) {
-        owner = uploadingUser;
+    try {
+      if (resource.getStatus() == UploadResource.UPLOADED_STATUS) {
+        final String uploadingUser = uploadInfo.getUser();
+        String owner = null;
+        // Owner is user if it's not a space, otherwise use space identity
+        if (!uploadInfo.getType().equals(OWNER_TYPE_SPACE) && !uploadInfo.getIdentity().equals(uploadingUser)) {
+          owner = uploadingUser;
+        } else {
+          owner = uploadInfo.getIdentity();
+        }
+        Node rootNode = getRootFolderNode(owner, uploadInfo.getType());
+        // If it's 1-1 or chat-room call, we pass participants to share the file.
+        // Otherwise we just upload to the space docs
+        if (uploadInfo.getType().equals(OWNER_TYPE_CHATROOM) || uploadInfo.getType().equals(USER)) {
+          saveFile(rootNode, resource, uploadingUser, uploadInfo.getParticipants());
+        } else {
+          saveFile(rootNode, resource, uploadingUser, null);
+        }
+        try {
+          CallInfo call = getCall(uploadInfo.getCallId());
+          LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+        } catch (InvalidCallException e) {
+          LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
+        }
       } else {
-        owner = uploadInfo.getIdentity();
+        throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: "
+            + resource.getStatus());
       }
-      Node rootNode = getRootFolderNode(owner, uploadInfo.getType());
-      // If it's 1-1 or chat-room call, we pass participants to share the file.
-      // Otherwise we just upload to the space docs
-      if (uploadInfo.getType().equals(OWNER_TYPE_CHATROOM) || uploadInfo.getType().equals(USER)) {
-        saveFile(rootNode, resource, uploadingUser, uploadInfo.getParticipants());
-      } else {
-        saveFile(rootNode, resource, uploadingUser, null);
-      }
-
-      uploadService.removeUploadResource(uploadId); // TODO should this be in try-finally for a cleanup in case of saving failure?
-      
-      try {
-        CallInfo call = getCall(uploadInfo.getCallId());
-        broacastCallEvent(EVENT_CALL_RECORDED, call, uploadingUser);
-        LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null));
-      } catch (InvalidCallException e) {
-        LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
-      }
-    } else {
+    } finally {
       uploadService.removeUploadResource(uploadId);
-      throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: "
-          + resource.getStatus());
     }
   }
 
@@ -2620,6 +2637,8 @@ public class WebConferencingService implements Startable {
       CallInfo call = new CallInfo(callId, savedCall.getTitle(), owner, savedCall.getProviderType());
       call.setState(savedCall.getState());
       call.setLastDate(savedCall.getLastDate());
+      call.setStartDate(savedCall.getStartDate());
+      call.setEndDate(savedCall.getEndDate());
       try {
         String inviteId = getInviteId(callId);
         if (inviteId != null) {
@@ -2669,19 +2688,6 @@ public class WebConferencingService implements Startable {
           members.stream().forEach(m -> m.setState(UserState.LEAVED));
           call.addParticipants(members);
         } // Otherwise it's 1-1 call and its participants already added in createCall() if start parameter was set to true
-        // TODO do we need read 1-1 parties from its origins, if so, then they should not be added in createCall()
-        /*else if (call.getParticipants().size() == 0) {
-          // Otherwise it's 1-1 and parties come from the call's origins if not already in actual participants (step 1)
-          for (OriginEntity o : originsStorage.findCallOrigins(callId, OWNER_TYPE_USER)) {
-            UserInfo user = userInfo(o.getId());
-            if (user != null) {
-              user.setState(UserState.LEAVED); // the origin is LEAVED if not yet a participant above
-              call.addParticipant(user);
-            } else {
-              LOG.warn("Skipped not found participant " + o.getId() + " for call " + callId);
-            }
-          }
-        }*/
       }
       return call;
     } else {
@@ -2748,6 +2754,8 @@ public class WebConferencingService implements Startable {
    */
   protected CallEntity createCallEntity(CallInfo call) throws CallSettingsException {
     CallEntity entity = new CallEntity();
+    // set ID (PK in DB) only for a new call entity
+    entity.setId(call.getId());
     syncCallEntity(call, entity);
     return entity;
   }
@@ -2761,8 +2769,6 @@ public class WebConferencingService implements Startable {
    */
   protected void syncCallEntity(CallInfo call, CallEntity entity) throws CallSettingsException {
     if (call != null) {
-      final String callId = call.getId();
-      entity.setId(callId);
       entity.setProviderType(call.getProviderType());
       entity.setTitle(call.getTitle());
       IdentityInfo owner = call.getOwner();
@@ -2879,6 +2885,9 @@ public class WebConferencingService implements Startable {
                                              IllegalStateException,
                                              PersistenceException,
                                              CallSettingsException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(">> txCreateCall: " + call.getId());
+    }
     callStorage.create(createCallEntity(call));
     String callId = call.getId();
     if (call.getOwner().isGroup()) {
@@ -2915,7 +2924,13 @@ public class WebConferencingService implements Startable {
   protected void txAddParticipant(String callId, UserInfo participant) throws IllegalArgumentException,
                                                                        IllegalStateException,
                                                                        PersistenceException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(">> txAddParticipant: " + participant.getId() + "@" + callId);
+    }
     addParticipant(callId, participant);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("<< txAddParticipant: " + participant.getId() + "@" + callId);
+    }
   }
   
   private void addParticipant(String callId, UserInfo participant) throws IllegalArgumentException,
@@ -3009,7 +3024,13 @@ public class WebConferencingService implements Startable {
                                              IllegalStateException,
                                              PersistenceException,
                                              CallSettingsException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(">> txUpdateCall: " + call.getId());
+    }
     saveCall(call);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("<< txUpdateCall: " + call.getId());
+    }
   }
 
   /**
@@ -3038,6 +3059,9 @@ public class WebConferencingService implements Startable {
     for (InvitedIdentity identity : identities) {
       // TODO: add check GROUP/USER in org service
       createInvite(callId, identity.getIdentity(), identity.getType(), inviteId);
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("<< txUpdateInvites: " + callId);
     }
   }
 
@@ -3082,7 +3106,13 @@ public class WebConferencingService implements Startable {
                                                                           IllegalStateException,
                                                                           PersistenceException,
                                                                           ParticipantNotFoundException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(">> txUpdateParticipant: " + participant.getId() + "@" + callId);
+    }
     saveParticipant(callId, participant);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("<< txUpdateParticipant: " + participant.getId() + "@" + callId);
+    }
   }
   
   /**
@@ -3128,6 +3158,9 @@ public class WebConferencingService implements Startable {
         }
         call.addParticipant(m); // add also to the actual parties
       }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("<< txSyncMembersAndParticipants: " + call.getId());
+      }
     }
   }
 
@@ -3153,11 +3186,17 @@ public class WebConferencingService implements Startable {
    */
   @ExoTransactional
   protected void txRemoveParticipant(String callId, String partId) throws ParticipantNotFoundException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(">> txRemoveParticipant: " + partId + "@" + callId);
+    }
     ParticipantEntity entity = participantsStorage.find(new ParticipantId(partId, callId));
     if (entity != null) {
       participantsStorage.delete(entity);
     } else {
       throw new ParticipantNotFoundException("Call participant " + partId + " not found for " + callId);
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("<< txRemoveParticipant: " + partId + "@" + callId);
     }
   }
 
@@ -3191,6 +3230,9 @@ public class WebConferencingService implements Startable {
                                                             CallNotFoundException,
                                                             CallSettingsException,
                                                             ParticipantNotFoundException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(">> txUpdateCallAndParticipants: " + call.getId());
+    }
     // Update call
     saveCall(call);
     if (CallState.STARTED.equals(call.getState()) && call.getInviteId() == null) {
@@ -3198,15 +3240,12 @@ public class WebConferencingService implements Startable {
       call.setInviteId(createInvite(call.getId()));
     }
     // Update participants
-    // TODO this could be done with a single SQL UPDATE, but need ensure that JPA will not fail after that to
-    // access the call due to presence in the session of participant entities with outdated state (like it was
-    // faced in addCall() when deleted outdated call before creating a new one)
     String callId = call.getId();
     for (UserInfo p : call.getParticipants()) {
       try {
         saveParticipant(callId, p);
       } catch(ParticipantNotFoundException e) {
-        // XXX check if this participant not from group's origins
+        // Check if this participant not from group's origins
         if (call.getOwner().isGroup() && GroupInfo.class.cast(call.getOwner()).getMembers().keySet().contains(p.getId())) {
           addParticipant(callId, p);
         } else {
@@ -3214,6 +3253,9 @@ public class WebConferencingService implements Startable {
                                                  + ", call: " + callId, e);
         }
       }
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("<< txUpdateCallAndParticipants: " + call.getId());
     }
   }
 
@@ -3230,20 +3272,42 @@ public class WebConferencingService implements Startable {
    */
   @ExoTransactional
   protected void txUpdateCallAndOrigins(CallInfo call) throws IllegalArgumentException,
-                                                            IllegalStateException,
-                                                            PersistenceException,
-                                                            CallNotFoundException,
-                                                            CallSettingsException,
-                                                            ParticipantNotFoundException {
+                                                       IllegalStateException,
+                                                       PersistenceException,
+                                                       CallNotFoundException,
+                                                       CallSettingsException,
+                                                       ParticipantNotFoundException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(">> txUpdateCallAndOrigins: " + call.getId());
+    }
     // Update call
     saveCall(call);
-
     String callId = call.getId();
-    // Replace all origins on the call update
-    originsStorage.deleteCallOrigins(callId);
-    originsStorage.clear(); // XXX we need this as we delete origins by JQL query
-    for (OriginInfo o : call.getOrigins()) {
+    // Update all origins of the call
+    // Instead of deleting and adding the all, we figure out what actually
+    // to add/remove to deal better with DB transactions and JPA caches state.
+    List<OriginEntity> savedOrigins = Stream.concat(originsStorage.findCallOrigins(callId, OWNER_TYPE_USER).stream(),
+                                                    originsStorage.findCallOrigins(callId, OWNER_TYPE_SPACE).stream())
+                                            .collect(Collectors.toCollection(ArrayList::new));
+    // Add newly added origins
+    next: for (OriginInfo o : call.getOrigins()) {
+      for (Iterator<OriginEntity> oiter = savedOrigins.iterator(); oiter.hasNext();) {
+        OriginEntity oe = oiter.next();
+        if (oe.getType().equals(o.getType()) && oe.getId().equals(o.getId())) {
+          // This origin already exists - do nothing but remove from already
+          // saved (see removal below)
+          oiter.remove();
+          continue next;
+        }
+      }
       originsStorage.create(createOriginEntity(callId, o));
+    }
+    // Remove not actual origins
+    for (OriginEntity oe : savedOrigins) {
+      originsStorage.delete(oe);
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("<< txUpdateCallAndOrigins: " + call.getId());
     }
   }
 
@@ -3285,15 +3349,30 @@ public class WebConferencingService implements Startable {
   protected void txUpdateParticipants(CallInfo call, List<UserInfo> participants) throws IllegalArgumentException,
                                                                                   IllegalStateException,
                                                                                   PersistenceException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(">> txUpdateParticipants: " + call.getId());
+    }
     if (participants != null && !participants.isEmpty()) {
+      // Instead of deleting and adding the all, we figure out whom actually 
+      // to add/remove to deal better with DB transactions from other requests (e.g. from client via CometD/REST).
+      Set<String> partIds = participants.stream().map(UserInfo::getId).collect(Collectors.toSet());
       List<ParticipantEntity> savedParts = participantsStorage.findCallParts(call.getId());
+      Set<String> savedPartIds = savedParts.stream().map(ParticipantEntity::getId).collect(Collectors.toSet());
       for (ParticipantEntity p : savedParts) {
-        participantsStorage.delete(p);
+        if (!partIds.contains(p.getId())) {
+          participantsStorage.delete(p);
+          savedPartIds.remove(p.getId());
+        }
       }
       for (UserInfo p : participants) {
-        participantsStorage.create(createParticipantEntity(call.getId(), p));
-        call.addParticipant(p);
+        if (!savedPartIds.contains(p.getId())) {
+          participantsStorage.create(createParticipantEntity(call.getId(), p));
+        }
+        call.addParticipant(p); // just add a party as this call instance has not parts fetched from the DB (see caller method)
       }
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("<< txUpdateParticipants: " + call.getId());
     }
   }
 
@@ -3307,7 +3386,14 @@ public class WebConferencingService implements Startable {
    */
   @ExoTransactional
   protected int txDeleteAllUserCalls() throws IllegalArgumentException, IllegalStateException, PersistenceException {
-    return callStorage.deleteAllUsersCalls();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(">> txDeleteAllUserCalls");
+    }
+    int r = callStorage.deleteAllUsersCalls();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("<< txDeleteAllUserCalls: " + r);
+    }
+    return r;
   }
   
   
@@ -3315,6 +3401,7 @@ public class WebConferencingService implements Startable {
    * Clear JPA storage from stale/cached objects.
    *
    */
+  @Deprecated
   protected void clearStorage() {
     //Clear storage session:
     // XXX It is REQUIRED stuff (actual when something were deleted above), otherwise
@@ -3323,10 +3410,10 @@ public class WebConferencingService implements Startable {
     // was already associated with the session, e.g.:
     // [org.exoplatform.webconferencing.domain.ParticipantEntity#org.exoplatform.webconferencing.domain.ParticipantId@4aa63de3]
     try {
-      originsStorage.clear();
-      participantsStorage.clear();
-      callStorage.clear();
-      inviteStorage.clear();
+      //originsStorage.clear();
+      //participantsStorage.clear();
+      //inviteStorage.clear();
+      callStorage.clear(); // it's single entity manager for all DAOs - clean it once 
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       LOG.warn("Call storage cleanup failed", e);
     }
@@ -3375,7 +3462,6 @@ public class WebConferencingService implements Startable {
                                                           ParticipantNotFoundException,
                                                           CallSettingsException,
                                                           CallNotFoundException {
-    // clearStorage(); // TODO is it required here?
     try {
       txUpdateCallAndParticipants(call);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
@@ -3396,7 +3482,6 @@ public class WebConferencingService implements Startable {
                                                           ParticipantNotFoundException,
                                                           CallSettingsException,
                                                           CallNotFoundException {
-    //clearStorage(); // TODO is it required here?
     try {
       txUpdateCallAndOrigins(call);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
@@ -3472,6 +3557,7 @@ public class WebConferencingService implements Startable {
    * Find call in storage by its ID.
    *
    * @param id the id
+   * @param withParticipants also read participants from the DB
    * @return the call info
    * @throws IdentityStateException if error reading call owner or participant
    * @throws StorageException if persistent error happens
@@ -3479,13 +3565,13 @@ public class WebConferencingService implements Startable {
    *           title too long or has bad value)
    * @throws CallOwnerException if call owner type of unknown type
    */
-  protected CallInfo findCallById(String id) throws IdentityStateException,
+  protected CallInfo findCallById(String id, boolean withParticipants) throws IdentityStateException,
                                              StorageException,
                                              CallSettingsException,
                                              CallOwnerException {
     try {
       CallEntity savedCall = callStorage.find(id);
-      return readCallEntity(savedCall, true);
+      return readCallEntity(savedCall, withParticipants);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       throw new StorageException("Error reading call " + id, e);
     }
@@ -3608,8 +3694,6 @@ public class WebConferencingService implements Startable {
    * @throws CallSettingsException the call settings wrong (chat room title)
    */
   protected void createCall(CallInfo call) throws StorageException, CallConflictException, CallSettingsException {
-    // Clear storage session first
-    clearStorage();
     try {
       // Persist the call with all its participants
       txCreateCall(call);

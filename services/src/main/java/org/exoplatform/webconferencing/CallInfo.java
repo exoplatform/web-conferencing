@@ -24,6 +24,11 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
+import org.exoplatform.ws.frameworks.json.impl.JsonException;
+import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
+
 /**
  * Created by The eXo Platform SAS.
  *
@@ -31,7 +36,75 @@ import java.util.Set;
  * @version $Id: CallInfo.java 00000 Jun 19, 2017 pnedonosko $
  */
 public class CallInfo {
+  
+  /** The Constant LOG. */
+  protected static final Log                         LOG                    = ExoLogger.getLogger(CallInfo.class);
 
+  /**
+   * The Class describing a CallInfo with simplified (POJO) fields for consumption by clients.
+   */
+  public class CallView {
+
+    public String getLastDate() {
+      try {
+        return Utils.formatISODate(CallInfo.this.getLastDate());
+      } catch(Exception e) {
+        LOG.warn("Failed to format call last date", e);
+        return null;
+      }
+    }
+    
+    public String getStartDate() {
+      try {
+        return Utils.formatISODate(CallInfo.this.getStartDate());
+      } catch(Exception e) {
+        LOG.warn("Failed to format call start date", e);
+        return null;
+      }
+    }
+    
+    public String getEndDate() {
+      try {
+        return Utils.formatISODate(CallInfo.this.getEndDate());
+      } catch(Exception e) {
+        LOG.warn("Failed to format call end date", e);
+        return null;
+      }
+    }
+    
+    public String getId() {
+      return CallInfo.this.getId();
+    }
+    
+    public String getState() {
+      return CallInfo.this.getState();
+    }
+    
+    public String getInviteId() {
+      return CallInfo.this.getInviteId();
+    }
+
+    public IdentityInfo getOwner() {
+      return CallInfo.this.getOwner();
+    }
+    
+    public String getProviderType() {
+      return CallInfo.this.getProviderType();
+    }
+    
+    public String getTitle() {
+      return CallInfo.this.getTitle();
+    }
+    
+    public Set<UserInfo> getParticipants() {
+      return CallInfo.this.getParticipants();
+    }
+    
+    public Set<OriginInfo> getOrigins() {
+      return CallInfo.this.getOrigins();
+    }
+  }
+  
   /** The id. */
   protected final String        id;
 
@@ -283,5 +356,15 @@ public class CallInfo {
    */
   public void setEndDate(Date endDate) {
     this.endDate = endDate;
+  }
+  
+  /**
+   * Return JSON representation of this call.
+   *
+   * @return the string
+   * @throws JsonException the json exception
+   */
+  public String toJSON() throws JsonException {
+    return new JsonGeneratorImpl().createJsonObject(new CallView()).toString();
   }
 }
