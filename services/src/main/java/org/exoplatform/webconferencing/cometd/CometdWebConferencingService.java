@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -1813,18 +1812,20 @@ public class CometdWebConferencingService implements Startable {
                             String title = asString(info.get("title"));
                             String pstr = asString(info.get("participants"));
                             String spacesstr = asString(info.get("spaces"));
-                            String startDate = asString(arguments.get("startDate"));
+                            String startDate = asString(info.get("startDate"));
                             Date startD = null;
                             try {
-                              startD = parseDate(startDate);
+                              startD = parseISODate(startDate);
                             } catch (Exception e) {
+                              LOG.warn("Error parsing call start date: " + startDate, e);
                               caller.failure(ErrorInfo.clientError("Wrong parameter format for call update: startDate").asJSON());
                             }
-                            String endDate = asString(arguments.get("endDate"));
+                            String endDate = asString(info.get("endDate"));
                             Date endD = null;
                             try {
-                              endD = parseDate(endDate);
+                              endD = parseISODate(endDate);
                             } catch (Exception e) {
+                              LOG.warn("Error parsing call end date: " + endDate, e);
                               caller.failure(ErrorInfo.clientError("Wrong parameter format for call update: endDate").asJSON());
                             }
                             if (pstr != null) { // we don't check max length here
@@ -1914,14 +1915,14 @@ public class CometdWebConferencingService implements Startable {
                           String startDate = asString(arguments.get("startDate"));
                           Date startD = null;
                           try {
-                            startD = parseDate(startDate);
+                            startD = parseISODate(startDate);
                           } catch (Exception e) {
                             caller.failure(ErrorInfo.clientError("Wrong parameter format for call creation: startDate").asJSON());
                           }
                           String endDate = asString(arguments.get("endDate"));
                           Date endD = null;
                           try {
-                            endD = parseDate(endDate);
+                            endD = parseISODate(endDate);
                           } catch (Exception e) {
                             caller.failure(ErrorInfo.clientError("Wrong parameter format for call creation: endDate").asJSON());
                           }
@@ -2184,25 +2185,6 @@ public class CometdWebConferencingService implements Startable {
       } catch (Throwable e) {
         LOG.error("Error processing call request from client " + session.getId() + " with data: " + args, e);
         caller.failure(ErrorInfo.serverError("Error processing call request: " + e.getMessage()).asJSON());
-      }
-    }
-
-    /**
-     * Parse date.
-     *
-     * @param date the date
-     * @return the date
-     */
-    private Date parseDate(String date) {
-      if (date != null) {
-        try {
-          return Date.from(ZonedDateTime.parse(date, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant());
-        } catch (Exception e) {
-          LOG.warn("Error parsing call date: '" + date + "'", e);
-          throw e;
-        }
-      } else {
-        return null;
       }
     }
   }
