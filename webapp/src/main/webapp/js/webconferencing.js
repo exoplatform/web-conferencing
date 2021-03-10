@@ -4,10 +4,6 @@
 (function($, cCometD) {
 	"use strict";
 
-	// ******** Constants *******
-	var EVENT_ROOM_SELECTION_CHANGED = 'exo-chat-selected-contact-changed';
-	var CHAT_SERVER_API = '/chatServer/';
-	
 	// ******** Utils ********
 
 	var getRandomArbitrary = function(min, max) {
@@ -67,10 +63,6 @@
 			msg += response.data;
 		}
 		return msg;
-	};
-	
-	var cometdInfo = function(response) {
-		return "[" + response.id + "] " + response.channel;
 	};
 	
 	// CometD transport bus
@@ -364,7 +356,6 @@
 	
 	// core log not enabled for remote spooling until some provider will do this, see init()
 	var log = new Logger().prefix("webconferencing").get();
-	//log.trace("> Loading at " + location.origin + location.pathname);
 	
 	/** 
 	 * Polyfill ECMAScript 2015's String.startsWith().
@@ -390,36 +381,7 @@
 
 		return theLocation.protocol + "//" + theHostName;
 	};
-
-	var getPortalUser = function() {
-		return eXo.env.portal.userName;
-	};
-
-	var decodeString = function(str) {
-		if (str) {
-			try {
-				str = str.replace(/\+/g, " ");
-				str = decodeURIComponent(str);
-				return str;
-			} catch(e) {
-				log.warn("Error decoding string " + str + ". " + e, e);
-			}
-		}
-		return null;
-	}
-
-	var encodeString = function(str) {
-		if (str) {
-			try {
-				str = encodeURIComponent(str);
-				return str;
-			} catch(e) {
-				log.warn("Error decoding string " + str + ". " + e, e);
-			}
-		}
-		return null;
-	};
-
+  
 	// ******** UI utils **********
 
 	var messages; // will be initialized by WebConferencing.init()
@@ -428,28 +390,14 @@
 		return messages ? messages["webconferencing." + key] : "";
 	};
 	
-	/**
-	 * Open pop-up.
-	 */
-	var popupWindow = function(url) {
-		var w = 650;
-		var h = 400;
-		var left = (screen.width / 2) - (w / 2);
-		var top = (screen.height / 2) - (h / 2);
-		return window.open(url, 'contacts', 'width=' + w + ',height=' + h + ',top=' + top + ',left=' + left);
-	};
-	
 	// UI messages
 	// Used to show immediate notifications in top right corner.
 	// This functionality requires pnotifyJQuery and jqueryui CSS.
-
 	var NOTICE_WIDTH = "380px";
   
   var isIOS = /iPhone|iPod|iPad/.test(navigator.userAgent);
   var isAndroid = /Android/.test(navigator.userAgent);
   var isWindowsMobile = /IEmobile|WPDesktop|Windows Phone/i.test(navigator.userAgent) || /WM\s*\d.*.Edge\/\d./i.test(navigator.userAgent);
-  
-  var CACHE_LIVETIME = 30000;
   
 	/**
 	 * Show notice to user. Options support "icon" class, "hide", "closer" and "nonblock" features.
@@ -679,89 +627,7 @@
 		};
 		return process.promise(processTarget);
 	};
-
-	function Cache() {
-		var cache = {};
-		var locks = {};
-		
-		this.put = function(key, value) {
-			cache[key] = value;
-			setTimeout(function() {
-				cache[key] = null;
-  		}, CACHE_LIVETIME);
-		};
-		
-		this.get = function(key) {
-			// TODO do we need this check?
-			if (cache.hasOwnProperty(key)) {
-				return cache[key];
-			} else {
-				return null;
-			}
-		};
-		
-		this.remove = function(key) {
-			cache[key] = null;
-		};
-		
-		this.lock = function(key, worker) {
-			locks[key] = worker;
-		};
-		
-		this.locked = function(key) {
-			if (locks.hasOwnProperty(key)) {
-				return locks[key];
-			} else {
-				return null;
-			}
-		};
-		
-		this.unlock = function(key) {
-			locks[key] = null;
-		};
-	}
 	
-	var getCached = function(key, cache, getFunc) {
-		var res = cache.locked(key);
-		if (res) {
-			return res;
-		}
-		var worker = $.Deferred();
-		cache.lock(key, res = worker.promise());
-		var cached = cache.get(key);
-		if (cached) {
-			cache.unlock(key);
-			worker.notify("CACHED " + key);
-			worker.resolve(cached, "cached");
-  	} else if (getFunc) {
-  		var unlock = true;
-  		var get = getFunc(key);
-  		get.done(function(data, status, textStatus, jqXHR) {
-  			cache.put(key, data);
-  			cache.unlock(key);
-  			unlock = false;
-  			worker.resolve(data, status, textStatus, jqXHR);
-	  	});
-  		get.fail(function(data, status, err, jqXHR) {
-  			cache.unlock(key);
-  			unlock = false;
-  			worker.reject(data, status, err, jqXHR);
-  		});
-  		get.always(function() {
-  			if (unlock) {
-  				// unlock again here - for a case if will not do in done/fail :)
-  				cache.unlock(key); 
-  			}
-  		});
-  	} else {
-  		cache.unlock(key);
-  		worker.notify("NOT FOUND " + key + ". Getter function not provided.");
-  		worker.reject("Not found: " + key);
-  	}
-  	return res;
-	};
-	
-	var cachedUsers = new Cache();
 	var getUserInfoReq = function(userId) {
 		var request = $.ajax({
 			async : true,
@@ -770,12 +636,7 @@
 		});
 		return initRequest(request);
 	};
-	var getUserInfo = function(userId) {
-		return getCached(userId, cachedUsers, getUserInfoReq);
-	};
 
-	// Local caches not yet used, but still good thing to add as an improvements
-	var cachedSpaces = new Cache();
 	var getSpaceInfoReq = function(spaceId) {
 		var request = $.ajax({
 			async : true,
@@ -783,9 +644,6 @@
 			url : prefixUrl + "/portal/rest/webconferencing/space/" + spaceId
 		});
 		return initRequest(request);
-	};
-	var getSpaceInfo = function(spaceId) {
-		return getCached(spaceId, cachedSpaces, getSpaceInfoReq);
 	};
 
   var getSpaceEventInfoReq = function(spaceId, participants, spaces) {
@@ -809,7 +667,6 @@
     return initRequest(request);
   };
 	
-	var cachedRooms = new Cache();
 	var getRoomInfoReq = function(roomId, title, members) {
 		var q = "";
 		if (title) {
@@ -829,11 +686,6 @@
 			url : prefixUrl + "/portal/rest/webconferencing/room/" + roomId + q
 		});
 		return initRequest(request);
-	};
-	var getRoomInfo = function(id, name, title, members) {
-		return getCached(id, cachedRooms, function(key) {
-			return getRoomInfoReq(key, title, members);
-		});
 	};
 	
 	var getProvidersConfig = function() {
@@ -889,105 +741,7 @@
 	
 	var prepareUser = function(user) {
 		user.title = user.firstName + " " + user.lastName;
-	};
-	
-	/**
-	 * Helpers for interaction with eXo Chat on portal pages.
-	 */
-	function Chat() {
-		
-		var isApplication = function() {
-			return eXo && eXo.chat && eXo.chat.userSettings && typeof eXo.chat.userSettings === "object" && $("#chat-application").length;
-		};
-		this.isApplication = isApplication;
-		
-		var isEmbedded = function() {
-			return eXo && eXo.chat && eXo.chat.userSettings && typeof eXo.chat.userSettings === "object" && $("#chatApplicationNotification").length;;
-		};
-		this.isEmbedded = isEmbedded;
-		
-		this.currentRoomId = function() {
-			return eXo.chat.selectedContact ? eXo.chat.selectedContact.user : null;
-		};
-		
-		this.getUsers = function(roomId) {
-			var process = $.Deferred(); 
-
-			var url, dbName, token;
-			
-      if (!roomId) {
-        roomId = this.currentRoomId();
-      }
-      url = CHAT_SERVER_API + 'users';
-      dbName = eXo.chat.userSettings.dbName;
-      token = eXo.chat.userSettings.token;
-
-			if (roomId && url) {
-				serviceGet(url, {
-	        room: roomId,
-	        user: eXo.env.portal.userName,
-	        dbName: dbName
-	      }, {
-	        "Authorization": "Bearer " + token
-	      }).done(function(resp) {
-	      	if (resp && resp.users) {
-						process.resolve(resp.users);																
-					} else {
-						process.reject("Chat users request return empty response");
-					}
-	      }).fail(function(err, status) {
-	      	process.reject(err, status);
-	      });				
-			} else if (process.state() == "pending") {
-				process.reject("Cannot get room users: prerequisites failed");
-			}
-			
-			return process.promise();
-		};
-		
-		/**
-		 * Gets a chat room by its ID and type. If ID not given then it will try find a current one from the context.
-		 * If type not given but ID fond then it will try autodetect it. Method always returns a promise, it will be resolved if room request
-		 * succeeded, if no room found then it resolved with null value, and rejected if some parameter wrong or request failed.
-		 */
-		this.getRoom = function(id, type) {
-			var process = $.Deferred(); 
-
-			var url, dbName, token;
-			
-      if (!id) {
-        id = eXo.chat.selectedContact.user;         
-      }
-      if (id) {
-        type = eXo.chat.selectedContact.type;
-        dbName = eXo.chat.userSettings.dbName;
-        token = eXo.chat.userSettings.token;
-				var roomReq = {
-					targetUser: id,
-					user: eXo.env.portal.userName,
-					dbName: dbName,
-					withDetail: true,
-					isAdmin : false
-				};
-				// If type not given then the ID should be in prefix form, i.e. starts with space-, team- or external-
-				// otherwise it will be treated as users room (1:1) by the Chat server
-				if (typeof type == "string") {
-					roomReq.type = type;
-				}
-				serviceGet(CHAT_SERVER_API + 'getRoom', roomReq, {
-				  "Authorization": "Bearer " + token
-				}).done(function(room) {
-					process.resolve(room);
-				}).fail(function(err, status) {
-					process.reject(err, status);
-				});				
-			} else if (process.state() == "pending") {
-				process.resolve(null);
-			}
-			
-			return process.promise();
-		};
-	}
+	};	
 	
 	/**
 	 * WebConferencing core class.
@@ -1006,62 +760,12 @@
 		var providersConfig; // will be assigned in init()
 		var providersInitializer = {}; // map managed by getProvider() and initProvider()
 		
-		var chat = new Chat();
-		this.getChat = function() {
-			return chat;
-		};
-
 		this.errorText = errorText;
 		
 		var contextId = function(context) {
 			return context.userId ? context.userId : (context.spaceId ? context.spaceId : context.roomName);
 		};
 		this.contextId = contextId;
-		
-		var userPreferenceKey = function(name) {
-			return currentUser.id + "@exo.webconferencing." + name;
-		};
-		
-		var getPreferredProvider = function(contextName) {
-			if (currentUser) {
-				var key = userPreferenceKey(contextName + ".provider");
-				if (typeof Storage != "undefined") {
-					return localStorage.getItem(key);
-				} else {
-				  // No Web Storage support.
-					if (eXo && eXo.webConferencing && eXo.webConferencing.__preferences) {
-						return eXo.webConferencing.__preferences[key];
-					} else {
-						log.warn("Cannot read user preference: local storage not supported.");
-					}
-				}				
-			} else {
-				log.warn("Current user not set for reading user preferences.");
-			}
-			return null;
-		};
-		
-		var setPreferredProvider = function(contextName, providerType) {
-			if (currentUser) {
-				var key = userPreferenceKey(contextName + ".provider");
-				if (typeof Storage != "undefined") {
-					try {
-						localStorage.setItem(key, providerType);						
-					} catch(err) {
-						log.error("Error saving preferred provider for " + contextName, err);
-					}
-				} else {
-				  // No Web Storage support.
-					if (eXo && eXo.webConferencing && eXo.webConferencing.__preferences) {
-						eXo.webConferencing.__preferences[key] = providerType;
-					} else {
-						log.warn("Cannot save user preference: local storage not supported.");
-					}
-				}				
-			} else {
-				log.warn("Current user not set for saving user preferences.");
-			}
-		};
 		
 		var initContext = function() {
 			var context = {
@@ -1142,174 +846,6 @@
 			return initializer.promise();
 		};
 		
-		/**
-		 * Add call button to given target element.
-		 */
-		var addCallButton = function($target, context) {
-			var initializer = $.Deferred();
-			if ($target.length > 0) {
-				// We need deal with non consecutive asynchronous calls to this method,
-				// 1) use only currently available providers - froze the state
-				var addProviders = providers.slice();
-				if (addProviders.length > 0) {
-					var buttonClass = "callButton";
-					var providerFlag = "hasProvider_";
-					var contextName = contextId(context);
-					// 2) if already calling, then need wait for previous call completion and then re-call this method 
-					var prevInitializer = $target.data("callbuttoninit");
-					if (prevInitializer) {
-						prevInitializer.always(function() {
-							log.trace(">> addCallButton > init RESUMED " + contextName + " providers: " + addProviders.length);
-							addCallButton($target, context).done(function($container) {
-								initializer.resolve($container);
-							}).fail(function(err) {
-								initializer.reject(err);
-							});
-						});
-					} else {
-						$target.data("callbuttoninit", initializer);
-						initializer.always(function() {
-							$target.removeData("callbuttoninit");
-						});
-						// Call button placed in a 'container' element for positioning on a page
-						// TODO may be we don't need it since we don't have a default button?
-						var $container = $target.find(".callButtonContainer");
-						// Dropdown is a button to click when several providers available, otherwise it's a simple button
-						var $dropdown = $container.find(".dropdown-menu");
-						var addDropdown = $dropdown.length == 0;
-						var hasButton = $container.children("." + buttonClass).length > 0;
-						if ($container.length == 0) {
-							$container = $("<div style='display: none;' class='callButtonContainer'></div>");
-							$target.append($container);
-						} // else, a first (single) button or several (in the dropdown) already exist
-						var workers = [];
-						var preferredProviderId = getPreferredProvider(contextName);
-						var preferredClass = "preferred";
-						var $preferredButton = $container.find("." + preferredClass).first(); // it should be an one in fact
-						function moveToDefaultButton($preferred) {
-							if ($dropdown.length > 0 && $preferred.length > 0) {
-								var $first = $container.find(".btn." + buttonClass);
-								if ($first.is($preferred)) {
-									if (!$preferred.hasClass(preferredClass)) {
-										$preferred.addClass(preferredClass);
-									}
-								} else {
-									// if not the same selected element in DOM
-									$first.removeClass("btn");
-									$first.removeClass(preferredClass);
-									var $li = $("<li></li>");
-									$li.append($first);
-									$dropdown.prepend($li);
-									$preferred.addClass("btn");
-									$preferred.addClass(preferredClass);
-									$container.prepend($preferred);
-								} // else, preferred button already first
-							} // else, nothing to move at all
-						}
-						function addProviderButton(provider, button) {
-							// need do this in a function to keep worker variable in the scope of given button when it will be done 
-							var bworker = $.Deferred();
-							button.done(function($button) {
-								if (hasButton) {
-									// add this button as an item to dropdown list
-									if ($dropdown.length == 0) { // check actual dropdown content right here, not addDropdown
-										$dropdown = $("<ul class='dropdown-menu'></ul>");
-									}
-									$button.addClass(buttonClass);
-									var $li = $("<li></li>");
-									$li.append($button);
-									$dropdown.append($li);
-								} else {
-									// add as a first (single) button
-									if (!$button.hasClass("btn")) {
-										$button.addClass("btn"); // btn btn-primary actionIcon ?
-									}
-									$button.addClass(buttonClass);
-									$container.append($button);
-									hasButton = true;
-								}
-								if (provider.getType() == preferredProviderId) {
-									// Mark if it's preferred button 
-									// even if $preferredButton already contains something - this last wins (but this should not be a case)
-									$preferredButton = $button; 
-								} else {
-									// Otherwise save user preference for this call	when it will be used
-									$button.click(function() {
-										setPreferredProvider(contextName, provider.getType());
-										// Also reorder the Call Button and its dropdown to keep this one as default
-										// TODO need also re-run context initializer consumed this promise's done button
-										//moveToDefaultButton($button);
-									});
-								}
-							});
-							button.fail(function(msg, err) {
-								if (err) {
-									log.error("Failed to add a call button for " + contextName + " by " + context.currentUser.id + ". " + msg + ". " + errorText(err));
-								}
-							});
-							button.always(function() {
-								// for the below $.when's always callback we need resolve all workers independently succeeded or failed 
-								bworker.resolve();
-							});
-							workers.push(bworker.promise());
-						}
-						// we have an one button for each provider
-						for (var i = 0; i < addProviders.length; i++) {
-							var p = addProviders[i];
-							if (p.isInitialized) {
-								if (!$container.data(providerFlag + p.getType())) {
-									// even if adding will fail, we treat it as 'canceled' and mark the provider as added
-									$container.data(providerFlag + p.getType(), true);
-									var b = p.callButton(context, "element");
-									const $b = $(b);
-									addProviderButton(p, $b);
-								}								
-							}
-						}
-						if (workers.length > 0) {
-							$.when.apply($, workers).always(function() {
-								if ($dropdown.length > 0) {
-									if (addDropdown) {
-										var $toggle = $("<button class='btn dropdown-toggle' data-toggle='dropdown'>" +
-												"<i class='uiIconArrowDown uiIconLightGray'></i></span></button>");
-										$container.append($toggle);
-										$container.append($dropdown);
-									}
-									// User preferred provider for this call should be a default (first) button
-									if (preferredProviderId && $preferredButton.length > 0) {
-										moveToDefaultButton($preferredButton);
-									} else {
-										// Mark first a default one (for nice CSS)
-										$container.find(".btn." + buttonClass).addClass(preferredClass);
-									}
-								} else {
-									$container.find(".btn." + buttonClass).addClass(preferredClass);
-								}
-								$container.show();
-								initializer.resolve($container);
-			        });
-						} else {
-							initializer.reject(); // Nothing to add
-						}
-					}
-				} else {
-					initializer.reject("No providers");
-				}	
-			} else {
-				initializer.reject("Target not found");
-			}
-			return initializer.promise();
-		};
-		
-		/**
-		 * Find current Chat context from a room available in it.
-		 */
-	  // TODO Deprecated, should be used by only old jQuery buttons
-		var getChatContext = function() {
-			return chatContext(eXo.chat);
-		};
-		this.getChatContext = getChatContext;
-
     /** 
      * Returns the context details function in accordance with context.
      */
@@ -1479,156 +1015,7 @@
       }
       return context;
     };
-
-    /**
-		 * eXo Chat initialization
-		 */
-		var initChat = function() {
-			$(function() {
-				var $chat = $("#chat-application");
-				if (chat.isApplication() && $chat.length > 0) {
-					var $roomDetail = $chat.find("#room-detail");
-          document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function() {
-            $roomDetail = $chat.find("#room-detail");
-            var $wrapper = $(".callButtonContainerWrapper");
-            $wrapper.hide(); // hide immediately
-            $wrapper.html('');
-            $roomDetail.removeData("roomcallinitialized");
-          });
-					var addRoomButtton = function() {
-						$roomDetail.find(".callButtonContainerWrapper").hide(); // hide immediately
-						setTimeout(function () {
-							var $wrapper = $(".callButtonContainerWrapper");
-							const context = getChatContext();
-							if (context) {
-								if (context.isSpace) {
-									// When in Chat app we set current space ID from the current room.
-									// It may be used by the provider module by calling webConferencing.getCurrentSpaceId()
-									// XXX here we use the same technique as in chat.js's loadRoom(), 
-									// here space pretty name is an ID
-									currentRoomTitle = context.roomTitle;
-									currentSpaceId = context.roomName;
-								} else if (context.isRoom) {
-									currentRoomTitle = context.roomTitle;
-									currentSpaceId = null;
-								} else if (context.isUser) {
-									currentRoomTitle = context.roomTitle;
-									currentSpaceId = null;
-								} else {
-									// It's no chat room found
-									currentRoomTitle = null;
-									currentSpaceId = null;
-								}
-								if (context.roomId) {
-									var initializer = addCallButton($wrapper, context);
-									initializer.done(function ($container) {
-										$container.find(".callButton").first().addClass("chatCall");
-										$container.find(".dropdown-menu").addClass("pull-right");
-										$wrapper.show();
-									});
-									initializer.fail(function (err) {
-										if (err) {
-											log.error("Chat initialization failed in '" + context.roomTitle + "' for " + currentUser.id, err);
-											$roomDetail.removeData("roomcallinitialized");
-										}
-									});
-								} else {
-									log.trace("<< initChat WARN no room found in context");
-									$roomDetail.removeData("roomcallinitialized");
-								}
-							} else {
-								log.error("Error getting room info from Chat server");
-								$roomDetail.removeData("roomcallinitialized");
-							}
-						}, 1500); // XXX whoIsOnline may run 500-750ms on eXo Tribe
-					};
-					
-					if (!$roomDetail.data("roomcallinitialized")) {
-						$roomDetail.data("roomcallinitialized", true);
-						addRoomButtton();
-					} else {
-						log.trace("Chat room already initialized");
-					}
-					
-					// User popovers in right panel
-					var $chatUsers = $chat.find("#chat-users");
-					$chatUsers.each(function(index, elem) {
-						var $target = $(elem);
-						if (!$target.data("usercallinitialized")) {
-							$target.data("usercallinitialized", true);
-							$target.click(function() {
-								$roomDetail.removeData("roomcallinitialized");
-								addRoomButtton();
-							});
-						}
-					});
-				} else {
-          document.addEventListener('exo-chat-settings-loaded', initChat);
-				}
-			});
-		};
 		
-		var initMiniChat = function() {
-			$(function() {
-				var $miniChat = $(".mini-chat").first();
-				if (chat.isEmbedded()) {
-					if (!$miniChat.data("minichatcallinitialized")) {
-						$miniChat.data("minichatcallinitialized", true);
-						var process = $.Deferred();
-						var addMiniChatCallButton = function() {
-							var roomTitle = eXo.chat.selectedContact.fullName;
-							var $miniChat = $(".mini-chat").first();
-							var $titleBar = $miniChat.find(".title-right");
-							if ($titleBar.length > 0 && roomTitle.length > 0) {
-								var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
-								// Wait a bit for completing Chat workers
-								setTimeout(function() {
-									getChatContext().done(function(context) {
-										if (context.roomId) {
-		                  $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
-											var initializer = addCallButton($wrapper, context);
-											initializer.done(function($container) {
-												var $first = $container.find(".callButton").first();
-												$first.removeClass("btn").addClass("uiActionWithLabel btn-mini miniChatCall");
-												$first.children(".callTitle").remove();
-												$first.children(".uiIconLightGray").add($container.find(".dropdown-toggle > .uiIconLightGray"))
-														.removeClass("uiIconLightGray").addClass("uiIconWhite");
-												$container.find(".dropdown-toggle").removeClass("btn").addClass("btn-mini");
-												$container.find(".dropdown-menu").addClass("pull-right");
-												$titleBar.prepend($wrapper);
-											});
-											initializer.fail(function(err) {
-												if (err) {
-													log.error("Mini-chat initialization failed in " + context.roomTitle + " for " + currentUser.id, err);
-													$miniChat.removeData("minichatcallinitialized");												
-												}
-											});
-										} else {
-											log.trace("<< initMiniChat WARN no room found in context");
-										}
-									}).fail(function(err) {
-										log.error("Error getting room info from Chat server (for mini-chat)", err);
-									});
-								}, 750);
-							} else {
-								log.trace("<< initMiniChat CANCELED mini-chat not found or empty");
-							}
-						};
-		        document.addEventListener(EVENT_ROOM_SELECTION_CHANGED, function() {
-		          var $miniChat = $(".mini-chat").first();
-		          var $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
-		          $wrapper = $miniChat.find(".callButtonContainerMiniWrapper");
-		          $wrapper = $(".callButtonContainerMiniWrapper");
-		          $wrapper.html('');
-		          addMiniChatCallButton();
-		        });
-					};
-				} else {
-          document.addEventListener('exo-chat-settings-loaded', initMiniChat);
-        }
-			});
-		};
-
 		var userContext = function(userId) {
 			var context = {
 				currentUser : currentUser,
@@ -1649,137 +1036,6 @@
 				}
 			};
 			return context;
-		};
-		
-		
-		var tiptip = function() {
-			var process = $.Deferred();
-			function findTiptipWait() {
-				var $tiptip = $("#tiptip_content");
-				if ($tiptip.length == 0) {
-					// wait for popup script load
-					setTimeout(findTiptipWait, 250);
-				} else {
-					process.resolve($tiptip);
-				}
-			}
-			findTiptipWait();
-			return process.promise();
-		};
-		
-		var onTiptipUpdate = function(listener) {
-			tiptip().done(function($tiptip) {
-				var listeners = $tiptip.data("callbuttoninit");
-				if (listeners && listeners.length > 0) {
-					listeners.push(listener);
-				} else {
-				  listeners = [ listener ];
-					$tiptip.data("callbuttoninit", listeners);
-					// run DOM listener to know when popovr will be updated with actual (context) content
-					// we catch '#tiptip_content #tipName node addition
-					var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
-					var findNodeById = function(id, list) {
-						for (var i=0; i<list.length; i++) {
-							var n = list[i];
-							if (n.id == id) {
-								return n;
-							}
-						}
-						return null;
-					}
-					var observer = new MutationObserver(function(mutations) {
-						for(var i=0; i<mutations.length; i++) {
-							var m = mutations[i];
-							var tipName;
-							if (m.type == "childList" && (tipName = findNodeById("tipName", m.addedNodes))) {
-								var $tipName = $(tipName);
-								for (var i=0; i<listeners.length; i++) {
-									listeners[i]($tiptip, $tipName);
-								}
-								break;
-							}
-						}
-					});
-					observer.observe($tiptip.get(0), {
-						childList : true,
-						subtree : false,
-						attributes : false
-					});
-				}
-			});
-		};
-		
-		var addPopoverButton = function($target, context) {
-			var initializer = addCallButton($target, context);
-			initializer.done(function($container) {
-				$container.find(".callButton").first().addClass("popoverCall");
-				// XXX workaround to avoid first-child happen on call button in the popover
-				$container.prepend($("<div class='btn' style='display: none;'></div>"));
-			});
-			initializer.fail(function(err) {
-				if (err) {
-					log.trace("<< addPopoverButton ERROR " + contextId(context) + " for " + currentUser.id , err);
-				}
-			});
-			return initializer;
-		};
-		
-		/**
-		 * Add call button to user's on-mouse popups and panels.
-		 */
-		var initUsers = function() {
-			// user popovers
-			/*onTiptipUpdate(function($tiptip, $tipName) {
-				var $profileLink = $tipName.find("td>a[href*='\\/profile\\/']");
-				if ($profileLink.length > 0) {
-					// Find user ID for a tip
-					var userId = $profileLink.attr("href");
-					userId = userId.substring(userId.lastIndexOf("/") + 1, userId.length);
-					if (userId != currentUser.id) {
-						var $userAction = $tiptip.find(".uiAction");
-						var buttonUser = $userAction.data("callbuttonuser");
-						if (!buttonUser || buttonUser != userId) {
-							$userAction.data("callbuttonuser", userId);
-							// cleanup after previous user
-							$userAction.find(".callButtonContainer").empty();
-							addPopoverButton($userAction, userContext(userId));
-						}
-					}
-				}
-			});*/
-
-			// single user profile;
-			/*var $userProfileMenu = $(".uiProfileMenu:first");
-			var userId = eXo.env.portal.profileOwner;
-
-			var $userActions = $userProfileMenu.find(".profileMenuApps");
-			if (!$userActions.length) {
-			  $userActions = $('<ul class="hidden"></ul>');
-			}
-      var $callButtons = $userActions.find(".userMenuCallButtons");
-      if ($callButtons.length == 0) {
-        $callButtons = $("<li></li>").appendTo($userActions).addClass("userMenuCallButtons");
-      }
-      addCallButton($callButtons, userContext(userId)).done(function($container) {
-        $container.addClass("pull-left");
-        $callButtons.find(".callButtonContainer").each((index, callButton) => {
-          const text = $(callButton).text();
-          const icon = $(callButton).find('.uiIcon').attr('class');
-          if (text || icon) {
-            const profileExtensionAction = {
-              title: text,
-              icon: icon,
-              order: 20,
-              enabled: profile => profile && profile.enabled && !profile.deleted,
-              click: (profile) => {
-                $(callButton).find('.btn').trigger('click');
-              },
-            };
-            extensionRegistry.registerExtension('profile-extension', 'action', profileExtensionAction);
-            document.dispatchEvent(new CustomEvent('profile-extension-updated', { detail: profileExtensionAction}));
-          }
-        });
-      });*/
 		};
 
 		var spaceContext = function(spaceId) {
@@ -1827,75 +1083,6 @@
       return context;
     };
 		
-		/**
-		 * Add call button to space's on-mouse popups and panels.
-		 */
-		var initSpacePopups = function() {
-			// space popovers
-			onTiptipUpdate(function($tiptip, $tipName) {
-				// Find user's first name for a tip
-				var $profileLink = $tipName.find("td>a[href*='\\/g/:spaces:']");
-				if ($profileLink.length > 0) {
-					var spaceId = $profileLink.attr("href");
-					spaceId = spaceId.substring(spaceId.lastIndexOf("/") + 1, spaceId.length);
-					var $spaceAction = $tiptip.find(".uiAction");
-					var buttonSpace = $spaceAction.data("callbuttonspace");
-					if (!buttonSpace || buttonSpace != spaceId) {
-						$spaceAction.data("callbuttonspace", spaceId);
-						// cleanup after previous space
-						$spaceAction.find(".callButtonContainer").empty();
-						addPopoverButton($spaceAction, spaceContext(spaceId));
-					}
-				}
-			});
-		};
-		
-		var initSpace = function() {
-			if (currentSpaceId) {
-				var $spaceMenuPortlet = $("#UISpaceMenuPortlet");
-				var $spaceApps = $spaceMenuPortlet.find(".spaceMenuApps");
-        var $callButtons = $spaceApps.find(".spaceMenuCallButtons");
-				
-				if ($callButtons.length == 0) {
-					$callButtons = $("<li></li>").appendTo($spaceApps).addClass("spaceMenuCallButtons");
-				}
-				
-				var addSpaceCallButton = function() {
-					var initializer = addCallButton($callButtons, spaceContext(currentSpaceId));
-					initializer.done(function($container) {
-						var $button = $container.find(".callButton");
-						var $first = $button.first();
-						$first.addClass("spaceCall");
-					});
-					initializer.fail(function(err) {
-						if (err) {
-							log.trace("<< initSpace ERROR " + currentSpaceId + " for " + currentUser.id, err);
-							log.error("Space initialization failed in " + currentSpaceId + " for " + currentUser.id, err);
-						}
-					});
-				};
-				
-				// XXX if Chat found, ensure Call button added after it to respect its CSS
-				if (chat.isEmbedded()) {
-					var waitAttempts = 0;
-					var waitAndAdd = function() {
-						waitAttempts++;
-						setTimeout(function() {
-							var $chatButton = $spaceApps.children(".chat-button");
-							if ($chatButton.length == 0 && waitAttempts < 40) { // wait max 2 sec
-								waitAndAdd();
-							} else {
-								addSpaceCallButton();								
-							}
-						}, 50);						
-					};
-					waitAndAdd();
-				} else {
-					addSpaceCallButton();
-				}
-			}
-		};
-    
     /**
      * Format start/end dates in the call info from Date instance to String in ISO 8601.
      */
@@ -1913,14 +1100,11 @@
       }
     };
 		
+    /**
+     * DEPRECATED method. It's referd by the documentaiton and samples - need clean in a next release.
+     */
 		this.update = function() {
-			if (currentUser) { 
-				//initUsers();
-				//initSpacePopups();
-				//initSpace();
-				//initChat();
-				//initMiniChat();
-			}
+			// Do nothing
 		};
 
 		/**
