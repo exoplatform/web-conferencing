@@ -118,5 +118,40 @@
         </includes>
       </resource>
     </resources>
+    <plugins>
+      <plugin>
+        <groupId>com.github.kongchen</groupId>
+        <artifactId>swagger-maven-plugin</artifactId>
+        <configuration>
+          <apiSources>
+            <apiSource>
+              <springmvc>false</springmvc>
+              <locations>org.exoplatform.webconferencing.webrtc.rest</locations>
+              <schemes>http,https</schemes>
+              <host>localhost:8080</host>
+              <basePath>/rest/webrtc</basePath>
+              <info>
+                <title>WebRTC provider REST API for eXo Web Conferencing</title>
+                <version>1</version>
+                <description>REST API of WebRTC provider for eXo Web Conferencing.
+                  These methods for accessing WebRTC settings such as RTC configurations.
+                  Here are the descriptions of a full representation of each of the WebRTC provider resources available.</description>
+              </info>
+              <templatePath>${basedir}/src/main/resources/swagger-doc-template/strapdown.html.hbs</templatePath>
+              <outputPath>${basedir}/target/generated/document.html</outputPath>
+              <swaggerDirectory>${basedir}/target/generated-sources/annotations/generated</swaggerDirectory>
+            </apiSource>
+          </apiSources>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
 </project>
