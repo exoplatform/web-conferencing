@@ -1,12 +1,14 @@
 <template>
-  <v-app id="web-conferencing-admin" class="VuetifyApp">
-    <v-container style="width: 95%" class="v-application--is-ltr">
+  <v-app id="web-conferencing-admin">
+    <v-container style="width: 95%">
       <div
         v-show="error"
         class="alert alert-error">{{ i18n.te(`${errorResourceBase}.${error}`) ? $t(`${errorResourceBase}.${error}`) : error }}</div>
-      <v-row class="white">
+      <v-row>
         <v-col xs12 px-3>
-          <h4 class="webconferencingTitle">{{ $t("webconferencing.admin.title") }}</h4>
+          <h4 class="webconferencingTitle">
+            <span class="me-3">{{ $t("webconferencing.admin.title") }}</span>
+          </h4>
         </v-col>
       </v-row>
       <v-row>
@@ -17,13 +19,13 @@
             <template v-slot:default>
               <thead>
                 <tr class="providersTableRow">
-                  <th class="text-left">{{ $t("webconferencing.admin.table.Provider") }}</th>
-                  <th class="text-left">{{ $t("webconferencing.admin.table.Description") }}</th>
+                  <th class="text-start">{{ $t("webconferencing.admin.table.Provider") }}</th>
+                  <th class="text-start">{{ $t("webconferencing.admin.table.Description") }}</th>
                   <th
-                    class="text-left"
+                    class="text-start"
                     style="width: 5%">{{ $t("webconferencing.admin.table.Active") }}</th>
                   <th
-                    class="text-left"
+                    class="text-start"
                     style="width: 5%">{{ $t("webconferencing.admin.table.Permissions") }}</th>
                 </tr>
               </thead>
@@ -164,7 +166,6 @@ export default {
       content: "";
       position: absolute;
       width: 100%;
-      margin-left: 10px;
     }
   }
     .providersTable {
