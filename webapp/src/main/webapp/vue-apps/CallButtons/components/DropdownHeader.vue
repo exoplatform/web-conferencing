@@ -7,7 +7,7 @@
       <i class="uiIconSocPhone uiIconSocBlue"></i>
       <span>
         {{ $i18n.te("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
-        : "Start Call" }}</span>
+          : "Start Call" }}</span>
     </div>
     <i
       :style="{ 'background-color': header.bgMini }"

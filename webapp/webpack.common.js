@@ -16,30 +16,6 @@ let config = {
   module: {
     rules: [
       {
-        test: /\.css$/,
-        use: ["vue-style-loader", "css-loader"]
-      },
-      {
-        test: /\.less$/,
-        use: ExtractTextWebpackPlugin.extract({
-          fallback: "vue-style-loader",
-          use: [
-            {
-              loader: "css-loader",
-              options: {
-                sourceMap: true
-              }
-            },
-            {
-              loader: "less-loader",
-              options: {
-                sourceMap: true
-              }
-            }
-          ]
-        })
-      },
-      {
         test: /\.js$/,
         exclude: /node_modules/,
         use: [
@@ -59,11 +35,7 @@ let config = {
   externals: {
     vue: "Vue",
     vuetify: "Vuetify",
-  },
-  plugins: [
-    // we use ExtractTextWebpackPlugin to extract the css code on a css file
-    new ExtractTextWebpackPlugin("css/main.css")
-  ]
+  }
 };
 
 module.exports = config;

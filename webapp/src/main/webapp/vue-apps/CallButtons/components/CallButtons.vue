@@ -20,31 +20,31 @@
 </template>
 
 <script>
-import Dropdown from "./Dropdown.vue";
-import singlebtn from "./SingleButton.vue";
+import Dropdown from './Dropdown.vue';
+import singlebtn from './SingleButton.vue';
 
 export default {
-  name: "CallButtons",
+  name: 'CallButtons',
   components: {
     Dropdown,
     singlebtn
   },
   directives: {
-    "click-outside": {
+    'click-outside': {
       priority: 700,
       bind: function(el, binding, vnode) {
-        if (el.classList.value.includes("dropdown-vue")) { // TODO too general text 'dropdown-vue' to detect exactky our dropdown
+        if (el.classList.value.includes('dropdown-vue')) { // TODO too general text 'dropdown-vue' to detect exactky our dropdown
           el.clickOutside = function(e) {
             if (!(el === e.target || el.contains(e.target))) {
               vnode.context[binding.expression](e);
             }
           };
-          document.body.addEventListener("click", el.clickOutside);
+          document.body.addEventListener('click', el.clickOutside);
         }
       },
       unbind: function(el) {
         if (el) {
-          document.body.removeEventListener("click", el.clickOutside);
+          document.body.removeEventListener('click', el.clickOutside);
         }
       }
     }
@@ -85,13 +85,13 @@ export default {
       return document.body.getBoundingClientRect();
     },
     positionClass: function() {
-      let position = "right";
+      let position = 'right';
       if (this.isDropdownVisualized) {
         const widthRelation =
           (this.client.width - this.dropdown.left) /
           this.dropdownContainer.width;
         if (widthRelation < 1.1) {
-          position = "left";
+          position = 'left';
         }
       }
       return position;
@@ -100,30 +100,30 @@ export default {
       return this.$refs.callbutton.parentElement.parentElement.parentElement;
     },
     parentClass() {
-      return Object.values(this.parentContainerElement.classList).join("");
+      return Object.values(this.parentContainerElement.classList).join('');
     },
     condition() {
       return (
-        this.parentClass.includes("call-button-mini") ||
-        this.parentClass.includes("call-button--tiptip")
+        this.parentClass.includes('call-button-mini') ||
+        this.parentClass.includes('call-button--tiptip')
       );
     },
     header() {
       return this.condition
         ? {
-            bgHover: "white",
-            // paddingClass: "pa-1",
-            bgMini: this.isOpen ? "#d3d6db" : "#ffffff"
-          }
+          bgHover: 'white',
+          // paddingClass: "pa-1",
+          bgMini: this.isOpen ? '#d3d6db' : '#ffffff'
+        }
         : {
-            bgHover: this.isOpen ? "var(--allPagesGreyColor, #e1e8ee)" : "white"
-            // paddingClass: "px-2"
-          };
+          bgHover: this.isOpen ? 'var(--allPagesGreyColor, #e1e8ee)' : 'white'
+          // paddingClass: "px-2"
+        };
     }
   },
   watch: {
-    callContext(newContext, oldContext) {
-      this.setProvidersButtons(newContext);
+    callContext() {
+      this.setProvidersButtons(this.callContext);
     }
     // screenWidth(newWidth, oldWidth) {
     //   if (newWidth <= 980) {
@@ -133,7 +133,7 @@ export default {
     // }
   },
   created() {
-    this.log = webConferencing.getLog("webconferencing");
+    this.log = webConferencing.getLog('webconferencing');
   },
   // mounted() {
   //   this.$nextTick(() => {
@@ -146,7 +146,7 @@ export default {
     // },
     setProvidersButtons(context) {
       this.providersButton.splice(0);
-      this.$refs.callbutton.classList.remove("single");
+      this.$refs.callbutton.classList.remove('single');
       this.hideDropdown();
       const thevue = this;
       try {
@@ -161,10 +161,10 @@ export default {
             });
             Promise.allSettled(callButtons).then(resCallButtons => {
               resCallButtons.forEach(button => {
-                if (button.status === "fulfilled") {
+                if (button.status === 'fulfilled') {
                   this.providersButton.push(button.value);
                   if (button.value.$data) {
-                    button.value.$data.header = "CALL";
+                    button.value.$data.header = 'CALL';
                   }
                 }
               });
@@ -177,16 +177,16 @@ export default {
           // TODO copypasted code - why we need it here??
           if (this.isFirstInitialization) {
             this.isFirstInitialization = false;
-            this.log.trace("<< setProvidersButtons() << Call buttons are initialized first time");
+            this.log.trace('<< setProvidersButtons() << Call buttons are initialized first time');
             this.fireCreated();
           }
         }
       } catch (err) {
-        this.log.error("Error building call buttons", err);
+        this.log.error('Error building call buttons', err);
       }
     },
     createButtons() {
-      this.log.trace(">> createButtons()");
+      this.log.trace('>> createButtons()');
       let ref;
       let vm = null;
       if (this.providersButton.length !== 0) {
@@ -208,8 +208,8 @@ export default {
           } else {
             //add a single button
             const callButton = this.$refs.callbutton.childNodes[0];
-            this.$refs.callbutton.classList.add("single");
-            callButton.innerHTML = "";
+            this.$refs.callbutton.classList.add('single');
+            callButton.innerHTML = '';
             if (pb instanceof Vue) {
               // add vue button
               vm = pb.$mount(); // TODO why we need vm globaly?
@@ -222,12 +222,12 @@ export default {
         }
       } else {
         const callButton = this.$refs.callbutton.childNodes[0];
-        callButton.innerHTML = "";
+        callButton.innerHTML = '';
       }
 
       if (this.isFirstInitialization) {
         this.isFirstInitialization = false;
-        this.log.trace("<< createButtons() << Call buttons are initialized first time");
+        this.log.trace('<< createButtons() << Call buttons are initialized first time');
         this.fireCreated();
       }
     },
@@ -245,7 +245,7 @@ export default {
       this.childRef = ref;
     },
     fireCreated() {
-      this.$emit("created");
+      this.$emit('created');
     },
     fireDropdownIsVisualized() {
       this.isDropdownVisualized = true;
