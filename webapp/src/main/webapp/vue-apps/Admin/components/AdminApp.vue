@@ -3,7 +3,9 @@
     <v-container style="width: 95%">
       <div
         v-show="error"
-        class="alert alert-error">{{ i18n.te(`${errorResourceBase}.${error}`) ? $t(`${errorResourceBase}.${error}`) : error }}</div>
+        class="alert alert-error">
+        {{ i18n.te(`${errorResourceBase}.${error}`) ? $t(`${errorResourceBase}.${error}`) : error }}
+      </div>
       <v-row>
         <v-col xs12 px-3>
           <h4 class="webconferencingTitle">
@@ -23,10 +25,14 @@
                   <th class="text-start">{{ $t("webconferencing.admin.table.Description") }}</th>
                   <th
                     class="text-start"
-                    style="width: 5%">{{ $t("webconferencing.admin.table.Active") }}</th>
+                    style="width: 5%">
+                    {{ $t("webconferencing.admin.table.Active") }}
+                  </th>
                   <th
                     class="text-start"
-                    style="width: 5%">{{ $t("webconferencing.admin.table.Permissions") }}</th>
+                    style="width: 5%">
+                    {{ $t("webconferencing.admin.table.Permissions") }}
+                  </th>
                 </tr>
               </thead>
               <tbody v-if="providersConfig.length > 0">
@@ -46,7 +52,7 @@
                     <div 
                       v-html="i18n.te(`webconferencing.admin.${providerConfig.title}.description`)
                         ? $t(`webconferencing.admin.${providerConfig.title}.description`)
-                      : '' ">
+                        : '' ">
                     </div>
                   </td>
                   <td class="center actionContainer">
@@ -59,7 +65,7 @@
                         hide-details
                         color="#568dc9"
                         class="providersSwitcher"
-                        @change="changeActive(providerConfig)"/>
+                        @change="changeActive(providerConfig)" />
                     </div>
                   </td>
                   <td class="center actionContainer">
@@ -80,13 +86,7 @@
 
 <script>
 export default {
-  components: {
-  },
   props: {
-    services: {
-      type: Object,
-      required: true
-    },
     i18n: {
       type: Object,
       required: true
@@ -109,7 +109,7 @@ export default {
     };
   },
   created() {
-    this.log = webConferencing.getLog().prefix("webconferencing.admin");
+    this.log = webConferencing.getLog().prefix('webconferencing.admin');
     this.getProviders();
   },
   methods: {
@@ -122,7 +122,7 @@ export default {
             webConferencing.getProvider(providerConfig.type).then((provider) => {
               providerConfig.provider = provider;
               // set setting visibility for the provider
-              providerConfig.hasSettings = provider.showSettings && provider.hasOwnProperty("showSettings");
+              providerConfig.hasSettings = provider.showSettings && provider.hasOwnProperty('showSettings');
               thisvue.providersConfig.push(providerConfig);
             }).fail(function(err) {
               thisvue.log.warn(`Provider ${providerConfig.type} is not available`, err);
@@ -141,7 +141,7 @@ export default {
     async changeActive(provider) {
       // getting rest for updating provider status
       try {
-        const data = await webConferencing.postProviderConfig(provider.type, provider.active)
+        await webConferencing.postProviderConfig(provider.type, provider.active);
         this.error = null;
       } catch (err) {
         this.error = err.message;

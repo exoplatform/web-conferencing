@@ -22,10 +22,10 @@
 </template>
 
 <script>
-import DropdownHeader from "./DropdownHeader.vue";
+import DropdownHeader from './DropdownHeader.vue';
 
 export default {
-  name: "Dropdown",
+  name: 'Dropdown',
   components: {
     DropdownHeader
   },
@@ -51,22 +51,22 @@ export default {
     async isopen(value) {
       if (value) {
         await this.$nextTick();
-        this.$emit("dropdownIsVisualized");
+        this.$emit('dropdownIsVisualized');
       }
     }
   },
   updated() {
-    this.$emit("updated");
+    this.$emit('updated');
   },
   methods: {
     showDropdownComponent() {
-      this.$emit("showDropdown");
+      this.$emit('showDropdown');
     },
     passRefs() {
-      this.$emit("getRefs", this.$refs);
+      this.$emit('getRefs', this.$refs);
     },
-    selectProvider(event) {
-      this.$emit("selectedProvider");
+    selectProvider() {
+      this.$emit('selectedProvider');
     }
   }
 };
