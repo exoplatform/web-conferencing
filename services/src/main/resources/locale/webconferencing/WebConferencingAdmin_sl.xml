@@ -38,7 +38,7 @@
         <SearchLabel>URL:</SearchLabel>
         <WithPermissions>STUN/TURN strežniki</WithPermissions>
         <None>Brez</None>
-        <Everybody>Everybody</Everybody>
+        <Everybody>Vsi</Everybody>
       </modal>
       <buttons>
         <Save>Shrani</Save>
