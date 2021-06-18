@@ -50,10 +50,6 @@
   </scm>
 
   <properties>
-    <!-- Defaut compiler settings -->
-    <maven.compiler.optimize>true</maven.compiler.optimize>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
     <!-- eXo Modules -->
     <!-- **************************************** -->
     <!-- Dependencies versions                    -->
