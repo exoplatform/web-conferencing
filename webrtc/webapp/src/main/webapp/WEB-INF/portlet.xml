@@ -8,6 +8,10 @@
     <portlet-name>WebrtcProviderPortlet</portlet-name>
     <display-name xml:lang="EN">WebRTC Provider for Web Conferencing</display-name>
     <portlet-class>org.exoplatform.webconferencing.webrtc.portlet.WebrtcProviderPortlet</portlet-class>
+    <init-param>
+      <name>preload.resource.stylesheet</name>
+      <value><![CDATA[/webrtc/skin/webrtc.css]]></value>
+    </init-param>
     <supports>
       <mime-type>text/html</mime-type>
     </supports>
