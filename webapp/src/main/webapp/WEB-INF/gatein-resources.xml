@@ -48,29 +48,6 @@
 
   <!-- Javascript for webconferencing support in Platform -->
   <module>
-    <name>webConferencingJqueryPnotify</name>
-    <load-group>webConferencingGRP</load-group>
-    <script>
-      <path>/js/jquery.pnotify.min.js</path>
-    </script>
-    <depends>
-      <module>jquery</module>
-      <as>jQuery</as>
-    </depends>
-  </module>
-  <module>
-    <name>webConferencingJqueryUI</name>
-    <as>jqueryUI</as>
-    <load-group>webConferencingGRP</load-group>
-    <script>
-      <path>/js/jquery-ui.min.js</path>
-    </script>
-    <depends>
-      <module>jquery</module>
-      <as>jQuery</as>
-    </depends>
-  </module>
-  <module>
     <name>webConferencing</name>
     <load-group>webConferencingGRP</load-group>
     <script>
@@ -83,10 +60,11 @@
       <module>commons-cometd3</module>
     </depends>
     <depends>
-      <module>webConferencingJqueryUI</module>
+      <module>jQueryUI12</module>
+      <as>jqueryUI</as>
     </depends>
     <depends>
-      <module>webConferencingJqueryPnotify</module>
+      <module>jQueryPnotify12</module>
     </depends>
     <depends>
       <module>extensionRegistry</module>

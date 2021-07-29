@@ -1927,7 +1927,7 @@
 			if (document.createStyleSheet) {
 				document.createStyleSheet(cssUrl); // IE way
 			} else {
-				if ($("head").find("link[href='"+cssUrl+"']").length == 0) {
+        if ($("head").find("link[href='"+cssUrl+"'][rel!='preload']").length == 0) {
 					var headElems = document.getElementsByTagName("head");
 					var style = document.createElement("link");
 					style.type = "text/css";
@@ -2018,13 +2018,6 @@
 			$.pnotify.defaults.styling = "jqueryui";
 			// no history roller in the right corner
 			$.pnotify.defaults.history = false;
-			
-			// Load common styles here - it's common CSS for all skins so far.
-			webConferencing.loadStyle("/webconferencing/skin/jquery-ui.min.css");
-			webConferencing.loadStyle("/webconferencing/skin/jquery-ui.structure.min.css");
-			webConferencing.loadStyle("/webconferencing/skin/jquery-ui.theme.min.css");
-			webConferencing.loadStyle("/webconferencing/skin/jquery.pnotify.default.css");
-			webConferencing.loadStyle("/webconferencing/skin/jquery.pnotify.default.icons.css");
 		} catch(err) {
 			log.error("Error configuring Web Conferencing notifications.", err);
 		}
