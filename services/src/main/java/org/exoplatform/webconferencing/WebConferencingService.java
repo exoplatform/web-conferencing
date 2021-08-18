@@ -2319,7 +2319,8 @@ public class WebConferencingService implements Startable {
     Session session = sessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
     if (OWNER_TYPE_SPACE.equals(type)) {
       Node rootSpace = null;
-      rootSpace = (Node) session.getItem(nodeCreator.getJcrPath(CMS_GROUPS_PATH) + "/spaces/" + identity);
+      Space space = spaceService.getSpaceByPrettyName(identity);
+      rootSpace = (Node) session.getItem(nodeCreator.getJcrPath(CMS_GROUPS_PATH) + space.getGroupId());
       folderNode = rootSpace.getNode("Documents");
     } else {
       String privateRelativePath = nodeCreator.getJcrPath("userPrivate");
