@@ -2063,7 +2063,7 @@ public class WebConferencingService implements Startable {
         final String uploadingUser = uploadInfo.getUser();
         String owner = null;
         // Owner is user if it's not a space, otherwise use space identity
-        if (!uploadInfo.getType().equals(OWNER_TYPE_SPACE) && !uploadInfo.getIdentity().equals(uploadingUser)) {
+        if (!uploadInfo.getType().equals(OWNER_TYPE_SPACEEVENT) && !uploadInfo.getType().equals(OWNER_TYPE_SPACE) && !uploadInfo.getIdentity().equals(uploadingUser)) {
           owner = uploadingUser;
         } else {
           owner = uploadInfo.getIdentity();
