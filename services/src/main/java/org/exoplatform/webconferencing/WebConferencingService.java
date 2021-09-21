@@ -629,19 +629,21 @@ public class WebConferencingService implements Startable {
   /**
    * Space event info.
    *
-   * @param spacePrettyName the space pretty name
+   * @param spaceIdentityId the space identity id
    * @param callId the call id
    * @param participants the participants user names
    * @param spaces an array of space pretty names
    * @return the space info
    * @throws IdentityStateException the identity state exception
    */
-  protected SpaceEventInfo spaceEventInfo(String spacePrettyName, String callId, String[] participants, String[] spaces) throws IdentityStateException {
-    Space socialSpaceHost = spaceService.getSpaceByPrettyName(spacePrettyName);
+  protected SpaceEventInfo spaceEventInfo(String spaceIdentityId, String callId, String[] participants, String[] spaces) throws IdentityStateException {
+    Identity spaceIdentity = socialIdentityManager.getIdentity(spaceIdentityId);
+    Space socialSpaceHost = spaceService.getSpaceByPrettyName(spaceIdentity.getRemoteId());
     SpaceEventInfo spaceEvent = new SpaceEventInfo(socialSpaceHost);
     
     // Merge the host space, given spaces and participants.
     Set<String> allSpaces = new LinkedHashSet<>();
+    String spacePrettyName = socialSpaceHost.getPrettyName();
     allSpaces.add(spacePrettyName);
     allSpaces.addAll(Arrays.asList(spaces));
     // 1) host space & 2) invited spaces
@@ -1164,7 +1166,8 @@ public class WebConferencingService implements Startable {
         throw new CallArgumentException("Wrong call owner (" + ownerId + ")");
       }
     } else if (isSpaceEvent) {
-      Space space = spaceService.getSpaceByPrettyName(ownerId);
+      Identity spaceIdentity = socialIdentityManager.getIdentity(ownerId);
+      Space space = spaceService.getSpaceByPrettyName(spaceIdentity.getRemoteId());
       if (space != null) {
         owner = new SpaceEventInfo(space);
         owner.setProfileLink(space.getUrl());
