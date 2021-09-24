@@ -237,12 +237,16 @@ public class WebConferencingService implements Startable {
     /**
      * Instantiates a new space event info.
      *
-     * @param socialSpace the social space
-     * @param spaceIdentityId the space identity id
+     * @param spaceIdentity the space identity
      */
-    public SpaceEventInfo(Space socialSpace, String spaceIdentityId) {
-      super(spaceIdentityId, socialSpace.getDisplayName());
-      this.groupId = socialSpace.getGroupId();
+    public SpaceEventInfo(Identity spaceIdentity) {
+      super(spaceIdentity.getId(), spaceIdentity.getRemoteId());
+      Space space = spaceService.getSpaceByPrettyName(spaceIdentity.getRemoteId());
+      this.profileLink = space.getUrl();
+      String avatar = space.getAvatarUrl();
+      avatar = avatar != null ? avatar : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
+      this.avatarLink = avatar;
+      this.groupId = space.getGroupId();
     }
 
     /**
@@ -639,12 +643,11 @@ public class WebConferencingService implements Startable {
    */
   protected SpaceEventInfo spaceEventInfo(String spaceIdentityId, String callId, String[] participants, String[] spaces) throws IdentityStateException {
     Identity spaceIdentity = socialIdentityManager.getIdentity(spaceIdentityId);
-    Space socialSpaceHost = spaceService.getSpaceByPrettyName(spaceIdentity.getRemoteId());
-    SpaceEventInfo spaceEvent = new SpaceEventInfo(socialSpaceHost, spaceIdentityId);
+    SpaceEventInfo spaceEvent = new SpaceEventInfo(spaceIdentity);
     
     // Merge the host space, given spaces and participants.
     Set<String> allSpaces = new LinkedHashSet<>();
-    String spacePrettyName = socialSpaceHost.getPrettyName();
+    String spacePrettyName = spaceIdentity.getRemoteId();
     allSpaces.add(spacePrettyName);
     allSpaces.addAll(Arrays.asList(spaces));
     // 1) host space & 2) invited spaces
@@ -672,9 +675,6 @@ public class WebConferencingService implements Startable {
         LOG.warn("Skipped not found participant " + p + " for space event in " + spacePrettyName);
       }
     }
-    
-    spaceEvent.setProfileLink(socialSpaceHost.getUrl());
-    spaceEvent.setAvatarLink(socialSpaceHost.getAvatarUrl());
     spaceEvent.setCallId(callId);
     return spaceEvent;
   }
@@ -1168,13 +1168,8 @@ public class WebConferencingService implements Startable {
       }
     } else if (isSpaceEvent) {
       Identity spaceIdentity = socialIdentityManager.getIdentity(ownerId);
-      Space space = spaceService.getSpaceByPrettyName(spaceIdentity.getRemoteId());
-      if (space != null) {
-        owner = new SpaceEventInfo(space, ownerId);
-        owner.setProfileLink(space.getUrl());
-        String avatar = space.getAvatarUrl();
-        avatar = avatar != null ? avatar : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
-        owner.setAvatarLink(avatar);
+      if (spaceIdentity != null) {
+        owner = new SpaceEventInfo(spaceIdentity);
       } else {
         LOG.error("Cannot find call's owner event space: " + ownerId);
         throw new CallArgumentException("Wrong call owner (" + ownerId + ")");
