@@ -243,9 +243,7 @@ public class WebConferencingService implements Startable {
       super(spaceIdentity.getId(), spaceIdentity.getRemoteId());
       Space space = spaceService.getSpaceByPrettyName(spaceIdentity.getRemoteId());
       this.profileLink = space.getUrl();
-      String avatar = space.getAvatarUrl();
-      avatar = avatar != null ? avatar : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
-      this.avatarLink = avatar;
+      this.avatarLink = space.getAvatarUrl() != null ? space.getAvatarUrl() : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
       this.groupId = space.getGroupId();
     }
 
