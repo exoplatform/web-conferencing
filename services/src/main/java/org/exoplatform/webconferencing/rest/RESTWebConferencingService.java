@@ -65,9 +65,6 @@ import io.swagger.annotations.ApiResponses;
 @Produces(MediaType.APPLICATION_JSON)
 public class RESTWebConferencingService implements ResourceContainer {
 
-  /** The Constant EMPTY. */
-  public static final String             EMPTY = "".intern();
-
   /** The Constant LOG. */
   protected static final Log             LOG   = ExoLogger.getLogger(RESTWebConferencingService.class);
 
@@ -365,12 +362,12 @@ public class RESTWebConferencingService implements ResourceContainer {
    * Gets the space event info.
    *
    * @param uriInfo the uri info
-   * @param spaceName the space name
+   * @param spaceIdentityId the space identity id
    * @return the space event info response
    */
     @GET
     @RolesAllowed("users")
-    @Path("/space-event/{spaceName}")
+    @Path("/space-event/{spaceIdentityId}")
     @ApiOperation(value = "Return a Social space event information", httpMethod = "GET", response = GroupInfo.class, 
       notes = "Use this method to read a Social space event used as call origin. This operation is avalable to all Platform users.")
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Request fulfilled. Space event info object returned.", response = GroupInfo.class),
@@ -382,17 +379,17 @@ public class RESTWebConferencingService implements ResourceContainer {
       @ApiResponse(code = 404, message = "Space not found or not accessible. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
       @ApiResponse(code = 500, message = "Internal server error due to data reading from DB, its encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
     public Response getSpaceEventInfo(@Context UriInfo uriInfo,
-                                      @ApiParam(value = "Space pretty name used as the event host, ex: 'sales_team'", required = true) @PathParam("spaceName") String spaceName,
+                                      @ApiParam(value = "Space pretty name used as the event host, ex: 'sales_team'", required = true) @PathParam("spaceIdentityId") String spaceIdentityId,
                                       @ApiParam(value = "Participants directly invited to the event, a string of comma-separated names, ex: 'john,mary,james'", required = true) @QueryParam("participants") String participants,
                                       @ApiParam(value = "Space pretty names for inviting its participants to the event, a string of comma-separated names, ex: 'sales_team,acme_project,ux_pride'", required = true) @QueryParam("spaces") String spaces) {
       ConversationState convo = ConversationState.getCurrent();
       if (convo != null) {
         String currentUserName = convo.getIdentity().getUserId();
-        if (spaceName != null && spaceName.length() > 0) {
+        if (spaceIdentityId != null && spaceIdentityId.length() > 0) {
           if (participants != null && participants.length() > 0) {
             if (spaces != null && spaces.length() > 0) {
               try {
-                GroupInfo space = webConferencing.getSpaceEventInfo(spaceName,
+                GroupInfo space = webConferencing.getSpaceEventInfo(spaceIdentityId,
                                                                     participants.trim().split(";"),
                                                                     spaces.trim().split(";"));
                 if (space != null) {
@@ -411,22 +408,22 @@ public class RESTWebConferencingService implements ResourceContainer {
                                  .build();
                 }
               } catch (IdentityStateException e) {
-                LOG.error("Error reading member of space '" + spaceName + "' by '" + currentUserName + "'", e);
+                LOG.error("Error reading member of space with id'" + spaceIdentityId + "' by '" + currentUserName + "'", e);
                 return Response.serverError()
                                .cacheControl(cacheControl)
-                               .entity(ErrorInfo.serverError("Error reading member of space '" + spaceName + "'"))
+                               .entity(ErrorInfo.serverError("Error reading member of space with id'" + spaceIdentityId + "'"))
                                .build();
               } catch (StorageException e) {
-                LOG.error("Storage error for space event info of '" + spaceName + "' by '" + currentUserName + "'", e);
+                LOG.error("Storage error for space event info of space with id'" + spaceIdentityId + "' by '" + currentUserName + "'", e);
                 return Response.serverError()
                                .cacheControl(cacheControl)
-                               .entity(ErrorInfo.serverError("Storage error for space '" + spaceName + "'"))
+                               .entity(ErrorInfo.serverError("Storage error for space with id'" + spaceIdentityId + "'"))
                                .build();
               } catch (Throwable e) {
-                LOG.error("Error reading space event info of '" + spaceName + "' by '" + currentUserName + "'", e);
+                LOG.error("Error reading space event info of space with id'" + spaceIdentityId + "' by '" + currentUserName + "'", e);
                 return Response.serverError()
                                .cacheControl(cacheControl)
-                               .entity(ErrorInfo.serverError("Error reading space " + spaceName))
+                               .entity(ErrorInfo.serverError("Error reading space with id" + spaceIdentityId))
                                .build();
               }
             } else {
