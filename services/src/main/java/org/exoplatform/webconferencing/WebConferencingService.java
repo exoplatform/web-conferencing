@@ -237,11 +237,14 @@ public class WebConferencingService implements Startable {
     /**
      * Instantiates a new space event info.
      *
-     * @param socialSpace the social space
+     * @param spaceIdentity the space identity
      */
-    public SpaceEventInfo(Space socialSpace) {
-      super(socialSpace.getPrettyName(), socialSpace.getDisplayName());
-      this.groupId = socialSpace.getGroupId();
+    public SpaceEventInfo(Identity spaceIdentity) {
+      super(spaceIdentity.getId(), spaceIdentity.getRemoteId());
+      Space space = spaceService.getSpaceByPrettyName(spaceIdentity.getRemoteId());
+      this.profileLink = space.getUrl();
+      this.avatarLink = space.getAvatarUrl() != null ? space.getAvatarUrl() : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
+      this.groupId = space.getGroupId();
     }
 
     /**
@@ -576,7 +579,7 @@ public class WebConferencingService implements Startable {
    * moment of invocation. Even participants will be resolved from the owner and
    * given spaces' members plus given participants IDs.
    *
-   * @param spacePrettyName the space pretty name
+   * @param spaceIdentityId the space identity id
    * @param partIds the participants IDs (attendees) added to the event directly
    * @param spacesPrettyName the Social spaces' pretty names for add its members as
    *          participants (attendees) to the event
@@ -584,10 +587,10 @@ public class WebConferencingService implements Startable {
    * @throws IdentityStateException the identity state exception
    * @throws StorageException the storage exception
    */
-  public SpaceEventInfo getSpaceEventInfo(String spacePrettyName, String[] partIds, String[] spacesPrettyName)
+  public SpaceEventInfo getSpaceEventInfo(String spaceIdentityId, String[] partIds, String[] spacesPrettyName)
                                                                                                      throws IdentityStateException,
                                                                                                      StorageException {
-    return spaceEventInfo(spacePrettyName, findLastSpaceEventCallId(spacePrettyName), partIds, spacesPrettyName);
+    return spaceEventInfo(spaceIdentityId, findLastSpaceEventCallId(spaceIdentityId), partIds, spacesPrettyName);
   }
 
   /**
@@ -629,19 +632,20 @@ public class WebConferencingService implements Startable {
   /**
    * Space event info.
    *
-   * @param spacePrettyName the space pretty name
+   * @param spaceIdentityId the space identity id
    * @param callId the call id
    * @param participants the participants user names
    * @param spaces an array of space pretty names
    * @return the space info
    * @throws IdentityStateException the identity state exception
    */
-  protected SpaceEventInfo spaceEventInfo(String spacePrettyName, String callId, String[] participants, String[] spaces) throws IdentityStateException {
-    Space socialSpaceHost = spaceService.getSpaceByPrettyName(spacePrettyName);
-    SpaceEventInfo spaceEvent = new SpaceEventInfo(socialSpaceHost);
+  protected SpaceEventInfo spaceEventInfo(String spaceIdentityId, String callId, String[] participants, String[] spaces) throws IdentityStateException {
+    Identity spaceIdentity = socialIdentityManager.getIdentity(spaceIdentityId);
+    SpaceEventInfo spaceEvent = new SpaceEventInfo(spaceIdentity);
     
     // Merge the host space, given spaces and participants.
     Set<String> allSpaces = new LinkedHashSet<>();
+    String spacePrettyName = spaceIdentity.getRemoteId();
     allSpaces.add(spacePrettyName);
     allSpaces.addAll(Arrays.asList(spaces));
     // 1) host space & 2) invited spaces
@@ -669,9 +673,6 @@ public class WebConferencingService implements Startable {
         LOG.warn("Skipped not found participant " + p + " for space event in " + spacePrettyName);
       }
     }
-    
-    spaceEvent.setProfileLink(socialSpaceHost.getUrl());
-    spaceEvent.setAvatarLink(socialSpaceHost.getAvatarUrl());
     spaceEvent.setCallId(callId);
     return spaceEvent;
   }
@@ -1164,13 +1165,9 @@ public class WebConferencingService implements Startable {
         throw new CallArgumentException("Wrong call owner (" + ownerId + ")");
       }
     } else if (isSpaceEvent) {
-      Space space = spaceService.getSpaceByPrettyName(ownerId);
-      if (space != null) {
-        owner = new SpaceEventInfo(space);
-        owner.setProfileLink(space.getUrl());
-        String avatar = space.getAvatarUrl();
-        avatar = avatar != null ? avatar : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
-        owner.setAvatarLink(avatar);
+      Identity spaceIdentity = socialIdentityManager.getIdentity(ownerId);
+      if (spaceIdentity != null) {
+        owner = new SpaceEventInfo(spaceIdentity);
       } else {
         LOG.error("Cannot find call's owner event space: " + ownerId);
         throw new CallArgumentException("Wrong call owner (" + ownerId + ")");
