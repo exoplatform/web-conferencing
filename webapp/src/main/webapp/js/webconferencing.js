@@ -1556,7 +1556,7 @@
           cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
             var result = tryParseJson(response);
             if (response.successful) {
-              self.getProvider(stateInfo.provider)
+              self.getProvider(result.providerType)
                 .then(provider => {
                   if (provider.getCallUrl) {
                     result.url = provider.getCallUrl(id);
