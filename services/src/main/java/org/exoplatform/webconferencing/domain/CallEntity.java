@@ -49,7 +49,10 @@ import org.exoplatform.webconferencing.WebConferencingService;
     @NamedQuery(name = "WebConfCall.findUserGroupCalls",
                 query = "SELECT c FROM WebConfCall c, WebConfParticipant p WHERE c.id = p.callId AND p.id = :userId ORDER BY c.lastDate"),
     @NamedQuery(name = "WebConfCall.deleteOwnerOlderCalls",
-                query = "DELETE FROM WebConfCall WHERE ownerType = :ownerType AND lastDate <= :expiredDate") })
+                query = "DELETE FROM WebConfCall WHERE ownerType = :ownerType AND lastDate <= :expiredDate"),
+        @NamedQuery(name = "WebConfCall.findCallsByState",
+                query = "SELECT c FROM WebConfCall c WHERE c.state = :state")})
+
 public class CallEntity {
 
   /** The id. */
