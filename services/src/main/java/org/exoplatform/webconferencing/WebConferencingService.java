@@ -2314,9 +2314,15 @@ public class WebConferencingService implements Startable {
     // TODO use the user session, not a system session
     SessionProvider sessionProvider = sessionProviders.getSystemSessionProvider(null);
     Session session = sessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
-    if (OWNER_TYPE_SPACE.equals(type) || OWNER_TYPE_SPACEEVENT.equals(type)) {
+    if (OWNER_TYPE_SPACE.equals(type)) {
       Node rootSpace = null;
       Space space = spaceService.getSpaceByPrettyName(identity);
+      rootSpace = (Node) session.getItem(nodeCreator.getJcrPath(CMS_GROUPS_PATH) + space.getGroupId());
+      folderNode = rootSpace.getNode("Documents");
+    } else if (OWNER_TYPE_SPACEEVENT.equals(type)) {
+      Node rootSpace = null;
+      Identity spaceIdentity = socialIdentityManager.getIdentity(identity);
+      Space space = spaceService.getSpaceByPrettyName(spaceIdentity.getRemoteId());
       rootSpace = (Node) session.getItem(nodeCreator.getJcrPath(CMS_GROUPS_PATH) + space.getGroupId());
       folderNode = rootSpace.getNode("Documents");
     } else {
