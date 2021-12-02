@@ -143,22 +143,6 @@ public class CallDAO extends GenericDAOJPAImpl<CallEntity, String> {
   }
 
   /**
-   * Find all calls by specific state
-   *
-   * @param state
-   * @return list of calls, or empty list if no matched result
-   */
-  public List<CallEntity> findCallsByState(String state) {
-    TypedQuery<CallEntity> query = getEntityManager().createNamedQuery("WebConfCall.findCallsByState", CallEntity.class)
-            .setParameter("state", state);
-    try {
-      return query.getResultList();
-    } catch (NoResultException e) {
-      return Collections.emptyList();
-    }
-  }
-
-  /**
    * Delete all users calls older of {@value #USER_CALL_DAYS_LIVETIME} days.
    *
    * @return the int number of actually removed calls
