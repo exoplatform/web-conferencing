@@ -52,8 +52,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.lang.RandomStringUtils;
-import org.exoplatform.container.PortalContainer;
-import org.exoplatform.container.component.RequestLifeCycle;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -1195,37 +1193,6 @@ public class WebConferencingService implements Startable {
       return findCallById(id, true);
     } catch (CallSettingsException | CallOwnerException | StorageException | IdentityStateException e) {
       throw new InvalidCallException("Error getting call: " + id, e);
-    }
-  }
-
-  /**
-   * initialize all saved started calls state.
-   */
-
-  public void initializeStartedCallsState() {
-    try {
-      List<CallEntity> savedCalls = callStorage.findCallsByState(CallState.STARTED);
-      if (!savedCalls.isEmpty()) {
-        savedCalls.stream().forEach(callEntity -> {
-          try {
-            CallInfo callInfo = readCallEntity(callEntity, true);
-            callInfo.getParticipants().stream()
-                    .filter(participant -> participant.getState().equals(UserState.JOINED))
-                    .forEach(joinedUser -> {
-                      try {
-                        leaveCall(callInfo.getId(), joinedUser.getId(), joinedUser.getClientId());
-                      } catch (InvalidCallException e) {
-                        LOG.error("Error while updating participant {} state in call {}", joinedUser.getId(), callInfo.getId());
-                      }
-                    });
-            stopCall(callInfo.getId(), false);
-          } catch (Exception e) {
-            LOG.error("Error while reading call entity", e);
-          }
-        });
-      }
-    } catch (Exception e) {
-      LOG.error("Error while getting saved started calls");
     }
   }
 
@@ -2422,21 +2389,17 @@ public class WebConferencingService implements Startable {
   public void start() {
     // XXX we need reference SpaceService after the container start only, otherwise the servr startup fails
     this.spaceService = ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(SpaceService.class);
+
     // For a case when calls was active and server stopped, then calls wasn't marked as Stopped and need
     // remove them.
     LOG.info("Web Conferencing service started.");
-    PortalContainer container = PortalContainer.getInstance();
-    RequestLifeCycle.begin(container);
     try {
       int cleaned = deleteAllUserCalls();
       if (cleaned > 0) {
         LOG.info("Cleaned " + cleaned + " expired user calls.");
       }
-      initializeStartedCallsState();
     } catch (Throwable e) {
       LOG.warn("Error cleaning calls from previous server execution", e);
-    } finally {
-      RequestLifeCycle.end();
     }
   }
 
@@ -3480,7 +3443,7 @@ public class WebConferencingService implements Startable {
    *
    * @return number of deleted calls
    * @throws StorageException if storage error happens
-   *
+   * 
    */
   protected int deleteAllUserCalls() throws StorageException {
     try {
