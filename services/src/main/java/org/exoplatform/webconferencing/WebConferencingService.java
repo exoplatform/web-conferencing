@@ -52,6 +52,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.lang.RandomStringUtils;
+import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.component.RequestLifeCycle;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -612,21 +614,24 @@ public class WebConferencingService implements Startable {
    */
   protected SpaceInfo spaceInfo(String spacePrettyName, String callId) throws IdentityStateException {
     Space socialSpace = spaceService.getSpaceByPrettyName(spacePrettyName);
-    SpaceInfo space = new SpaceInfo(socialSpace);
-    for (String sm : socialSpace.getMembers()) {
-      UserInfo user = userInfo(sm);
-      if (user != null) {
-        space.addMember(user);
-      } else {
-        LOG.warn("Skipped not found space member " + sm + " of " + spacePrettyName);
-        // for space we have members from inside, thus if it is not found, we ignore him assuming space
-        // should be consistent
+    if (socialSpace != null) {
+      SpaceInfo space = new SpaceInfo(socialSpace);
+      for (String sm : socialSpace.getMembers()) {
+        UserInfo user = userInfo(sm);
+        if (user != null) {
+          space.addMember(user);
+        } else {
+          LOG.warn("Skipped not found space member " + sm + " of " + spacePrettyName);
+          // for space we have members from inside, thus if it is not found, we ignore him assuming space
+          // should be consistent
+        }
       }
+      space.setProfileLink(socialSpace.getUrl());
+      space.setAvatarLink(socialSpace.getAvatarUrl());
+      space.setCallId(callId);
+      return space;
     }
-    space.setProfileLink(socialSpace.getUrl());
-    space.setAvatarLink(socialSpace.getAvatarUrl());
-    space.setCallId(callId);
-    return space;
+    return null;
   }
   
   /**
@@ -834,6 +839,7 @@ public class WebConferencingService implements Startable {
                 } else {
                   throw new CallArgumentException("Unexpected call owner type: " + ownerType + " for " + ownerId);
                 }
+
                 // Group call starts with all parties LEAVED status
                 for (UserInfo m : group.getMembers().values()) {
                   m.setState(UserState.LEAVED);
@@ -1193,6 +1199,27 @@ public class WebConferencingService implements Startable {
       return findCallById(id, true);
     } catch (CallSettingsException | CallOwnerException | StorageException | IdentityStateException e) {
       throw new InvalidCallException("Error getting call: " + id, e);
+    }
+  }
+
+  /**
+   * initialize all saved started calls state.
+   */
+  public void initializeStartedCallsState() {
+    try {
+      List<CallEntity> savedCalls = callStorage.findGroupCallsByState(CallState.STARTED);
+      savedCalls.stream().forEach(callEntity -> {
+        try {
+          int parts = participantsStorage.updateParticipantStateByCallId(UserState.LEAVED, callEntity.getId());
+          LOG.info("State of {} participants of call {} were updated to {} ", parts, callEntity.getId(), UserState.LEAVED);
+        } catch (Exception e) {
+          LOG.error("Error while updating participants state ", e);
+        }
+      });
+      int calls = callStorage.updateStartedCallState(CallState.STOPPED);
+      LOG.info("{} Calls state were updated to {} ", calls, CallState.STOPPED);
+    } catch (Exception e) {
+      LOG.error("Error while getting saved started calls");
     }
   }
 
@@ -2393,13 +2420,18 @@ public class WebConferencingService implements Startable {
     // For a case when calls was active and server stopped, then calls wasn't marked as Stopped and need
     // remove them.
     LOG.info("Web Conferencing service started.");
+    PortalContainer container = PortalContainer.getInstance();
+    RequestLifeCycle.begin(container);
     try {
       int cleaned = deleteAllUserCalls();
       if (cleaned > 0) {
         LOG.info("Cleaned " + cleaned + " expired user calls.");
       }
+      initializeStartedCallsState();
     } catch (Throwable e) {
       LOG.warn("Error cleaning calls from previous server execution", e);
+    } finally {
+      RequestLifeCycle.end();
     }
   }
 
@@ -2586,117 +2618,123 @@ public class WebConferencingService implements Startable {
    * @throws CallOwnerException if call owner is of wrong type or cannot be found (as an identity)
    */
   protected CallInfo readCallEntity(CallEntity savedCall, boolean withParticipants) throws CallSettingsException,
-                                                                                    IdentityStateException,
-                                                                                    CallOwnerException {
-    if (savedCall != null) {
-      String callId = savedCall.getId();
-      IdentityInfo owner;
-      String ownerId = savedCall.getOwnerId();
-      List<ParticipantEntity> savedParticipants = null;
-      if (OWNER_TYPE_CHATROOM.equals(savedCall.getOwnerType())) {
-        String settings = savedCall.getSettings(); // we expect JSON here
-        try {
-          JSONObject json = new JSONObject(settings);
-          String roomTitle = json.optString("roomTitle");
-          if (roomTitle != null && roomTitle.length() > 0) {
-            // XXX In case of chat room we read participants storage ahead (see below code on withParticipants=true)
-            // This could be improved by reviewing and separating logic of participants/origins
-            savedParticipants = participantsStorage.findCallParts(callId);
-            // Filter only room members without guests which aren't actual room members here
-            String[] members = savedParticipants.stream()
-                                                  .filter(p -> !GuestInfo.TYPE_NAME.equals(p.getType()))
-                                                  .map(p -> p.getId())
-                                                  .toArray(String[]::new);
-            owner = roomInfo(ownerId, roomTitle, members, callId);
-          } else {
-            LOG.warn("Saved call doesn't have room settings: '" + settings + "'");
-            throw new CallSettingsException("Saved call doesn't have room settings");
-          }
-        } catch (JSONException e) {
-          LOG.warn("Saved call has wrong room settings format (bad JSON syntax): '" + settings + "'", e);
-          throw new CallSettingsException("Saved call has wrong room settings format", e);
-        }
-      } else if (OWNER_TYPE_SPACEEVENT.equals(savedCall.getOwnerType())) {
-        // XXX We work with origins only for space events for the moment, but the origins would be useful for all types of calls.
-        String[] eventParticipants = originsStorage.findCallOrigins(callId, OWNER_TYPE_USER)
-            .stream()
-            .map(p -> p.getId())
-            .toArray(String[]::new);
-        String[] eventSpaces = originsStorage.findCallOrigins(callId, OWNER_TYPE_SPACE)
-            .stream()
-            .map(p -> p.getId())
-            .toArray(String[]::new);
-        owner = spaceEventInfo(ownerId, callId, eventParticipants, eventSpaces);
-      } else if (OWNER_TYPE_SPACE.equals(savedCall.getOwnerType())) {
-        owner = spaceInfo(ownerId, callId);
-      } else if (OWNER_TYPE_USER.equals(savedCall.getOwnerType())) {
-        owner = userInfo(ownerId);
-      } else {
-        throw new CallOwnerException("Unexpected call owner type: " + savedCall.getOwnerType() + " for " + ownerId);
-      }
-      if (owner == null) {
-        throw new CallOwnerException("Call owner cannot be found: " + ownerId);
-      }
-
-      CallInfo call = new CallInfo(callId, savedCall.getTitle(), owner, savedCall.getProviderType());
-      call.setState(savedCall.getState());
-      call.setLastDate(savedCall.getLastDate());
-      call.setStartDate(savedCall.getStartDate());
-      call.setEndDate(savedCall.getEndDate());
-      try {
-        String inviteId = getInviteId(callId);
-        if (inviteId != null) {
-          call.setInviteId(inviteId);
-        } else {
-          // This should not happen in normal circumstances as invite will be
-          // created within the call or on call start, 
-          // see also txCreateCall(), txUpdateCallAndParticipants()
-          if (CallState.STARTED.equals(call.getState())) {
-            LOG.warn("Cannot find inviteId for started call {}", callId);
-          } else if (LOG.isDebugEnabled()) {
-            LOG.debug("An inviteId not found for call {}", callId);
-          }
-        }
-      } catch (StorageException e) {
-        LOG.warn("Cannot get inviteId for call {} : {}", callId, e.getMessage());
-      }
-
-      if (withParticipants) {
-        if (savedParticipants == null) {
-          savedParticipants = participantsStorage.findCallParts(callId);
-        } // otherwise reuse room's participants
-        // 1) read actually added participants for call already or being running with their current states from DB
-        // this way we add the ones who exist also in the origins with their actual state (e.g. JOINED for those who are already in the call).
-        for (ParticipantEntity p : savedParticipants) {
-          if (UserInfo.TYPE_NAME.equals(p.getType()) || GuestInfo.TYPE_NAME.equals(p.getType())) {
-            UserInfo user = userInfo(p.getId());
-            if (user == null) {
-              // external guest or undefined participant
-              user = GuestInfo.TYPE_NAME.equals(p.getType()) ? new GuestInfo(p.getId())
-                                                             : new ParticipantInfo(savedCall.getProviderType(), p.getId());
-            } else if (GuestInfo.TYPE_NAME.equals(user.getType())) {
-              // eXo user as guest
-              user = new GuestInfo(user);
-            }
-            user.setState(p.getState());
-            user.setClientId(p.getClientId());
-            call.addParticipant(user);
-          } else {
-            LOG.warn("Non user participant skipped for call " + savedCall.getId() + ": " + p.getId() + " (" + p.getType() + ")");
-          }
-        }
-        // 2) resolve allowed participants from call origins (actual for space event calls)
-        if (savedCall.isGroup()) {
-          // Resolve actual participants from the owner members with LEAVED state (members may come from the origins above)
-          Set<UserInfo> members = new HashSet<>(GroupInfo.class.cast(owner).getMembers().values());
-          members.stream().forEach(m -> m.setState(UserState.LEAVED));
-          call.addParticipants(members);
-        } // Otherwise it's 1-1 call and its participants already added in createCall() if start parameter was set to true
-      }
-      return call;
-    } else {
+          IdentityStateException,
+          CallOwnerException {
+    if (savedCall == null) {
       return null;
     }
+    String callId = savedCall.getId();
+    IdentityInfo owner;
+    String ownerId = savedCall.getOwnerId();
+    List<ParticipantEntity> savedParticipants = null;
+    if (OWNER_TYPE_CHATROOM.equals(savedCall.getOwnerType())) {
+      String settings = savedCall.getSettings(); // we expect JSON here
+      try {
+        JSONObject json = new JSONObject(settings);
+        String roomTitle = json.optString("roomTitle");
+        if (roomTitle != null && roomTitle.length() > 0) {
+          // XXX In case of chat room we read participants storage ahead (see below code on withParticipants=true)
+          // This could be improved by reviewing and separating logic of participants/origins
+          savedParticipants = participantsStorage.findCallParts(callId);
+          // Filter only room members without guests which aren't actual room members here
+          String[] members = savedParticipants.stream()
+                  .filter(p -> !GuestInfo.TYPE_NAME.equals(p.getType()))
+                  .map(p -> p.getId())
+                  .toArray(String[]::new);
+          owner = roomInfo(ownerId, roomTitle, members, callId);
+        } else {
+          LOG.warn("Saved call doesn't have room settings: '" + settings + "'");
+          throw new CallSettingsException("Saved call doesn't have room settings");
+        }
+      } catch (JSONException e) {
+        LOG.warn("Saved call has wrong room settings format (bad JSON syntax): '" + settings + "'", e);
+        throw new CallSettingsException("Saved call has wrong room settings format", e);
+      }
+    } else if (OWNER_TYPE_SPACEEVENT.equals(savedCall.getOwnerType())) {
+      // XXX We work with origins only for space events for the moment, but the origins would be useful for all types of calls.
+      String[] eventParticipants = originsStorage.findCallOrigins(callId, OWNER_TYPE_USER)
+              .stream()
+              .map(p -> p.getId())
+              .toArray(String[]::new);
+      String[] eventSpaces = originsStorage.findCallOrigins(callId, OWNER_TYPE_SPACE)
+              .stream()
+              .map(p -> p.getId())
+              .toArray(String[]::new);
+      owner = spaceEventInfo(ownerId, callId, eventParticipants, eventSpaces);
+    } else if (OWNER_TYPE_SPACE.equals(savedCall.getOwnerType())) {
+      owner = spaceInfo(ownerId, callId);
+    } else if (OWNER_TYPE_USER.equals(savedCall.getOwnerType())) {
+      owner = userInfo(ownerId);
+    } else {
+      throw new CallOwnerException("Unexpected call owner type: " + savedCall.getOwnerType() + " for " + ownerId);
+    }
+    if (owner == null) {
+      LOG.warn("Call owner cannot be found: " + ownerId + " of call " + callId);
+      try {
+        // delete the call if it's owner is not recognized (renamed space can be a reason)
+        LOG.info("Proceed to delete call: {}", callId);
+        deleteCall(callId);
+      } catch (StorageException e) {
+        LOG.error("Error while deleting call: {}", callId);
+      }
+      return null;
+    }
+    CallInfo call = new CallInfo(callId, savedCall.getTitle(), owner, savedCall.getProviderType());
+    call.setState(savedCall.getState());
+    call.setLastDate(savedCall.getLastDate());
+    call.setStartDate(savedCall.getStartDate());
+    call.setEndDate(savedCall.getEndDate());
+    try {
+      String inviteId = getInviteId(callId);
+      if (inviteId != null) {
+        call.setInviteId(inviteId);
+      } else {
+        // This should not happen in normal circumstances as invite will be
+        // created within the call or on call start,
+        // see also txCreateCall(), txUpdateCallAndParticipants()
+        if (CallState.STARTED.equals(call.getState())) {
+          LOG.warn("Cannot find inviteId for started call {}", callId);
+        } else if (LOG.isDebugEnabled()) {
+          LOG.debug("An inviteId not found for call {}", callId);
+        }
+      }
+    } catch (StorageException e) {
+      LOG.warn("Cannot get inviteId for call {} : {}", callId, e.getMessage());
+    }
+
+    if (withParticipants) {
+      if (savedParticipants == null) {
+        savedParticipants = participantsStorage.findCallParts(callId);
+      } // otherwise reuse room's participants
+      // 1) read actually added participants for call already or being running with their current states from DB
+      // this way we add the ones who exist also in the origins with their actual state (e.g. JOINED for those who are already in the call).
+      for (ParticipantEntity p : savedParticipants) {
+        if (UserInfo.TYPE_NAME.equals(p.getType()) || GuestInfo.TYPE_NAME.equals(p.getType())) {
+          UserInfo user = userInfo(p.getId());
+          if (user == null) {
+            // external guest or undefined participant
+            user = GuestInfo.TYPE_NAME.equals(p.getType()) ? new GuestInfo(p.getId())
+                    : new ParticipantInfo(savedCall.getProviderType(), p.getId());
+          } else if (GuestInfo.TYPE_NAME.equals(user.getType())) {
+            // eXo user as guest
+            user = new GuestInfo(user);
+          }
+          user.setState(p.getState());
+          user.setClientId(p.getClientId());
+          call.addParticipant(user);
+        } else {
+          LOG.warn("Non user participant skipped for call " + savedCall.getId() + ": " + p.getId() + " (" + p.getType() + ")");
+        }
+      }
+      // 2) resolve allowed participants from call origins (actual for space event calls)
+      if (savedCall.isGroup()) {
+        // Resolve actual participants from the owner members with LEAVED state (members may come from the origins above)
+        Set<UserInfo> members = new HashSet<>(GroupInfo.class.cast(owner).getMembers().values());
+        members.stream().forEach(m -> m.setState(UserState.LEAVED));
+        call.addParticipants(members);
+      } // Otherwise it's 1-1 call and its participants already added in createCall() if start parameter was set to true
+    }
+    return call;
   }
 
   /**
