@@ -23,8 +23,10 @@ import java.util.List;
 
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceException;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
+import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.persistence.impl.GenericDAOJPAImpl;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
@@ -77,6 +79,21 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
   @Deprecated // TODO not used
   public int deleteCallParts(String callId) throws PersistenceException, IllegalStateException, IllegalArgumentException {
     return getEntityManager().createNamedQuery("WebConfCall.deleteCallParts").setParameter("callId", callId).executeUpdate();
+  }
+
+  /**
+   * Update Participant state by call id
+   *
+   * @param state
+   * @return Number of updated participants
+   */
+  @ExoTransactional
+  public int updateParticipantStateByCallId(String state, String callId) {
+    Query query = getEntityManager().createQuery("UPDATE WebConfParticipant p SET p.state = :state  WHERE p.callId = :callId")
+            .setParameter("state", state)
+            .setParameter("callId", callId);
+
+    return query.executeUpdate();
   }
 
   /**

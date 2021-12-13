@@ -28,8 +28,10 @@ import java.util.List;
 
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceException;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
+import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.persistence.impl.GenericDAOJPAImpl;
 import org.exoplatform.webconferencing.domain.CallEntity;
 
@@ -156,6 +158,35 @@ public class CallDAO extends GenericDAOJPAImpl<CallEntity, String> {
                              .setParameter("ownerType", OWNER_TYPE_USER)
                              .setParameter("expiredDate", Timestamp.valueOf(expired))
                              .executeUpdate();
+  }
+  /**
+   * Find all group calls by specific state
+   *
+   * @param state
+   * @return list of group calls, or empty list if no matched result
+   */
+  public List<CallEntity> findGroupCallsByState(String state) {
+    TypedQuery<CallEntity> query = getEntityManager().createNamedQuery("WebConfCall.findGroupCallsByState", CallEntity.class)
+            .setParameter("state", state);
+    try {
+      return query.getResultList();
+    } catch (NoResultException e) {
+      return Collections.emptyList();
+    }
+  }
+
+  /**
+   * Update Call state
+   *
+   * @param state
+   * @return Number of updated calls
+   */
+  @ExoTransactional
+  public int updateStartedCallState(String state) {
+    Query query = getEntityManager().createQuery("UPDATE WebConfCall c SET c.state = :state  WHERE c.state = 'started'")
+            .setParameter("state", state);
+
+    return query.executeUpdate();
   }
 
   /**
