@@ -5,7 +5,7 @@
     @click="showdropdowncomponent(); passrefs()">
     <div class="dropdown-heading px-2">
       <i class="uiIconSocPhone uiIconSocBlue"></i>
-      <span>
+      <span v-if="!isMobile">
         {{ $i18n.te("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
           : "Start Call" }}</span>
     </div>
@@ -18,6 +18,11 @@
 
 <script>
 export default {
+  computed:{
+     isMobile() {
+      return this.$vuetify && this.$vuetify.breakpoint && this.$vuetify.breakpoint.name === 'xs';
+    },
+  },
   props: {
     header: {
       type: Object,
