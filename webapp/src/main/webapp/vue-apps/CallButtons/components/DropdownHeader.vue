@@ -4,20 +4,25 @@
     class="dropdown-header"
     @click="showdropdowncomponent(); passrefs()">
     <div class="dropdown-heading px-2">
-      <i class="uiIconSocPhone uiIconSocBlue"></i>
-      <span>
-        {{ $i18n.te("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
-          : "Start Call" }}</span>
-    </div>
-    <i
+       <i
       :style="{ 'background-color': header.bgMini }"
       :class="header.paddingClass"
       class="uiIconMiniArrowDown uiIconLightGray pa-1"></i>
+      <i class="uiIconSocPhone uiIconSocBlue"></i>
+      <span v-if="!isMobile">
+        {{ $i18n.te("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
+          : "Start Call" }}</span>
+    </div>
   </div>
 </template>
 
 <script>
 export default {
+  computed: {
+    isMobile() {
+      return this.$vuetify && this.$vuetify.breakpoint && this.$vuetify.breakpoint.name === 'xs';
+    },
+  },
   props: {
     header: {
       type: Object,
@@ -43,7 +48,6 @@ export default {
     display: inline-flex;
     align-items: center;
     background-color: white;
-    border: 1px solid rgb(232, 238, 242);
     border-radius: 3px;
     width: 100%;
     min-height: 36px;
