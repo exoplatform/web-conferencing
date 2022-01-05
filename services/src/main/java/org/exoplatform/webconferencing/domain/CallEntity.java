@@ -19,6 +19,7 @@
 package org.exoplatform.webconferencing.domain;
 
 import static org.exoplatform.webconferencing.WebConferencingService.OWNER_TYPE_SPACEEVENT;
+import static org.exoplatform.webconferencing.WebConferencingService.OWNER_TYPE_USER;
 
 import java.util.Date;
 
@@ -49,7 +50,9 @@ import org.exoplatform.webconferencing.WebConferencingService;
     @NamedQuery(name = "WebConfCall.findUserGroupCalls",
                 query = "SELECT c FROM WebConfCall c, WebConfParticipant p WHERE c.id = p.callId AND p.id = :userId ORDER BY c.lastDate"),
     @NamedQuery(name = "WebConfCall.deleteOwnerOlderCalls",
-                query = "DELETE FROM WebConfCall WHERE ownerType = :ownerType AND lastDate <= :expiredDate") })
+                query = "DELETE FROM WebConfCall WHERE ownerType = :ownerType AND lastDate <= :expiredDate"),
+    @NamedQuery(name = "WebConfCall.findGroupCallsByState",
+                query = "SELECT c FROM WebConfCall c WHERE c.state = :state AND c.ownerType != '" + OWNER_TYPE_USER + "'")})
 public class CallEntity {
 
   /** The id. */
