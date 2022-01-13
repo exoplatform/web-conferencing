@@ -39,8 +39,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.exoplatform.container.web.AbstractFilter;
 import org.exoplatform.web.filter.Filter;
 import org.exoplatform.webconferencing.Utils;
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 
 /**
  * Filter forwards requests to WebRTC call URLs to related servlets.<br>
@@ -54,7 +54,7 @@ import org.gatein.common.logging.LoggerFactory;
 public class WebrtcCallFilter extends AbstractFilter implements Filter {
 
   /** The Constant LOG. */
-  protected static final Logger LOG          = LoggerFactory.getLogger(WebrtcCallFilter.class);
+  protected static final Log LOG          = ExoLogger.getLogger(WebrtcCallFilter.class);
 
   /** The Constant SCHEME_HTTP. */
   public static final String    SCHEME_HTTP  = "http";

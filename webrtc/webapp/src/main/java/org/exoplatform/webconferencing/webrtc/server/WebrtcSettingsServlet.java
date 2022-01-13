@@ -14,8 +14,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.exoplatform.container.web.AbstractHttpServlet;
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 
 /**
  * The Class WebrtcSettingsServlet.
@@ -26,7 +26,7 @@ public class WebrtcSettingsServlet extends AbstractHttpServlet {
   private static final long     serialVersionUID  = -6075521943684442791L;
 
   /** The Constant LOG. */
-  protected static final Logger LOG               = LoggerFactory.getLogger(WebrtcSettingsServlet.class);
+  protected static final Log  LOG               = ExoLogger.getLogger(WebrtcSettingsServlet.class);
 
   /** The Constant UNAUTHORIZED_PAGE. */
   private final static String   UNAUTHORIZED_PAGE = "/WEB-INF/pages/unauthorized.html";

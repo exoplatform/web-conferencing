@@ -22,8 +22,8 @@ package org.exoplatform.webconferencing.server.filter;
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.web.AbstractFilter;
 import org.exoplatform.web.filter.Filter;
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,7 +48,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
 public class ResourceFilter extends AbstractFilter implements Filter {
 
   /** The Constant LOG. */
-  protected static final Logger          LOG           = LoggerFactory.getLogger(ResourceFilter.class);
+  protected static final Log             LOG           = ExoLogger.getLogger(ResourceFilter.class);
 
   /** The Constant METHOD_GET. */
   protected static final String          METHOD_GET    = "GET";
