@@ -23,8 +23,8 @@ import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.webrtc.WebrtcProvider;
 import org.exoplatform.webconferencing.webrtc.WebrtcProvider.WebrtcSettings;
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 
 /**
  * The Class WebrtcCallServlet.
@@ -35,7 +35,7 @@ public class WebrtcCallServlet extends AbstractHttpServlet {
   private static final long     serialVersionUID  = -6075521943684342591L;
 
   /** The Constant LOG. */
-  protected static final Logger LOG               = LoggerFactory.getLogger(WebrtcCallServlet.class);
+  protected static final Log  LOG               = ExoLogger.getLogger(WebrtcCallServlet.class);
 
   /** The Constant UNAUTHORIZED_PAGE. */
   private final static String   UNAUTHORIZED_PAGE = "/WEB-INF/pages/unauthorized.html";
