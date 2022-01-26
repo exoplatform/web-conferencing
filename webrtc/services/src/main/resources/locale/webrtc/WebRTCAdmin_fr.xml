@@ -9,7 +9,7 @@
       <url>URL</url>
       <serverUrl>URL Serveur...</serverUrl>
       <credentials>Identifiants</credentials>
-      <username>Nom d'utilisateur</username>
+      <username>Username</username>
       <credential>Identifiant</credential>
       <save>Enregistrer</save>
       <cancel>Annuler</cancel>
