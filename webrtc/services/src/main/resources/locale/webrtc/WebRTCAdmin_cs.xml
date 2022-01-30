@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?><bundle>
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
   <webrtc>
     <admin>
       <description><![CDATA[Default provider based on <a href="https://webrtc.org/" target="_blank">WebRTC</a> standard. Let users to place peer to peer call. No browser plugin needed.]]></description>
