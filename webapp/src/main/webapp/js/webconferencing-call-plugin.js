@@ -138,6 +138,35 @@
       // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
       enabled: true,
     },
+
+    {
+      target: "space-popup",
+      type: "space-popup-action",
+      key: "spacePopupCallButton",
+      rank: 22,
+      iconName: "callButton",
+      appClass: CALL_BUTTON,
+      typeClass: "call-button-mini call-button-popup--space",
+      component: {
+        name: "CallButtons",
+        events: [],
+      },
+      // init call button context in space popup
+      init: function(target, spaceId) {
+        const typeClass = this.typeClass
+        require([
+          "SHARED/webConferencing",
+          "SHARED/webConferencingCallButton",
+        ], function(webConferencing, callButtons) {
+          webConferencing.createSpaceContext(spaceId).then((context) => {
+            callButtons.create(context, target, typeClass);
+          });
+        });
+      },
+      // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on space popup
+      enabled: true,
+    },
+
     {
       target: "user-profile-popup",
       type: "exo-social-user-popup-component",
@@ -171,6 +200,7 @@
       // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
       enabled: true
     },
+
     {
       target: "profile-header",
       type: "action-component",
