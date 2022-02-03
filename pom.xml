@@ -58,7 +58,8 @@
     <addon.exo.jcr.version>6.3.x-SNAPSHOT</addon.exo.jcr.version>
     <org.exoplatform.social.version>6.3.x-SNAPSHOT</org.exoplatform.social.version>
     <org.exoplatform.platform-ui.version>6.3.x-SNAPSHOT</org.exoplatform.platform-ui.version>
-  
+    <addon.exo.analytics.version>1.2.x-SNAPSHOT</addon.exo.analytics.version>
+
     <!-- Sonar properties -->
     <sonar.organization>exoplatform</sonar.organization>
   </properties>
@@ -98,6 +99,14 @@
         <groupId>org.exoplatform.jcr</groupId>
         <artifactId>jcr-parent</artifactId>
         <version>${addon.exo.jcr.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- Import versions from analytics project -->
+      <dependency>
+        <groupId>org.exoplatform.addons.analytics</groupId>
+        <artifactId>analytics-parent</artifactId>
+        <version>${addon.exo.analytics.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
