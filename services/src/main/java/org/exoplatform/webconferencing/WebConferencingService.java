@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -161,6 +162,9 @@ public class WebConferencingService implements Startable {
 
   /** The status ok. */
   public static final String          STATUS_OK                    = "ok";
+
+  /** The status not ok. */
+  public static final String          STATUS_NOT_OK                = "ko";
 
   public static final String    EVENT_CALL_CREATED           = "exo.webconferencing.callCreated";
 
@@ -908,6 +912,7 @@ public class WebConferencingService implements Startable {
                                      OPERATION_CALL_ADDED,
                                      STATUS_OK,
                                      System.currentTimeMillis() - opStart,
+                                     null,
                                      null));
               return call;
             } else {
@@ -1244,10 +1249,10 @@ public class WebConferencingService implements Startable {
 
         if (remove) {
           // Log metrics - call deleted
-          LOG.info(metricMessage(userId, call, OPERATION_CALL_DELETED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+          LOG.info(metricMessage(userId, call, OPERATION_CALL_DELETED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
         } else {
           // Log metrics - call stopped
-          LOG.info(metricMessage(userId, call, OPERATION_CALL_STOPPED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+          LOG.info(metricMessage(userId, call, OPERATION_CALL_STOPPED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
         }
         return call;
       } catch (StorageException e) {
@@ -1314,7 +1319,7 @@ public class WebConferencingService implements Startable {
         broacastCallEvent(EVENT_CALL_STARTED, call, userId);
 
         // Log metrics - call started
-        LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+        LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
         return call;
       } catch (StorageException | ParticipantNotFoundException | CallSettingsException e) {
         throw new InvalidCallException("Error starting call: " + callId, e);
@@ -1570,7 +1575,7 @@ public class WebConferencingService implements Startable {
             broacastCallEvent(EVENT_CALL_JOINDED, call, partId);
 
             // Log metrics - call joined
-            LOG.info(metricMessage(partId, call, OPERATION_CALL_JOINED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+            LOG.info(metricMessage(partId, call, OPERATION_CALL_JOINED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
           } else {
             LOG.warn("Call join invoked but no participant was found for given user. Call ID: " + callId + ", participant: " + partId);
           }
@@ -1584,7 +1589,7 @@ public class WebConferencingService implements Startable {
           broacastCallEvent(EVENT_CALL_JOINDED, call, userId);
 
           // Log metrics - call started
-          LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+          LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
         }
       } catch (CallSettingsException | ParticipantNotFoundException | StorageException e) {
         throw new InvalidCallException("Error joining call: " + callId, e);
@@ -1657,7 +1662,7 @@ public class WebConferencingService implements Startable {
 
             broacastCallEvent(EVENT_CALL_LEFT, call, partId);
             // Log metrics - call leaved
-            LOG.info(metricMessage(partId, call, OPERATION_CALL_LEAVED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+            LOG.info(metricMessage(partId, call, OPERATION_CALL_LEAVED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
             // Check if don't need stop the call if all parts leaved already
             if (call.getOwner().isGroup()) {
               if (leavedNum == call.getParticipants().size() || call.getParticipants().size() == 0
@@ -1675,6 +1680,7 @@ public class WebConferencingService implements Startable {
                                        OPERATION_CALL_STOPPED,
                                        STATUS_OK,
                                        System.currentTimeMillis() - opStart,
+                                       null,
                                        null));
               }
             } else if (call.getParticipants().size() - leavedNum <= 1) {
@@ -1688,6 +1694,7 @@ public class WebConferencingService implements Startable {
                                      OPERATION_CALL_DELETED,
                                      STATUS_OK,
                                      System.currentTimeMillis() - opStart,
+                                     null,
                                      null));
             }
           } // else, if no one leaved, we don't need any action (it may be leaved an user of already stopped
@@ -2102,15 +2109,19 @@ public class WebConferencingService implements Startable {
         }
         try {
           CallInfo call = getCall(uploadInfo.getCallId());
-          LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null));
+          LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
         } catch (InvalidCallException e) {
           LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
         }
       } else {
+        LOG.info(metricMessage(uploadInfo.getUser(), null, OPERATION_CALL_RECORDED, STATUS_NOT_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
         throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: "
             + resource.getStatus());
       }
-    } finally {
+    } catch (Exception e) {
+      LOG.warn("Failed while saving the uploaded file" + e.getMessage(), e);
+    }
+    finally {
       uploadService.removeUploadResource(uploadId);
     }
   }
@@ -3861,10 +3872,10 @@ public class WebConferencingService implements Startable {
                                  String operation,
                                  String status,
                                  Long duration,
-                                 String error) {
+                                 String error,
+                                 Double fileSize) {
     StringBuilder res = new StringBuilder("service=webconferencing");
     res.append(" operation=").append(operation);
-    res.append(" status=").append(status);
     res.append(" parameters=");
     res.append("\"userId:").append(userId);
     res.append(", isGroup:").append(call.getOwner().isGroup());
@@ -3873,6 +3884,19 @@ public class WebConferencingService implements Startable {
     res.append(", provider:").append(call.getProviderType());
     res.append(", state:").append(call.getState());
     res.append(", participantsCount:").append(call.getParticipants().size());
+    if(operation.equals(OPERATION_CALL_RECORDED) && fileSize != null) {
+      DecimalFormat df = new DecimalFormat("0.00");
+      String fileSizeByMO = df.format(fileSize / 1048576);
+      res.append(", recording_file_size:").append(fileSizeByMO);
+      if (status.equals(STATUS_OK)) {
+        res.append(", upload_successful:").append(true);
+      } else {
+        res.append(", upload_Successful:").append(false);
+      }
+    }
+    else {
+      res.append(" status=").append(status);
+    }
     if (call.getLastDate() != null) {
       long callDurationSec = Math.round((System.currentTimeMillis() - call.getLastDate().getTime()) / 1000);
       res.append(", callDuration_sec:").append(callDurationSec);
