@@ -18,7 +18,7 @@
       <table>
         <Provider>Провайдер</Provider>
         <Description>Описание</Description>
-        <Active>Активно</Active>
+        <Active>Активное</Active>
         <Permissions>Действия</Permissions>
       </table>
       <WebRTC>
