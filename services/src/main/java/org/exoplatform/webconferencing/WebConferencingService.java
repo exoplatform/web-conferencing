@@ -2069,7 +2069,6 @@ public class WebConferencingService implements Startable {
     }
     return results;
   }
-
   /**
    * Save recording to JCR.
    *
