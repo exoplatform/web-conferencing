@@ -3874,6 +3874,7 @@ public class WebConferencingService implements Startable {
                                  Double fileSize) {
     StringBuilder res = new StringBuilder("service=webconferencing");
     res.append(" operation=").append(operation);
+    res.append(" status=").append(status);
     res.append(" parameters=");
     res.append("\"userId:").append(userId);
     res.append(", isGroup:").append(call.getOwner().isGroup());
@@ -3882,7 +3883,6 @@ public class WebConferencingService implements Startable {
     res.append(", provider:").append(call.getProviderType());
     res.append(", state:").append(call.getState());
     res.append(", participantsCount:").append(call.getParticipants().size());
-    res.append(", status=").append(status);
     if(fileSize != null) {
       DecimalFormat df = new DecimalFormat("0.00");
       String fileSizeByMO = df.format(fileSize / 1048576);
