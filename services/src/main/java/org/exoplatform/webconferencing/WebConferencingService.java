@@ -2114,13 +2114,12 @@ public class WebConferencingService implements Startable {
           LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
         }
       } else {
-        LOG.info(metricMessage(uploadInfo.getUser(), null, OPERATION_CALL_RECORDED, STATUS_NOT_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
         throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: "
             + resource.getStatus());
       }
     } catch (Exception e) {
-      LOG.warn("Failed while saving the uploaded file" + e.getMessage(), e);
-    }
+      LOG.info(metricMessage(uploadInfo.getUser(), null, OPERATION_CALL_RECORDED, STATUS_NOT_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
+      LOG.error("Failed while saving the uploaded file" + e.getMessage(), e);    }
     finally {
       uploadService.removeUploadResource(uploadId);
     }
@@ -3884,19 +3883,11 @@ public class WebConferencingService implements Startable {
     res.append(", provider:").append(call.getProviderType());
     res.append(", state:").append(call.getState());
     res.append(", participantsCount:").append(call.getParticipants().size());
-    if(operation.equals(OPERATION_CALL_RECORDED) && fileSize != null) {
-      DecimalFormat df = new DecimalFormat("0.00");
+    res.append(", status=").append(status);
+    if(fileSize != null) {
       DecimalFormat df = new DecimalFormat("0.00");
       String fileSizeByMO = df.format(fileSize / 1048576);
       res.append(", recording_file_size:").append(fileSizeByMO);
-      if (status.equals(STATUS_OK)) {
-        res.append(", upload_successful:").append(true);
-      } else {
-        res.append(", upload_Successful:").append(false);
-      }
-    }
-    else {
-      res.append(", status=").append(status);
     }
     if (call.getLastDate() != null) {
       long callDurationSec = Math.round((System.currentTimeMillis() - call.getLastDate().getTime()) / 1000);
