@@ -2071,62 +2071,6 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Upload recording of the call.
-   *
-   * @param uploadInfo the upload info
-   * @param request the request
-   * @throws UploadFileException the upload recording exception
-   * @throws RepositoryException the repository exception
-   */
-  public void uploadFile(UploadFileInfo uploadInfo, HttpServletRequest request) throws UploadFileException, RepositoryException {
-    final long opStart = System.currentTimeMillis();
-    // final long opStart = System.currentTimeMillis();
-    String uploadId = String.valueOf((long) (Math.random() * 100000L));
-    try {
-      uploadService.createUploadResource(uploadId, request);
-    } catch (FileUploadException e) {
-      LOG.error("Cannot create upload resource: " + e.getMessage());
-      throw new UploadFileException("Cannot create upload resource", e);
-    }
-    UploadResource resource = uploadService.getUploadResource(uploadId);
-    try {
-      if (resource.getStatus() == UploadResource.UPLOADED_STATUS) {
-        final String uploadingUser = uploadInfo.getUser();
-        String owner = null;
-        // Owner is user if it's not a space, otherwise use space identity
-        if (!uploadInfo.getType().equals(OWNER_TYPE_SPACEEVENT) && !uploadInfo.getType().equals(OWNER_TYPE_SPACE) && !uploadInfo.getIdentity().equals(uploadingUser)) {
-          owner = uploadingUser;
-        } else {
-          owner = uploadInfo.getIdentity();
-        }
-        Node rootNode = getRootFolderNode(owner, uploadInfo.getType());
-        // If it's 1-1 or chat-room call, we pass participants to share the file.
-        // Otherwise we just upload to the space docs
-        if (uploadInfo.getType().equals(OWNER_TYPE_CHATROOM) || uploadInfo.getType().equals(USER)) {
-          saveFile(rootNode, resource, uploadingUser, uploadInfo.getParticipants());
-        } else {
-          saveFile(rootNode, resource, uploadingUser, null);
-        }
-        try {
-          CallInfo call = getCall(uploadInfo.getCallId());
-          LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
-        } catch (InvalidCallException e) {
-          LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
-        }
-      } else {
-        LOG.info(metricMessage(uploadInfo.getUser(), null, OPERATION_CALL_RECORDED, STATUS_NOT_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
-        throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: "
-            + resource.getStatus());
-      }
-    } catch (Exception e) {
-      LOG.warn("Failed while saving the uploaded file" + e.getMessage(), e);
-    }
-    finally {
-      uploadService.removeUploadResource(uploadId);
-    }
-  }
-
-  /**
    * Save recording to JCR.
    *
    * @param parent the parent
@@ -2229,6 +2173,60 @@ public class WebConferencingService implements Startable {
       }
     }
     return recordingsFolder;
+  }
+
+  /**
+   * Upload recording of the call.
+   *
+   * @param uploadInfo the upload info
+   * @param request the request
+   * @throws UploadFileException the upload recording exception
+   * @throws RepositoryException the repository exception
+   */
+  public void uploadFile(UploadFileInfo uploadInfo, HttpServletRequest request) throws UploadFileException, RepositoryException {
+    final long opStart = System.currentTimeMillis();
+    // final long opStart = System.currentTimeMillis();
+    String uploadId = String.valueOf((long) (Math.random() * 100000L));
+    try {
+      uploadService.createUploadResource(uploadId, request);
+    } catch (FileUploadException e) {
+      LOG.error("Cannot create upload resource: " + e.getMessage());
+      throw new UploadFileException("Cannot create upload resource", e);
+    }
+    UploadResource resource = uploadService.getUploadResource(uploadId);
+    CallInfo call = null;
+    try {
+      if (resource.getStatus() == UploadResource.UPLOADED_STATUS) {
+        call = getCall(uploadInfo.getCallId());
+        final String uploadingUser = uploadInfo.getUser();
+        String owner = null;
+        // Owner is user if it's not a space, otherwise use space identity
+        if (!uploadInfo.getType().equals(OWNER_TYPE_SPACEEVENT) && !uploadInfo.getType().equals(OWNER_TYPE_SPACE) && !uploadInfo.getIdentity().equals(uploadingUser)) {
+          owner = uploadingUser;
+        } else {
+          owner = uploadInfo.getIdentity();
+        }
+        Node rootNode = getRootFolderNode(owner, uploadInfo.getType());
+        // If it's 1-1 or chat-room call, we pass participants to share the file.
+        // Otherwise we just upload to the space docs
+        if (uploadInfo.getType().equals(OWNER_TYPE_CHATROOM) || uploadInfo.getType().equals(USER)) {
+          saveFile(rootNode, resource, uploadingUser, uploadInfo.getParticipants());
+        } else {
+          saveFile(rootNode, resource, uploadingUser, null);
+        }
+        LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
+      } else {
+        throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: "
+                + resource.getStatus());
+      }
+    } catch (InvalidCallException e) {
+      LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
+    } catch (Exception e) {
+      LOG.info(metricMessage(uploadInfo.getUser(), call, OPERATION_CALL_RECORDED, STATUS_NOT_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
+      LOG.error("Failed while saving the uploaded file" + e.getMessage(), e);    }
+    finally {
+      uploadService.removeUploadResource(uploadId);
+    }
   }
 
   /**
@@ -3884,19 +3882,11 @@ public class WebConferencingService implements Startable {
     res.append(", provider:").append(call.getProviderType());
     res.append(", state:").append(call.getState());
     res.append(", participantsCount:").append(call.getParticipants().size());
-    if(operation.equals(OPERATION_CALL_RECORDED) && fileSize != null) {
-      DecimalFormat df = new DecimalFormat("0.00");
+    res.append(", status=").append(status);
+    if(fileSize != null) {
       DecimalFormat df = new DecimalFormat("0.00");
       String fileSizeByMO = df.format(fileSize / 1048576);
       res.append(", recording_file_size:").append(fileSizeByMO);
-      if (status.equals(STATUS_OK)) {
-        res.append(", upload_successful:").append(true);
-      } else {
-        res.append(", upload_Successful:").append(false);
-      }
-    }
-    else {
-      res.append(", status=").append(status);
     }
     if (call.getLastDate() != null) {
       long callDurationSec = Math.round((System.currentTimeMillis() - call.getLastDate().getTime()) / 1000);
