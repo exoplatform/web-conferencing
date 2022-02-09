@@ -59,12 +59,6 @@
     <org.exoplatform.social.version>6.3.x-maintenance-SNAPSHOT</org.exoplatform.social.version>
     <org.exoplatform.platform-ui.version>6.3.x-maintenance-SNAPSHOT</org.exoplatform.platform-ui.version>
     <addon.exo.analytics.version>1.2.x-maintenance-SNAPSHOT</addon.exo.analytics.version>
-<<<<<<< HEAD
-    
-=======
-
->>>>>>> 7ff5742c (Task-53432: Add Analytics metric for recordings in jitsi.)
-    <!-- Sonar properties -->
     <sonar.organization>exoplatform</sonar.organization>
   </properties>
 

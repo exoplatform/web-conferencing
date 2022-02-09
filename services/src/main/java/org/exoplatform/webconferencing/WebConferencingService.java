@@ -3894,11 +3894,11 @@ public class WebConferencingService implements Startable {
     try {
       Map<String, String> info = new HashMap<>();
       info.put("user_id", userId);
+      info.put("status", status);
       if(eventName.equals(EVENT_CALL_RECORDED) && fileSize != null) {
         DecimalFormat df = new DecimalFormat("0.00");
         String fileSizeByMO = df.format(fileSize / 1048576);
         info.put("file_size", fileSizeByMO);
-        info.put("upload_status", status);
       }
       listenerService.broadcast(eventName, call, info);
     } catch (Exception e) {
