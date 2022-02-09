@@ -3,6 +3,7 @@ package org.exoplatform.webconferencing.listener.analytics;
 import static org.exoplatform.analytics.utils.AnalyticsUtils.*;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.codec.binary.StringUtils;
@@ -20,7 +21,7 @@ import org.exoplatform.webconferencing.WebConferencingService.SpaceEventInfo;
 import org.exoplatform.webconferencing.WebConferencingService.SpaceInfo;
 
 @Asynchronous
-public class WebConferencingListener extends Listener<CallInfo, String> {
+public class WebConferencingListener extends Listener<CallInfo, Map<? extends String,? extends String>> {
 
   private static final Log LOG = ExoLogger.getLogger(WebConferencingListener.class);
 
@@ -33,9 +34,10 @@ public class WebConferencingListener extends Listener<CallInfo, String> {
   }
 
   @Override
-  public void onEvent(Event<CallInfo, String> event) throws Exception {
+  public void onEvent(Event<CallInfo, Map<? extends String,? extends String>> event) throws Exception {
     CallInfo callInfo = event.getSource();
-    String username = event.getData();
+    Map<? extends String, ? extends String> info = event.getData();
+    String username = info.get("user_id");
 
     if (callInfo == null) {
       LOG.warn("Call information is null.");
@@ -124,6 +126,10 @@ public class WebConferencingListener extends Listener<CallInfo, String> {
     statisticData.addParameter("callState", callInfo.getState());
     if (callDuration > 0) {
       statisticData.addParameter("callDuration", callDuration);
+    }
+    if(statisticData.getOperation().equals("callRecorded") && info.containsKey("file_size")) {
+      statisticData.addParameter("recordedFileSize", info.get("file_size"));
+      statisticData.setStatus(info.get("upload_status").equals(WebConferencingService.STATUS_OK) ? StatisticData.StatisticStatus.OK : StatisticData.StatisticStatus.KO);
     }
     addStatisticData(statisticData);
   }
