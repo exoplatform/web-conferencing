@@ -355,7 +355,7 @@ export default {
         }
       }
       &.single {
-        padding: 0 10px 0px 0;
+        padding: 0;
         width: unset;
         border: none;
         height: 20px;
