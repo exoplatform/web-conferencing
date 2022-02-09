@@ -168,6 +168,38 @@
     },
 
     {
+      target: "user-profile-popover",
+      type: "action",
+      key: "userProfilePopoverCall",
+      rank: 40,
+
+      // appClass is a class of container which consist of action button and WebConferencingCall component
+      appClass: CALL_BUTTON,
+      typeClass: "call-button-mini call-button-popover--profile",
+
+      component: {
+        name: "CallButtons",
+        events: [],
+      },
+      // html DOM element that will be added in the extension point
+      // init call button context in space popup
+      init: function(target, userId) {
+        const typeClass = this.typeClass
+        require([
+          "SHARED/webConferencing",
+          "SHARED/webConferencingCallButton",
+        ], function(webConferencing, callButtons) {
+          webConferencing.createUserContext(userId).then((context) => {
+            callButtons.create(context, target, typeClass);
+          });
+        });
+      },
+
+      // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
+      enabled: true
+    },
+
+    {
       target: "user-profile-popup",
       type: "exo-social-user-popup-component",
       key: "userProfilePopupCallButton",
