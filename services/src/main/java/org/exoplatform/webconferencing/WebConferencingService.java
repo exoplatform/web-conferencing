@@ -25,24 +25,10 @@ import java.net.URLEncoder;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.*;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -901,7 +887,7 @@ public class WebConferencingService implements Startable {
                 }
               }
 
-              broacastCallEvent(EVENT_CALL_CREATED, call, currentUserId);
+              broacastCallEvent(EVENT_CALL_CREATED, call, currentUserId, null);
 
               // Log metrics - call created
               // service=notifications operation=send-push-notification
@@ -1245,7 +1231,7 @@ public class WebConferencingService implements Startable {
       String userId = currentUserId();
       try {
         stopCall(call, userId, remove);
-        broacastCallEvent(EVENT_CALL_STOPPED, call, userId);
+        broacastCallEvent(EVENT_CALL_STOPPED, call, userId, null);
 
         if (remove) {
           // Log metrics - call deleted
@@ -1316,7 +1302,7 @@ public class WebConferencingService implements Startable {
         String userId = currentUserId();
         startCall(call, userId, clientId, true);
 
-        broacastCallEvent(EVENT_CALL_STARTED, call, userId);
+        broacastCallEvent(EVENT_CALL_STARTED, call, userId, null);
 
         // Log metrics - call started
         LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
@@ -1572,7 +1558,7 @@ public class WebConferencingService implements Startable {
                                  partId,
                                  part.getId());
             }
-            broacastCallEvent(EVENT_CALL_JOINDED, call, partId);
+            broacastCallEvent(EVENT_CALL_JOINDED, call, partId, null);
 
             // Log metrics - call joined
             LOG.info(metricMessage(partId, call, OPERATION_CALL_JOINED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
@@ -1586,7 +1572,7 @@ public class WebConferencingService implements Startable {
           String userId = currentUserId();
           startCall(call, userId, clientId, false); // We will not notify parties about the auto-start
 
-          broacastCallEvent(EVENT_CALL_JOINDED, call, userId);
+          broacastCallEvent(EVENT_CALL_JOINDED, call, userId, null);
 
           // Log metrics - call started
           LOG.info(metricMessage(userId, call, OPERATION_CALL_STARTED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
@@ -1660,7 +1646,7 @@ public class WebConferencingService implements Startable {
                                  part.getId());
             }
 
-            broacastCallEvent(EVENT_CALL_LEFT, call, partId);
+            broacastCallEvent(EVENT_CALL_LEFT, call, partId, null);
             // Log metrics - call leaved
             LOG.info(metricMessage(partId, call, OPERATION_CALL_LEAVED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
             // Check if don't need stop the call if all parts leaved already
@@ -1673,7 +1659,7 @@ public class WebConferencingService implements Startable {
                 // but then need find a proper way of stopping the call if guests will not leave finally via API (network errors, server crashes etc).
                 stopCall(call, partId, false);
 
-                broacastCallEvent(EVENT_CALL_STOPPED, call, partId);
+                broacastCallEvent(EVENT_CALL_STOPPED, call, partId, null);
                 // Log metrics - call stopped
                 LOG.info(metricMessage(partId,
                                        call,
@@ -1687,7 +1673,7 @@ public class WebConferencingService implements Startable {
               // For P2P we remove the call when one of parts stand alone
               stopCall(call, partId, true);
 
-              broacastCallEvent(EVENT_CALL_STOPPED, call, partId);
+              broacastCallEvent(EVENT_CALL_STOPPED, call, partId, null);
               // Log metrics - call deleted
               LOG.info(metricMessage(partId,
                                      call,
@@ -2089,8 +2075,10 @@ public class WebConferencingService implements Startable {
       throw new UploadFileException("Cannot create upload resource", e);
     }
     UploadResource resource = uploadService.getUploadResource(uploadId);
+    CallInfo call = null;
     try {
       if (resource.getStatus() == UploadResource.UPLOADED_STATUS) {
+        call = getCall(uploadInfo.getCallId());
         final String uploadingUser = uploadInfo.getUser();
         String owner = null;
         // Owner is user if it's not a space, otherwise use space identity
@@ -2107,18 +2095,17 @@ public class WebConferencingService implements Startable {
         } else {
           saveFile(rootNode, resource, uploadingUser, null);
         }
-        try {
-          CallInfo call = getCall(uploadInfo.getCallId());
-          LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
-        } catch (InvalidCallException e) {
-          LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
-        }
+        broacastCallEvent(EVENT_CALL_RECORDED, call, uploadingUser, resource.getUploadedSize(), STATUS_OK);
+        LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
       } else {
         throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: "
-            + resource.getStatus());
+                + resource.getStatus());
       }
+    } catch (InvalidCallException e) {
+      LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
     } catch (Exception e) {
-      LOG.info(metricMessage(uploadInfo.getUser(), null, OPERATION_CALL_RECORDED, STATUS_NOT_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
+      broacastCallEvent(EVENT_CALL_RECORDED, call, uploadInfo.getUser(), resource.getUploadedSize(), STATUS_NOT_OK);
+      LOG.info(metricMessage(uploadInfo.getUser(), call, OPERATION_CALL_RECORDED, STATUS_NOT_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
       LOG.error("Failed while saving the uploaded file" + e.getMessage(), e);    }
     finally {
       uploadService.removeUploadResource(uploadId);
@@ -3887,7 +3874,7 @@ public class WebConferencingService implements Startable {
     if(fileSize != null) {
       DecimalFormat df = new DecimalFormat("0.00");
       String fileSizeByMO = df.format(fileSize / 1048576);
-      res.append(", recording_file_size:").append(fileSizeByMO);
+      res.append(", recording_file_size_in_mb:").append(fileSizeByMO);
     }
     if (call.getLastDate() != null) {
       long callDurationSec = Math.round((System.currentTimeMillis() - call.getLastDate().getTime()) / 1000);
@@ -3903,12 +3890,24 @@ public class WebConferencingService implements Startable {
     return res.toString();
   }
 
-  private void broacastCallEvent(String eventName, CallInfo call, String userId) {
+  private void broacastCallEvent(String eventName, CallInfo call, String userId, Double fileSize, String status) {
     try {
-      listenerService.broadcast(eventName, call, userId);
+      Map<String, String> info = new HashMap<>();
+      info.put("user_id", userId);
+      if(eventName.equals(EVENT_CALL_RECORDED) && fileSize != null) {
+        DecimalFormat df = new DecimalFormat("0.00");
+        String fileSizeByMO = df.format(fileSize / 1048576);
+        info.put("file_size", fileSizeByMO);
+        info.put("upload_status", status);
+      }
+      listenerService.broadcast(eventName, call, info);
     } catch (Exception e) {
       LOG.error("Error while broadcasting event '{}' for user '{}'", eventName, userId, e);
     }
+  }
+
+  private void broacastCallEvent(String eventName, CallInfo call, String userId, Double fileSize) {
+    this.broacastCallEvent(eventName, call, userId, fileSize, STATUS_OK);
   }
 
   // <<<<<<< Call storage: wrappers to catch JPA exceptions
