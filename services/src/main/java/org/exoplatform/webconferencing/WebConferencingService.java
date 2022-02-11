@@ -3887,7 +3887,7 @@ public class WebConferencingService implements Startable {
     if(fileSize != null) {
       DecimalFormat df = new DecimalFormat("0.00");
       String fileSizeByMO = df.format(fileSize / 1048576);
-      res.append(", recording_file_size:").append(fileSizeByMO);
+      res.append(", recording_file_size_in_mb:").append(fileSizeByMO);
     }
     if (call.getLastDate() != null) {
       long callDurationSec = Math.round((System.currentTimeMillis() - call.getLastDate().getTime()) / 1000);
