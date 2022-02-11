@@ -59,11 +59,8 @@
     <org.exoplatform.social.version>6.3.x-maintenance-SNAPSHOT</org.exoplatform.social.version>
     <org.exoplatform.platform-ui.version>6.3.x-maintenance-SNAPSHOT</org.exoplatform.platform-ui.version>
     <addon.exo.analytics.version>1.2.x-maintenance-SNAPSHOT</addon.exo.analytics.version>
-<<<<<<< HEAD
-=======
     
     <!-- Sonar properties -->
->>>>>>> d76e3994e7663666d1a153fa0a677bf4ea34f204
     <sonar.organization>exoplatform</sonar.organization>
   </properties>
 

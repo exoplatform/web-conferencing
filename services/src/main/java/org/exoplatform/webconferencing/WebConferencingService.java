@@ -25,27 +25,6 @@ import java.net.URLEncoder;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.text.DecimalFormat;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
->>>>>>> d76e3994e7663666d1a153fa0a677bf4ea34f204
-=======
->>>>>>> 73457a9d585def2e5381ddc64bc4af4b8a188a16
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -2116,44 +2095,16 @@ public class WebConferencingService implements Startable {
         } else {
           saveFile(rootNode, resource, uploadingUser, null);
         }
-<<<<<<< HEAD
-<<<<<<< HEAD
         broacastCallEvent(EVENT_CALL_RECORDED, call, uploadingUser, resource.getUploadedSize(), STATUS_OK);
         LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
-=======
-        try {
-          CallInfo call = getCall(uploadInfo.getCallId());
-          LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
-        } catch (InvalidCallException e) {
-          LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
-        }
->>>>>>> d76e3994e7663666d1a153fa0a677bf4ea34f204
-=======
-        broacastCallEvent(EVENT_CALL_RECORDED, call, uploadingUser, resource.getUploadedSize(), STATUS_OK);
-        LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
->>>>>>> 73457a9d585def2e5381ddc64bc4af4b8a188a16
       } else {
-        throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: "
-                + resource.getStatus());
+        throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: " + resource.getStatus());
       }
-<<<<<<< HEAD
-<<<<<<< HEAD
     } catch (InvalidCallException e) {
       LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
     } catch (Exception e) {
       broacastCallEvent(EVENT_CALL_RECORDED, call, uploadInfo.getUser(), resource.getUploadedSize(), STATUS_NOT_OK);
       LOG.info(metricMessage(uploadInfo.getUser(), call, OPERATION_CALL_RECORDED, STATUS_NOT_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
-=======
-    } catch (Exception e) {
-      LOG.info(metricMessage(uploadInfo.getUser(), null, OPERATION_CALL_RECORDED, STATUS_NOT_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
->>>>>>> d76e3994e7663666d1a153fa0a677bf4ea34f204
-=======
-    } catch (InvalidCallException e) {
-      LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
-    } catch (Exception e) {
-      broacastCallEvent(EVENT_CALL_RECORDED, call, uploadInfo.getUser(), resource.getUploadedSize(), STATUS_NOT_OK);
-      LOG.info(metricMessage(uploadInfo.getUser(), call, OPERATION_CALL_RECORDED, STATUS_NOT_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
->>>>>>> 73457a9d585def2e5381ddc64bc4af4b8a188a16
       LOG.error("Failed while saving the uploaded file" + e.getMessage(), e);    }
     finally {
       uploadService.removeUploadResource(uploadId);
@@ -3922,15 +3873,7 @@ public class WebConferencingService implements Startable {
     if(fileSize != null) {
       DecimalFormat df = new DecimalFormat("0.00");
       String fileSizeByMO = df.format(fileSize / 1048576);
-<<<<<<< HEAD
-<<<<<<< HEAD
       res.append(", recording_file_size_in_mb:").append(fileSizeByMO);
-=======
-      res.append(", recording_file_size:").append(fileSizeByMO);
->>>>>>> d76e3994e7663666d1a153fa0a677bf4ea34f204
-=======
-      res.append(", recording_file_size_in_mb:").append(fileSizeByMO);
->>>>>>> 73457a9d585def2e5381ddc64bc4af4b8a188a16
     }
     if (call.getLastDate() != null) {
       long callDurationSec = Math.round((System.currentTimeMillis() - call.getLastDate().getTime()) / 1000);
@@ -3950,18 +3893,11 @@ public class WebConferencingService implements Startable {
     try {
       Map<String, String> info = new HashMap<>();
       info.put("user_id", userId);
-<<<<<<< HEAD
       info.put("status", status);
-=======
->>>>>>> 73457a9d585def2e5381ddc64bc4af4b8a188a16
-      if(eventName.equals(EVENT_CALL_RECORDED) && fileSize != null) {
+      if(fileSize != null) {
         DecimalFormat df = new DecimalFormat("0.00");
         String fileSizeByMO = df.format(fileSize / 1048576);
         info.put("file_size", fileSizeByMO);
-<<<<<<< HEAD
-=======
-        info.put("upload_status", status);
->>>>>>> 73457a9d585def2e5381ddc64bc4af4b8a188a16
       }
       listenerService.broadcast(eventName, call, info);
     } catch (Exception e) {
