@@ -127,11 +127,17 @@ public class WebConferencingListener extends Listener<CallInfo, Map<? extends St
     if (callDuration > 0) {
       statisticData.addParameter("callDuration", callDuration);
     }
+<<<<<<< HEAD
     if (info.get("status") != null) {
       statisticData.setStatus(info.get("status").equals(WebConferencingService.STATUS_OK) ? StatisticData.StatisticStatus.OK : StatisticData.StatisticStatus.KO);
     }
     if(statisticData.getOperation().equals("callRecorded") && info.containsKey("file_size")) {
       statisticData.addParameter("recordedFileSize", info.get("file_size"));
+=======
+    if(statisticData.getOperation().equals("callRecorded") && info.containsKey("file_size")) {
+      statisticData.addParameter("recordedFileSize", info.get("file_size"));
+      statisticData.setStatus(info.get("upload_status").equals(WebConferencingService.STATUS_OK) ? StatisticData.StatisticStatus.OK : StatisticData.StatisticStatus.KO);
+>>>>>>> 73457a9d585def2e5381ddc64bc4af4b8a188a16
     }
     addStatisticData(statisticData);
   }
