@@ -3910,5 +3910,4 @@ public class WebConferencingService implements Startable {
   }
 
   // <<<<<<< Call storage: wrappers to catch JPA exceptions
-
 }
