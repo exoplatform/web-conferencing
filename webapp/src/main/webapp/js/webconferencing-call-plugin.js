@@ -138,6 +138,67 @@
       // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
       enabled: true,
     },
+
+    {
+      target: "space-popup",
+      type: "space-popup-action",
+      key: "spacePopupCallButton",
+      rank: 22,
+      iconName: "callButton",
+      appClass: CALL_BUTTON,
+      typeClass: "call-button-mini call-button-popup--space",
+      component: {
+        name: "CallButtons",
+        events: [],
+      },
+      // init call button context in space popup
+      init: function(target, spaceId) {
+        const typeClass = this.typeClass
+        require([
+          "SHARED/webConferencing",
+          "SHARED/webConferencingCallButton",
+        ], function(webConferencing, callButtons) {
+          webConferencing.createSpaceContext(spaceId).then((context) => {
+            callButtons.create(context, target, typeClass);
+          });
+        });
+      },
+      // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on space popup
+      enabled: true,
+    },
+
+    {
+      target: "user-profile-popover",
+      type: "action",
+      key: "userProfilePopoverCall",
+      rank: 40,
+
+      // appClass is a class of container which consist of action button and WebConferencingCall component
+      appClass: CALL_BUTTON,
+      typeClass: "call-button-mini call-button-popover--profile",
+
+      component: {
+        name: "CallButtons",
+        events: [],
+      },
+      // html DOM element that will be added in the extension point
+      // init call button context in space popup
+      init: function(target, userId) {
+        const typeClass = this.typeClass
+        require([
+          "SHARED/webConferencing",
+          "SHARED/webConferencingCallButton",
+        ], function(webConferencing, callButtons) {
+          webConferencing.createUserContext(userId).then((context) => {
+            callButtons.create(context, target, typeClass);
+          });
+        });
+      },
+
+      // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
+      enabled: true
+    },
+
     {
       target: "user-profile-popup",
       type: "exo-social-user-popup-component",
@@ -171,6 +232,7 @@
       // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
       enabled: true
     },
+
     {
       target: "profile-header",
       type: "action-component",
