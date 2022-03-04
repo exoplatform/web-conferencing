@@ -50,8 +50,6 @@ public class SessionFilter implements Filter {
       Cookie cookie = new Cookie(WebConferencingService.SESSION_TOKEN_COOKIE, sessionToken);
       cookie.setPath("/");
       cookie.setMaxAge(2400); // 40 mins
-      cookie.setHttpOnly(true);
-      cookie.setSecure(request.isSecure());
       httpRes.addCookie(cookie);
     }
 
