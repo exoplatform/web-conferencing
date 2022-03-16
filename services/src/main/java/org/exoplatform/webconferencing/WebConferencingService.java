@@ -2077,8 +2077,8 @@ public class WebConferencingService implements Startable {
     UploadResource resource = uploadService.getUploadResource(uploadId);
     CallInfo call = null;
     try {
+      call = getCall(uploadInfo.getCallId());
       if (resource.getStatus() == UploadResource.UPLOADED_STATUS) {
-        call = getCall(uploadInfo.getCallId());
         final String uploadingUser = uploadInfo.getUser();
         String owner = null;
         // Owner is user if it's not a space, otherwise use space identity
@@ -2098,15 +2098,36 @@ public class WebConferencingService implements Startable {
         broacastCallEvent(EVENT_CALL_RECORDED, call, uploadingUser, resource.getUploadedSize(), STATUS_OK);
         LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
       } else {
-        throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: " + resource.getStatus());
+        if (uploadService.isLimited(resource, resource.getEstimatedSize())) {
+          UploadService.UploadLimit limitUpload = uploadService.getLimitForResource(resource);
+          String limit = "";
+          limit = " ("+limitUpload.getLimit() + " " + limitUpload.getUnit()+")";
+          broacastCallEvent(EVENT_CALL_RECORDED, call, uploadInfo.getUser(), resource.getEstimatedSize(), STATUS_NOT_OK);
+          LOG.info(metricMessage(uploadInfo.getUser(),
+                                 call,
+                                 OPERATION_CALL_RECORDED,
+                                 STATUS_NOT_OK,
+                                 System.currentTimeMillis() - opStart,
+                                 "Record size limit exceed the upload limit"+limit,
+                                 resource.getEstimatedSize()));
+          LOG.error("Failed while uploading the record : record size exceed the upload limit"+limit);
+      } else {
+          throw new UploadFileException("The file " + resource.getFileName() + " cannot be uploaded. Status: " + resource.getStatus());
+        }
       }
     } catch (InvalidCallException e) {
       LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
     } catch (Exception e) {
-      broacastCallEvent(EVENT_CALL_RECORDED, call, uploadInfo.getUser(), resource.getUploadedSize(), STATUS_NOT_OK);
-      LOG.info(metricMessage(uploadInfo.getUser(), call, OPERATION_CALL_RECORDED, STATUS_NOT_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
-      LOG.error("Failed while saving the uploaded file" + e.getMessage(), e);    }
-    finally {
+      broacastCallEvent(EVENT_CALL_RECORDED, call, uploadInfo.getUser(), resource.getEstimatedSize(), STATUS_NOT_OK);
+      LOG.info(metricMessage(uploadInfo.getUser(),
+                             call,
+                             OPERATION_CALL_RECORDED,
+                             STATUS_NOT_OK,
+                             System.currentTimeMillis() - opStart,
+                             null,
+                             resource.getEstimatedSize()));
+      LOG.error("Failed while saving the uploaded file " + e.getMessage(), e);
+    } finally {
       uploadService.removeUploadResource(uploadId);
     }
   }
