@@ -39,8 +39,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.lang.RandomStringUtils;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.RequestLifeCycle;
+import org.exoplatform.services.cms.documents.DocumentService;
+import org.exoplatform.services.jcr.impl.core.NodeImpl;
+import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -684,7 +688,7 @@ public class WebConferencingService implements Startable {
    */
   public RoomInfo getRoomInfo(String id, String title, String[] members) throws IdentityStateException, StorageException {
     return roomInfo(id, title, members, findChatRoomCallId(id));
-  };
+  }
 
   /**
    * Room info.
@@ -2095,14 +2099,14 @@ public class WebConferencingService implements Startable {
         } else {
           saveFile(rootNode, resource, uploadingUser, null);
         }
-        broacastCallEvent(EVENT_CALL_RECORDED, call, uploadingUser, resource.getUploadedSize(), STATUS_OK);
+        broacastCallEvent(EVENT_CALL_RECORDED, call, uploadingUser, resource.getUploadedSize(),resource.getFileName(), uploadInfo, STATUS_OK);
         LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
       } else {
         if (uploadService.isLimited(resource, resource.getEstimatedSize())) {
           UploadService.UploadLimit limitUpload = uploadService.getLimitForResource(resource);
           String limit = "";
           limit = " ("+limitUpload.getLimit() + " " + limitUpload.getUnit()+")";
-          broacastCallEvent(EVENT_CALL_RECORDED, call, uploadInfo.getUser(), resource.getEstimatedSize(), STATUS_NOT_OK);
+          broacastCallEvent(EVENT_CALL_RECORDED, call, uploadInfo.getUser(), resource.getEstimatedSize(), null, uploadInfo, STATUS_NOT_OK);
           LOG.info(metricMessage(uploadInfo.getUser(),
                                  call,
                                  OPERATION_CALL_RECORDED,
@@ -2118,7 +2122,7 @@ public class WebConferencingService implements Startable {
     } catch (InvalidCallException e) {
       LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
     } catch (Exception e) {
-      broacastCallEvent(EVENT_CALL_RECORDED, call, uploadInfo.getUser(), resource.getEstimatedSize(), STATUS_NOT_OK);
+      broacastCallEvent(EVENT_CALL_RECORDED, call, uploadInfo.getUser(), resource.getEstimatedSize(), null, null, STATUS_NOT_OK);
       LOG.info(metricMessage(uploadInfo.getUser(),
                              call,
                              OPERATION_CALL_RECORDED,
@@ -3910,7 +3914,7 @@ public class WebConferencingService implements Startable {
     return res.toString();
   }
 
-  private void broacastCallEvent(String eventName, CallInfo call, String userId, Double fileSize, String status) {
+  private void broacastCallEvent(String eventName, CallInfo call, String userId, Double fileSize, String fileName, UploadFileInfo uploadFileInfo, String status) {
     try {
       Map<String, String> info = new HashMap<>();
       info.put("user_id", userId);
@@ -3919,7 +3923,11 @@ public class WebConferencingService implements Startable {
         DecimalFormat df = new DecimalFormat("0.00");
         String fileSizeByMO = df.format(fileSize / 1048576);
         info.put("file_size", fileSizeByMO);
+        info.put("file_name", fileName);
+        info.put("type", uploadFileInfo.getType());
+        info.put("identity", uploadFileInfo.getIdentity());
       }
+
       listenerService.broadcast(eventName, call, info);
     } catch (Exception e) {
       LOG.error("Error while broadcasting event '{}' for user '{}'", eventName, userId, e);
@@ -3927,8 +3935,25 @@ public class WebConferencingService implements Startable {
   }
 
   private void broacastCallEvent(String eventName, CallInfo call, String userId, Double fileSize) {
-    this.broacastCallEvent(eventName, call, userId, fileSize, STATUS_OK);
+    this.broacastCallEvent(eventName, call, userId, fileSize, null, null, STATUS_OK);
   }
 
+  public String getRecordingUrl(String uploadingUser, String fileName, String type, String identity) throws Exception {
+    if(!fileName.isEmpty()) {
+     DocumentService documentService = WCMCoreUtils.getService(DocumentService.class);
+     Node rootNode = null;
+     if (type.equals(OWNER_TYPE_SPACE) || type.equals(OWNER_TYPE_SPACEEVENT)) {
+       rootNode = getRootFolderNode(identity, type);
+     } else {
+       rootNode = getRootFolderNode(uploadingUser, type);
+     }
+     Node recordingsFolder = getRecordingsFolder(rootNode);
+     Node fileRecorded = recordingsFolder.getNode(fileName);
+     String shortLink = documentService.getShortLinkInDocumentsApp(fileRecorded.getSession().getWorkspace().getName(), ((NodeImpl) fileRecorded).getInternalIdentifier());
+     return CommonsUtils.getCurrentDomain() + shortLink;
+    } else {
+      return  "";
+    }
+  }
   // <<<<<<< Call storage: wrappers to catch JPA exceptions
 }
