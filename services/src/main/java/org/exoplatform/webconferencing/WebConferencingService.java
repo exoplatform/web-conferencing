@@ -2167,10 +2167,9 @@ public class WebConferencingService implements Startable {
     }
 
     ManageableRepository repository = repositoryService.getCurrentRepository();
-    SessionProvider userProvider = sessionProviders.getSessionProvider(state);
-    sessionProviders.setSessionProvider(null, userProvider);
-    Session session = userProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
-    // Get node under user session
+    SessionProvider systemSessionProvider = sessionProviders.getSystemSessionProvider(null);
+    Session session = systemSessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
+    // Get node under system session
     Node folder = (Node) session.getItem(parent.getPath());
     Node recordingsFolder = getRecordingsFolder(folder);
 
