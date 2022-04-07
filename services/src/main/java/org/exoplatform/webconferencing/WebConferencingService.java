@@ -37,6 +37,7 @@ import javax.jcr.Session;
 import javax.persistence.PersistenceException;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.lang.RandomStringUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
@@ -45,6 +46,8 @@ import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.services.cms.documents.DocumentService;
 import org.exoplatform.services.jcr.impl.core.NodeImpl;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
+import org.exoplatform.web.security.codec.AbstractCodec;
+import org.exoplatform.web.security.codec.CodecInitializer;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -400,6 +403,8 @@ public class WebConferencingService implements Startable {
   /** The Link manager. */
   protected final LinkManager                        linkManager;
 
+  private AbstractCodec                              codec;
+
   /**
    * Checks is ID valid (not null, not empty and not longer of {@value #ID_MAX_LENGTH} chars).
    *
@@ -489,7 +494,8 @@ public class WebConferencingService implements Startable {
                                 Authenticator authenticator,
                                 ShareDocumentService shareService,
                                 InitParams initParams,
-                                LinkManager linkManager) {
+                                LinkManager linkManager,
+                                CodecInitializer codecInitializer) {
     this.organization = organization;
     this.socialIdentityManager = socialIdentityManager;
     this.listenerService = listenerService;
@@ -508,6 +514,11 @@ public class WebConferencingService implements Startable {
     this.secretKey = jwtSecretParam.getProperty(SECRET_KEY);
     this.shareService = shareService;
     this.linkManager = linkManager;
+    try {
+      this.codec = codecInitializer.getCodec();
+    } catch (Exception e) {
+      LOG.error("Error initializing codecs", e);
+    }
   }
 
   protected UserInfo userInfo(String id) throws IdentityStateException {
@@ -2802,7 +2813,10 @@ public class WebConferencingService implements Startable {
    * @return the string with new invite ID
    */
   private String createInvite(String callId) {
-    String inviteId = RandomStringUtils.randomAlphabetic(12);
+    String inviteId = codec.encode(callId);
+    byte[] inviteIdBytes = Base64.getDecoder().decode(inviteId);
+    inviteId = Base64.getUrlEncoder().withoutPadding().encodeToString(inviteIdBytes);
+
     createInvite(callId, ALL_USERS, GROUP, inviteId);
     return inviteId;
   }
