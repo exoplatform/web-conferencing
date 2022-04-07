@@ -37,7 +37,6 @@ import javax.jcr.Session;
 import javax.persistence.PersistenceException;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.lang.RandomStringUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
