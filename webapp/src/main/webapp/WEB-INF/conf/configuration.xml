@@ -28,4 +28,5 @@
   
   <import profiles="all">war:/conf/webconferencing/configuration.xml</import>
   <import profiles="all">war:/conf/webconferencing/portal/portal-configuration.xml</import>
+  <import>war:/conf/webconferencing/notification-configuration.xml</import>
 </configuration>
