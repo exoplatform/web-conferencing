@@ -150,14 +150,21 @@
         <constraints nullable="true" />
       </column>
       <column name="END_DATE" type="TIMESTAMP">
-        <constraints nullable="true" />
+        <constraints nullable="true"/>
       </column>
     </addColumn>
   </changeSet>
-  
+
   <!-- Alter WBC_CALLS table: remove constraint limiting to a single call per owner by group/user flag -->
   <changeSet author="web-conferencing" id="1.0.0-10">
-    <dropUniqueConstraint tableName="WBC_CALLS" constraintName="UK_WBC_GROUP_CALL" />
+    <dropUniqueConstraint tableName="WBC_CALLS" constraintName="UK_WBC_GROUP_CALL"/>
+  </changeSet>
+
+  <changeSet author="web-conferencing" id="1.0.0-11">
+    <modifyDataType tableName="WBC_INVITES"
+                    columnName="INVITATION_ID"
+                    newDataType="NVARCHAR(64)"
+    />
   </changeSet>
 
 </databaseChangeLog>
