@@ -17,19 +17,19 @@
 *
 */
 %>
-<li class="$READ clearfix" data-id="$NOTIFICATION_ID">
-    <div class="media">
-        <div class="avatarXSmall pull-left">
-        <img style="border-radius: 4px;" height="150" width="150" src="https://w7.pngwing.com/pngs/322/333/png-transparent-call-recording-software-text-messaging-android-android-blue-text-telephone-call.png" alt="call recording" />
-        </div>
-
-        <div class="media-body">
+<li class="$READ clearfix" data-id="$NOTIFICATION_ID" data-link="$FILE_URL">
+  <div class="media">
+    <div class="avatarXSmall pull-left">
+      <img src="$AVATAR" alt="$CALL_OWNER" title="$CALL_OWNER"/>
+    </div>
+    <div class="media-body">
         <% String DESCRIPTION = RECORDING_STATUS.equals("ok") ? _ctx.appRes("Notification.webconferencing.callrecording.success") : _ctx.appRes("Notification.webconferencing.callrecording.failed"); %>
         <div class="status">$DESCRIPTION </div>
 
-            <div class="contentSmall" data-link="$URL">
+            <div class="contentSmall" data-link="$FILE_URL">
             <%if (RECORDING_STATUS.equals("ok")) { %>
-                <div><a href="$FILE_URL" alt="$FILE_NAME">$FILE_NAME</a></div>
+                <div class="content"><i class="uiIcon uiIconTick uiIconBlue"></i>
+                                             	<span>$FILE_NAME</span></div>
             <%} %>
                 <div class="lastUpdatedTime">$LAST_UPDATED_TIME</div>
             </div>

@@ -49,12 +49,16 @@ public class CallRecordingPlugin extends BaseNotificationPlugin {
         String recordingStatus= notificationContext.value(NotificationConstants.RECORDING_STATUS);
         String fileUrl = notificationContext.value(NotificationConstants.RECORDED_FILE_URL);
         String fileName = notificationContext.value((NotificationConstants.FILE_NAME));
+        String avatarUrl = notificationContext.value((NotificationConstants.AVATAR_URL));
+        String callOwner = notificationContext.value(NotificationConstants.CALL_OWNER);
         List<String> participants = notificationContext.value(NotificationConstants.CALL_PARTICIPANTS);
         return NotificationInfo.instance()
                     .to(participants)
                     .with(NotificationConstants.RECORDING_STATUS.getKey(), recordingStatus)
                     .with(NotificationConstants.FILE_NAME.getKey(), fileName)
                     .with(NotificationConstants.RECORDED_FILE_URL.getKey(), fileUrl)
+                    .with(NotificationConstants.AVATAR_URL.getKey(), avatarUrl)
+                    .with(NotificationConstants.CALL_OWNER.getKey(), callOwner)
                     .key(getKey())
                     .end();
     }
