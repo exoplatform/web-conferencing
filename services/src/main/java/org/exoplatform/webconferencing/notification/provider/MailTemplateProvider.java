@@ -53,9 +53,13 @@ public class MailTemplateProvider extends TemplateProvider {
             String recordingStatus = notificationInfo.getValueOwnerParameter(NotificationConstants.RECORDING_STATUS.getKey());
             String fileName = notificationInfo.getValueOwnerParameter(NotificationConstants.FILE_NAME.getKey());
             String fileUrl = notificationInfo.getValueOwnerParameter(NotificationConstants.RECORDED_FILE_URL.getKey());
+            String avatarUrl = notificationInfo.getValueOwnerParameter(NotificationConstants.AVATAR_URL.getKey());
+            String callOwner = notificationInfo.getValueOwnerParameter(NotificationConstants.CALL_OWNER.getKey());
             templateContext.put("RECORDING_STATUS", encoder.encode(recordingStatus));
             templateContext.put("FILE_URL", encoder.encode(fileUrl));
             templateContext.put("FILE_NAME", encoder.encode(fileName));
+            templateContext.put("AVATAR_URL", encoder.encode(avatarUrl));
+            templateContext.put("CALL_OWNER", encoder.encode(callOwner));
             String user = notificationInfo.getTo();
             templateContext.put("USER", encoder.encode(user));
             templateContext.put("NOTIFICATION_ID", notificationInfo.getId());

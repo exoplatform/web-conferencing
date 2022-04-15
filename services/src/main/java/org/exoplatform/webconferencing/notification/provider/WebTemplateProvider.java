@@ -52,11 +52,16 @@ public class WebTemplateProvider extends TemplateProvider {
             String recordingStatus = notificationInfo.getValueOwnerParameter(NotificationConstants.RECORDING_STATUS.getKey());
             String fileName = notificationInfo.getValueOwnerParameter(NotificationConstants.FILE_NAME.getKey());
             String fileUrl = notificationInfo.getValueOwnerParameter(NotificationConstants.RECORDED_FILE_URL.getKey());
+            String avatarUrl = notificationInfo.getValueOwnerParameter(NotificationConstants.AVATAR_URL.getKey());
+            String callOwner = notificationInfo.getValueOwnerParameter(NotificationConstants.CALL_OWNER.getKey());
             String language = getLanguage(notificationInfo);
             TemplateContext templateContext = TemplateContext.newChannelInstance(getChannelKey(), pluginId, language);
             templateContext.put("RECORDING_STATUS", recordingStatus);
             templateContext.put("FILE_NAME", fileName);
+            templateContext.put("AVATAR", avatarUrl);
             templateContext.put("FILE_URL", fileUrl);
+            templateContext.put("CALL_OWNER", callOwner);
+            templateContext.put("USER", notificationInfo.getTo());
             Calendar lastModified = Calendar.getInstance();
             lastModified.setTimeInMillis(notificationInfo.getLastModifiedDate());
             templateContext.put("LAST_UPDATED_TIME",

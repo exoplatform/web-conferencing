@@ -3950,21 +3950,21 @@ public class WebConferencingService implements Startable {
     this.broacastCallEvent(eventName, call, userId, fileSize, null, null, STATUS_OK);
   }
 
-  public String getRecordingUrl(String uploadingUser, String fileName, String type, String identity) throws Exception {
+  public String getRecordingUrl(String identity, String fileName, String type) throws Exception {
     if(!fileName.isEmpty()) {
      DocumentService documentService = WCMCoreUtils.getService(DocumentService.class);
      Node rootNode = null;
      if (type.equals(OWNER_TYPE_SPACE) || type.equals(OWNER_TYPE_SPACEEVENT)) {
        rootNode = getRootFolderNode(identity, type);
      } else {
-       rootNode = getRootFolderNode(uploadingUser, type);
+       rootNode = getRootFolderNode(identity, type);
      }
      Node recordingsFolder = getRecordingsFolder(rootNode);
      Node fileRecorded = recordingsFolder.getNode(fileName);
      String shortLink = documentService.getShortLinkInDocumentsApp(fileRecorded.getSession().getWorkspace().getName(), ((NodeImpl) fileRecorded).getInternalIdentifier());
      return CommonsUtils.getCurrentDomain() + shortLink;
     } else {
-      return  "";
+      return  "#";
     }
   }
   // <<<<<<< Call storage: wrappers to catch JPA exceptions
