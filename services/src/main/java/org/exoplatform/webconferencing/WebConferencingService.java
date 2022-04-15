@@ -3953,12 +3953,7 @@ public class WebConferencingService implements Startable {
   public String getRecordingUrl(String identity, String fileName, String type) throws Exception {
     if(!fileName.isEmpty()) {
      DocumentService documentService = WCMCoreUtils.getService(DocumentService.class);
-     Node rootNode = null;
-     if (type.equals(OWNER_TYPE_SPACE) || type.equals(OWNER_TYPE_SPACEEVENT)) {
-       rootNode = getRootFolderNode(identity, type);
-     } else {
-       rootNode = getRootFolderNode(identity, type);
-     }
+     Node rootNode = getRootFolderNode(identity, type);
      Node recordingsFolder = getRecordingsFolder(rootNode);
      Node fileRecorded = recordingsFolder.getNode(fileName);
      String shortLink = documentService.getShortLinkInDocumentsApp(fileRecorded.getSession().getWorkspace().getName(), ((NodeImpl) fileRecorded).getInternalIdentifier());
