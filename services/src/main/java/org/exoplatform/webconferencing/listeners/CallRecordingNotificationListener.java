@@ -79,7 +79,7 @@ public class CallRecordingNotificationListener extends Listener<CallInfo, Map<? 
                     avatarUrl += ident.getProfile().getAvatarUrl();
                 }
             } else {
-                name = identity;
+                name = callInfo.getTitle();
                 avatarUrl += "/chat/img/room-default.jpg";
             }
             for (String participant : participants) {
