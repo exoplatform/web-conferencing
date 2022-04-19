@@ -2781,7 +2781,7 @@ public class WebConferencingService implements Startable {
         // Assume inviationId is the same for all invites in this call.
         return invites.get(0).getInvitationId();
       }
-      return null;
+      return createInvite(callId);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       throw new StorageException("Error getting invite Id for call " + callId, e);
     }
