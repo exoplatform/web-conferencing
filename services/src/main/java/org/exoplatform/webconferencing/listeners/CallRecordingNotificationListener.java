@@ -40,64 +40,77 @@ import java.util.stream.Collectors;
 
 public class CallRecordingNotificationListener extends Listener<CallInfo, Map<? extends String, ? extends String>> {
 
+  private final IdentityManager        identityManager;
 
-    @Override
-    public void onEvent(Event<CallInfo, Map<? extends String, ? extends String>> event) throws Exception {
+  private final WebConferencingService webConferencingService;
 
-        CallInfo callInfo = event.getSource();
-        Map<? extends String, ? extends String> info = event.getData();
-        List<String> participants = callInfo.getParticipants().stream().map(UserInfo::getId).collect(Collectors.toList());
-        String status = info.get("status");
-        String fileName = info.get("file_name") == null ? "" : info.get("file_name");
-        String identity =  info.get("identity") == null ? null : info.get("identity");
-        String callType = info.get("type") == null ? "" : info.get("type");
-        WebConferencingService webConferencingService = ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(WebConferencingService.class);
-        String name = "";
-        String avatarUrl = CommonsUtils.getCurrentDomain();
-        if(callType.equals(WebConferencingService.OWNER_TYPE_SPACE) || callType.equals(WebConferencingService.OWNER_TYPE_SPACEEVENT)) {
-            NotificationContext ctx = NotificationContextImpl.cloneInstance();
-            SpaceService spaceService = ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(SpaceService.class);
-            Space space = spaceService.getSpaceByPrettyName(identity);
-            name = space.getDisplayName() == null ? "" : space.getDisplayName();
-            avatarUrl += space.getAvatarUrl() == null ? "" : space.getAvatarUrl();
-            String fileUrl = webConferencingService.getRecordingUrl(identity, fileName, callType);
-            ctx.append(NotificationConstants.RECORDED_FILE_URL, fileUrl);
-            ctx.append(NotificationConstants.CALL_PARTICIPANTS, participants);
-            ctx.append(NotificationConstants.FILE_NAME, fileName);
-            ctx.append(NotificationConstants.AVATAR_URL, avatarUrl);
-            ctx.append(NotificationConstants.RECORDING_STATUS, status);
-            ctx.append(NotificationConstants.CALL_TYPE, callType);
-            ctx.append(NotificationConstants.CALL_OWNER, name);
-            ctx.getNotificationExecutor()
-                    .with(ctx.makeCommand(PluginKey.key(CallRecordingPlugin.ID))).execute(ctx);
-        } else {
-            if (callType.equals(WebConferencingService.OWNER_TYPE_USER)) {
-                IdentityManager identityManager = CommonsUtils.getService(IdentityManager.class);
-                Identity ident = identityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME, identity);
-                if (ident != null) {
-                    name = ident.getProfile().getFullName();
-                    avatarUrl += ident.getProfile().getAvatarUrl();
-                }
-            } else {
-                name = callInfo.getTitle();
-                avatarUrl += "/chat/img/room-default.jpg";
-            }
-            for (String participant : participants) {
-                NotificationContext ctx = NotificationContextImpl.cloneInstance();
-                List<String> part = new ArrayList<>();
-                part.add(participant);
-                String fileUrl = webConferencingService.getRecordingUrl(participant, fileName, callType);
-                ctx.append(NotificationConstants.FILE_NAME, fileName);
-                ctx.append(NotificationConstants.RECORDING_STATUS, status);
-                ctx.append(NotificationConstants.RECORDED_FILE_URL, fileUrl);
-                ctx.append(NotificationConstants.CALL_PARTICIPANTS, part);
-                ctx.append(NotificationConstants.AVATAR_URL, avatarUrl);
-                ctx.append(NotificationConstants.CALL_TYPE, callType);
-                ctx.append(NotificationConstants.CALL_OWNER, name);
-                ctx.getNotificationExecutor()
-                    .with(ctx.makeCommand(PluginKey.key(CallRecordingPlugin.ID))).execute(ctx);
-            }
+  private final SpaceService           spaceService;
+
+  public CallRecordingNotificationListener(IdentityManager identityManager,
+                                           WebConferencingService webConferencingService,
+                                           SpaceService spaceService) {
+    this.identityManager = identityManager;
+    this.webConferencingService = webConferencingService;
+    this.spaceService = spaceService;
+  }
+
+  @Override
+  public void onEvent(Event<CallInfo, Map<? extends String, ? extends String>> event) throws Exception {
+
+    CallInfo callInfo = event.getSource();
+    Map<? extends String, ? extends String> info = event.getData();
+    List<String> participants = callInfo.getParticipants().stream().map(UserInfo::getId).collect(Collectors.toList());
+    String status = info.get("status");
+    String fileName = info.get("file_name") == null ? "" : info.get("file_name");
+    String identity = info.get("identity") == null ? null : info.get("identity");
+    String callType = info.get("type") == null ? "" : info.get("type");
+    String name = "";
+    String avatarUrl = CommonsUtils.getCurrentDomain();
+    if (callType.equals(WebConferencingService.OWNER_TYPE_SPACE) || callType.equals(WebConferencingService.OWNER_TYPE_SPACEEVENT)) {
+      Space space;
+      if (callType.equals(WebConferencingService.OWNER_TYPE_SPACEEVENT)) {
+        Identity spaceIdentity = identityManager.getIdentity(identity);
+        space = spaceService.getSpaceByPrettyName(spaceIdentity.getRemoteId());
+      } else {
+        space = spaceService.getSpaceByPrettyName(identity);
+      }
+      NotificationContext ctx = NotificationContextImpl.cloneInstance();
+      String fileUrl = webConferencingService.getRecordingUrl(identity, fileName, callType);
+      ctx.append(NotificationConstants.RECORDED_FILE_URL, fileUrl);
+      ctx.append(NotificationConstants.CALL_PARTICIPANTS, participants);
+      ctx.append(NotificationConstants.FILE_NAME, fileName);
+      ctx.append(NotificationConstants.AVATAR_URL, space.getAvatarUrl());
+      ctx.append(NotificationConstants.RECORDING_STATUS, status);
+      ctx.append(NotificationConstants.CALL_TYPE, callType);
+      ctx.append(NotificationConstants.CALL_OWNER, space.getDisplayName());
+      ctx.getNotificationExecutor().with(ctx.makeCommand(PluginKey.key(CallRecordingPlugin.ID))).execute(ctx);
+    } else {
+      if (callType.equals(WebConferencingService.OWNER_TYPE_USER)) {
+        IdentityManager identityManager = CommonsUtils.getService(IdentityManager.class);
+        Identity ident = identityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME, identity);
+        if (ident != null) {
+          name = ident.getProfile().getFullName();
+          avatarUrl += ident.getProfile().getAvatarUrl();
         }
-
+      } else {
+        name = callInfo.getTitle();
+        avatarUrl += "/chat/img/room-default.jpg";
+      }
+      for (String participant : participants) {
+        NotificationContext ctx = NotificationContextImpl.cloneInstance();
+        List<String> part = new ArrayList<>();
+        part.add(participant);
+        String fileUrl = webConferencingService.getRecordingUrl(participant, fileName, callType);
+        ctx.append(NotificationConstants.FILE_NAME, fileName);
+        ctx.append(NotificationConstants.RECORDING_STATUS, status);
+        ctx.append(NotificationConstants.RECORDED_FILE_URL, fileUrl);
+        ctx.append(NotificationConstants.CALL_PARTICIPANTS, part);
+        ctx.append(NotificationConstants.AVATAR_URL, avatarUrl);
+        ctx.append(NotificationConstants.CALL_TYPE, callType);
+        ctx.append(NotificationConstants.CALL_OWNER, name);
+        ctx.getNotificationExecutor().with(ctx.makeCommand(PluginKey.key(CallRecordingPlugin.ID))).execute(ctx);
+      }
     }
+
+  }
 }
