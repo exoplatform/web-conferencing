@@ -2024,6 +2024,5 @@
 	});
 
 	log.trace("< Loaded at " + location.origin + location.pathname);
-	webConferencing.closeWindow = function(){window.close();};
 	return webConferencing;
 })($, cCometD);
