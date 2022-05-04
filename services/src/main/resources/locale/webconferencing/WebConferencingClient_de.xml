@@ -4,7 +4,7 @@
   <webconferencing>
     <ok>Ok</ok>
     <cancel>Abbrechen</cancel>
-    <callHeader>Start Call</callHeader>
+    <callHeader>Anruf starten</callHeader>
     <notConfigured>nicht konfiguriert</notConfigured>
     <errorReference>Fehlerreferenz:</errorReference>
   </webconferencing>
