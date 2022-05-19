@@ -9,7 +9,8 @@
       v-show="isopen" 
       ref="buttonsContainer" 
       :class="positionclass" 
-      class="buttons-container">
+      class="buttons-container"
+      @mouseleave="showDropdownComponent">
       <!-- TODO why we need IDs for them?? a class will not work? -->
       <div
         v-for="(button, index) in providersbutton"
@@ -80,7 +81,7 @@ export default {
   border: @defaultBorder;
   border-radius: 3px;
   margin-top: 3px;
-  min-width: @width + 30px;
+  min-width: @width;
   max-width: @width + @width;
   box-shadow: @defaultShadow;
   position: absolute;
