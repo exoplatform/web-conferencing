@@ -3,12 +3,21 @@
     :style="{ 'background-color': header.bgHover }"
     class="dropdown-header"
     @click="showdropdowncomponent(); passrefs()">
-    <div class="dropdown-heading px-2">
-       <i
-      :style="{ 'background-color': header.bgMini }"
-      :class="header.paddingClass"
-      class="uiIconMiniArrowDown uiIconLightGray pa-1"></i>
-      <i class="uiIconSocPhone uiIconSocBlue"></i>
+    <div class="dropdown-heading pe-2">
+      <i
+        :style="{ 'background-color': header.bgMini }"
+        :class="header.paddingClass"
+        class="uiIconMiniArrowDown uiIconLightGray pa-1"></i>
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on, attrs }">
+          <i 
+            v-bind="attrs"
+            v-on="on" 
+            class="uiIconSocPhone uiIconSocBlue v-btn--icon v-size--default d-flex align-center justify-content-center justify-center"></i>
+        </template>
+        <span>{{ $i18n.te("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
+          : "Start Call" }}</span>
+      </v-tooltip>
       <span v-if="!isMobile">
         {{ $i18n.te("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
           : "Start Call" }}</span>
@@ -51,7 +60,7 @@ export default {
     border-radius: 3px;
     width: 100%;
     min-height: 36px;
-    color: var(--allPagesDarkGrey, #4d5466) !important;
+    color: @primaryColor !important;
     letter-spacing: normal;
     .uiIconMiniArrowDown {
       color: var(--allPagesDarkGrey, #4d5466) !important;
@@ -86,8 +95,8 @@ export default {
     }
     .uiIconMiniArrowDown {
       position: absolute;
-      top: 7px;
-      right: -7px;
+      top: 9px;
+      right: 2px;
       text-align: center;
       &::before {
         color: @primaryColor;

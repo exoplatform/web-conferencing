@@ -308,11 +308,16 @@ export default {
         }
       }
     }
-    a,
-    a:hover,
-    a:focus {
+    a {
       color: var(--allPagesDarkGrey, #4d5466) !important;
       letter-spacing: normal;
+    }
+    a:hover,
+    a:focus {
+      color: white !important;
+      i {
+        color: white !important;
+      }
     }
     [class^="call-button-container-"] {
       width: 100%;
@@ -340,7 +345,6 @@ export default {
   .VuetifyApp {
     .call-button-container {
       min-width: unset;
-      padding: 0 0 7px 0;
       &:hover {
         .dropdown-header {
           background-color: transparent;
@@ -399,7 +403,8 @@ export default {
     }
 
     .buttons-container {
-      top: 23px;
+      top: 27px;
+      right: -70px!important;
     }
   }
 }
