@@ -7,7 +7,7 @@
     "url": "https://github.com/exoplatform/webconferencing"
   },
   "scripts": {
-    "watch": "webpack --config webpack.watch.js --progress --colors --watch -d",
+    "watch": "webpack --config webpack.dev.js --progress --colors --watch -d",
     "lint": "eslint --fix ./src/main/webapp/vue-apps/**/*.js  ./src/main/webapp/vue-apps/**/*.vue",
     "build": "webpack --config webpack.prod.js --mode production"
   },
