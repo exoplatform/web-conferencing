@@ -323,8 +323,6 @@ export default {
       width: 100%;
     }
     cursor: pointer !important;
-    position: relative;
-    z-index: 100;
     min-height: 36px;
   }
   [class^="call-button-container-"]:hover,
@@ -405,6 +403,7 @@ export default {
     .buttons-container {
       top: 27px;
       right: -70px!important;
+      z-index: 100;
     }
   }
 }
