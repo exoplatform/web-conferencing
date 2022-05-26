@@ -170,6 +170,8 @@ public class WebConferencingService implements Startable {
 
   public static final String    EVENT_CALL_RECORDED          = "exo.webconferencing.callRecorded";
 
+  public static final String    ROOM_DEFAULT_AVATAR_URL      = "/webconferencing/skin/images/room-default.jpg";
+
   /** The Constant CALL_OWNER_SCOPE_NAME. */
   protected static final String CALL_OWNER_SCOPE_NAME        = "webconferencing.callOwner".intern();
 
@@ -187,6 +189,7 @@ public class WebConferencingService implements Startable {
 
   /** The Constant SECRET_KEY. */
   protected static final String SECRET_KEY                   = "secret-key";
+
 
   /**
    * Represent Space in calls.
@@ -725,7 +728,7 @@ public class WebConferencingService implements Startable {
       }
     }
     room.setProfileLink(IdentityInfo.EMPTY);
-    room.setAvatarLink(LinkProvider.SPACE_DEFAULT_AVATAR_URL);
+    room.setAvatarLink(ROOM_DEFAULT_AVATAR_URL);
     room.setCallId(callId);
     return room;
   };
