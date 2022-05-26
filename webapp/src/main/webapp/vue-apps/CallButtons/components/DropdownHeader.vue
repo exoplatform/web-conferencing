@@ -19,10 +19,10 @@
           : "Start Call" }}</span>
     </div>
     <div class="pr-4 pl-2">
-    <i
-        :style="{ 'background-color': header.bgMini }"
-        :class="header.paddingClass"
-        class="uiIconMiniArrowDown uiIconLightGray "></i>
+      <i
+          :style="{ 'background-color': header.bgMini }"
+          :class="header.paddingClass"
+          class="uiIconMiniArrowDown uiIconLightGray "></i>
     </div>
   </div>
 </template>
