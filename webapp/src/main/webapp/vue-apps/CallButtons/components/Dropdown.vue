@@ -23,13 +23,8 @@
 </template>
 
 <script>
-import DropdownHeader from './DropdownHeader.vue';
-
 export default {
   name: 'Dropdown',
-  components: {
-    DropdownHeader
-  },
   props: {
     providersbutton: {
       type: Array,

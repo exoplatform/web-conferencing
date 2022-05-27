@@ -1,6 +1,8 @@
 Vue.config.devtools = true;
 
 import CallButtons from './components/CallButtons.vue';
+import './initComponents.js';
+import {initCallExtensions} from './extensions.js';
 Vue.use(Vuetify);
 const vuetify = new Vuetify(eXo.env.portal.vuetifyPreset);
 
@@ -17,13 +19,10 @@ export function create(context, target) {
       const mountEl = document.createElement('div'); // div for vue mounting
       // we need the target as the parent container to use that classes for call button settings
       target.appendChild(mountEl);
-
+      initCallExtensions();
       exoi18n.loadLanguageAsync(lang, url).then((i18n) => {
         const comp = new Vue({
           el: mountEl,
-          components: {
-            CallButtons
-          },
           data() {
             return {
               language: lang,

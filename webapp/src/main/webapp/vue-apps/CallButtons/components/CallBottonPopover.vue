@@ -43,14 +43,6 @@ export default {
     }
   },
   props: {
-    language: {
-      type: String,
-      required: true
-    },
-    resourceBundleName: {
-      type: String,
-      required: true
-    },
     callContext: {
       type: Object,
       required: true
@@ -64,7 +56,9 @@ export default {
       isDropdownVisualized: false, // is added to DOM
       childRef: null,
       isFirstInitialization: true,
-      log: null
+      log: null,
+      language: 'en',
+      resourceBundleName: 'WebConferencingClient',
     };
   },
   computed: {
