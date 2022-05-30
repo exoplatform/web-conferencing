@@ -3,17 +3,13 @@
     :style="{ 'background-color': header.bgHover }"
     class="dropdown-header"
     @click="showdropdowncomponent(); passrefs()">
-    <div class="dropdown-heading pe-2">
-      <i
-        :style="{ 'background-color': header.bgMini }"
-        :class="header.paddingClass"
-        class="uiIconMiniArrowDown uiIconLightGray pa-1"></i>
+    <div class="dropdown-heading d-flex d-row align-center justify-center">
       <v-tooltip bottom>
         <template v-slot:activator="{ on, attrs }">
           <i 
             v-bind="attrs"
             v-on="on" 
-            class="uiIconSocPhone uiIconSocBlue v-btn--icon v-size--default d-flex align-center justify-content-center justify-center"></i>
+            class="uiIconSocPhone uiIconSocBlue v-btn--icon v-size--default d-flex align-center justify-end pe-1"></i>
         </template>
         <span>{{ $i18n.te("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
           : "Start Call" }}</span>
@@ -21,6 +17,12 @@
       <span v-if="!isMobile">
         {{ $i18n.te("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
           : "Start Call" }}</span>
+    </div>
+    <div class="pe-4 ps-2">
+      <i
+          :style="{ 'background-color': header.bgMini }"
+          :class="header.paddingClass"
+          class="uiIconMiniArrowDown uiIconLightGray "></i>
     </div>
   </div>
 </template>
@@ -57,14 +59,14 @@ export default {
     display: inline-flex;
     align-items: center;
     background-color: white;
-    border-radius: 3px;
+    border-radius: 4px;
+    border: 1px solid var(--allPagesBtnBorder, var(--allPagesGreyColor, #e1e8ee)) !important;
     width: 100%;
     min-height: 36px;
     color: @primaryColor !important;
-    letter-spacing: normal;
+    letter-spacing: 0.09em;
     .uiIconMiniArrowDown {
       color: var(--allPagesDarkGrey, #4d5466) !important;
-      border-radius: 50%;
     }
     .dropdown-heading {
       i {
