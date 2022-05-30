@@ -1669,13 +1669,25 @@ public class WebConferencingService implements Startable {
             // Check if don't need stop the call if all parts leaved already
             if (call.getOwner().isGroup()) {
               if (leavedNum == call.getParticipants().size() || call.getParticipants().size() == 0
-                  || call.getParticipants().stream().allMatch(p -> p.getState() == null || UserState.LEAVED.equals(p.getState()))
+                  || call.getParticipants()
+                         .stream()
+                         .allMatch(p -> p.getType().equals(GuestInfo.TYPE_NAME) || p.getState() == null
+                             || UserState.LEAVED.equals(p.getState()))
                   /*|| call.getParticipants().stream().allMatch(p -> p.getType() == GuestInfo.TYPE_NAME)*/) {
                 // Stop when all group members leave the call
                 // TODO it would be better UX when we let guest to run the call even without exo users,
                 // but then need find a proper way of stopping the call if guests will not leave finally via API (network errors, server crashes etc).
+                call.getParticipants()
+                    .stream()
+                    .filter(participant -> participant.getType().equals(GuestInfo.TYPE_NAME)
+                        && participant.getState().equals(UserState.JOINED))
+                    .forEach(guest -> fireUserCallStateChanged(guest.getId(),
+                                             callId,
+                                             call.getProviderType(),
+                                             CallState.STOPPED,
+                                             call.getOwner().getId(),
+                                             call.getOwner().getType()));
                 stopCall(call, partId, false);
-
                 broacastCallEvent(EVENT_CALL_STOPPED, call, partId, null);
                 // Log metrics - call stopped
                 LOG.info(metricMessage(partId,
