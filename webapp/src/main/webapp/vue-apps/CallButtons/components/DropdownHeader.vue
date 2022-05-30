@@ -18,7 +18,7 @@
         {{ $i18n.te("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
           : "Start Call" }}</span>
     </div>
-    <div class="pr-4 pl-2">
+    <div class="pe-4 ps-2">
       <i
           :style="{ 'background-color': header.bgMini }"
           :class="header.paddingClass"
