@@ -64,12 +64,13 @@ import static org.exoplatform.webconferencing.support.CallLog.WARN_LEVEL;
 import static org.exoplatform.webconferencing.support.CallLog.validate;
 
 import org.cometd.annotation.Param;
-import org.cometd.annotation.RemoteCall;
-import org.cometd.annotation.ServerAnnotationProcessor;
+import org.cometd.annotation.server.RemoteCall;
+import org.cometd.annotation.server.ServerAnnotationProcessor;
 import org.cometd.annotation.Service;
 import org.cometd.annotation.Session;
 import org.cometd.annotation.Subscription;
 import org.cometd.bayeux.Message;
+import org.cometd.bayeux.Promise;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.cometd.bayeux.server.BayeuxServer.ChannelListener;
 import org.cometd.bayeux.server.ConfigurableServerChannel;
@@ -1110,7 +1111,7 @@ public class CometdWebConferencingService implements Startable {
                       data.append(ownerType);
                       data.append("\"}");
                       data.append('}');
-                      bayeux.getChannel(channelId).publish(serverSession, data.toString());
+                      bayeux.getChannel(channelId).publish(serverSession, data.toString(), Promise.noop());
                       if (LOG.isDebugEnabled()) {
                         LOG.debug(">>> Sent call leaved to " + channelId + " call: " + callId + "[" + partId + "] by " + currentUserId(null));
                       }
@@ -1141,7 +1142,7 @@ public class CometdWebConferencingService implements Startable {
                       data.append(ownerType);
                       data.append("\"}");
                       data.append('}');
-                      bayeux.getChannel(channelId).publish(serverSession, data.toString());
+                      bayeux.getChannel(channelId).publish(serverSession, data.toString(), Promise.noop());
                       if (LOG.isDebugEnabled()) {
                         LOG.debug(">>> Sent call joined to " + channelId + " call: " + callId + "[" + partId + "] by " + currentUserId(null));
                       }
@@ -1171,7 +1172,7 @@ public class CometdWebConferencingService implements Startable {
                       data.append(ownerType);
                       data.append("\"}");
                       data.append('}');
-                      bayeux.getChannel(channelId).publish(serverSession, data.toString());
+                      bayeux.getChannel(channelId).publish(serverSession, data.toString(), Promise.noop());
                       if (LOG.isDebugEnabled()) {
                         LOG.debug(">>> Sent call state update to " + channelId + " by " + currentUserId(null));
                       }
@@ -1187,14 +1188,15 @@ public class CometdWebConferencingService implements Startable {
                 LOG.warn("Subscribing to other user not possible, was user " + currentUserId + ", channel:" + channelId);
                 remote.deliver(serverSession,
                                channelId,
-                               ErrorInfo.clientError("Subscribing to other user not possible").asJSON());
+                               ErrorInfo.clientError("Subscribing to other user not possible").asJSON(),
+                               Promise.noop());
                 if (!channel.unsubscribe(remote)) {
                   LOG.warn("Unable to unsubscribe user " + currentUserId + " from channel " + channelId);
                 }
               }
             } else {
               LOG.warn("Subscribing by unauthorized user not possible, was channel: " + channelId);
-              remote.deliver(serverSession, channelId, ErrorInfo.accessError("Unauthorized user").asJSON());
+              remote.deliver(serverSession, channelId, ErrorInfo.accessError("Unauthorized user").asJSON(), Promise.noop());
               if (!channel.unsubscribe(remote)) {
                 LOG.warn("Unable to unsubscribe unauthorized user from channel " + channelId);
               }
@@ -1714,7 +1716,7 @@ public class CometdWebConferencingService implements Startable {
       if (LOG.isDebugEnabled()) {
         String callId = callId(callType, callInfo);
         // Should log this to a dedicated diagnostic log!
-        LOG.debug("> Call published in " + message.getChannel() + " callId: " + callId + " data: " + message.getJSON());
+        LOG.debug("> Call published in " + message.getChannel() + " callId: " + callId + " data: " + message);
       }
     }
 
@@ -1728,7 +1730,7 @@ public class CometdWebConferencingService implements Startable {
     public void subscribeUser(Message message, @Param("userId") String userId) {
       final String channelId = message.getChannel();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("> User published in " + channelId + " userId: " + userId + " data: " + message.getJSON());
+        LOG.debug("> User published in " + channelId + " userId: " + userId + " data: " + message);
       }
     }
 
@@ -2225,7 +2227,7 @@ public class CometdWebConferencingService implements Startable {
     // instantiate processor after the eXo container start, to let start-dependent logic worked before us
     final AtomicReference<ServerAnnotationProcessor> processor = new AtomicReference<>();
     // need initiate process after Bayeux server starts
-    exoBayeux.addLifeCycleListener(new LifeCycle.Listener() {
+    exoBayeux.addEventListener(new LifeCycle.Listener() {
       @Override
       public void lifeCycleStarted(LifeCycle event) {
         ServerAnnotationProcessor p = new ServerAnnotationProcessor(exoBayeux);
@@ -2261,7 +2263,7 @@ public class CometdWebConferencingService implements Startable {
       // This listener not required for work, just for info during development
       exoBayeux.addListener(new BayeuxServer.SessionListener() {
         @Override
-        public void sessionRemoved(ServerSession session, boolean timedout) {
+        public void sessionRemoved(ServerSession session, ServerMessage message, boolean timedout) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("< sessionRemoved: " + session.getId() + " timedout:" + timedout + " channels: "
                 + channelsAsString(session.getSubscriptions()));
