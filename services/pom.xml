@@ -33,6 +33,12 @@
   <name>eXo Web Conferencing :: Extension Services</name>
   <description>eXo Web Conferencing services of portal extension</description>
 
+  <properties>
+    <rest.api.doc.title>WebConferencing Rest Api</rest.api.doc.title>
+    <rest.api.doc.version>1.0</rest.api.doc.version>
+    <rest.api.doc.description>WebConferencing addon rest endpoints</rest.api.doc.description>
+  </properties>
+
   <dependencies>
     <!-- Others third party -->
     <dependency>
@@ -138,41 +144,29 @@
     </resources>
     <plugins>
       <plugin>
-        <groupId>com.jcabi</groupId>
-        <artifactId>jcabi-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>com.github.kongchen</groupId>
+        <groupId>io.openapitools.swagger</groupId>
         <artifactId>swagger-maven-plugin</artifactId>
         <configuration>
-          <apiSources>
-            <apiSource>
-              <springmvc>false</springmvc>
-              <locations>org.exoplatform.webconferencing.rest</locations>
-              <schemes>http,https</schemes>
-              <host>localhost:8080</host>
-              <basePath>/rest</basePath>
-              <info>
-                <title>eXo Web Conferencing REST API</title>
-                <version>1</version>
-                <description>The eXo Web Conferencing REST API provides methods for accessing web conferencing resources such as
-                  call provider configurations and participants information.
-                  Here are the descriptions of a full representation of each of the web conferencing resources available.</description>
-              </info>
-              <templatePath>${basedir}/src/main/resources/swagger-doc-template/strapdown.html.hbs</templatePath>
-              <outputPath>${basedir}/target/generated/document.html</outputPath>
-              <swaggerDirectory>${basedir}/target/generated-sources/annotations/generated</swaggerDirectory>
-            </apiSource>
-          </apiSources>
+          <useResourcePackagesChildren>true</useResourcePackagesChildren>
+          <resourcePackages>
+            <locations>org.exoplatform.webconferencing.rest</locations>
+          </resourcePackages>
+          <swaggerConfig>
+            <info>
+              <title>${rest.api.doc.title}</title>
+              <version>${rest.api.doc.version}</version>
+              <description>${rest.api.doc.description}</description>
+              <license>
+                <url>https://www.gnu.org/licenses/agpl-3.0.en.html</url>
+                <name>AGPL</name>
+              </license>
+            </info>
+          </swaggerConfig>
         </configuration>
-        <executions>
-          <execution>
-            <phase>compile</phase>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.jcabi</groupId>
+        <artifactId>jcabi-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
