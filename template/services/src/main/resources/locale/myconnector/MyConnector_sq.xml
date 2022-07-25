@@ -3,12 +3,12 @@
   <!-- Messages for Platform menu and view settings -->
   <UIBasicProfile>
     <label>
-      <myconnector>crwdns6858667:0crwdne6858667:0</myconnector>
+      <myconnector>My Call</myconnector>
     </label>
   </UIBasicProfile>
   <UIEditUserProfileForm>
     <label>
-      <myconnector>crwdns6858668:0crwdne6858668:0</myconnector>
+      <myconnector>My Call</myconnector>
     </label>
   </UIEditUserProfileForm>
   <!-- Messages for Platform add-on -->

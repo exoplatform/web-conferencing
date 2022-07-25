@@ -2,10 +2,10 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>crwdns6858711:0crwdne6858711:0</ok>
-    <cancel>crwdns6858712:0crwdne6858712:0</cancel>
-    <callHeader>crwdns6966502:0crwdne6966502:0</callHeader>
-    <notConfigured>crwdns6858713:0crwdne6858713:0</notConfigured>
-    <errorReference>crwdns6858948:0crwdne6858948:0</errorReference>
+    <ok>OK</ok>
+    <cancel>Cancel</cancel>
+    <callHeader>Start Call</callHeader>
+    <notConfigured>not configured</notConfigured>
+    <errorReference>Error reference:</errorReference>
   </webconferencing>
 </bundle>

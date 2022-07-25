@@ -3,46 +3,46 @@
   <webconferencing>
     <admin>
       <error>
-        <ProviderNotRegistered>crwdns6966232:0crwdne6966232:0</ProviderNotRegistered>
-        <EmptyRequest>crwdns6966234:0crwdne6966234:0</EmptyRequest>
-        <CannotGetProviders>crwdns6966236:0crwdne6966236:0</CannotGetProviders>
-        <PermissionNotValid>crwdns6966238:0crwdne6966238:0</PermissionNotValid>
-        <CannotLoadIdentities>crwdns6966240:0crwdne6966240:0</CannotLoadIdentities>
-        <CannotSavePreferredEditor>crwdns6966242:0crwdne6966242:0</CannotSavePreferredEditor>
-        <UnableGetData>crwdns6966244:0crwdne6966244:0</UnableGetData>
-        <UnablePostData>crwdns6966246:0crwdne6966246:0</UnablePostData>
+        <ProviderNotRegistered>The editor provider is not registered.</ProviderNotRegistered>
+        <EmptyRequest>The request should contain at least 1 form param (active/permissions).</EmptyRequest>
+        <CannotGetProviders>Can't get providers list.</CannotGetProviders>
+        <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
+        <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
+        <UnableGetData>An error occurred while reading the data.</UnableGetData>
+        <UnablePostData>An error occurred while saving the data.</UnablePostData>
       </error>
-      <page>crwdns6858669:0crwdne6858669:0</page>
-      <title>crwdns6858670:0crwdne6858670:0</title>
-      <info>crwdns6858671:0crwdne6858671:0</info>
+      <page>Web Conferencing</page>
+      <title>Web Conferencing Administration</title>
+      <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
       <table>
-        <Provider>crwdns6966248:0crwdne6966248:0</Provider>
-        <Description>crwdns6966250:0crwdne6966250:0</Description>
-        <Active>crwdns6966252:0crwdne6966252:0</Active>
-        <Permissions>crwdns6966254:0crwdne6966254:0</Permissions>
+        <Provider>Provider</Provider>
+        <Description>Description</Description>
+        <Active>Active</Active>
+        <Permissions>Actions</Permissions>
       </table>
       <WebRTC>
-        <name>crwdns6966256:0crwdne6966256:0</name>
+        <name>WebRTC</name>
         <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
       </WebRTC>
       <Skype>
-        <name>crwdns6966260:0crwdne6966260:0</name>
-        <description>crwdns6966262:0crwdne6966262:0</description>
+        <name>Skype</name>
+        <description>Provider for Skype. Let users place a group and 1:1 calls. No plugin required but the Skype application must be installed on the client side.</description>
       </Skype>
       <Jitsi>
-        <name>crwdns6966264:0crwdne6966264:0</name>
-        <description>crwdns6966266:0crwdne6966266:0</description>
+        <name>Jitsi</name>
+        <description>Jitsi provider for WebConferencing</description>
       </Jitsi>
       <modal>
-        <title>crwdns6966268:0crwdne6966268:0</title>
-        <SearchLabel>crwdns6966270:0crwdne6966270:0</SearchLabel>
-        <WithPermissions>crwdns6966272:0crwdne6966272:0</WithPermissions>
-        <None>crwdns6966274:0crwdne6966274:0</None>
-        <Everybody>crwdns6966276:0crwdne6966276:0</Everybody>
+        <title>Provider settings</title>
+        <SearchLabel>URL:</SearchLabel>
+        <WithPermissions>STUN / TURN servers</WithPermissions>
+        <None>None</None>
+        <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>crwdns6966278:0crwdne6966278:0</Save>
-        <Cancel>crwdns6966280:0crwdne6966280:0</Cancel>
+        <Save>Save</Save>
+        <Cancel>Cancel</Cancel>
       </buttons>
     </admin>
   </webconferencing>
