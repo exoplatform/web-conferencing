@@ -31,6 +31,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
@@ -40,11 +45,6 @@ import org.exoplatform.webconferencing.client.ErrorInfo;
 import org.exoplatform.webconferencing.webrtc.WebrtcProvider;
 import org.exoplatform.webconferencing.webrtc.WebrtcProvider.RTCConfiguration;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
 
 import org.json.JSONObject;
 
@@ -58,7 +58,7 @@ import org.json.JSONObject;
  */
 @Path("/webrtc/webconferencing")
 @Produces(MediaType.APPLICATION_JSON)
-@Api(tags = "/webrtc/webconferencing", value = "/webrtc/webconferencing", description = "Operations on WebRTC provider settings")
+@Tag(name = "/webrtc/webconferencing", description = "Operations on WebRTC provider settings")
 public class RESTWebRTCService implements ResourceContainer {
 
   /** The Constant LOG. */
@@ -93,14 +93,16 @@ public class RESTWebRTCService implements ResourceContainer {
   @POST
   @RolesAllowed("administrators")
   @Path("/settings")
-  @ApiOperation(value = "Updates RTC configuration in WebRTC settings", httpMethod = "POST", response = RTCConfiguration.class, 
-    notes = "Use this method to update RTC configuration of WebRTC provider. This operation only avalable to Administrator user.")
-  @ApiResponses(value = { @ApiResponse(code = 200, message = "Request fulfilled. Updated provider config returned.", response = RTCConfiguration.class),
-    @ApiResponse(code = 401, message = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
-    @ApiResponse(code = 404, message = "Provider (WebRTC) not found. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
-    @ApiResponse(code = 500, message = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
+  @Operation(
+          summary = "Updates RTC configuration in WebRTC settings",
+          method = "POST",
+          description = "Use this method to update RTC configuration of WebRTC provider. This operation only available to Administrator user.")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled. Updated provider config returned."),
+    @ApiResponse(responseCode = "401", description = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+    @ApiResponse(responseCode = "404", description = "Provider (WebRTC) not found. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
+    @ApiResponse(responseCode = "500", description = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
   public Response postSettings(@Context UriInfo uriInfo, 
-                               @ApiParam(value = "RTC configuration in JSON format. See WebrtcProvider.jsonToRtcConfig() for details", required = true) @FormParam("rtcConfiguration") String rtcConfig) {
+                               @Parameter(description = "RTC configuration in JSON format. See WebrtcProvider.jsonToRtcConfig() for details", required = true) @FormParam("rtcConfiguration") String rtcConfig) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
@@ -140,12 +142,14 @@ public class RESTWebRTCService implements ResourceContainer {
   @GET
   @RolesAllowed("administrators")
   @Path("/settings") // TODO not used
-  @ApiOperation(value = "Read WebRTC providers settings", httpMethod = "GET", response = RTCConfiguration.class, 
-    notes = "Use this method to read WebRTC providers settings. This operation only avalable to Administrator user.")
-  @ApiResponses(value = { @ApiResponse(code = 200, message = "Request fulfilled. Settings object returned.", response = RTCConfiguration.class),
-    @ApiResponse(code = 401, message = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
-    @ApiResponse(code = 404, message = "Provider (WebRTC) not found. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
-    @ApiResponse(code = 500, message = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
+  @Operation(
+          summary = "Read WebRTC providers settings",
+          method = "GET",
+          description = "Use this method to read WebRTC providers settings. This operation only available to Administrator user.")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled. Settings object returned."),
+    @ApiResponse(responseCode = "401", description = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+    @ApiResponse(responseCode = "404", description = "Provider (WebRTC) not found. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
+    @ApiResponse(responseCode = "500", description = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
   public Response getSettings(@Context UriInfo uriInfo) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
