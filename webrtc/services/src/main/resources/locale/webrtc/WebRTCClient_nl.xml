@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Oproep</call>
+    <call>Call</call>
     <callingYou>is u aan het bellen ...</callingYou>
     <callWith>Bel met</callWith>
     <callTo>Bel naar</callTo>
     <incomingCall>Inkomende oproep</incomingCall>
     <answer>antwoord</answer>
-    <decline>Daling van de</decline>
+    <decline>Decline</decline>
     <callStartTip>Klik om een ​​video-oproep te starten</callStartTip>
     <callRunningTip>Deze oproep is al bezig. Klik om het gespreksvenster weer te geven.</callRunningTip>
     

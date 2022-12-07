@@ -2,8 +2,8 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>موافق</ok>
-    <cancel>الغاء</cancel>
+    <ok>OK</ok>
+    <cancel>Cancel</cancel>
     <callHeader>بدء المكالمة</callHeader>
     <notConfigured>لم يتم تشكيله</notConfigured>
     <errorReference>مرجع الخطأ:</errorReference>

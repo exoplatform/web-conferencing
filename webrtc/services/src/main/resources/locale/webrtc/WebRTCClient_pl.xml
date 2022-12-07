@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Połączenie</call>
+    <call>Call</call>
     <callingYou>dzwoni do Ciebie...</callingYou>
     <callWith>Zadzwoń za pomocą</callWith>
     <callTo>Zadzwoń do</callTo>
     <incomingCall>Połączenie przychodzące</incomingCall>
     <answer>Odpowiedź</answer>
-    <decline>Odrzuć</decline>
+    <decline>Decline</decline>
     <callStartTip>Kliknij, aby rozpocząć rozmowę wideo</callStartTip>
     <callRunningTip>To połączenie jest już w toku. Kliknij, aby wyświetlić okno połączenia.</callRunningTip>
     

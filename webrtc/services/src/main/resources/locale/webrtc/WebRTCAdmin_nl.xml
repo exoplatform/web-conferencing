@@ -9,10 +9,10 @@
       <url>URL</url>
       <serverUrl>Server-URL ...</serverUrl>
       <credentials>Toegangsgegevens</credentials>
-      <username>Gebruikersnaam</username>
+      <username>Username</username>
       <credential>Toegangsgegevens</credential>
-      <save>Opslaan</save>
-      <cancel>Annuleren</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>Geen server beschikbaar, voeg uw eerste toe</noServer>
       <addNewServer>Een nieuwe server toevoegen</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>ICE-server verwijderen?</confirmServerRemoval>
       <serverRemoveText>Weet u zeker dat u deze serverconfiguratie wilt verwijderen?</serverRemoveText>
-      <remove>Verwijderen</remove>
+      <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Foutendiagnose</errorDiagnostic>

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Hovor</call>
+    <call>Call</call>
     <callingYou>vás volá...</callingYou>
     <callWith>Hovor s</callWith>
     <callTo>Zavolat</callTo>
     <incomingCall>Příchozí hovor</incomingCall>
     <answer>Odpověď</answer>
-    <decline>Odmítnout</decline>
+    <decline>Decline</decline>
     <callStartTip>Klikněte k zahájení videohovoru</callStartTip>
     <callRunningTip>Tento hovor již probíhá. Kliknutím zobrazíte okno hovoru.</callRunningTip>
     

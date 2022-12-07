@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Tawag</call>
+    <call>Call</call>
     <callingYou>ay tumatawag sa iyo...</callingYou>
     <callWith>Tumawag sa</callWith>
     <callTo>Tumawag sa</callTo>
     <incomingCall>Papasok na tawag</incomingCall>
     <answer>Ang sagot</answer>
-    <decline>Tumanggi</decline>
+    <decline>Decline</decline>
     <callStartTip>I-klik upang magsimula ng isang video call</callStartTip>
     <callRunningTip>Itong tawag ay nasa progreso na. I-klik upang ipakita ang window ng tawag.</callRunningTip>
     

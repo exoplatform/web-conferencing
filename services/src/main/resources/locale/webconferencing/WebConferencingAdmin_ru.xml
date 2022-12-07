@@ -16,10 +16,10 @@
       <title>Администрирование веб-конференций</title>
       <info>Веб-конференции могут быть обработаны разными провайдерами. Вы можете включить необходимого Вам провайдера и настроить параметры.</info>
       <table>
-        <Provider>Провайдер</Provider>
-        <Description>Описание</Description>
-        <Active>Активное</Active>
-        <Permissions>Действия</Permissions>
+        <Provider>Provider</Provider>
+        <Description>Description</Description>
+        <Active>Active</Active>
+        <Permissions>Actions</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -35,14 +35,14 @@
       </Jitsi>
       <modal>
         <title>Provider settings</title>
-        <SearchLabel>URL-адрес:</SearchLabel>
-        <WithPermissions>STUN / TURN сервера</WithPermissions>
-        <None>Нет</None>
+        <SearchLabel>URL:</SearchLabel>
+        <WithPermissions>STUN / TURN servers</WithPermissions>
+        <None>None</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Сохранить</Save>
-        <Cancel>Отмена</Cancel>
+        <Save>Save</Save>
+        <Cancel>Cancel</Cancel>
       </buttons>
     </admin>
   </webconferencing>

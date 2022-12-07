@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>通話</call>
+    <call>Call</call>
     <callingYou>呼び出し中...</callingYou>
     <callWith>通話端末</callWith>
     <callTo>発信先</callTo>
     <incomingCall>着信</incomingCall>
     <answer>回答する</answer>
-    <decline>許可しない</decline>
+    <decline>Decline</decline>
     <callStartTip>ビデオ通話を開始</callStartTip>
     <callRunningTip>この呼び出しは既に進行中です。通話ウィンドウを表示するをクリックしてください。</callRunningTip>
     

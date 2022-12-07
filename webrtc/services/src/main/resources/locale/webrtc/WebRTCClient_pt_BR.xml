@@ -7,7 +7,7 @@
     <callTo>Chamada para</callTo>
     <incomingCall>Recebendo chamada</incomingCall>
     <answer>Resposta</answer>
-    <decline>Recusar</decline>
+    <decline>Decline</decline>
     <callStartTip>Clique para iniciar uma chamada em vídeo</callStartTip>
     <callRunningTip>Esta chamada já está em andamento. Clique para exibir a janela da chamada.</callRunningTip>
     

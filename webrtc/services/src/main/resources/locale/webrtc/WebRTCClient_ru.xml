@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Вызов</call>
+    <call>Call</call>
     <callingYou>вызывает Вас...</callingYou>
     <callWith>Вызов с</callWith>
     <callTo>Позвонить</callTo>
     <incomingCall>Входящий вызов</incomingCall>
     <answer>Ответить</answer>
-    <decline>Отклонить</decline>
+    <decline>Decline</decline>
     <callStartTip>Нажмите, чтобы начать видеозвонок</callStartTip>
     <callRunningTip>Этот вызов уже выполняется. Нажмите, чтобы показать окно звонка.</callRunningTip>
     

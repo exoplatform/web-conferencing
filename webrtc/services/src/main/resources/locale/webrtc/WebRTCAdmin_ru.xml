@@ -6,13 +6,13 @@
       <title>Настройки WebRTC</title>
       <servers>STUN / TURN сервера</servers>
       <serversTip>STUN/TURN сервера необходимы, чтобы убедиться, что вызовы без проблем работают внутри сетевой архитектуры. Мы рекомендуем настроить свой собственный TURN сервер, чтобы управлять безопасностью и доступностью сервиса.</serversTip>
-      <url>URL-адрес</url>
+      <url>URL</url>
       <serverUrl>URL-адрес сервера...</serverUrl>
       <credentials>Учётные данные</credentials>
-      <username>Имя пользователя</username>
+      <username>Username</username>
       <credential>Учётные данные</credential>
-      <save>Сохранить</save>
-      <cancel>Отмена</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>Нет сервера, добавьте свой первый сервер</noServer>
       <addNewServer>Добавить новый сервер</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Удалить ICE сервер?</confirmServerRemoval>
       <serverRemoveText>Вы уверены, что хотите удалить эту конфигурацию сервера?</serverRemoveText>
-      <remove>Удалить</remove>
+      <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Диагностика ошибки</errorDiagnostic>

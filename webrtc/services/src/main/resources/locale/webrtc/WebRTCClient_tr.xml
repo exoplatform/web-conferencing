@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Çağrı</call>
+    <call>Call</call>
     <callingYou>{0} seni arıyor...</callingYou>
     <callWith>Çağrıyı şununla yap</callWith>
     <callTo>#'yı ara</callTo>
     <incomingCall>Gelen çağrı</incomingCall>
     <answer>Cevap</answer>
-    <decline>Düşüş</decline>
+    <decline>Decline</decline>
     <callStartTip>Video aramasını başlatmak için tıklayın</callStartTip>
     <callRunningTip>Bu arama işlemi zaten devam ediyor. Arama penceresini göstermek için tıklayın.</callRunningTip>
     

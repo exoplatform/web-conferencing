@@ -6,13 +6,13 @@
       <title>Nastavení WebRTC</title>
       <servers>Servery STUN/TURN</servers>
       <serversTip>Servery STUN/TURN jsou nezbytné k zajištění správné funkce webových konferenčních hovorů přes síťové routery. Důrazně doporučujeme nastavit si vlastní soukromý server TURN, abyste měli přehled o bezpečnosti vaší komunikace a zajistili maximální dostupnost.</serversTip>
-      <url>ADRESA URL</url>
+      <url>URL</url>
       <serverUrl>URL serveru...</serverUrl>
       <credentials>Pověření</credentials>
-      <username>Uživatelské jméno</username>
+      <username>Username</username>
       <credential>Pověření</credential>
-      <save>Uložit</save>
-      <cancel>Zrušit</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>Není k dispozici žádný server, přidejte první server</noServer>
       <addNewServer>Přidat nový server</addNewServer>

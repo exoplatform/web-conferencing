@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Apel</call>
+    <call>Call</call>
     <callingYou>te sună...</callingYou>
     <callWith>Apelați cu</callWith>
     <callTo>Apelează</callTo>
     <incomingCall>Apel primit</incomingCall>
     <answer>Răspuns</answer>
-    <decline>Refuză</decline>
+    <decline>Decline</decline>
     <callStartTip>Atinge pentru a începe un apel video</callStartTip>
     <callRunningTip>Acest apel este deja în curs de desfăşurare. Faceţi clic pe pentru a afişa fereastra de apel.</callRunningTip>
     

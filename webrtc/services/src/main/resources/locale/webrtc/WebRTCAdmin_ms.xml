@@ -11,8 +11,8 @@
       <credentials>Credentials</credentials>
       <username>Username</username>
       <credential>Credential</credential>
-      <save>Simpan</save>
-      <cancel>Batal</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>No server available, please add your first one</noServer>
       <addNewServer>Add a new server</addNewServer>

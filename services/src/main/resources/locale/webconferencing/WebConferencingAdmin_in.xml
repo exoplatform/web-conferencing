@@ -16,10 +16,10 @@
       <title>Administrasi Konferensi Web</title>
       <info>Konferensi Web dapat ditangani oleh penyedia yang berbeda. Anda dapat mengaktifkan penyedia yang Anda butuhkan dan mengkonfigurasi pengaturan.</info>
       <table>
-        <Provider>penyedia</Provider>
-        <Description>Deskripsi</Description>
-        <Active>Aktif</Active>
-        <Permissions>Tindakan</Permissions>
+        <Provider>Provider</Provider>
+        <Description>Description</Description>
+        <Active>Active</Active>
+        <Permissions>Actions</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -36,13 +36,13 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>SETRUM / MENGUBAH server</WithPermissions>
-        <None>Tidak ada</None>
+        <WithPermissions>STUN / TURN servers</WithPermissions>
+        <None>None</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Simpan</Save>
-        <Cancel>membatalkan</Cancel>
+        <Save>Save</Save>
+        <Cancel>Cancel</Cancel>
       </buttons>
     </admin>
   </webconferencing>

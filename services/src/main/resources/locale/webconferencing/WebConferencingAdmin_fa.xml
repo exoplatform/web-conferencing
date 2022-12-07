@@ -17,9 +17,9 @@
       <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
       <table>
         <Provider>Provider</Provider>
-        <Description>شرح</Description>
-        <Active>فعال</Active>
-        <Permissions>اقدامات</Permissions>
+        <Description>Description</Description>
+        <Active>Active</Active>
+        <Permissions>Actions</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -37,12 +37,12 @@
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
         <WithPermissions>STUN / TURN servers</WithPermissions>
-        <None>هیچ کدام</None>
+        <None>None</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>ذخيره</Save>
-        <Cancel>انصراف</Cancel>
+        <Save>Save</Save>
+        <Cancel>Cancel</Cancel>
       </buttons>
     </admin>
   </webconferencing>

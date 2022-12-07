@@ -9,10 +9,10 @@
       <url>URL-адреса</url>
       <serverUrl>URL-адреса сервера...</serverUrl>
       <credentials>Облікові дані</credentials>
-      <username>Ім’я користувача</username>
+      <username>Username</username>
       <credential>Обліковий запис</credential>
-      <save>Зберегти</save>
-      <cancel>Скасувати</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>Немає доступного сервера, додайте свій перший</noServer>
       <addNewServer>Додати новий сервер</addNewServer>

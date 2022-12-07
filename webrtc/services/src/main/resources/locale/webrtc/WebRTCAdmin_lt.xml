@@ -9,10 +9,10 @@
       <url>URL</url>
       <serverUrl>Server URL...</serverUrl>
       <credentials>Credentials</credentials>
-      <username>Vartotojo vardas</username>
+      <username>Username</username>
       <credential>Credential</credential>
-      <save>Išsaugoti</save>
-      <cancel>Atšaukti</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>No server available, please add your first one</noServer>
       <addNewServer>Add a new server</addNewServer>

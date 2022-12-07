@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>通話</call>
+    <call>Call</call>
     <callingYou>is calling you...</callingYou>
     <callWith>Call with</callWith>
     <callTo>Call to</callTo>
     <incomingCall>Incoming call</incomingCall>
     <answer>答案</answer>
-    <decline>拒絕</decline>
+    <decline>Decline</decline>
     <callStartTip>Click to start a video call</callStartTip>
     <callRunningTip>This call is already in progress. Click to show the call window.</callRunningTip>
     

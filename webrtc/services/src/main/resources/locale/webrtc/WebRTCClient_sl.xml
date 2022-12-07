@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Pokliči</call>
+    <call>Call</call>
     <callingYou>vas kliče...</callingYou>
     <callWith>Pokliči s/z</callWith>
     <callTo>Klic za</callTo>
     <incomingCall>Dohodni klic</incomingCall>
     <answer>Odgovor</answer>
-    <decline>Zavrni</decline>
+    <decline>Decline</decline>
     <callStartTip>Kliknite za pričetek video klica</callStartTip>
     <callRunningTip>Ta klic je že v teku. Kliknite za prikaz okna klica.</callRunningTip>
     

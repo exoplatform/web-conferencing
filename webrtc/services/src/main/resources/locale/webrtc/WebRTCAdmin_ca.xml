@@ -9,10 +9,10 @@
       <url>URL</url>
       <serverUrl>URL del servidor...</serverUrl>
       <credentials>Credencials</credentials>
-      <username>Nom d'usuari</username>
+      <username>Username</username>
       <credential>Credencial</credential>
-      <save>Desa</save>
-      <cancel>Cancel·la</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>No hi ha cap servidor disponible; afegeix-hi el primer</noServer>
       <addNewServer>Afegeix un servidor nou</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Vol eliminar el servidor ICE?</confirmServerRemoval>
       <serverRemoveText>Està segur de voler eliminar aquesta configuració del servidor?</serverRemoveText>
-      <remove>Elimina</remove>
+      <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Diagnòstic d'errors</errorDiagnostic>

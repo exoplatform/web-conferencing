@@ -9,10 +9,10 @@
       <url>URL</url>
       <serverUrl>Server URL...</serverUrl>
       <credentials>Səlahiyyətlər</credentials>
-      <username>İstifadəçi Adı</username>
+      <username>Username</username>
       <credential>Səlahiyyət</credential>
-      <save>Saxla</save>
-      <cancel>Ləğv Et</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>No server available, please add your first one</noServer>
       <addNewServer>Add a new server</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>ICE serverini silirsən?</confirmServerRemoval>
       <serverRemoveText>Siz server konfuqrasiyasını silmək istəyirsinizmi?</serverRemoveText>
-      <remove>Sil</remove>
+      <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Səhvlərin Diaqnostikası</errorDiagnostic>

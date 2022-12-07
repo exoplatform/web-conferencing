@@ -3,7 +3,7 @@
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
     <ok>OK</ok>
-    <cancel>Avbryt</cancel>
+    <cancel>Cancel</cancel>
     <callHeader>Start Call</callHeader>
     <notConfigured>not configured</notConfigured>
     <errorReference>Error reference:</errorReference>

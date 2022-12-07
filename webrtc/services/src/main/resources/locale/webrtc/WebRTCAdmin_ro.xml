@@ -9,10 +9,10 @@
       <url>URL</url>
       <serverUrl>URL-ul serverului...</serverUrl>
       <credentials>Date de autentificare</credentials>
-      <username>Nume de utilizator</username>
+      <username>Username</username>
       <credential>Acreditare</credential>
-      <save>Salvaţi</save>
-      <cancel>Renunță</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>No server available, please add your first one</noServer>
       <addNewServer>Add a new server</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Ștergeți serverul ICE?</confirmServerRemoval>
       <serverRemoveText>Sunteți sigur că vreți să ștergeți configurația serverului acesta?</serverRemoveText>
-      <remove>Elimină</remove>
+      <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Diagnosticare erori</errorDiagnostic>

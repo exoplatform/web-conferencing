@@ -9,10 +9,10 @@
       <url>URL</url>
       <serverUrl>サーバー URL...</serverUrl>
       <credentials>認証情報</credentials>
-      <username>ユーザー名</username>
+      <username>Username</username>
       <credential>認証情報</credential>
-      <save>保存</save>
-      <cancel>キャンセル</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>利用可能なサーバーが存在しません。まずは追加してください。</noServer>
       <addNewServer>新規サーバーを追加</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>ICE サーバーを削除しますか?</confirmServerRemoval>
       <serverRemoveText>本当にこのサーバーの設定を削除しますか？</serverRemoveText>
-      <remove>削除</remove>
+      <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>エラー診断</errorDiagnostic>

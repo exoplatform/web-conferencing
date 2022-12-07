@@ -16,10 +16,10 @@
       <title>Administração de Vídeo Chamada Web</title>
       <info>Vídeo Chamada Web pode ser fornecida por diferentes operadores. Identifique e defina as configurações consoante o operador escolhido.</info>
       <table>
-        <Provider>Operador</Provider>
-        <Description>Descrição</Description>
-        <Active>Ativo</Active>
-        <Permissions>Ações</Permissions>
+        <Provider>Provider</Provider>
+        <Description>Description</Description>
+        <Active>Active</Active>
+        <Permissions>Actions</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -36,13 +36,13 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>Servidores STUN / TURN</WithPermissions>
-        <None>Nenhum</None>
+        <WithPermissions>STUN / TURN servers</WithPermissions>
+        <None>None</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Gravar</Save>
-        <Cancel>Cancelar</Cancel>
+        <Save>Save</Save>
+        <Cancel>Cancel</Cancel>
       </buttons>
     </admin>
   </webconferencing>

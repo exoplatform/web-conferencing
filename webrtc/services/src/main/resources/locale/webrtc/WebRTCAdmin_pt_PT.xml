@@ -9,10 +9,10 @@
       <url>URL</url>
       <serverUrl>URL do servidor...</serverUrl>
       <credentials>Credenciais</credentials>
-      <username>Utilizador</username>
+      <username>Username</username>
       <credential>Credenciais</credential>
-      <save>Gravar</save>
-      <cancel>Cancelar</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>Nenhum servidor disponível, por favor, adicione o servidor</noServer>
       <addNewServer>Adicionar novo servidor</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Remover servidor ICE?</confirmServerRemoval>
       <serverRemoveText>Tem a certeza que deseja apagar as definições deste servidor?</serverRemoveText>
-      <remove>Remover</remove>
+      <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Diagnóstico do erro</errorDiagnostic>

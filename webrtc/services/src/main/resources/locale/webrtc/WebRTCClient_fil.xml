@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Tumawag</call>
+    <call>Call</call>
     <callingYou>ay tumatawag sa iyo...</callingYou>
     <callWith>Tumawag sa</callWith>
     <callTo>Tumawag sa</callTo>

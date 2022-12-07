@@ -16,8 +16,8 @@
       <title>İnzibatçının Web Konfransı</title>
       <info>Web Konfrans müxtəlif provayderlər tərəfindən idarə oluna bilər. Sizə lazım olan provayderi aktiv etmək üçün tənzimləmələri konfuqrasiya edə bilərsiniz.</info>
       <table>
-        <Provider>Provayder</Provider>
-        <Description>Açıqlama</Description>
+        <Provider>Provider</Provider>
+        <Description>Description</Description>
         <Active>Active</Active>
         <Permissions>Actions</Permissions>
       </table>
@@ -36,13 +36,13 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN serverləri</WithPermissions>
+        <WithPermissions>STUN / TURN servers</WithPermissions>
         <None>None</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Saxla</Save>
-        <Cancel>Ləğv Et</Cancel>
+        <Save>Save</Save>
+        <Cancel>Cancel</Cancel>
       </buttons>
     </admin>
   </webconferencing>

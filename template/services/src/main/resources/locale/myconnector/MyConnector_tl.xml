@@ -8,7 +8,7 @@
   </UIBasicProfile>
   <UIEditUserProfileForm>
     <label>
-      <myconnector>Aking tawag</myconnector>
+      <myconnector>My Call</myconnector>
     </label>
   </UIEditUserProfileForm>
   <!-- Messages for Platform add-on -->

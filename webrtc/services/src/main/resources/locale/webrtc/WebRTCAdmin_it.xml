@@ -6,13 +6,13 @@
       <title>Impostazioni di WebRTC</title>
       <servers>Server STUN/TURN</servers>
       <serversTip>I server STUN/TURN  sono necessari per garantire che le chiamate di conferenza web funzionino correttamente attraverso i router di rete. Ti consigliamo vivamente di configurare il tuo server TURN privato per mantenere il controllo sulla sicurezza delle tue comunicazioni e garantire la massima disponibilità.</serversTip>
-      <url>Url</url>
+      <url>URL</url>
       <serverUrl>URL del server...</serverUrl>
       <credentials>Credenziali</credentials>
-      <username>Nome utente</username>
+      <username>Username</username>
       <credential>Credenziale</credential>
-      <save>Salva</save>
-      <cancel>Annulla</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>Nessun server disponibile, per favore aggiungi il primo</noServer>
       <addNewServer>Aggiungi un nuovo server</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Rimuovere il server ICE?</confirmServerRemoval>
       <serverRemoveText>Sei sicuro di voler eliminare questa configurazione del server?</serverRemoveText>
-      <remove>Rimuovi</remove>
+      <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Diagnostica errori</errorDiagnostic>

@@ -9,10 +9,10 @@
       <url>URL</url>
       <serverUrl>Server-URL...</serverUrl>
       <credentials>Referenzen</credentials>
-      <username>Benutzername</username>
+      <username>Username</username>
       <credential>Referenz</credential>
-      <save>Speichern</save>
-      <cancel>Abbrechen</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>Kein Server verfügbar. Bitte fügen Sie den ersten Server hinzu</noServer>
       <addNewServer>Einen neuen Server hinzufügen</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>ICE-Server entfernen?</confirmServerRemoval>
       <serverRemoveText>Sind Sie sicher, dass Sie diese Serverkonfiguration entfernen möchten?</serverRemoveText>
-      <remove>Entfernen</remove>
+      <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Fehlerdiagnose</errorDiagnostic>

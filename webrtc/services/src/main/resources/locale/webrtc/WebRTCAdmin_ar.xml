@@ -6,13 +6,13 @@
       <title>إعدادات WEBRTC</title>
       <servers>تشغيل / إيقاف الخادم</servers>
       <serversTip>تشغيل / إيقاف الخادم مطلوبون لضمان إتصالات عقد المؤتمرات على الويب  ستعمل بشكل صحيح عبر أجهزة توجيه شبكة الاتصال. نحن نوصي بشدة إعداد الخادم الخاص بك بدوره خاصة الاحتفاظ بالسيطرة على الأمن للاتصالات الخاصة بك، وضمان توافر الحد الأقصى.</serversTip>
-      <url>عنوان الموقع</url>
+      <url>URL</url>
       <serverUrl>رابط الخادم...</serverUrl>
       <credentials>بيانات الاعتماد</credentials>
-      <username>اسم المستخدم</username>
+      <username>Username</username>
       <credential>بيانات الاعتماد</credential>
-      <save>حفظ</save>
-      <cancel>الغاء</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>لا يوجد خادم متوفر، يرجى إضافة الخادم الأول الخاص بك</noServer>
       <addNewServer>إضافة خادم جديد</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>إزالة الخادم ICE ؟</confirmServerRemoval>
       <serverRemoveText>هل أنت متأكد من أنك تريد إزالة تكوين هذا الخادم ؟</serverRemoveText>
-      <remove>حذف</remove>
+      <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>تشخيص الخطأ</errorDiagnostic>

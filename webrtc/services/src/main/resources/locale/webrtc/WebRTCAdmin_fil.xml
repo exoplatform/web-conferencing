@@ -9,10 +9,10 @@
       <url>URL</url>
       <serverUrl>URL ng Server...</serverUrl>
       <credentials>Mga Credential</credentials>
-      <username>Ang Username</username>
+      <username>Username</username>
       <credential>Credential</credential>
-      <save>Seyb</save>
-      <cancel>Kanselahin</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>No server available, please add your first one</noServer>
       <addNewServer>Add a new server</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Tanggalin ang ICE Server?</confirmServerRemoval>
       <serverRemoveText>Sigurado ka bang gusto mong tanggalin ang server configuration na ito?</serverRemoveText>
-      <remove>Tanggalin</remove>
+      <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Mga Diagnostic ng Mali</errorDiagnostic>

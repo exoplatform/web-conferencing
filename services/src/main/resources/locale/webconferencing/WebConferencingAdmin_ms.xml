@@ -41,8 +41,8 @@
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Simpan</Save>
-        <Cancel>Batal</Cancel>
+        <Save>Save</Save>
+        <Cancel>Cancel</Cancel>
       </buttons>
     </admin>
   </webconferencing>

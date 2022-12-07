@@ -3,22 +3,22 @@
   <webconferencing>
     <admin>
       <error>
-        <ProviderNotRegistered>Le fournisseur de l'éditeur n'est pas enregistré.</ProviderNotRegistered>
-        <EmptyRequest>La demande doit contenir au moins un formulaire param (actif/permissions).</EmptyRequest>
-        <CannotGetProviders>Impossible d'obtenir la liste des fournisseurs.</CannotGetProviders>
-        <PermissionNotValid>L'autorisation spécifiée n'est pas valable. Il est probable que l'utilisateur ou le groupe n'existe pas.</PermissionNotValid>
-        <CannotLoadIdentities>Impossible de charger les identités selon des critères spécifiés</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Impossible de sauvegarder l'éditeur sélectionné comme éditeur préféré.</CannotSavePreferredEditor>
-        <UnableGetData>Une erreur s'est produite lors de la lecture des données.</UnableGetData>
-        <UnablePostData>Une erreur s'est produite lors de la sauvegarde des données.</UnablePostData>
+        <ProviderNotRegistered>The editor provider is not registered.</ProviderNotRegistered>
+        <EmptyRequest>The request should contain at least 1 form param (active/permissions).</EmptyRequest>
+        <CannotGetProviders>Can't get providers list.</CannotGetProviders>
+        <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
+        <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
+        <UnableGetData>An error occurred while reading the data.</UnableGetData>
+        <UnablePostData>An error occurred while saving the data.</UnablePostData>
       </error>
       <page>Visioconférence</page>
       <title>Administration des Visioconférences</title>
       <info>Les visioconférences peuvent être prises en charge par différents connecteurs. Vous pouvez activer les connecteurs dont vous avez besoin et les paramétrer.</info>
       <table>
-        <Provider>Connecteur</Provider>
+        <Provider>Provider</Provider>
         <Description>Description</Description>
-        <Active>Actif</Active>
+        <Active>Active</Active>
         <Permissions>Actions</Permissions>
       </table>
       <WebRTC>
@@ -36,13 +36,13 @@
       <modal>
         <title>Paramètres du fournisseur</title>
         <SearchLabel>URL :</SearchLabel>
-        <WithPermissions>Serveurs STUN/TURN</WithPermissions>
-        <None>Aucune</None>
-        <Everybody>Tout le monde</Everybody>
+        <WithPermissions>STUN / TURN servers</WithPermissions>
+        <None>None</None>
+        <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Enregistrer</Save>
-        <Cancel>Annuler</Cancel>
+        <Save>Save</Save>
+        <Cancel>Cancel</Cancel>
       </buttons>
     </admin>
   </webconferencing>

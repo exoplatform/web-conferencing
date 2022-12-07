@@ -9,10 +9,10 @@
       <url>URL</url>
       <serverUrl>URL strežnika...</serverUrl>
       <credentials>Poverilnice</credentials>
-      <username>Uporabniško ime</username>
+      <username>Username</username>
       <credential>Poverilnica</credential>
-      <save>Shrani</save>
-      <cancel>Prekliči</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>Ni strežnikov na razpolago, prosim, dodaj prvega.</noServer>
       <addNewServer>Dodaj nov strežnik</addNewServer>
@@ -21,7 +21,7 @@
       <!-- Confirmation dialog -->
       <confirmServerRemoval>Odstranimo ICE strežnik?</confirmServerRemoval>
       <serverRemoveText>Ali ste prepričani, da želite odstraniti konfiguracijio tega strežnika?</serverRemoveText>
-      <remove>Odstrani</remove>
+      <remove>Remove</remove>
       
       <!-- Error Diagnostics -->
       <errorDiagnostic>Diagnostika napak</errorDiagnostic>

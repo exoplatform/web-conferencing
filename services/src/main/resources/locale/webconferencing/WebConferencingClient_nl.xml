@@ -3,7 +3,7 @@
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
     <ok>OK</ok>
-    <cancel>Annuleren</cancel>
+    <cancel>Cancel</cancel>
     <callHeader>Start Call</callHeader>
     <notConfigured>niet geconfigureerd</notConfigured>
     <errorReference>Foutreferentie:</errorReference>

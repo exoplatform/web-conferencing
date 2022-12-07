@@ -6,13 +6,13 @@
       <title>WebRTC settings</title>
       <servers>STUN / TURN servers</servers>
       <serversTip>STUN/TURN servers are required to ensure that web conferencing calls  will work properly across network routers. We highly recommend setting up your own private TURN server to keep control on the security of your communications and ensure maximum availability.</serversTip>
-      <url>Διεύθυνση URL</url>
+      <url>URL</url>
       <serverUrl>Server URL...</serverUrl>
       <credentials>Credentials</credentials>
-      <username>Όνομα χρήστη</username>
+      <username>Username</username>
       <credential>Credential</credential>
-      <save>Αποθήκευση</save>
-      <cancel>Ακύρωση</cancel>
+      <save>Save</save>
+      <cancel>Cancel</cancel>
 
       <noServer>No server available, please add your first one</noServer>
       <addNewServer>Add a new server</addNewServer>

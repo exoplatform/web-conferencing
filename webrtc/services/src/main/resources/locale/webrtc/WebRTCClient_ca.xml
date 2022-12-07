@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Trucada</call>
+    <call>Call</call>
     <callingYou>l'està trucant...</callingYou>
     <callWith>Trucar amb</callWith>
     <callTo>Trucar a</callTo>
     <incomingCall>Trucada entrant</incomingCall>
     <answer>Resposta</answer>
-    <decline>Rebutja</decline>
+    <decline>Decline</decline>
     <callStartTip>Faci clic per iniciar una videotrucada</callStartTip>
     <callRunningTip>Aquesta trucada ja està en progrés. Faci clic per mostrar la finestra de trucada.</callRunningTip>
     

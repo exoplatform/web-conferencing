@@ -3,23 +3,23 @@
   <webconferencing>
     <admin>
       <error>
-        <ProviderNotRegistered>Der Editor-Anbieter ist nicht registriert.</ProviderNotRegistered>
-        <EmptyRequest>Die Anforderung sollte mindestens 1 Formularparameter (aktiv/Berechtigungen) enthalten.</EmptyRequest>
-        <CannotGetProviders>Lister der Anbieter kann nicht abgerufen werden.</CannotGetProviders>
-        <PermissionNotValid>Die angegebene Berechtigung ist ungültig. Möglicherweise existiert der Nutzer oder die Gruppe nicht.</PermissionNotValid>
-        <CannotLoadIdentities>Identitäten können nicht nach festgelegten Kriterien geladen werden</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Der ausgewählte Editor kann nicht als bevorzugter Editor gespeichert werden.</CannotSavePreferredEditor>
-        <UnableGetData>Beim Lesen der Daten ist ein Fehler aufgetreten.</UnableGetData>
-        <UnablePostData>Beim Speichern der Daten ist ein Fehler aufgetreten.</UnablePostData>
+        <ProviderNotRegistered>The editor provider is not registered.</ProviderNotRegistered>
+        <EmptyRequest>The request should contain at least 1 form param (active/permissions).</EmptyRequest>
+        <CannotGetProviders>Can't get providers list.</CannotGetProviders>
+        <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
+        <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
+        <UnableGetData>An error occurred while reading the data.</UnableGetData>
+        <UnablePostData>An error occurred while saving the data.</UnablePostData>
       </error>
       <page>Webkonferenz</page>
       <title>Verwaltung von Webkonferenzen</title>
       <info>Webkonferenzen können von verschiedenen Anbietern betrieben werden. Sie können den von Ihnen benötigten Anbieter aktivieren und Einstellungen konfigurieren.</info>
       <table>
-        <Provider>Anbieter</Provider>
-        <Description>Beschreibung</Description>
-        <Active>Aktiv</Active>
-        <Permissions>Aktionen</Permissions>
+        <Provider>Provider</Provider>
+        <Description>Description</Description>
+        <Active>Active</Active>
+        <Permissions>Actions</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -36,13 +36,13 @@
       <modal>
         <title>Hersteller-Einstellungen</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN/TURN-Server</WithPermissions>
-        <None>Keine</None>
-        <Everybody>Alle</Everybody>
+        <WithPermissions>STUN / TURN servers</WithPermissions>
+        <None>None</None>
+        <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Speichern</Save>
-        <Cancel>Abbrechen</Cancel>
+        <Save>Save</Save>
+        <Cancel>Cancel</Cancel>
       </buttons>
     </admin>
   </webconferencing>

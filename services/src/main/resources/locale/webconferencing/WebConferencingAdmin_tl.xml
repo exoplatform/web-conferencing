@@ -16,9 +16,9 @@
       <title>Ang Administrasyon ng Web Conferencing</title>
       <info>Ang Web Conferencing ay maaaring pamahalaan ng ibat-ibang mga provider. Pwede kang magpagana ng provider at i-configure ang mga setting.</info>
       <table>
-        <Provider>Ang Provider o Tagapagtustos</Provider>
+        <Provider>Provider</Provider>
         <Description>Description</Description>
-        <Active>Gawing aktibo</Active>
+        <Active>Active</Active>
         <Permissions>Actions</Permissions>
       </table>
       <WebRTC>
@@ -35,14 +35,14 @@
       </Jitsi>
       <modal>
         <title>Provider settings</title>
-        <SearchLabel>Ang URL:</SearchLabel>
+        <SearchLabel>URL:</SearchLabel>
         <WithPermissions>STUN / TURN servers</WithPermissions>
-        <None>Wala</None>
+        <None>None</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
         <Save>Save</Save>
-        <Cancel>Kanselahin</Cancel>
+        <Cancel>Cancel</Cancel>
       </buttons>
     </admin>
   </webconferencing>

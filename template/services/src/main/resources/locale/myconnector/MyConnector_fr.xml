@@ -8,7 +8,7 @@
   </UIBasicProfile>
   <UIEditUserProfileForm>
     <label>
-      <myconnector>Mon Appel</myconnector>
+      <myconnector>My Call</myconnector>
     </label>
   </UIEditUserProfileForm>
   <!-- Messages for Platform add-on -->

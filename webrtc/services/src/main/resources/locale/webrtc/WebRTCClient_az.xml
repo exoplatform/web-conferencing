@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Zəng</call>
+    <call>Call</call>
     <callingYou>sizə zəng edir...</callingYou>
     <callWith>Zəng ilə</callWith>
     <callTo>Zəng üçün</callTo>

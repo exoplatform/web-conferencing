@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Llamada</call>
+    <call>Call</call>
     <callingYou>está llamándote...</callingYou>
     <callWith>Llamada con</callWith>
     <callTo>Llamar a</callTo>
     <incomingCall>Llamada entrante</incomingCall>
     <answer>Responder</answer>
-    <decline>Declinar</decline>
+    <decline>Decline</decline>
     <callStartTip>Clic para comenzar una videollamada</callStartTip>
     <callRunningTip>Esta llamada ya está en curso. Haz clic para mostrarla en pantalla.</callRunningTip>
     

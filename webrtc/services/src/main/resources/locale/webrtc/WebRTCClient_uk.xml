@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bundle>
   <webrtc>
-    <call>Дзвінок</call>
+    <call>Call</call>
     <callingYou>викликає вас...</callingYou>
     <callWith>Дзвінок з</callWith>
     <callTo>Подзвонити</callTo>
     <incomingCall>Вхідний дзвінок</incomingCall>
     <answer>Відповідь</answer>
-    <decline>Відхилити</decline>
+    <decline>Decline</decline>
     <callStartTip>Натисніть, щоб почати відео-дзвінок</callStartTip>
     <callRunningTip>Цей дзвінок вже виконується. Натисніть, щоб показати вікно дзвінка.</callRunningTip>
     
