@@ -3,23 +3,23 @@
   <webconferencing>
     <admin>
       <error>
-        <ProviderNotRegistered>The editor provider is not registered.</ProviderNotRegistered>
-        <EmptyRequest>The request should contain at least 1 form param (active/permissions).</EmptyRequest>
-        <CannotGetProviders>Can't get providers list.</CannotGetProviders>
-        <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
-        <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
-        <UnableGetData>An error occurred while reading the data.</UnableGetData>
-        <UnablePostData>An error occurred while saving the data.</UnablePostData>
+        <ProviderNotRegistered>Düzenleyici sağlayıcı kayıtlı değil.</ProviderNotRegistered>
+        <EmptyRequest>İstek en az 1 form parametresi (etkin/izinler) içermelidir.</EmptyRequest>
+        <CannotGetProviders>Sağlayıcı listesi alınamıyor.</CannotGetProviders>
+        <PermissionNotValid>Belirtilen izin geçerli değil. Kullanıcı veya grup mevcut olmayabilir.</PermissionNotValid>
+        <CannotLoadIdentities>Kimlikler belirtilen kriterlere göre yüklenemiyor</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Seçili düzenleyici tercih edilen düzenleyici olarak kaydedilemiyor.</CannotSavePreferredEditor>
+        <UnableGetData>Verileri okurken bir hata oluştu.</UnableGetData>
+        <UnablePostData>Verileri kaydederken bir hata oluştu.</UnablePostData>
       </error>
       <page>Web Konferansı</page>
       <title>Web Konferansı İdaresi</title>
       <info>Web Konferansı farklı sağlayıcılar tarafından idare edilebilir. İhtiyacınız olan sağlayıcı idare edebilir ve ayarları ayarlayabilirsiniz.</info>
       <table>
-        <Provider>Provider</Provider>
-        <Description>Description</Description>
-        <Active>Active</Active>
-        <Permissions>Actions</Permissions>
+        <Provider>Sağlaycı</Provider>
+        <Description>Açıklama</Description>
+        <Active>Etkin</Active>
+        <Permissions>Eylemler</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -36,13 +36,13 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN servers</WithPermissions>
-        <None>None</None>
-        <Everybody>Everybody</Everybody>
+        <WithPermissions>STUN / TURN sunucuları</WithPermissions>
+        <None>Hiçbiri</None>
+        <Everybody>Herkes</Everybody>
       </modal>
       <buttons>
-        <Save>Save</Save>
-        <Cancel>Cancel</Cancel>
+        <Save>Kaydet</Save>
+        <Cancel>İptal</Cancel>
       </buttons>
     </admin>
   </webconferencing>

@@ -3,23 +3,23 @@
   <webconferencing>
     <admin>
       <error>
-        <ProviderNotRegistered>The editor provider is not registered.</ProviderNotRegistered>
-        <EmptyRequest>The request should contain at least 1 form param (active/permissions).</EmptyRequest>
-        <CannotGetProviders>Can't get providers list.</CannotGetProviders>
-        <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
-        <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
-        <UnableGetData>An error occurred while reading the data.</UnableGetData>
-        <UnablePostData>An error occurred while saving the data.</UnablePostData>
+        <ProviderNotRegistered>El proveedor del editor no está registrado.</ProviderNotRegistered>
+        <EmptyRequest>La solicitud debe contener al menos 1 párrafo de formulario (activo/permisos).</EmptyRequest>
+        <CannotGetProviders>Error al obtener la lista de proveedores.</CannotGetProviders>
+        <PermissionNotValid>El permiso especificado no es válido. Tal vez el usuario o el grupo no existe.</PermissionNotValid>
+        <CannotLoadIdentities>Error al cargar identidades con criterios específicos.</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Error al guardar el editor seleccionado como uno preferido.</CannotSavePreferredEditor>
+        <UnableGetData>Error al leer los datos.</UnableGetData>
+        <UnablePostData>Error al guardar los datos.</UnablePostData>
       </error>
       <page>Conferencia web</page>
       <title>Administración de conferencias web</title>
       <info>Las conferencias web pueden ser manejadas por distintos proveedores. Puedes activar el proveedor que necesites y configurar los ajustes.</info>
       <table>
-        <Provider>Provider</Provider>
-        <Description>Description</Description>
-        <Active>Active</Active>
-        <Permissions>Actions</Permissions>
+        <Provider>Proveedor</Provider>
+        <Description>Descripción</Description>
+        <Active>Activo</Active>
+        <Permissions>Acciones</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -36,13 +36,13 @@
       <modal>
         <title>Ajustes del proveedor</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN servers</WithPermissions>
-        <None>None</None>
-        <Everybody>Everybody</Everybody>
+        <WithPermissions>Servidores STUN/TURN</WithPermissions>
+        <None>Ninguno</None>
+        <Everybody>Todo el mundo</Everybody>
       </modal>
       <buttons>
-        <Save>Save</Save>
-        <Cancel>Cancel</Cancel>
+        <Save>Guardar</Save>
+        <Cancel>Cancelar</Cancel>
       </buttons>
     </admin>
   </webconferencing>

@@ -16,10 +16,10 @@
       <title>Administrowanie konferencjami internetowymi</title>
       <info>Konferencje internetowe mogą być obsługiwane przez różnych dostawców. Można włączyć potrzebnego dostawcę i skonfigurować ustawienia.</info>
       <table>
-        <Provider>Provider</Provider>
-        <Description>Description</Description>
-        <Active>Active</Active>
-        <Permissions>Actions</Permissions>
+        <Provider>Dostawca</Provider>
+        <Description>Opis</Description>
+        <Active>Aktywny</Active>
+        <Permissions>Działania</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -36,13 +36,13 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN servers</WithPermissions>
-        <None>None</None>
+        <WithPermissions>Serwery STUN/TURN</WithPermissions>
+        <None>Brak</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Save</Save>
-        <Cancel>Cancel</Cancel>
+        <Save>Zapisz</Save>
+        <Cancel>Anuluj</Cancel>
       </buttons>
     </admin>
   </webconferencing>

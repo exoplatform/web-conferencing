@@ -16,10 +16,10 @@
       <title>Správa webových konferencí</title>
       <info>Webové konference mohou zpracovávat různí poskytovatelé. Máte možnost povolit požadovaného poskytovatele a konfigurovat nastavení.</info>
       <table>
-        <Provider>Provider</Provider>
-        <Description>Description</Description>
-        <Active>Active</Active>
-        <Permissions>Actions</Permissions>
+        <Provider>Poskytovatel</Provider>
+        <Description>Popis</Description>
+        <Active>Aktivní</Active>
+        <Permissions>Akce</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -36,13 +36,13 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN servers</WithPermissions>
-        <None>None</None>
+        <WithPermissions>Servery STUN/TURN</WithPermissions>
+        <None>Žádný</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Save</Save>
-        <Cancel>Cancel</Cancel>
+        <Save>Uložit</Save>
+        <Cancel>Zrušit</Cancel>
       </buttons>
     </admin>
   </webconferencing>

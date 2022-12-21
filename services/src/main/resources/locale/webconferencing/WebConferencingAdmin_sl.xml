@@ -16,10 +16,10 @@
       <title>Adminstracija spletne konference</title>
       <info>Spletno konferenco omogočajo različni ponudniki. Omogočite ponudnika, ki ga potrebujete in konfigurirajte nastavitve.</info>
       <table>
-        <Provider>Provider</Provider>
-        <Description>Description</Description>
-        <Active>Active</Active>
-        <Permissions>Actions</Permissions>
+        <Provider>Ponudnik</Provider>
+        <Description>Opis</Description>
+        <Active>Aktiven</Active>
+        <Permissions>Dejanja</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -36,13 +36,13 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN servers</WithPermissions>
-        <None>None</None>
+        <WithPermissions>STUN/TURN strežniki</WithPermissions>
+        <None>Brez</None>
         <Everybody>Vsi</Everybody>
       </modal>
       <buttons>
-        <Save>Save</Save>
-        <Cancel>Cancel</Cancel>
+        <Save>Shrani</Save>
+        <Cancel>Prekliči</Cancel>
       </buttons>
     </admin>
   </webconferencing>

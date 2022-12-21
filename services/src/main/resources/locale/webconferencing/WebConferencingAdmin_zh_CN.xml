@@ -17,9 +17,9 @@
       <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
       <table>
         <Provider>Provider</Provider>
-        <Description>Description</Description>
-        <Active>Active</Active>
-        <Permissions>Actions</Permissions>
+        <Description>说明</Description>
+        <Active>活动</Active>
+        <Permissions>操作</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -35,14 +35,14 @@
       </Jitsi>
       <modal>
         <title>Provider settings</title>
-        <SearchLabel>URL:</SearchLabel>
+        <SearchLabel>URL：</SearchLabel>
         <WithPermissions>STUN / TURN servers</WithPermissions>
-        <None>None</None>
+        <None>无</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Save</Save>
-        <Cancel>Cancel</Cancel>
+        <Save>保存</Save>
+        <Cancel>取消</Cancel>
       </buttons>
     </admin>
   </webconferencing>

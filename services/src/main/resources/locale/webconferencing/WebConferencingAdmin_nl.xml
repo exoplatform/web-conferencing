@@ -17,9 +17,9 @@
       <info>'Elektonisch vergaderen' kan door verschillende providers worden afgehandeld. U kunt de provider die u nodig hebt inschakelen en de instellingen configureren.</info>
       <table>
         <Provider>Provider</Provider>
-        <Description>Description</Description>
-        <Active>Active</Active>
-        <Permissions>Actions</Permissions>
+        <Description>Beschrijving</Description>
+        <Active>Actieve</Active>
+        <Permissions>Acties</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -36,13 +36,13 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN servers</WithPermissions>
-        <None>None</None>
+        <WithPermissions>STUN/TURN-servers</WithPermissions>
+        <None>Geen</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Save</Save>
-        <Cancel>Cancel</Cancel>
+        <Save>Opslaan</Save>
+        <Cancel>Annuleren</Cancel>
       </buttons>
     </admin>
   </webconferencing>
