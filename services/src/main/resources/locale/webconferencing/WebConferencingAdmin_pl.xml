@@ -36,7 +36,7 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>Serwery STUN/TURN</WithPermissions>
+        <WithPermissions>STUN / TURN servers</WithPermissions>
         <None>Brak</None>
         <Everybody>Everybody</Everybody>
       </modal>

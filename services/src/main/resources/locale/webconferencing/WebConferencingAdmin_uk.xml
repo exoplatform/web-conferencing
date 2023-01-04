@@ -8,7 +8,7 @@
         <CannotGetProviders>Неможливо отримати список провайдерів.</CannotGetProviders>
         <PermissionNotValid>Вказаний дозвіл недійсний. Можливо, користувач чи група не існує.</PermissionNotValid>
         <CannotLoadIdentities>Не вдається завантажити ідентифікації за вказаними критеріями</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Неможливо зберегти вибраний редактор в якості бажаного.</CannotSavePreferredEditor>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
         <UnableGetData>Під час читання даних сталась помилка.</UnableGetData>
         <UnablePostData>Сталася помилка під час збереження даних.</UnablePostData>
       </error>
@@ -36,7 +36,7 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL-адреса:</SearchLabel>
-        <WithPermissions>STUN / TURN сервери</WithPermissions>
+        <WithPermissions>STUN / TURN servers</WithPermissions>
         <None>Жоден</None>
         <Everybody>Усі</Everybody>
       </modal>
