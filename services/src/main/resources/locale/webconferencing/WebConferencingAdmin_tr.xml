@@ -8,7 +8,7 @@
         <CannotGetProviders>Sağlayıcı listesi alınamıyor.</CannotGetProviders>
         <PermissionNotValid>Belirtilen izin geçerli değil. Kullanıcı veya grup mevcut olmayabilir.</PermissionNotValid>
         <CannotLoadIdentities>Kimlikler belirtilen kriterlere göre yüklenemiyor</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one</CannotSavePreferredEditor>
         <UnableGetData>Verileri okurken bir hata oluştu.</UnableGetData>
         <UnablePostData>Verileri kaydederken bir hata oluştu.</UnablePostData>
       </error>
@@ -36,7 +36,7 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN servers</WithPermissions>
+        <WithPermissions>STUN / TURN server</WithPermissions>
         <None>Hiçbiri</None>
         <Everybody>Herkes</Everybody>
       </modal>

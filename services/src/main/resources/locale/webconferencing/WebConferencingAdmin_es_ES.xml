@@ -8,7 +8,7 @@
         <CannotGetProviders>Error al obtener la lista de proveedores.</CannotGetProviders>
         <PermissionNotValid>El permiso especificado no es válido. Tal vez el usuario o el grupo no existe.</PermissionNotValid>
         <CannotLoadIdentities>Error al cargar identidades con criterios específicos.</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one</CannotSavePreferredEditor>
         <UnableGetData>Error al leer los datos.</UnableGetData>
         <UnablePostData>Error al guardar los datos.</UnablePostData>
       </error>
@@ -36,7 +36,7 @@
       <modal>
         <title>Ajustes del proveedor</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN servers</WithPermissions>
+        <WithPermissions>STUN / TURN server</WithPermissions>
         <None>Ninguno</None>
         <Everybody>Todo el mundo</Everybody>
       </modal>
