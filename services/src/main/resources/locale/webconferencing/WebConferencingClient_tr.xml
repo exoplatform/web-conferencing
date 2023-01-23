@@ -2,8 +2,8 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>OK</ok>
-    <cancel>Cancel</cancel>
+    <ok>Tamam</ok>
+    <cancel>İptal</cancel>
     <callHeader>Start Call</callHeader>
     <notConfigured>ayarlanmamış</notConfigured>
     <errorReference>Hata referansı:</errorReference>

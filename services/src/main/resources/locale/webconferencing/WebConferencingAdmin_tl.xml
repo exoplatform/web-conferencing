@@ -8,7 +8,7 @@
         <CannotGetProviders>Can't get providers list.</CannotGetProviders>
         <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
         <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one</CannotSavePreferredEditor>
         <UnableGetData>An error occurred while reading the data.</UnableGetData>
         <UnablePostData>An error occurred while saving the data.</UnablePostData>
       </error>
@@ -16,9 +16,9 @@
       <title>Ang Administrasyon ng Web Conferencing</title>
       <info>Ang Web Conferencing ay maaaring pamahalaan ng ibat-ibang mga provider. Pwede kang magpagana ng provider at i-configure ang mga setting.</info>
       <table>
-        <Provider>Provider</Provider>
+        <Provider>Ang Provider o Tagapagtustos</Provider>
         <Description>Description</Description>
-        <Active>Active</Active>
+        <Active>Gawing aktibo</Active>
         <Permissions>Actions</Permissions>
       </table>
       <WebRTC>
@@ -35,14 +35,14 @@
       </Jitsi>
       <modal>
         <title>Provider settings</title>
-        <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN servers</WithPermissions>
-        <None>None</None>
+        <SearchLabel>Ang URL:</SearchLabel>
+        <WithPermissions>STUN / TURN server</WithPermissions>
+        <None>Wala</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
         <Save>Save</Save>
-        <Cancel>Cancel</Cancel>
+        <Cancel>Kanselahin</Cancel>
       </buttons>
     </admin>
   </webconferencing>

@@ -2,8 +2,8 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>OK</ok>
-    <cancel>Cancel</cancel>
+    <ok>Confirmar</ok>
+    <cancel>Cancelar</cancel>
     <callHeader>Iniciar llamada</callHeader>
     <notConfigured>sin configurar</notConfigured>
     <errorReference>Error de referencia:</errorReference>

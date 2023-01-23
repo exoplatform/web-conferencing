@@ -2,8 +2,8 @@
 <bundle>
   <!-- Messages and UI texts for client parts -->
   <webconferencing>
-    <ok>OK</ok>
-    <cancel>Cancel</cancel>
+    <ok>V redu</ok>
+    <cancel>Prekliči</cancel>
     <callHeader>Start Call</callHeader>
     <notConfigured>ni nastavljen</notConfigured>
     <errorReference>Sklic na napako:</errorReference>

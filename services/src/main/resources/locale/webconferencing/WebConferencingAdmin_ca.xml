@@ -8,7 +8,7 @@
         <CannotGetProviders>Can't get providers list.</CannotGetProviders>
         <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
         <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one</CannotSavePreferredEditor>
         <UnableGetData>An error occurred while reading the data.</UnableGetData>
         <UnablePostData>An error occurred while saving the data.</UnablePostData>
       </error>
@@ -16,10 +16,10 @@
       <title>Administració de conferències web</title>
       <info>Les conferències web les poden gestionar diferents proveïdors. Vostè pot habilitar el proveïdor que necessiti i configurar els paràmetres.</info>
       <table>
-        <Provider>Provider</Provider>
-        <Description>Description</Description>
-        <Active>Active</Active>
-        <Permissions>Actions</Permissions>
+        <Provider>Proveïdor</Provider>
+        <Description>Descripció</Description>
+        <Active>Actiu</Active>
+        <Permissions>Accions</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -36,13 +36,13 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN servers</WithPermissions>
-        <None>None</None>
+        <WithPermissions>STUN / TURN server</WithPermissions>
+        <None>Cap</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Save</Save>
-        <Cancel>Cancel</Cancel>
+        <Save>Desa</Save>
+        <Cancel>Cancel·la</Cancel>
       </buttons>
     </admin>
   </webconferencing>
