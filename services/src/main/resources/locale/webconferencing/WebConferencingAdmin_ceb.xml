@@ -8,7 +8,7 @@
         <CannotGetProviders>Can't get providers list.</CannotGetProviders>
         <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
         <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one</CannotSavePreferredEditor>
         <UnableGetData>An error occurred while reading the data.</UnableGetData>
         <UnablePostData>An error occurred while saving the data.</UnablePostData>
       </error>
@@ -16,7 +16,7 @@
       <title>Ang Pagdumala sa Web Conferencing</title>
       <info>Ang web conferencing kay pwede pagdumalaan sa laen-laeng mga tighatag. Kung nanginahanglan kag tighatag pwede nimo siya sugtan og imo lang i-configure ang mga setting.</info>
       <table>
-        <Provider>Provider</Provider>
+        <Provider>Tighatag</Provider>
         <Description>Description</Description>
         <Active>Active</Active>
         <Permissions>Actions</Permissions>
@@ -36,7 +36,7 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN servers</WithPermissions>
+        <WithPermissions>STUN / TURN server</WithPermissions>
         <None>None</None>
         <Everybody>Everybody</Everybody>
       </modal>
