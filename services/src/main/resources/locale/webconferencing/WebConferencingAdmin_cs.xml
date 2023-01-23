@@ -8,7 +8,7 @@
         <CannotGetProviders>Can't get providers list.</CannotGetProviders>
         <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
         <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Can't save selected editor as preferred one.</CannotSavePreferredEditor>
+        <CannotSavePreferredEditor>Can't save selected editor as preferred one</CannotSavePreferredEditor>
         <UnableGetData>An error occurred while reading the data.</UnableGetData>
         <UnablePostData>An error occurred while saving the data.</UnablePostData>
       </error>
@@ -16,10 +16,10 @@
       <title>Správa webových konferencí</title>
       <info>Webové konference mohou zpracovávat různí poskytovatelé. Máte možnost povolit požadovaného poskytovatele a konfigurovat nastavení.</info>
       <table>
-        <Provider>Provider</Provider>
-        <Description>Description</Description>
-        <Active>Active</Active>
-        <Permissions>Actions</Permissions>
+        <Provider>Poskytovatel</Provider>
+        <Description>Popis</Description>
+        <Active>Aktivní</Active>
+        <Permissions>Akce</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -36,13 +36,13 @@
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN servers</WithPermissions>
-        <None>None</None>
+        <WithPermissions>STUN / TURN server</WithPermissions>
+        <None>Žádný</None>
         <Everybody>Everybody</Everybody>
       </modal>
       <buttons>
-        <Save>Save</Save>
-        <Cancel>Cancel</Cancel>
+        <Save>Uložit</Save>
+        <Cancel>Zrušit</Cancel>
       </buttons>
     </admin>
   </webconferencing>
