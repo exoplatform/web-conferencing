@@ -40,6 +40,8 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
+import org.exoplatform.social.core.space.model.Space;
+import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.webconferencing.CallProviderConfiguration;
 import org.exoplatform.webconferencing.GroupInfo;
 import org.exoplatform.webconferencing.IdentityStateException;
@@ -71,6 +73,8 @@ public class RESTWebConferencingService implements ResourceContainer {
   /** The web conferencing. */
   protected final WebConferencingService webConferencing;
 
+  private final SpaceService spaceService;
+
   /** The cache control. */
   private final CacheControl             cacheControl;
 
@@ -79,8 +83,9 @@ public class RESTWebConferencingService implements ResourceContainer {
    *
    * @param webConferencing the web conferencing
    */
-  public RESTWebConferencingService(WebConferencingService webConferencing) {
+  public RESTWebConferencingService(WebConferencingService webConferencing, SpaceService spaceService) {
     this.webConferencing = webConferencing;
+    this.spaceService = spaceService;
     this.cacheControl = new CacheControl();
     cacheControl.setNoCache(true);
     cacheControl.setNoStore(true);
@@ -309,9 +314,9 @@ public class RESTWebConferencingService implements ResourceContainer {
       String currentUserName = convo.getIdentity().getUserId();
       if (spaceName != null && spaceName.length() > 0) {
         try {
-          GroupInfo space = webConferencing.getSpaceInfo(spaceName);
+          Space space = spaceService.getSpaceByPrettyName(spaceName);
           if (space != null) {
-            if (space.getMembers().containsKey(currentUserName)) {
+            if (spaceService.isMember(space, currentUserName)) {
               return Response.ok().cacheControl(cacheControl).entity(space).build();
             } else {
               return Response.status(Status.FORBIDDEN)
@@ -325,18 +330,6 @@ public class RESTWebConferencingService implements ResourceContainer {
                            .entity(ErrorInfo.notFoundError("Space not found or not accessible"))
                            .build();
           }
-        } catch (IdentityStateException e) {
-          LOG.error("Error reading member of space '" + spaceName + "' by '" + currentUserName + "'", e);
-          return Response.serverError()
-                         .cacheControl(cacheControl)
-                         .entity(ErrorInfo.serverError("Error reading member of space '" + spaceName + "'"))
-                         .build();
-        } catch (StorageException e) {
-          LOG.error("Storage error for space info of '" + spaceName + "' by '" + currentUserName + "'", e);
-          return Response.serverError()
-                         .cacheControl(cacheControl)
-                         .entity(ErrorInfo.serverError("Storage error for space '" + spaceName + "'"))
-                         .build();
         } catch (Throwable e) {
           LOG.error("Error reading space info of '" + spaceName + "' by '" + currentUserName + "'", e);
           return Response.serverError()
