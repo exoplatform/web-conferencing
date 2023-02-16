@@ -327,7 +327,8 @@ public class RESTWebConferencingService implements ResourceContainer {
           Space space = spaceService.getSpaceByPrettyName(spaceName);
           if (space != null) {
             if (spaceService.isMember(space, currentUserName)) {
-              return Response.ok().cacheControl(cacheControl).entity(space).build();
+              WebConferencingService.SpaceInfo spaceInfo = webConferencing.new SpaceInfo((space));
+              return Response.ok().cacheControl(cacheControl).entity(spaceInfo).build();
             } else {
               return Response.status(Status.FORBIDDEN)
                              .cacheControl(cacheControl)
