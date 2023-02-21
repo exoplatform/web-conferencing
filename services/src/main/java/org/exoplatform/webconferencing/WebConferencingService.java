@@ -2218,7 +2218,16 @@ public class WebConferencingService implements Startable {
                                                           .append(PermissionType.ADD_NODE)
                                                           .append(",")
                                                           .append(PermissionType.SET_PROPERTY)
+                                                          .append(",")
+                                                          .append(PermissionType.REMOVE)
                                                           .toString();
+      try {
+        if (PermissionUtil.canChangePermission(fileNode)) {
+          setUserPermission(fileNode, user, perm.split(","));
+        }
+      } catch (Exception e) {
+        LOG.error("Cannot set user permission to file node.", e.getMessage());
+      }
       // Share file to other users
       if (shareToUsers != null) {
         for (String participant : shareToUsers) {
@@ -2342,6 +2351,10 @@ public class WebConferencingService implements Startable {
       String nodeMimeType = org.exoplatform.wcm.ext.component.activity.listener.Utils.getMimeType(recordNode);
       link.addMixin(NodetypeConstant.MIX_FILE_TYPE);
       link.setProperty(NodetypeConstant.EXO_FILE_TYPE, nodeMimeType);
+      if (!link.hasProperty(EXO_TITLE_PROP)) {
+        link.addMixin(EXO_RSS_ENABLE_PROP);
+      }
+      link.setProperty(EXO_TITLE_PROP, recordNode.getName());
       userPrivateNode.save();
     } catch (RepositoryException e) {
       if (LOG.isErrorEnabled()) {
