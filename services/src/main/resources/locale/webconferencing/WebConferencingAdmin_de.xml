@@ -8,7 +8,7 @@
         <CannotGetProviders>Lister der Anbieter kann nicht abgerufen werden.</CannotGetProviders>
         <PermissionNotValid>Die angegebene Berechtigung ist ungültig. Möglicherweise existiert der Nutzer oder die Gruppe nicht.</PermissionNotValid>
         <CannotLoadIdentities>Identitäten können nicht nach festgelegten Kriterien geladen werden</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Can't save selected editor as preferred one</CannotSavePreferredEditor>
+        <CannotSavePreferredEditor>Der ausgewählte Editor kann nicht als bevorzugter Editor gespeichert werden.</CannotSavePreferredEditor>
         <UnableGetData>Beim Lesen der Daten ist ein Fehler aufgetreten.</UnableGetData>
         <UnablePostData>Beim Speichern der Daten ist ein Fehler aufgetreten.</UnablePostData>
       </error>
@@ -36,7 +36,7 @@
       <modal>
         <title>Hersteller-Einstellungen</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN server</WithPermissions>
+        <WithPermissions>STUN/TURN-Server</WithPermissions>
         <None>Keine</None>
         <Everybody>Alle</Everybody>
       </modal>
