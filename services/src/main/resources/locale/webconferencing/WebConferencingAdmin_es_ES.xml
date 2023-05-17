@@ -36,7 +36,7 @@
       <modal>
         <title>Ajustes del proveedor</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN server</WithPermissions>
+        <WithPermissions>Servidores STUN/TURN</WithPermissions>
         <None>Ninguno</None>
         <Everybody>Todo el mundo</Everybody>
       </modal>
