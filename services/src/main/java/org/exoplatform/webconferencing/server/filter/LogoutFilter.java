@@ -35,6 +35,8 @@ public class LogoutFilter implements Filter {
       Cookie cookie = new Cookie(WebConferencingService.SESSION_TOKEN_COOKIE, "");
       cookie.setPath("/");
       cookie.setMaxAge(0);
+      cookie.setHttpOnly(true);
+      cookie.setSecure(request.isSecure());
       httpResponse.addCookie(cookie);
     }
     chain.doFilter(request, response);
