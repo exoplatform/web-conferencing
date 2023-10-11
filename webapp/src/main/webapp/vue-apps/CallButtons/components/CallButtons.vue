@@ -358,9 +358,7 @@ export default {
       }
       &.single {
         padding: 0;
-        width: unset;
         border: none;
-        height: 20px;
         background-color: transparent !important;
         // &.single-btn-container {
         button {
@@ -482,9 +480,6 @@ export default {
   margin-right: 6px;
   .call-button-container {
     padding: 0 10px 10px 0;
-    &.single {
-      padding: 0 10px 10px 0;
-    }
   }
 }
 .space-title-action-components {
