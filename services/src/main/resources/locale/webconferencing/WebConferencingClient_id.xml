@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <!-- Messages and UI texts for client parts -->
+  <webconferencing>
+    <ok>Oke</ok>
+    <cancel>Membatalkan</cancel>
+    <callHeader>Start Call</callHeader>
+    <notConfigured>tidak di konfigurasi</notConfigured>
+    <errorReference>Referensi kesalahan:</errorReference>
+  </webconferencing>
+</bundle>

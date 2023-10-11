@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <webrtc>
+    <call>Panggilan</call>
+    <callingYou>menelepon anda...</callingYou>
+    <callWith>Panggilan dengan</callWith>
+    <callTo>Panggilan untuk</callTo>
+    <incomingCall>Panggilan masuk</incomingCall>
+    <answer>Jawab</answer>
+    <decline>Menurun</decline>
+    <callStartTip>Tekan untuk memulai obrolan video</callStartTip>
+    <callRunningTip>Panggilan ini sudah berlangsung. Tekan untuk menampilkan jendela panggilan.</callRunningTip>
+    
+    <providerError>Kesalahan pada penyedia WebRTC</providerError>
+    <providerNotAvailable>Penyedia WebRTC tidak ada</providerNotAvailable>
+    <refreshTryAgainContactAdmin>Silahkan refresh halaman ini dan coba lagi. Jika terdapat kesalahan yang sama, mohon hubungi administrator anda dengan mereferensikan kesalahan ini.</refreshTryAgainContactAdmin>
+    <callStopped>Panggilan telah dihentikan</callStopped>
+    <errorAddCall>Panggilan tidak dapat di mulai karena kesalahan pada server</errorAddCall>
+    <errorOpeningCall>Terjadi kesalahan saat membuka jendela panggilan. Harap segarkan halaman dan coba lagi. Jika kesalahan berlanjut, hubungi administrator Anda.</errorOpeningCall>
+    <callWindowNotOpen>Jendela panggilan tidak bisa di buka. Harap periksa apakah itu diblokir oleh browser Anda.</callWindowNotOpen>
+    <errorStartingCall>Gagal mulai panggilan</errorStartingCall>
+    <errorIncomingCall>Kesalahan saat panggilan masuk</errorIncomingCall>
+    <errorReadUserStatus>Kesalahan saat membaca informasi status pengguna dari server</errorReadUserStatus>
+    <errorReadCall>Kesalahan saat membaca informasi status panggilan dari server</errorReadCall>
+    <errorSubscribeUser>Gagal membuat saluran server-ke-browser untuk mengkomunikasikan pembaharuan pengguna</errorSubscribeUser>
+    <errorSubscribeCall>Gagal membuat saluran server-ke-browser untuk pembaharuan panggilan</errorSubscribeCall>
+    <errorStartingConnection>Kesalahan saat mulai koneksi</errorStartingConnection>
+    <notSupportedPlatform>Platform yang tidak di dukung</notSupportedPlatform>
+    <yourBrowserNotSupportWebrtc>Browser Anda tidak bisa mendukung panggilan WebRTC</yourBrowserNotSupportWebrtc>
+    <notInitialized>Konektor panggilan video WebRTC tidak diinisialisasi dengan benar. Silakan tutup jendela ini dan coba lagi.</notInitialized>
+    <connectionFailed>Gagal konek</connectionFailed>
+    <audioVideoRequired>Mikrofon dan/atau kamera di haruskan melakukan panggilan</audioVideoRequired>
+    <mediaDevicesError>Kesalahan pada saat mengakses kamera atau mikrofon</mediaDevicesError>
+    <accessDenied>Tidak dapat membuka perangkat media karena adanya kesalahan akses atau izin. Pastikan perangkat Anda terhubung dan tidak digunakan oleh aplikasi lain.</accessDenied>
+    <noAudioFound>Tidak ada mikrofon yang di temukan</noAudioFound>
+    <butVideoFound>tapi ada kamera yang di temukan</butVideoFound>
+    
+    <admin>
+      <wrongSettings>Kesalahan pada pengaturan</wrongSettings>
+      <serverUrlMandatory>URL server tidak boleh di kosongkan</serverUrlMandatory>
+      <usernameMandatory>Nama pengguna tidak boleh kosong</usernameMandatory>
+      <credentialMandatory>Kata sandi tidak boleh kosong</credentialMandatory>
+      <errorSavingSettings>Kesalahan menyimpan pengaturan</errorSavingSettings>
+    </admin>
+  </webrtc>
+</bundle>
