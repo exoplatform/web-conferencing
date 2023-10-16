@@ -77,7 +77,7 @@
     </dependency>
     <dependency>
       <groupId>org.exoplatform.social</groupId>
-      <artifactId>social-component-webui</artifactId>
+      <artifactId>social-component-web</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>
