@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <webconferencing>
+    <admin>
+      <error>
+        <ProviderNotRegistered>Penyedia editor tidak terdaftar.</ProviderNotRegistered>
+        <EmptyRequest>Permintaan harus berisi setidaknya 1 parameter formulir (aktif/izin).</EmptyRequest>
+        <CannotGetProviders>Tidak dapat mendapatkan daftar penyedia.</CannotGetProviders>
+        <PermissionNotValid>Izin yang ditentukan tidak valid. Mungkin pengguna atau grup tidak ada.</PermissionNotValid>
+        <CannotLoadIdentities>Tidak dapat memuat identitas berdasarkan kriteria yang ditentukan.</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Tidak dapat menyimpan editor yang dipilih sebagai pilihan.</CannotSavePreferredEditor>
+        <UnableGetData>Terjadi kesalahan saat membaca data.</UnableGetData>
+        <UnablePostData>Terjadi kesalahan saat menyimpan data.</UnablePostData>
+      </error>
+      <page>Konferensi web</page>
+      <title>Administrasi Konferensi Web</title>
+      <info>Konferensi Web dapat ditangani oleh penyedia yang berbeda. Anda dapat mengaktifkan penyedia yang Anda butuhkan dan mengkonfigurasi pengaturan.</info>
+      <table>
+        <Provider>penyedia</Provider>
+        <Description>Deskripsi</Description>
+        <Active>Aktif</Active>
+        <Permissions>Aksi</Permissions>
+      </table>
+      <WebRTC>
+        <name>WebRTC</name>
+        <description>Penyedia bawaan berdasarkan standar https\://webrtc.org/. Memungkinkan pengguna melakukan panggilan peer-to-peer. Tidak perlu plugin.</description>
+      </WebRTC>
+      <Skype>
+        <name>Skype</name>
+        <description>Penyedia untuk Skype. Memungkinkan pengguna melakukan panggilan grup dan 1\:1. Tidak memerlukan plugin, tetapi aplikasi Skype harus diinstal di sisi klien.</description>
+      </Skype>
+      <Jitsi>
+        <name>Jitsi</name>
+        <description>Penyedia Jitsi untuk WebConferencing</description>
+      </Jitsi>
+      <modal>
+        <title>Pengaturan penyedia</title>
+        <SearchLabel>URL:</SearchLabel>
+        <WithPermissions>STUN / TURN server</WithPermissions>
+        <None>Tidak ada</None>
+        <Everybody>semua orang</Everybody>
+      </modal>
+      <buttons>
+        <Save>Simpan</Save>
+        <Cancel>Batal</Cancel>
+      </buttons>
+    </admin>
+  </webconferencing>
+</bundle>
