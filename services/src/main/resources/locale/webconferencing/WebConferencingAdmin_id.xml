@@ -3,23 +3,23 @@
   <webconferencing>
     <admin>
       <error>
-        <ProviderNotRegistered>The editor provider is not registered.</ProviderNotRegistered>
-        <EmptyRequest>The request should contain at least 1 form param (active/permissions).</EmptyRequest>
-        <CannotGetProviders>Can't get providers list.</CannotGetProviders>
-        <PermissionNotValid>The specified permission is not valid. Maybe the user or group doesn't exist.</PermissionNotValid>
-        <CannotLoadIdentities>Can't load identities by specified criteria</CannotLoadIdentities>
-        <CannotSavePreferredEditor>Can't save selected editor as preferred one</CannotSavePreferredEditor>
-        <UnableGetData>An error occurred while reading the data.</UnableGetData>
-        <UnablePostData>An error occurred while saving the data.</UnablePostData>
+        <ProviderNotRegistered>Penyedia editor tidak terdaftar.</ProviderNotRegistered>
+        <EmptyRequest>Permintaan harus berisi setidaknya 1 parameter formulir (aktif/izin).</EmptyRequest>
+        <CannotGetProviders>Tidak dapat mendapatkan daftar penyedia.</CannotGetProviders>
+        <PermissionNotValid>Izin yang ditentukan tidak valid. Mungkin pengguna atau grup tidak ada.</PermissionNotValid>
+        <CannotLoadIdentities>Tidak dapat memuat identitas berdasarkan kriteria yang ditentukan.</CannotLoadIdentities>
+        <CannotSavePreferredEditor>Tidak dapat menyimpan editor yang dipilih sebagai pilihan.</CannotSavePreferredEditor>
+        <UnableGetData>Terjadi kesalahan saat membaca data.</UnableGetData>
+        <UnablePostData>Terjadi kesalahan saat menyimpan data.</UnablePostData>
       </error>
       <page>Konferensi web</page>
       <title>Administrasi Konferensi Web</title>
       <info>Konferensi Web dapat ditangani oleh penyedia yang berbeda. Anda dapat mengaktifkan penyedia yang Anda butuhkan dan mengkonfigurasi pengaturan.</info>
       <table>
-        <Provider>Provider</Provider>
-        <Description>Description</Description>
-        <Active>Active</Active>
-        <Permissions>Actions</Permissions>
+        <Provider>penyedia</Provider>
+        <Description>Deskripsi</Description>
+        <Active>Aktif</Active>
+        <Permissions>Aksi</Permissions>
       </table>
       <WebRTC>
         <name>WebRTC</name>
@@ -27,22 +27,22 @@
       </WebRTC>
       <Skype>
         <name>Skype</name>
-        <description>Provider for Skype. Let users place a group and 1:1 calls. No plugin required but the Skype application must be installed on the client side.</description>
+        <description>Penyedia untuk Skype. Memungkinkan pengguna melakukan panggilan grup dan 1:1. Tidak memerlukan plugin, tetapi aplikasi Skype harus diinstal di sisi klien.</description>
       </Skype>
       <Jitsi>
         <name>Jitsi</name>
-        <description>Jitsi provider for WebConferencing</description>
+        <description>Penyedia Jitsi untuk WebConferencing</description>
       </Jitsi>
       <modal>
-        <title>Provider settings</title>
+        <title>Pengaturan penyedia</title>
         <SearchLabel>URL:</SearchLabel>
-        <WithPermissions>STUN / TURN server</WithPermissions>
-        <None>None</None>
-        <Everybody>Everybody</Everybody>
+        <WithPermissions>Server STUN / TURN</WithPermissions>
+        <None>Tidak ada</None>
+        <Everybody>semua orang</Everybody>
       </modal>
       <buttons>
-        <Save>Save</Save>
-        <Cancel>Cancel</Cancel>
+        <Save>Simpan</Save>
+        <Cancel>Batal</Cancel>
       </buttons>
     </admin>
   </webconferencing>
