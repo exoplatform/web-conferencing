@@ -6,7 +6,8 @@ let config = {
   // can use multiple entry
   entry: {
     admin: "./src/main/webapp/vue-apps/Admin/main.js",
-    callButtons: "./src/main/webapp/vue-apps/CallButtons/main.js"
+    callButtons: "./src/main/webapp/vue-apps/CallButtons/main.js",
+    webConferencingNotificationExtension: "./src/main/webapp/vue-apps/Web-conferencing-notifications/main.js"
   },
   output: {
     filename: "js/[name].bundle.js",
