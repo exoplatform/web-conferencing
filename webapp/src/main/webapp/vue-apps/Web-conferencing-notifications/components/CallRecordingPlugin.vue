@@ -39,10 +39,10 @@ export default {
   },
   computed: {
     profileAvatarUrl() {
-      return this.notification && this.notification.parameters && this.notification.parameters.AVATAR_URL;
+      return this.notification && this.notification.parameters && this.notification.parameters.AVATAR;
     },
     fileUrl() {
-      return this.notification && this.notification.parameters && this.notification.parameters.FILE_URL;
+      return this.notification && this.notification.parameters && this.notification.parameters.RECORDED_FILE_URL;
     },
     fileName() {
       return this.notification && this.notification.parameters && this.notification.parameters.FILE_NAME;
