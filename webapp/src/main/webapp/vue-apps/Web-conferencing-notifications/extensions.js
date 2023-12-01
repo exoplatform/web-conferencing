@@ -17,14 +17,15 @@
 
 extensionRegistry.registerExtension('WebNotification', 'notification-group-extension', {
   rank: 50,
-  name: 'callRecording',
+  name: 'webConferencing',
   plugins: [
     'CallRecordingPlugin',
   ],
+  icon: 'fa-solid fa-video',
 });
 
 extensionRegistry.registerExtension('WebNotification', 'notification-content-extension', {
-  type: 'DlpAdminDetectedItemPlugin',
+  type: 'CallRecordingPlugin',
   rank: 10,
   vueComponent: Vue.options.components['call-recording-notification'],
 });
