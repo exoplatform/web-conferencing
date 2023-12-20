@@ -11,10 +11,10 @@ import static org.exoplatform.webconferencing.webrtc.server.WebrtcContext.CALL_R
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.web.AbstractHttpServlet;
