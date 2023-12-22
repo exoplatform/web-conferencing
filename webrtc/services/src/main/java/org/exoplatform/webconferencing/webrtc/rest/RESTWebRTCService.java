@@ -19,6 +19,7 @@
 package org.exoplatform.webconferencing.webrtc.rest;
 
 import javax.annotation.security.RolesAllowed;
+import javax.print.attribute.standard.Media;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -27,6 +28,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
@@ -36,10 +38,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import org.exoplatform.container.ExoContainer;
+import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
+import org.exoplatform.webconferencing.CallProvider;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.client.ErrorInfo;
 import org.exoplatform.webconferencing.webrtc.WebrtcProvider;
@@ -47,6 +53,8 @@ import org.exoplatform.webconferencing.webrtc.WebrtcProvider.RTCConfiguration;
 
 
 import org.json.JSONObject;
+
+import static org.exoplatform.webconferencing.Utils.buildUrl;
 
 /**
  * REST service for WebRTC provider in Web Conferencing.
@@ -178,4 +186,55 @@ public class RESTWebRTCService implements ResourceContainer {
                      .build();
     }
   }
+
+  @GET
+  @RolesAllowed("administrators")
+  @Path("/connectorsettings")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Operation(
+      summary = "Read WebRTC connector settings",
+      method = "GET",
+      description = "Use this method to read WebRTC connecotr settings. This operation only available to Administrator user.")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled. Settings object returned."),
+      @ApiResponse(responseCode = "401", description = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+      @ApiResponse(responseCode = "404", description = "Provider (WebRTC) not found. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
+      @ApiResponse(responseCode = "500", description = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
+  public Response getConnectorSettings(@Context UriInfo uriInfo, @Context HttpServletRequest request) {
+    ConversationState convo = ConversationState.getCurrent();
+    if (convo != null) {
+      String currentUserName = convo.getIdentity().getUserId();
+      try {
+        WebrtcProvider webrtc = (WebrtcProvider) webConferencing.getProvider(WebrtcProvider.WEBRTC_TYPE);
+        if (webrtc != null) {
+          CallProvider.Settings settings = webrtc.settings()
+                                                 .callUri(buildUrl(request.getScheme(),
+                                request.getServerName(),
+                                request.getServerPort(),
+                                "/webrtc/call"))
+                                                 .locale(request.getLocale())
+                                                 .build();
+
+
+          return Response.ok().cacheControl(cacheControl).entity(settings).build();
+        } else {
+          return Response.status(Status.NOT_FOUND)
+                         .cacheControl(cacheControl)
+                         .entity(ErrorInfo.notFoundError("WebRTC provider not found"))
+                         .build();
+        }
+      } catch (Throwable e) {
+        LOG.error("Error getting WebRTC settings by '" + currentUserName + "'", e);
+        return Response.serverError()
+                       .cacheControl(cacheControl)
+                       .entity(ErrorInfo.serverError("Error getting WebRTC settings"))
+                       .build();
+      }
+    } else {
+      return Response.status(Status.UNAUTHORIZED)
+                     .cacheControl(cacheControl)
+                     .entity(ErrorInfo.accessError("Unauthorized user"))
+                     .build();
+    }
+  }
+
 }
