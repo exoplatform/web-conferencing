@@ -18,6 +18,7 @@
  */
 package org.exoplatform.webconferencing.rest;
 
+import java.util.Locale;
 import java.util.Set;
 
 import javax.annotation.security.RolesAllowed;
@@ -41,17 +42,16 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.apache.commons.lang.StringUtils;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.resources.LocaleConfigService;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
-import org.exoplatform.webconferencing.CallProviderConfiguration;
-import org.exoplatform.webconferencing.GroupInfo;
-import org.exoplatform.webconferencing.IdentityStateException;
-import org.exoplatform.webconferencing.UserInfo;
-import org.exoplatform.webconferencing.WebConferencingService;
+import org.exoplatform.webconferencing.*;
 import org.exoplatform.webconferencing.client.ErrorInfo;
 import org.exoplatform.webconferencing.dao.StorageException;
+import org.exoplatform.ws.frameworks.json.impl.JsonException;
 
 
 /**
@@ -71,6 +71,8 @@ public class RESTWebConferencingService implements ResourceContainer {
   /** The web conferencing. */
   protected final WebConferencingService webConferencing;
 
+  protected final LocaleConfigService localeConfigService;
+
   /** The cache control. */
   private final CacheControl             cacheControl;
 
@@ -79,8 +81,9 @@ public class RESTWebConferencingService implements ResourceContainer {
    *
    * @param webConferencing the web conferencing
    */
-  public RESTWebConferencingService(WebConferencingService webConferencing) {
+  public RESTWebConferencingService(WebConferencingService webConferencing, LocaleConfigService localeConfigService) {
     this.webConferencing = webConferencing;
+    this.localeConfigService = localeConfigService;
     this.cacheControl = new CacheControl();
     cacheControl.setNoCache(true);
     cacheControl.setNoStore(true);
@@ -287,6 +290,68 @@ public class RESTWebConferencingService implements ResourceContainer {
                      .cacheControl(cacheControl)
                      .entity(ErrorInfo.accessError("Unauthorized user"))
                      .build();
+    }
+  }
+
+
+  /**
+   * Gets the Call context info.
+   *
+   * @param uriInfo
+   *          the uri info
+   * @param userName
+   *          the id
+   * @param language
+   *          the current language of the user
+   * @return the user info response
+   */
+  @GET
+  @RolesAllowed("users")
+  @Path("/context")
+  @Operation(
+          summary = "Return the current context of the call",
+          method = "GET",
+          description = "Use this method to read the current context of the call. This operation is available to all Platform users.")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled. Call context object returned."),
+    @ApiResponse(responseCode = "400", description = "Wrong request parameters: name or language. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),
+    @ApiResponse(responseCode = "401", description = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+     @ApiResponse(responseCode = "500", description = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
+  public Response getContext(@Context UriInfo uriInfo,
+                              @Parameter(description = "User name", required = true) @QueryParam("name") String userName,
+                              @Parameter(description = "Language", required = true) @QueryParam("lang") String language) {
+    Locale currentLocale = localeConfigService.getDefaultLocaleConfig().getLocale();
+    if(StringUtils.isBlank(userName)) {
+      return Response.status(Status.BAD_REQUEST)
+              .cacheControl(cacheControl)
+              .entity(ErrorInfo.clientError("Wrong request parameters: name"))
+              .build();
+    }
+    if(StringUtils.isNotBlank(language)) {
+      currentLocale = Locale.forLanguageTag(language);
+    }
+    ConversationState convo = ConversationState.getCurrent();
+    if (convo != null) {
+      String currentUserName = convo.getIdentity().getUserId();
+      if (StringUtils.isNotBlank(userName) && userName.equals(currentUserName)) {
+        ContextInfo context = Utils.getCurrentContext(userName, currentLocale);
+        try {
+          return Response.ok().cacheControl(cacheControl).entity(Utils.asJSON(context)).build();
+        } catch (JsonException jsonException) {
+          return Response.serverError()                         .cacheControl(cacheControl)
+                  .entity(ErrorInfo.serverError("Error creating Json for context "))
+                  .build();
+        }
+      } else {
+        return Response.status(Status.UNAUTHORIZED)
+                .cacheControl(cacheControl)
+                .entity(ErrorInfo.accessError("Unauthorized user"))
+                .build();
+      }
+    } else {
+      return Response.status(Status.UNAUTHORIZED)
+              .cacheControl(cacheControl)
+              .entity(ErrorInfo.accessError("Unauthorized user"))
+              .build();
     }
   }
 
