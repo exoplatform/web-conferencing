@@ -4,7 +4,6 @@
  */
 (function($, webConferencing) {
 	"use strict";
-
 	return {
 		start : function(user, context) {
 			$(function() {
@@ -15,3 +14,5 @@
 		}
 	};
 })($, webConferencing);
+
+

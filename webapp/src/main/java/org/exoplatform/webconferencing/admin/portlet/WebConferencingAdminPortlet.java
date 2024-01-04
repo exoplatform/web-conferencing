@@ -18,6 +18,8 @@
  */
 package org.exoplatform.webconferencing.admin.portlet;
 
+import static org.exoplatform.webconferencing.Utils.asJSON;
+import static org.exoplatform.webconferencing.Utils.getCurrentContext;
 import static org.exoplatform.webconferencing.Utils.getResourceMessages;
 
 import java.io.IOException;
@@ -34,6 +36,7 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.JavascriptManager;
+import org.exoplatform.webconferencing.ContextInfo;
 import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webui.application.WebuiRequestContext;
@@ -91,11 +94,17 @@ public class WebConferencingAdminPortlet extends GenericPortlet {
         //request.setAttribute("messages", messages);
         PortletRequestDispatcher prDispatcher = getPortletContext().getRequestDispatcher("/WEB-INF/pages/admin.jsp");
         prDispatcher.include(request, response);
+        String exoUserJson = asJSON(exoUser);
+        ContextInfo context = getCurrentContext(remoteUser, request.getLocale());
+        String contextJson = asJSON(context);
 
         // Javascript
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
-        js.require("SHARED/webConferencingAdminPortlet", "webConferencingAdminPortlet")
+        js.require("SHARED/webConferencingPortlet", "webConferencingPortlet")
+          .require("PORTLET/webconferencing/webConferencingAdminPortlet", "webConferencingAdminPortlet")
+          .addScripts("webConferencingPortlet.start(" + exoUserJson + "," + contextJson + ");")
           .addScripts("webConferencingAdminPortlet.init();"); // messages: " + asJSON(messages) + " - i18n not yet required by the script
+
       } else {
         LOG.warn("Web Conferencing Admin portlet cannot be initialized: user info cannot be obtained for " + remoteUser);
       }
