@@ -1,4 +1,12 @@
 import adminApp from './components/AdminApp.vue';
+const components = {
+  'admin-app': adminApp,
+};
+
+for (const key in components) {
+  Vue.component(key, components[key]);
+}
+
 
 Vue.use(Vuetify);
 const vuetify = new Vuetify(eXo.env.portal.vuetifyPreset);
@@ -8,22 +16,19 @@ const lang = (eXo && eXo.env && eXo.env.portal && eXo.env.portal.language) || 'e
 const localePortlet = 'locale.webconferencing';
 const resourceBundleName = 'WebConferencingAdmin';
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
+const appId = 'webconferencingAdmin';
 
 export function init() {
+  console.log('In webconferencing admin portlet init');
   // getting locale ressources
   exoi18n.loadLanguageAsync(lang, url).then(i18n => {
+
     // init Vue app when locale ressources are ready
-    new Vue({
-      render: h =>
-        h(adminApp, {
-          props: {
-            i18n: i18n,
-            language: lang,
-            resourceBundleName: resourceBundleName 
-          },
-        }),
-      i18n,
-      vuetify
-    }).$mount('#webconferencingAdmin');
-  });
+    console.log('In webconferencing admin portlet loadLanguageAsync',i18n);
+    Vue.createApp({
+      template: `<admin-app id="${appId}" />`,
+      vuetify,
+      i18n
+    }, `#${appId}`, 'WebConferencingAdmin');
+  }).finally(() => Vue.prototype.$utils.includeExtensions('VisioConnector'));
 }

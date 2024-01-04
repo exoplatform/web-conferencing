@@ -673,8 +673,6 @@
 						// copy ICE servers from the working settings and use them for updates
 						// Deep copy of the settings.rtcConfiguration as a working copy for the form 
 						var rtcConfiguration = $.extend(true, {}, settings.rtcConfiguration);
-						//activate tooltip
-						$popup.find("[data-toggle='tooltip']").tooltip();
 						var $error = $settings.find(".alert-error");
 						function showConfError(messageKey, $source) {
 							var messageText = message(messageKey);
