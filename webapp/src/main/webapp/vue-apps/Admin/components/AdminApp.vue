@@ -31,7 +31,7 @@
                 color="primary"
                 inset
                 class="providersSwitcher"
-                @change="changeActive(jitsiProviderConfig)" />
+                @change="changeActive(providerConfig)" />
             </v-list-item-action>
             <v-list-item-content class="py-0 pt-1">
               <v-list-item-title>
