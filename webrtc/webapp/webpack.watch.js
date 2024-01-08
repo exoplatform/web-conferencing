@@ -8,7 +8,7 @@ const webpackProductionConfig = require('./webpack.prod.js');
 module.exports = merge(webpackProductionConfig, {
   mode: 'development',
   output: {
-    path: '/exo-server/webapps/caldav/',
+    path: '/exo-server/webapps/webrtc/',
     filename: 'js/[name].bundle.js'
   }
 });
