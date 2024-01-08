@@ -1,84 +1,53 @@
 <template>
   <v-app id="web-conferencing-admin">
-    <v-container style="width: 95%">
+    <v-container style="width: 95%" class=" white card-border-radius pa-5">
       <div
         v-show="error"
         class="alert alert-error">
         {{ $t(`${errorResourceBase}.${error}`) ? $t(`${errorResourceBase}.${error}`) : error }}
       </div>
       <v-row>
-        <v-col xs12 px-3>
-          <h4 class="webconferencingTitle">
-            <span class="me-3">{{ $t("webconferencing.admin.title") }}</span>
-          </h4>
+        <v-col>
+          <v-label>
+            <span class="text-color font-weight-bold mb-2">{{ $t("webconferencing.admin.title") }}</span>
+          </v-label>
         </v-col>
       </v-row>
-      <v-row>
-        <v-col xs12>
-          <v-simple-table
-            :dense="true"
-            class="uiGrid table table-hover providersTable">
-            <template v-slot:default>
-              <thead>
-                <tr class="providersTableRow">
-                  <th class="text-start">{{ $t("webconferencing.admin.table.Provider") }}</th>
-                  <th class="text-start">{{ $t("webconferencing.admin.table.Description") }}</th>
-                  <th
-                    class="text-start"
-                    style="width: 5%">
-                    {{ $t("webconferencing.admin.table.Active") }}
-                  </th>
-                  <th
-                    class="text-start"
-                    style="width: 5%">
-                    {{ $t("webconferencing.admin.table.Permissions") }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody v-if="providersConfig.length > 0">
-                <tr 
-                  v-for="providerConfig in providersConfig"
-                  :key="providerConfig.title"
-                  class="providersTableRow">
-                  <td>
-                    <div>
-                      {{ $t(`webconferencing.admin.${providerConfig.title}.name`)
-                        ? $t(`webconferencing.admin.${providerConfig.title}.name`)
-                        : providerConfig.title
-                      }}
-                    </div>
-                  </td>
-                  <td>
-                    <div 
-                      v-html="$t(`webconferencing.admin.${providerConfig.title}.description`)
-                        ? $t(`webconferencing.admin.${providerConfig.title}.description`)
-                        : '' ">
-                    </div>
-                  </td>
-                  <td class="center actionContainer">
-                    <div>
-                      <v-switch
-                        :dense="true"
-                        :input-value="providerConfig.active"
-                        :ripple="false"
-                        v-model="providerConfig.active"
-                        hide-details
-                        color="#568dc9"
-                        class="providersSwitcher"
-                        @change="changeActive(providerConfig)" />
-                    </div>
-                  </td>
-                  <td class="center actionContainer">
-                    <i
-                      v-if="providerConfig.hasSettings"
-                      class="uiIconSetting uiIconLightGray"
-                      @click="providerConfig.provider.showSettings()"></i>
-                  </td>
-                </tr>
-              </tbody>
-            </template>
-          </v-simple-table>
+      <v-row class="mx-0 mt-2">
+        <v-col class="d-flex flex-row px-0 py-0 col-10">
+          <span class="text-color"> {{ $t("webconferencing.admin.section.title") }} </span>
         </v-col>
+        <v-list>
+          <v-list-item
+            class="px-0"
+            v-for="providerConfig in providersConfig"
+            :key="providerConfig.title">
+            <v-list-item-action class="me-2 mt-0">
+              <v-switch
+                :dense="true"
+                :input-value="providerConfig.active"
+                :ripple="true"
+                v-model="providerConfig.active"
+                color="primary"
+                inset
+                class="providersSwitcher"
+                @change="changeActive(providerConfig)" />
+            </v-list-item-action>
+            <v-list-item-content class="py-0 pt-1">
+              <v-list-item-title>
+                {{ $t(`webconferencing.admin.${providerConfig.title}.name`)
+                  ? $t(`webconferencing.admin.${providerConfig.title}.name`)
+                  : providerConfig.title }} 
+              </v-list-item-title>
+              <div
+                class="caption text-light-color" 
+                v-html="$t(`webconferencing.admin.${providerConfig.title}.description`)
+                  ? $t(`webconferencing.admin.${providerConfig.title}.description`)
+                  : '' ">
+              </div>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
       </v-row>
     </v-container>
   </v-app>
