@@ -1,6 +1,6 @@
 <template>
   <v-app id="web-conferencing-admin">
-    <v-container style="width: 95%" class=" white card-border-radius pa-5">
+    <div class="white card-border-radius pa-5">
       <div
         v-show="error"
         class="alert alert-error">
@@ -9,13 +9,13 @@
       <v-row>
         <v-col>
           <v-label>
-            <span class="text-color font-weight-bold mb-2">{{ $t("webconferencing.admin.title") }}</span>
+            <h4 class="font-weight-bold mt-0">{{ $t("webconferencing.admin.title") }}</h4>
           </v-label>
         </v-col>
       </v-row>
       <v-row class="mx-0 mt-2">
         <v-col class="d-flex flex-row px-0 py-0 col-10">
-          <span class="text-color"> {{ $t("webconferencing.admin.section.title") }} </span>
+          <h4 class="my-0 text-color"> {{ $t("webconferencing.admin.section.title") }} </h4>
         </v-col>
         <v-list>
           <v-list-item
@@ -24,12 +24,9 @@
             :key="providerConfig.title">
             <v-list-item-action class="me-2 mt-0">
               <v-switch
-                :dense="true"
                 :input-value="providerConfig.active"
-                :ripple="true"
                 v-model="providerConfig.active"
                 color="primary"
-                inset
                 class="providersSwitcher"
                 @change="changeActive(providerConfig)" />
             </v-list-item-action>
@@ -49,7 +46,7 @@
           </v-list-item>
         </v-list>
       </v-row>
-    </v-container>
+    </div>
   </v-app>
 </template>
 
