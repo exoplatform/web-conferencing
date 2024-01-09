@@ -20,9 +20,9 @@
     </div>
     <div class="pe-4 ps-2">
       <i
-          :style="{ 'background-color': header.bgMini }"
-          :class="header.paddingClass"
-          class="uiIconMiniArrowDown uiIconLightGray "></i>
+        :style="{ 'background-color': header.bgMini }"
+        :class="header.paddingClass"
+        class="uiIconMiniArrowDown uiIconLightGray "></i>
     </div>
   </div>
 </template>

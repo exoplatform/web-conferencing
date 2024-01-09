@@ -80,9 +80,16 @@ public class WebrtcProviderPortlet extends GenericPortlet {
 
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
         js.require("SHARED/webConferencing", "webConferencing")
+          .require("SHARED/webConferencingPortlet", "webConferencingPortlet")
           .require("SHARED/webConferencing_webrtc", "webrtcProvider")
-          .addScripts("if (webrtcProvider) { webrtcProvider.configure(" + settingsJson
-              + "); webConferencing.addProvider(webrtcProvider); webConferencing.update(); }");
+          .addScripts("async function registerProvider() {" +
+                    "if (webrtcProvider) { " +
+                      "await webConferencingPortlet.start();" +
+                      "webrtcProvider.configure(" + settingsJson + ");" +
+                      "webConferencing.addProvider(webrtcProvider); webConferencing.update(); " +
+                    "}" +
+                  "}" +
+                  "registerProvider();");
       } catch (Exception e) {
         LOG.error("Error processing WebRTC call portlet for user " + request.getRemoteUser(), e);
       }
