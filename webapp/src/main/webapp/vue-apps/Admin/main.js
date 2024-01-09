@@ -19,12 +19,10 @@ const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${loca
 const appId = 'webconferencingAdmin';
 
 export function init() {
-  console.log('In webconferencing admin portlet init');
   // getting locale ressources
   exoi18n.loadLanguageAsync(lang, url).then(i18n => {
 
     // init Vue app when locale ressources are ready
-    console.log('In webconferencing admin portlet loadLanguageAsync',i18n);
     Vue.createApp({
       template: `<admin-app id="${appId}" />`,
       vuetify,

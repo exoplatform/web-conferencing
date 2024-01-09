@@ -1,4 +1,4 @@
-window.require(['SHARED/webConferencing','SHARED/webConferencing_webrtc'], function(webConferencing,webConferencing_webrtc) {
+window.require(['SHARED/webConferencing','SHARED/webConferencingPortlet', 'SHARED/webConferencing_webrtc'], function(webConferencing, webConferencingPortlet, webConferencing_webrtc) {
   if (webConferencing_webrtc) {
     fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/webrtc/webconferencing/connectorsettings`, {
       credentials: 'include',
@@ -10,6 +10,7 @@ window.require(['SHARED/webConferencing','SHARED/webConferencing_webrtc'], funct
         return resp.json();
       }
     }).then((data) => {
+      webConferencingPortlet.start();
       webConferencing_webrtc.configure(data);
       webConferencing.addProvider(webConferencing_webrtc);
     });

@@ -822,8 +822,6 @@
 							} else {
 								$iceServers.append($ices);
 							}
-							//activate tooltip for added servers
-							$ices.find("[data-toggle='tooltip']").tooltip();
 						}
 
 						$noServer.on('click', '.uiIconPlus', function() {

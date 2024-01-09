@@ -759,14 +759,14 @@
 		var providers = []; // loaded providers
 		var providersConfig; // will be assigned in init()
 		var providersInitializer = {}; // map managed by getProvider() and initProvider()
-		
+
 		this.errorText = errorText;
-		
+
 		var contextId = function(context) {
 			return context.userId ? context.userId : (context.spaceId ? context.spaceId : context.roomName);
 		};
 		this.contextId = contextId;
-		
+
 		var initContext = function() {
 			var context = {
 				currentUser : currentUser,
@@ -781,7 +781,7 @@
 				}
 			};
 			if (currentSpaceId) {
-				context.spaceId = currentSpaceId; 
+				context.spaceId = currentSpaceId;
 				context.isSpace = true;
 				context.isGroup = true;
 			} else {
@@ -791,7 +791,7 @@
 			}
 			if (currentRoomTitle) {
 				context.roomTitle = currentRoomTitle;
-				context.isRoom = true; 
+				context.isRoom = true;
 			} else {
 				context.roomTitle = null;
 				context.isRoom = false;
@@ -808,9 +808,9 @@
 			}
 			return null;
 		};
-		
+
 		var initProvider = function(provider) {
-			// Returned promise will be resolved with a provider instance and boolean flag indicating was the provider 
+			// Returned promise will be resolved with a provider instance and boolean flag indicating was the provider
 			// successfully initialized or not. The promise will be rejected if provider not configured (should not happen).
 			var initializer = providersInitializer[provider.getType()]; // deferred may be added by getProvider()
 			if (!initializer) {
@@ -845,8 +845,8 @@
 			}
 			return initializer.promise();
 		};
-		
-    /** 
+
+    /**
      * Returns the context details function in accordance with context.
      */
     var contextDetails = function(context) {
@@ -934,9 +934,9 @@
       }
       return context;
     };
-    
-    /** 
-     * Build an array of chat room all members (including the current user). 
+
+    /**
+     * Build an array of chat room all members (including the current user).
      */
     var chatRoomParticipants = function(chatParticipants, chatUsername) {
       const unames = [];
@@ -957,10 +957,10 @@
       if (chatUsername && addUser) {
         unames.push(chatUsername);
       }
-      return unames;  
+      return unames;
     };
 
-    /** 
+    /**
      * Create the chat context from events target (selected room data)
      * target - the data from the exo-chat-selected-contact-changed event
      */
@@ -1015,7 +1015,7 @@
       }
       return context;
     };
-		
+
 		var userContext = function(userId) {
 			var context = {
 				currentUser : currentUser,
@@ -1053,7 +1053,7 @@
 					const	space = getSpaceInfoReq(spaceId);
 			  	space.fail(function(err) {
 			  		log.trace("Error getting space info " + spaceId + " for space context", err);
-					});	
+					});
 					return space;
 				}
 			};
@@ -1082,7 +1082,7 @@
       };
       return context;
     };
-		
+
     /**
      * Format start/end dates in the call info from Date instance to String in ISO 8601.
      */
@@ -1099,7 +1099,7 @@
         callInfo.endDate = undefined;
       }
     };
-		
+
     /**
      * DEPRECATED method. It's referd by the documentaiton and samples - need clean in a next release.
      */
@@ -1126,9 +1126,9 @@
 					if (context.roomTitle) {
 						currentRoomTitle = context.roomTitle;
 					} else {
-						currentRoomTitle = null; 
+						currentRoomTitle = null;
 					}
-					
+
 					// init CometD connectivity
 					if (context.cometdPath) {
 						cCometD.configure({
@@ -1153,13 +1153,13 @@
 					        this.unsubscribe(subscriptionHandle);
 					    }
 						}
-						
+
 						// Check if need core log remote spooling. Cometd required also for remote logger.
 						if (providersConfig && cometd) {
 							for (var i=0; i<providersConfig.length; i++) {
 								var conf = providersConfig[i];
 								if (conf && conf.logEnabled) {
-									// core log also should be spooled remotely from this moment, it contains info important for 
+									// core log also should be spooled remotely from this moment, it contains info important for
 									// monitoring a provider functionality
 									log = new Logger().prefix("webconferencing").remoteLog(true).get();
 									break;
@@ -1167,12 +1167,12 @@
 							}
 						}
 
-						log.debug("User initialized in Web Conferencing: " + currentUser.id + ". Lang: " + (navigator.language || navigator.userLanguage || navigator.browserLanguage) 
+						log.debug("User initialized in Web Conferencing: " + currentUser.id + ". Lang: " + (navigator.language || navigator.userLanguage || navigator.browserLanguage)
 									+ ". Local date: " + new Date().toLocaleString() + ". Browser: " + navigator.userAgent);
 					} else {
 						log.warn("CometD not found in context settings");
 					}
-				
+
 					contextInitializer.resolve();
 					// also init registered providers
 					for (var i = 0; i < providers.length; i++) {
@@ -1184,35 +1184,35 @@
 				}
 			}
 		};
-	
+
 		/**
 		 * eXo user running current session.
 		 */
 		this.getUser = function() {
 			return currentUser;
 		};
-		
+
 		/**
-		 * A space currently open in a page that runs this script. 
+		 * A space currently open in a page that runs this script.
 		 * It is not a space of the context (call button etc.) - use contextual spaceId instead.
 		 */
 		this.getCurrentSpaceId = function() {
 			return currentSpaceId;
 		};
-		
+
 		/**
-		 * A room currently open in a page that runs this script. 
+		 * A room currently open in a page that runs this script.
 		 * It is not a room of the context (call button etc.) - use contextual roomTitle or roomName instead.
-		 * Note that this value will be initialized on Chat app page, but may not set in mini chat or any other Platform page.  
+		 * Note that this value will be initialized on Chat app page, but may not set in mini chat or any other Platform page.
 		 */
 		this.getCurrentRoomTitle = function() {
 			return currentRoomTitle;
 		};
-		
+
 		this.getBaseUrl = function() {
 			return pageBaseUrl();
 		};
-		
+
 		/**
 		 * Add provider to the scope.
 		 */
@@ -1221,12 +1221,12 @@
 			// * getType() - major call type name
 			// * getSupportedTypes() - all supported call types
 			// * getTitle() - human-readable title for UI
-			// * callButton(context) - provider should offer an implementation of a Call button and call invoker in it, 
-			// it returns a promise, when it resolved there will be a JQuery element of a button(s) container. 
+			// * callButton(context) - provider should offer an implementation of a Call button and call invoker in it,
+			// it returns a promise, when it resolved there will be a JQuery element of a button(s) container.
 			//
 			// A provider may support following of API methods:
 			// * init() - will be called when web conferencing user will be initialized in this.init(), this method returns a promise
-			
+
 			// TODO avoid duplicates, use map like?
 			if (provider.getSupportedTypes && provider.hasOwnProperty("getSupportedTypes") && provider.getTitle && provider.hasOwnProperty("getTitle")) {
 				if (provider.callButton && provider.hasOwnProperty("callButton")) {
@@ -1249,7 +1249,7 @@
 				log.warn("Not a provider object: " + JSON.stringify(provider));
 			}
 		};
-		
+
 		/**
 		 * Return a provider registered by the type. This method doesn't check if provider was successfully configured and initialized.
 		 */
@@ -1260,12 +1260,12 @@
 				for (var ti = 0; ti < ptypes.length; ti++) {
 					if (ptypes[ti] === type) {
 						return p;
-					}					
+					}
 				}
 			}
 			return null;
 		};
-		
+
 		/**
 		 * Return a promise that will be resolved when a provider will be loaded (may be never if wrong name).
 		 */
@@ -1273,10 +1273,10 @@
 			var initializer = providersInitializer[type]; // deferred may be added by initProvider()
 			if (!initializer) {
 				initializer = providersInitializer[type] = $.Deferred();
-			}			
+			}
 			return initializer.promise();
 		};
-		
+
 		/**
 		 * Helper method to show call popup according the Web Conferencing spec.
 		 */
@@ -1289,7 +1289,7 @@
 				w = Math.floor(aw * 0.8);
 			  h = Math.floor(ah * 0.8);
 			  left = (aw/2)-(w/2);
-			  top = (ah/2)-(h/2);	
+			  top = (ah/2)-(h/2);
 			} else {
 				w = aw;
 			  h = ah;
@@ -1303,7 +1303,7 @@
 		  }
 		  return callWindow;
 		};
-    
+
     /**
      * Helper method to show call window (standard window or tab of the browser by default).
      */
@@ -1314,25 +1314,25 @@
       }
       return callWindow;
     };
-		
-		/** 
+
+		/**
 		 * Helper method to obtain the user IM account of given type.
 		 */
 		this.imAccount = function(user, type) {
 			var ims = user.imAccounts[type];
 			if (ims && ims.length > 0) {
 				// TODO work with multiple IMs of same type
-				return ims[0]; 
+				return ims[0];
 			} else {
 				return null;
 			}
 		};
-		
+
 		// TODO move these calls to CometD
-		this.getUserInfo = getUserInfoReq; 
+		this.getUserInfo = getUserInfoReq;
 		this.getSpaceInfo = getSpaceInfoReq;
 		this.getRoomInfo = getRoomInfoReq;
-		
+
 		/**
 		 * Get registered call from server side database.
 		 */
@@ -1357,9 +1357,9 @@
 				return $.Deferred().reject("CometD required").promise();
 			}
 		};
-    
+
     /**
-     * Find a call ID by given call link (URL) and a provider. 
+     * Find a call ID by given call link (URL) and a provider.
      * If no provider given, this method will go over all providers to find a first matching call.
      */
     this.findCallId = function(link, providerName) {
@@ -1381,7 +1381,7 @@
         }).catch(err => process.fail(err));
       } else {
         self.getAllProviders().then(providers => {
-          let callId = null; 
+          let callId = null;
           for (const provider of providers) {
             callId = findProviderCallId(link, provider);
             if (callId) {
@@ -1392,11 +1392,11 @@
           if (!callId) {
             process.reject("Cannot find call ID for link: " + link);
           }
-        }).catch(err => process.fail(err));        
+        }).catch(err => process.fail(err));
       }
       return process.promise();
     };
-		
+
 		/**
 		 * Find identities by name in org service. Includes groups and users.
 		 */
@@ -1422,7 +1422,7 @@
         return $.Deferred().reject("CometD required").promise();
       }
     };
-		
+
     /**
      * Check if user is invited to the call by provided inviteId.
      * Retuns JSON {"allowed" : true} or {"allowed" : false}
@@ -1449,7 +1449,7 @@
         return $.Deferred().reject("CometD required").promise();
       }
     };
-		
+
     /**
      * Update invites for the call.
      * Accepts array of invited users or groups in form of
@@ -1477,7 +1477,7 @@
         return $.Deferred().reject("CometD required").promise();
       }
     };
-		
+
     /**
      * Add guest to call.
      */
@@ -1503,7 +1503,7 @@
         return $.Deferred().reject("CometD required").promise();
       }
     };
-		
+
 	  /**
      * Update call participants in server side database.
      */
@@ -1529,7 +1529,7 @@
         return $.Deferred().reject("CometD required").promise();
       }
     };
-		
+
 		/**
 		 * Update call state or its all information in the backend.
 		 */
@@ -1551,7 +1551,7 @@
               command : "update",
               id : id,
               state : state
-            });            
+            });
           }
           cometd.remoteCall("/webconferencing/calls", callProps, function(response) {
             var result = tryParseJson(response);
@@ -1568,7 +1568,7 @@
             }
           });
         }
-				// Recognize method params: differentiate second param as a state string (to update only the call state) 
+				// Recognize method params: differentiate second param as a state string (to update only the call state)
         // or a callInfo object to update the whole call
         if (stateInfo) {
           if (typeof stateInfo === "object") {
@@ -1576,9 +1576,9 @@
           } else if (typeof stateInfo === "string") {
             processUpdateCall(id, stateInfo, null);
           } else {
-            stateInfo = null;   
+            stateInfo = null;
           }
-        } 
+        }
         if (!stateInfo) {
           log.trace("Updating call requires a state string or callInfo object");
           process.reject("Call update requires a state or information");
@@ -1589,7 +1589,7 @@
       }
       return process.promise();
 		};
-		
+
 		/**
 		 * Remove call in server side database.
 		 */
@@ -1621,7 +1621,7 @@
     function isDate(date) {
       return date && date instanceof Date && date.getTime() > 0;
     }
-		
+
 		/**
 		 * Register call in server side database.
 		 */
@@ -1641,7 +1641,7 @@
             var result = tryParseJson(response);
             if (response.successful) {
               if (callUrl && !result.url) {
-                result.url = callUrl; 
+                result.url = callUrl;
               }
               process.resolve(result);
             } else {
@@ -1711,7 +1711,7 @@
 			}
       return process.promise();
 		};
-				
+
 		this.getUserGroupCalls = function() {
 			if (cometd) {
 				var process = $.Deferred();
@@ -1733,7 +1733,7 @@
 				return $.Deferred().reject("CometD required").promise();
 			}
 		};
-		
+
 		/* TODO Deprecated since 1.1.1, use updateCall() instead. */
 		this.updateUserCall = function(id, state) {
 			if (cometd) {
@@ -1744,7 +1744,7 @@
 				return $.Deferred().reject("CometD required").promise();
 			}
 		};
-		
+
 		this.onUserUpdate = function(userId, onUpdate, onError, onReady) {
 			if (cometd) {
 				// /service/webconferencing/calls
@@ -1758,7 +1758,7 @@
 					} else {
 						if (typeof onUpdate == "function") {
 							onUpdate(result);
-						}							
+						}
 					}
 				}, cometdContext, function(subscribeReply) {
 					// Subscription status callback
@@ -1772,7 +1772,7 @@
 						var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
 						log.debug("User updates subscription failed for " + userId, err);
 						if (typeof onError == "function") {
-							onError("User updates subscription failed (" + err + ")");								
+							onError("User updates subscription failed (" + err + ")");
 						}
 					}
 				});
@@ -1784,14 +1784,14 @@
 			} else {
 				log.trace("User updates require CometD. Was user: " + userId);
 				if (typeof onError == "function") {
-					onError("CometD required");								
+					onError("CometD required");
 				}
 				return {
 					off : function(callback) {}
 				};
 			}
 		};
-		
+
 		this.onCallUpdate = function(callId, onUpdate, onError, onReady) {
 			if (cometd) {
 				var subscription = cometd.subscribe("/eXo/Application/WebConferencing/call/" + callId, function(message) {
@@ -1804,7 +1804,7 @@
 					} else {
 						if (typeof onUpdate == "function") {
 							onUpdate(result);
-						}							
+						}
 					}
 				}, cometdContext, function(subscribeReply) {
 					// Subscription status callback
@@ -1818,7 +1818,7 @@
 						var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
 						log.trace("Call updates subscription failed for " + callId, err);
 						if (typeof onError == "function") {
-							onError("Call updates subscription failed (" + err + ")");								
+							onError("Call updates subscription failed (" + err + ")");
 						}
 					}
 				});
@@ -1830,14 +1830,14 @@
 			} else {
 				log.trace("Call updates require CometD. Was call: " + callId);
 				if (typeof onError == "function") {
-					onError("Call updates require CometD");								
+					onError("Call updates require CometD");
 				}
 				return {
 					off : function() {}
 				}
 			}
 		};
-				
+
 		this.toCallUpdate = function(callId, data) {
 			var process = $.Deferred();
 			if (cometd) {
@@ -1854,7 +1854,7 @@
 			}
 			return process.promise();
 		};
-		
+
 		this.getProvidersConfig = function(forceUpdate) {
 			var process;
 			if (!forceUpdate && providersConfig) {
@@ -1872,9 +1872,9 @@
 		}
 		this.getProviderConfig = getProviderConfig; // this will ask server
 		this.postProviderConfig = postProviderConfig;
-		
+
 		this.getUserStatus = getUserStatus;
-		
+
 		// common utilities
 		this.getLog = function(providerType) {
 			if (providerType) {
@@ -1905,11 +1905,11 @@
 						}
 					});
 					return logger.get();
-				}				
+				}
 			}
-			return new Logger().get(); // default logger: without prefix and remote not enabled  
+			return new Logger().get(); // default logger: without prefix and remote not enabled
 		};
-    
+
 		this.getRandom = getRandomArbitrary;
 		this.message = message;
 		this.showWarn = showWarn;
@@ -1919,7 +1919,7 @@
 		this.showInfo = showInfo;
 		this.noticeInfo = noticeInfo;
 		this.showConfirm = showConfirm
-		
+
 		/**
 		 * Add style to current document (to the end of head).
 		 */
@@ -1937,7 +1937,7 @@
 				} // else, already added
 			}
 		};
-		
+
 		this.initRequest = initRequest; // for use in other modules (providers, portlets etc)
 
     // target (optional) - the data from the exo-chat-selected-contact-changed event
@@ -1997,6 +1997,30 @@
       });
       return allProviders.promise();
     };
+    this.loadUserInfo = function (userName) {
+      return fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/webconferencing/user/${userName}`, {
+        credentials: 'include',
+        method: 'GET',
+      }).then(resp => {
+        if (resp.ok) {
+          return resp.json();
+        } else {
+          throw new Error(`Error while getting user info for username ${userName}`);
+        }
+      });
+    },
+      this.loadContext = function (userName, language) {
+        return fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/webconferencing/context?name=${userName}&lang=${language}`, {
+          credentials: 'include',
+          method: 'GET',
+        }).then(resp => {
+          if (resp.ok) {
+            return resp.json();
+          } else {
+            throw new Error(`Error while getting call context for username ${userName} and language ${language}`);
+          }
+        });
+      }
 	}
 	
 	var webConferencing = new WebConferencing();
