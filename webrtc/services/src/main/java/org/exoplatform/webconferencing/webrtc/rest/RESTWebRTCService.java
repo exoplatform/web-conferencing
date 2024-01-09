@@ -188,7 +188,7 @@ public class RESTWebRTCService implements ResourceContainer {
   }
 
   @GET
-  @RolesAllowed("users")
+  @RolesAllowed("administrators")
   @Path("/connectorsettings")
   @Produces(MediaType.APPLICATION_JSON)
   @Operation(
