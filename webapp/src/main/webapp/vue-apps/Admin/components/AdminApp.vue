@@ -1,52 +1,51 @@
 <template>
   <v-app id="web-conferencing-admin">
-    <div class="white card-border-radius pa-5">
+    <v-card class="px-6 card-border-radius overflow-hidden" flat>
       <div
         v-show="error"
         class="alert alert-error">
         {{ $t(`${errorResourceBase}.${error}`) ? $t(`${errorResourceBase}.${error}`) : error }}
       </div>
-      <v-row>
-        <v-col>
-          <v-label>
-            <h4 class="font-weight-bold mt-0">{{ $t("webconferencing.admin.title") }}</h4>
-          </v-label>
-        </v-col>
-      </v-row>
-      <v-row class="mx-0 mt-2">
-        <v-col class="d-flex flex-row px-0 py-0 col-10">
-          <h4 class="my-0 text-color"> {{ $t("webconferencing.admin.section.title") }} </h4>
-        </v-col>
-        <v-list>
-          <v-list-item
-            class="px-0"
-            v-for="providerConfig in providersConfig"
-            :key="providerConfig.title">
-            <v-list-item-action class="me-2 mt-0">
-              <v-switch
-                :input-value="providerConfig.active"
-                v-model="providerConfig.active"
-                color="primary"
-                class="providersSwitcher"
-                @change="changeActive(providerConfig)" />
-            </v-list-item-action>
-            <v-list-item-content class="py-0 pt-1">
-              <v-list-item-title>
-                {{ $t(`webconferencing.admin.${providerConfig.title}.name`)
-                  ? $t(`webconferencing.admin.${providerConfig.title}.name`)
-                  : providerConfig.title }} 
-              </v-list-item-title>
-              <div
-                class="caption text-light-color" 
-                v-html="$t(`webconferencing.admin.${providerConfig.title}.description`)
-                  ? $t(`webconferencing.admin.${providerConfig.title}.description`)
-                  : '' ">
-              </div>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </v-row>
-    </div>
+      <v-list-item class="px-0 mb-2 mt-4">
+        <v-list-item-content class="py-0">
+          <v-list-item-title class="my-0">
+            <h4 class="font-weight-bold mt-0">
+              {{ $t("webconferencing.admin.title") }}
+            </h4>
+          </v-list-item-title>
+          <v-list-item-subtitle class="pt-4">
+            <h4 class="my-0 text-color">{{ $t("webconferencing.admin.section.title") }}</h4>
+          </v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
+      <v-list-item
+        class="pb-2 px-0"
+        dense
+        v-for="providerConfig in providersConfig"
+        :key="providerConfig.title">
+        <v-list-item-action class="me-4 mt-0">
+          <v-switch
+            :input-value="providerConfig.active"
+            v-model="providerConfig.active"
+            color="primary"
+            class="providersSwitcher"
+            @change="changeActive(providerConfig)" />
+        </v-list-item-action>
+        <v-list-item-content class="py-0">
+          <v-list-item-title class="subtitle-1 pt-2">
+            {{ $t(`webconferencing.admin.${providerConfig.title}.name`)
+              ? $t(`webconferencing.admin.${providerConfig.title}.name`)
+              : providerConfig.title }} 
+          </v-list-item-title>
+          <div
+            class="caption text-light-color" 
+            v-html="$t(`webconferencing.admin.${providerConfig.title}.description`)
+              ? $t(`webconferencing.admin.${providerConfig.title}.description`)
+              : '' ">
+          </div>
+        </v-list-item-content>
+      </v-list-item>
+    </v-card>
   </v-app>
 </template>
 
