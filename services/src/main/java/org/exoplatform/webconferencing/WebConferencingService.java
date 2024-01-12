@@ -50,10 +50,10 @@ import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.persistence.PersistenceException;
+import jakarta.persistence.PersistenceException;
 
 import org.apache.commons.fileupload2.core.FileUploadException;
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -3526,7 +3526,7 @@ public class WebConferencingService implements Startable {
     //Clear storage session:
     // XXX It is REQUIRED stuff (actual when something were deleted above), otherwise
     // ExoTx/Hibernate will fail to enter into the transaction in createCall() with an exception:
-    // javax.persistence.EntityExistsException: a different object with the same identifier value
+    // jakarta.persistence.EntityExistsException: a different object with the same identifier value
     // was already associated with the session, e.g.:
     // [org.exoplatform.webconferencing.domain.ParticipantEntity#org.exoplatform.webconferencing.domain.ParticipantId@4aa63de3]
     try {
