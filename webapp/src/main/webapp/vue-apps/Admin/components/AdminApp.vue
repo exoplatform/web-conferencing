@@ -45,6 +45,13 @@
           </div>
         </v-list-item-content>
       </v-list-item>
+      <div  
+        v-for="extension in additionalVisioExtensions"
+        :key="extension">
+        <extension-registry-components
+          name="additional-visio-actions"
+          :type="extension.componentName" />
+      </div>
     </v-card>
   </v-app>
 </template>
@@ -70,29 +77,30 @@ export default {
       providersConfig: [],
       switcher: false,
       error: null,
-      log: null
+      log: null,
+      extensions: [],
     };
+  },
+  computed: {
+    additionalVisioExtensions() {
+      return this.extensions.length > 0 && this.extensions.filter(component =>  this.providersConfig.some(provider => 
+        provider.active && component.componentOptions.name === provider.title));
+    }
   },
   created() {
     this.log = webConferencing.getLog().prefix('webconferencing.admin');
     this.getProviders();
+    this.$nextTick().then(() => this.refreshExtensions());
   },
   methods: {
+    refreshExtensions() {
+      this.extensions = extensionRegistry.loadComponents('additional-visio-actions') || [];
+    },
     getProviders() {
       // services object contains urls for requests
       try {
-        const thisvue = this;
         webConferencing.getProvidersConfig().then((providersConfig) => {
-          for (const providerConfig of providersConfig) {
-            webConferencing.getProvider(providerConfig.type).then((provider) => {
-              providerConfig.provider = provider;
-              // set setting visibility for the provider
-              providerConfig.hasSettings = provider.showSettings && provider.hasOwnProperty('showSettings');
-              thisvue.providersConfig.push(providerConfig);
-            }).fail(function(err) {
-              thisvue.log.warn(`Provider ${providerConfig.type} is not available`, err);
-            });
-          }
+          this.providersConfig = providersConfig;
         });
         this.error = null;
       } catch (err) {
