@@ -1,6 +1,9 @@
 <template>
   <v-app class="VuetifyApp ma-0">
-    <div ref="callbutton" :class="['call-button-container']">
+    <div
+      ref="callbutton"
+      v-show="providersButton.length"
+      :class="['call-button-container']">
       <dropdown
         v-click-outside="hideDropdown"
         v-if="providersButton.length > 1"
