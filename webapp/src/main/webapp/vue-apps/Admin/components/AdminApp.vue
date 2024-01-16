@@ -37,12 +37,12 @@
               ? $t(`webconferencing.admin.${providerConfig.title}.name`)
               : providerConfig.title }} 
           </v-list-item-title>
-          <div
-            class="caption text-light-color" 
-            v-html="$t(`webconferencing.admin.${providerConfig.title}.description`)
+          <v-list-item-subtitle
+            class="subtitle-1">
+            {{ $t(`webconferencing.admin.${providerConfig.title}.description`)
               ? $t(`webconferencing.admin.${providerConfig.title}.description`)
-              : '' ">
-          </div>
+              : '' }}
+          </v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
     </v-card>
