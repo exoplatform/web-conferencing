@@ -208,7 +208,7 @@ public class Utils {
         return gen.createJsonObject(obj).toString();
       }
     } else {
-      return "null".intern();
+      return "null";
     }
   }
   

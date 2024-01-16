@@ -4,7 +4,7 @@
       <div
         v-show="error"
         class="alert alert-error">
-        {{ i18n.te(`${errorResourceBase}.${error}`) ? $t(`${errorResourceBase}.${error}`) : error }}
+        {{ $t(`${errorResourceBase}.${error}`) ? $t(`${errorResourceBase}.${error}`) : error }}
       </div>
       <v-row>
         <v-col xs12 px-3>
@@ -42,7 +42,7 @@
                   class="providersTableRow">
                   <td>
                     <div>
-                      {{ i18n.te(`webconferencing.admin.${providerConfig.title}.name`)
+                      {{ $t(`webconferencing.admin.${providerConfig.title}.name`)
                         ? $t(`webconferencing.admin.${providerConfig.title}.name`)
                         : providerConfig.title
                       }}
@@ -50,7 +50,7 @@
                   </td>
                   <td>
                     <div 
-                      v-html="i18n.te(`webconferencing.admin.${providerConfig.title}.description`)
+                      v-html="$t(`webconferencing.admin.${providerConfig.title}.description`)
                         ? $t(`webconferencing.admin.${providerConfig.title}.description`)
                         : '' ">
                     </div>

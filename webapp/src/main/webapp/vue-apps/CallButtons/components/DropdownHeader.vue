@@ -11,18 +11,18 @@
             v-on="on" 
             class="uiIconSocPhone uiIconSocBlue v-btn--icon v-size--default d-flex align-center justify-end pe-1"></i>
         </template>
-        <span>{{ $i18n.te("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
+        <span>{{ $t("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
           : "Start Call" }}</span>
       </v-tooltip>
       <span v-if="!isMobile">
-        {{ $i18n.te("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
+        {{ $t("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
           : "Start Call" }}</span>
     </div>
     <div class="pe-4 ps-2">
       <i
-          :style="{ 'background-color': header.bgMini }"
-          :class="header.paddingClass"
-          class="uiIconMiniArrowDown uiIconLightGray "></i>
+        :style="{ 'background-color': header.bgMini }"
+        :class="header.paddingClass"
+        class="uiIconMiniArrowDown uiIconLightGray "></i>
     </div>
   </div>
 </template>
