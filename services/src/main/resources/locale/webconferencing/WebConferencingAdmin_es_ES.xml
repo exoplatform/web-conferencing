@@ -15,6 +15,9 @@
       <page>Conferencia web</page>
       <title>Administración de conferencias web</title>
       <info>Las conferencias web pueden ser manejadas por distintos proveedores. Puedes activar el proveedor que necesites y configurar los ajustes.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Proveedor</Provider>
         <Description>Descripción</Description>

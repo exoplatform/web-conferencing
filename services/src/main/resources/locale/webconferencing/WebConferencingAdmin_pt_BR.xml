@@ -15,6 +15,9 @@
       <page>Webconferências</page>
       <title>Administração de webconferências</title>
       <info>Webconferências podem ser realizadas através de diferentes provedores. Basta habilitar o provedor que precisa e definir as configurações.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Provedor</Provider>
         <Description>Descrição</Description>

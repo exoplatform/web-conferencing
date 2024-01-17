@@ -15,6 +15,9 @@
       <page>Ang web conferencing</page>
       <title>Ang Pagdumala sa Web Conferencing</title>
       <info>Ang web conferencing kay pwede pagdumalaan sa laen-laeng mga tighatag. Kung nanginahanglan kag tighatag pwede nimo siya sugtan og imo lang i-configure ang mga setting.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Tighatag</Provider>
         <Description>Description</Description>

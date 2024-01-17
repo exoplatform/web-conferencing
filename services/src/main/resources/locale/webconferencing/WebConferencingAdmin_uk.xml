@@ -15,6 +15,9 @@
       <page>Веб-Конференції</page>
       <title>Адміністрування Веб-Конференцій</title>
       <info>Веб-конференції можуть надаватися різними постачальниками. Ви можете ввімкнути потрібного постачальника та налаштувати параметри.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Постачальник</Provider>
         <Description>Опис</Description>

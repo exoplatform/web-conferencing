@@ -15,6 +15,9 @@
       <page>Web conferencing</page>
       <title>Amministrazione di web conferencing</title>
       <info>Web Conferencing possono essere gestite da diversi fornitori. È possibile abilitare il provider necessario e configurare le configurazioni.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Fornitore</Provider>
         <Description>Descrizione</Description>

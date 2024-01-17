@@ -15,6 +15,9 @@
       <page>Web 会議</page>
       <title>Web 会議の管理</title>
       <info>Web 会議は、異なるプロバイダーによって処理することができます。必要な設定を構成してプロバイダーを有効にできます。</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>プロバイダー</Provider>
         <Description>説明</Description>

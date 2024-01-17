@@ -15,6 +15,9 @@
       <page>Visioconférence</page>
       <title>Administration des Visioconférences</title>
       <info>Les visioconférences peuvent être prises en charge par différents connecteurs. Vous pouvez activer les connecteurs dont vous avez besoin et les paramétrer.</info>
+      <section>
+        <title>Visioconférence</title>
+      </section>
       <table>
         <Provider>Connecteur</Provider>
         <Description>Description</Description>

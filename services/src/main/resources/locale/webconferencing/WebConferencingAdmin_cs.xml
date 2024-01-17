@@ -15,6 +15,9 @@
       <page>Webové konference</page>
       <title>Správa webových konferencí</title>
       <info>Webové konference mohou zpracovávat různí poskytovatelé. Máte možnost povolit požadovaného poskytovatele a konfigurovat nastavení.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Poskytovatel</Provider>
         <Description>Popis</Description>

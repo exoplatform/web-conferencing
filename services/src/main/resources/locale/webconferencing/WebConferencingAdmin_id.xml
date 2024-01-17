@@ -15,6 +15,9 @@
       <page>Konferensi web</page>
       <title>Administrasi Konferensi Web</title>
       <info>Konferensi Web dapat ditangani oleh penyedia yang berbeda. Anda dapat mengaktifkan penyedia yang Anda butuhkan dan mengkonfigurasi pengaturan.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>penyedia</Provider>
         <Description>Deskripsi</Description>

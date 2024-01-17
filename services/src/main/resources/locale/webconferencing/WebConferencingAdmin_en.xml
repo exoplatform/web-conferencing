@@ -13,7 +13,7 @@
         <UnablePostData>An error occurred while saving the data.</UnablePostData>
       </error>
       <page>Web Conferencing</page>
-      <title>Video conference setup</title>
+      <title>Web Conferencing Administration</title>
       <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
       <section>
         <title>Video conference</title>
@@ -33,8 +33,8 @@
         <description>Provider for Skype. Let users place a group and 1:1 calls. No plugin required but the Skype application must be installed on the client side.</description>
       </Skype>
       <Jitsi>
-        <name>Jitsi eXo</name>
-        <description>Activate the default video conferencing packaged in eXo Platform</description>
+        <name>Jitsi</name>
+        <description>Jitsi provider for WebConferencing</description>
       </Jitsi>
       <modal>
         <title>Provider settings</title>

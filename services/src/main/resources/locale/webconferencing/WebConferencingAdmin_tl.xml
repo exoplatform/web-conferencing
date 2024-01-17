@@ -15,6 +15,9 @@
       <page>Ang Conferencing sa Web</page>
       <title>Ang Administrasyon ng Web Conferencing</title>
       <info>Ang Web Conferencing ay maaaring pamahalaan ng ibat-ibang mga provider. Pwede kang magpagana ng provider at i-configure ang mga setting.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Ang Provider o Tagapagtustos</Provider>
         <Description>Description</Description>

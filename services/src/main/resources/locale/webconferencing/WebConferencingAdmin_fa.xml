@@ -15,6 +15,9 @@
       <page>Web Conferencing</page>
       <title>Web Conferencing Administration</title>
       <info>Web Conferencing can be handled by different providers. You can enable the provider you need and configure settings.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Provider</Provider>
         <Description>شرح</Description>

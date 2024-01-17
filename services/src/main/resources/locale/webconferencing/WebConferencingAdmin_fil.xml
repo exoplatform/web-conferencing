@@ -15,6 +15,9 @@
       <page>Web Conferencing</page>
       <title>Ang administrasyon ng Web Conference</title>
       <info>Ang Web Conferencing ay maaaring humawak ng iba't ibang provider. Maaari mong paganahin ang provider na iyong kailangan at mag-configure ng mga setting.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Anga tagapaghatid</Provider>
         <Description>Paglalarawan</Description>
