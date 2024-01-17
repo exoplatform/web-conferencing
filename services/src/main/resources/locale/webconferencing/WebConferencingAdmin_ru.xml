@@ -15,6 +15,9 @@
       <page>Веб-конференции</page>
       <title>Администрирование веб-конференций</title>
       <info>Веб-конференции могут быть обработаны разными провайдерами. Вы можете включить необходимого Вам провайдера и настроить параметры.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Провайдер</Provider>
         <Description>Описание</Description>

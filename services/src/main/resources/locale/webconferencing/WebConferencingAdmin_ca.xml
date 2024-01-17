@@ -15,6 +15,9 @@
       <page>Conferència web</page>
       <title>Administració de conferències web</title>
       <info>Les conferències web les poden gestionar diferents proveïdors. Vostè pot habilitar el proveïdor que necessiti i configurar els paràmetres.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Proveïdor</Provider>
         <Description>Descripció</Description>

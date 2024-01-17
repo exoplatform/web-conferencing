@@ -15,6 +15,9 @@
       <page>Conferințe web</page>
       <title>Administrarea conferinței web</title>
       <info>Conferința web poate fi administrată de diferiți furnizori. Îți poți activa furnizorul de care ai nevoie și poți configura setările.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Furnizor</Provider>
         <Description>Descriere</Description>

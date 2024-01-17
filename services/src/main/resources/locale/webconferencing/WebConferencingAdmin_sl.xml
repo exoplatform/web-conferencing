@@ -15,6 +15,9 @@
       <page>Spletna konference</page>
       <title>Adminstracija spletne konference</title>
       <info>Spletno konferenco omogočajo različni ponudniki. Omogočite ponudnika, ki ga potrebujete in konfigurirajte nastavitve.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Ponudnik</Provider>
         <Description>Opis</Description>

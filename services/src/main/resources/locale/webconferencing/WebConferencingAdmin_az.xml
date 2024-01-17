@@ -15,6 +15,9 @@
       <page>Web Konfrans</page>
       <title>İnzibatçının Web Konfransı</title>
       <info>Web Konfrans müxtəlif provayderlər tərəfindən idarə oluna bilər. Sizə lazım olan provayderi aktiv etmək üçün tənzimləmələri konfuqrasiya edə bilərsiniz.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Provayder</Provider>
         <Description>Açıqlama</Description>

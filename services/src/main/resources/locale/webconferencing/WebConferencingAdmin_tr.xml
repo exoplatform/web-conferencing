@@ -15,6 +15,9 @@
       <page>Web Konferansı</page>
       <title>Web Konferansı İdaresi</title>
       <info>Web Konferansı farklı sağlayıcılar tarafından idare edilebilir. İhtiyacınız olan sağlayıcı idare edebilir ve ayarları ayarlayabilirsiniz.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Sağlaycı</Provider>
         <Description>Açıklama</Description>

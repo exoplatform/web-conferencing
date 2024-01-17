@@ -15,6 +15,9 @@
       <page>Vídeo Chamada Web</page>
       <title>Administração de Vídeo Chamada Web</title>
       <info>Vídeo Chamada Web pode ser fornecida por diferentes operadores. Identifique e defina as configurações consoante o operador escolhido.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Operador</Provider>
         <Description>Descrição</Description>

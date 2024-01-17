@@ -15,6 +15,9 @@
       <page>Elektronisch vergaderen</page>
       <title>Administratie van elektronisch vergaderen</title>
       <info>'Elektonisch vergaderen' kan door verschillende providers worden afgehandeld. U kunt de provider die u nodig hebt inschakelen en de instellingen configureren.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Provider</Provider>
         <Description>Beschrijving</Description>

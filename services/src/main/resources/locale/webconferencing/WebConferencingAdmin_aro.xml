@@ -15,6 +15,9 @@
       <page>عقد المؤتمرات على الويب</page>
       <title>إدارة محتوى مؤتمرات الويب</title>
       <info>عقد المؤتمرات على الويب يمكن أن تعالج عن طريق عدة مزودي خدمات. يمكنك تفعيل مزود الخدمات الذي تحتاجه وتهيئة الإعدادات.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>مزود الخدمة</Provider>
         <Description>الوصف</Description>

@@ -15,6 +15,9 @@
       <page>Webkonferenz</page>
       <title>Verwaltung von Webkonferenzen</title>
       <info>Webkonferenzen können von verschiedenen Anbietern betrieben werden. Sie können den von Ihnen benötigten Anbieter aktivieren und Einstellungen konfigurieren.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Anbieter</Provider>
         <Description>Beschreibung</Description>
