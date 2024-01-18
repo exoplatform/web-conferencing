@@ -318,6 +318,7 @@ public class RESTWebConferencingService implements ResourceContainer {
      @ApiResponse(responseCode = "500", description = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
   public Response getContext(@Context UriInfo uriInfo,
                               @Parameter(description = "User name", required = true) @QueryParam("name") String userName,
+                              @Parameter(description = "Space Id", required = true) @QueryParam("spaceId") String spaceId,
                               @Parameter(description = "Language", required = true) @QueryParam("lang") String language) {
     Locale currentLocale = localeConfigService.getDefaultLocaleConfig().getLocale();
     if(StringUtils.isBlank(userName)) {
@@ -333,7 +334,7 @@ public class RESTWebConferencingService implements ResourceContainer {
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
       if (StringUtils.isNotBlank(userName) && userName.equals(currentUserName)) {
-        ContextInfo context = Utils.getCurrentContext(userName, currentLocale);
+        ContextInfo context = Utils.getCurrentContext(userName, spaceId, currentLocale);
         try {
           return Response.ok().cacheControl(cacheControl).entity(Utils.asJSON(context)).build();
         } catch (JsonException jsonException) {
