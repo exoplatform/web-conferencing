@@ -2010,7 +2010,7 @@
       });
     },
       this.loadContext = function (userName, language) {
-        return fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/webconferencing/context?name=${userName}&lang=${language}`, {
+        return fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/webconferencing/context?name=${userName}&spaceId=${eXo.env.portal.spaceId ? eXo.env.portal.spaceId : ''}&lang=${language}`, {
           credentials: 'include',
           method: 'GET',
         }).then(resp => {
