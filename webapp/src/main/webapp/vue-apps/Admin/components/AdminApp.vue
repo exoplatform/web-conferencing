@@ -37,8 +37,7 @@
               ? $t(`webconferencing.admin.${providerConfig.title}.name`)
               : providerConfig.title }} 
           </v-list-item-title>
-          <v-list-item-subtitle
-            class="subtitle-1">
+          <v-list-item-subtitle>
             {{ $t(`webconferencing.admin.${providerConfig.title}.description`)
               ? $t(`webconferencing.admin.${providerConfig.title}.description`)
               : '' }}
