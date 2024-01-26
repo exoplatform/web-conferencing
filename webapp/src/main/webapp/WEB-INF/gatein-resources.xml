@@ -103,6 +103,12 @@
       <depends>
         <module>webConferencingPortlet</module>
       </depends>
+      <depends>
+        <module>AdditionalActionsExtension</module>
+      </depends>
+      <depends>
+        <module>extensionRegistry</module>
+      </depends>
     </module>
   </portlet>
 
@@ -150,6 +156,13 @@
     <depends>
       <module>extensionRegistry</module>
     </depends>
+  </module>
+  <module>
+    <name>AdditionalActionsExtension</name>
+    <load-group>AdditionalActionsExtensionGRP</load-group>
+    <script>
+      <path>/js/AdditionalActionsExtension.js</path>
+    </script>
   </module>
   
 </gatein-resources>

@@ -28,5 +28,8 @@ export function init() {
       vuetify,
       i18n
     }, `#${appId}`, 'WebConferencingAdmin');
-  }).finally(() => Vue.prototype.$utils.includeExtensions('VisioConnector'));
+  }).finally(() => {
+    Vue.prototype.$utils.includeExtensions('VisioConnector');
+    Vue.prototype.$utils.includeExtensions('AdditionalActionsExtension');
+  });
 }
