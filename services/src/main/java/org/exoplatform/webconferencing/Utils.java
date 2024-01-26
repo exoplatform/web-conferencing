@@ -23,6 +23,7 @@ import java.net.URL;
 import java.text.ParseException;
 import java.util.*;
 
+import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.utils.ISO8601;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
@@ -124,15 +125,31 @@ public class Utils {
    * @return the current context
    */
   public static ContextInfo getCurrentContext(String userId, Locale locale) {
-    String spaceRoomName;
-    String spacePrettyName = Utils.getSpaceNameByContext();
-    if (spacePrettyName != null) {
-      // TODO do we need a room name? what if chat room?
-      spaceRoomName = Utils.spaceRoomName(spacePrettyName);
-    } else {
-      spacePrettyName = spaceRoomName = IdentityInfo.EMPTY;
-    }
+    return getCurrentContext(userId, null, locale);
+  }
+
+  /**
+   * Gets the current context.
+   *
+   * @param userId the user id
+   * @param spaceId the current space id
+   * @param locale the locale
+   * @return the current context
+   */
+  public static ContextInfo getCurrentContext(String userId, String spaceId, Locale locale) {
+    String spaceRoomName = "";
+    String spacePrettyName = "";
     ExoContainer exo = ExoContainerContext.getCurrentContainer();
+    SpaceService spaceService = exo.getComponentInstanceOfType(SpaceService.class);
+    if(StringUtils.isNotBlank(spaceId)) {
+      Space space = spaceService.getSpaceById(spaceId);
+      if (space != null) {
+        spacePrettyName = space.getPrettyName();
+        spaceRoomName = Utils.spaceRoomName(spacePrettyName);
+      } else {
+        spacePrettyName = spaceRoomName = IdentityInfo.EMPTY;
+      }
+    }
     WebConferencingService webConferencing = exo.getComponentInstanceOfType(WebConferencingService.class);
     CometdWebConferencingService cometdService = exo.getComponentInstanceOfType(CometdWebConferencingService.class);
     ContextInfo context;
