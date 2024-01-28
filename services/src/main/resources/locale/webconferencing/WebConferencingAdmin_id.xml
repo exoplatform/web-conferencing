@@ -24,6 +24,10 @@
         <Active>Aktif</Active>
         <Permissions>Aksi</Permissions>
       </table>
+      <ExternalVisio>
+        <name>External Video Conference</name>
+        <description>Connect external video conferences via links</description>
+      </ExternalVisio>
       <WebRTC>
         <name>WebRTC</name>
         <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
