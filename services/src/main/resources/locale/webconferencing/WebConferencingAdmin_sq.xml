@@ -24,6 +24,10 @@
         <Active>crwdns6966252:0crwdne6966252:0</Active>
         <Permissions>crwdns6966254:0crwdne6966254:0</Permissions>
       </table>
+      <ExternalVisio>
+        <name>crwdns7100258:0crwdne7100258:0</name>
+        <description>crwdns7100260:0crwdne7100260:0</description>
+      </ExternalVisio>
       <WebRTC>
         <name>crwdns6966256:0crwdne6966256:0</name>
         <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
