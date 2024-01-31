@@ -245,6 +245,7 @@
       iconName: "callButton",
       appClass: CALL_BUTTON,
       typeClass: "call-button--profile",
+      mobileClass: "call-button-mini",
       component: {
         name: "call-button",
         events: [],
