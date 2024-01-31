@@ -40,6 +40,9 @@
         <name>Jitsi</name>
         <description>Jitsi-Anbieter für Webkonferenz</description>
       </Jitsi>
+      <switch>
+        <label>Enable/Disable {0} video conference</label>
+      </switch>
       <modal>
         <title>Hersteller-Einstellungen</title>
         <SearchLabel>URL:</SearchLabel>
