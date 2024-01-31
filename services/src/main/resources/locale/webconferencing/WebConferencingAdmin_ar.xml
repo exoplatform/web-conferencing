@@ -40,6 +40,9 @@
         <name>Jitsi</name>
         <description>مزود Jitsi لـ WebConference</description>
       </Jitsi>
+      <switch>
+        <label>Enable/Disable {0} video conference</label>
+      </switch>
       <modal>
         <title>إعدادات المزود</title>
         <SearchLabel>العنوان:</SearchLabel>

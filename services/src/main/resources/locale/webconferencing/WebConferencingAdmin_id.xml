@@ -40,6 +40,9 @@
         <name>Jitsi</name>
         <description>Penyedia Jitsi untuk WebConferencing</description>
       </Jitsi>
+      <switch>
+        <label>Enable/Disable {0} video conference</label>
+      </switch>
       <modal>
         <title>Pengaturan penyedia</title>
         <SearchLabel>URL:</SearchLabel>

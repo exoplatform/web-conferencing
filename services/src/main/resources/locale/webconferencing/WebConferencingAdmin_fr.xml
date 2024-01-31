@@ -25,8 +25,8 @@
         <Permissions>Actions</Permissions>
       </table>
       <ExternalVisio>
-        <name>Vidéoconférence externe</name>
-        <description>Connecter des vidéoconférences externes via des liens</description>
+        <name>External Video Conference</name>
+        <description>Connect external video conferences via links</description>
       </ExternalVisio>
       <WebRTC>
         <name>WebRTC</name>
@@ -41,7 +41,7 @@
         <description>Fournisseur Jitsi pour la Webconférence</description>
       </Jitsi>
       <switch>
-        <label>Activer/Désactiver {0} la vidéoconférence</label>
+        <label>Enable/Disable {0} video conference</label>
       </switch>
       <modal>
         <title>Paramètres du fournisseur</title>

@@ -40,6 +40,9 @@
         <name>crwdns6966264:0crwdne6966264:0</name>
         <description>crwdns6966266:0crwdne6966266:0</description>
       </Jitsi>
+      <switch>
+        <label>crwdns7100268:0{0}crwdne7100268:0</label>
+      </switch>
       <modal>
         <title>crwdns6966268:0crwdne6966268:0</title>
         <SearchLabel>crwdns6966270:0crwdne6966270:0</SearchLabel>
