@@ -38,7 +38,6 @@
   <modules>
     <module>services</module>
     <module>webapp</module>
-    <module>webrtc</module>
     <module>packaging</module>
   </modules>
 
@@ -81,19 +80,6 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>web-conferencing-webapp</artifactId>
-        <version>${project.version}</version>
-        <type>war</type>
-      </dependency>
-      <!-- WebRTC extension -->
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>web-conferencing-webrtc-services</artifactId>
-        <version>${project.version}</version>
-        <type>jar</type>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>web-conferencing-webrtc-webapp</artifactId>
         <version>${project.version}</version>
         <type>war</type>
       </dependency>
