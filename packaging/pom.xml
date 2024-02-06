@@ -46,19 +46,6 @@
       <type>war</type>
       <scope>provided</scope>
     </dependency>
-    <!-- WebRTC -->
-    <dependency>
-      <groupId>org.exoplatform.addons.web-conferencing</groupId>
-      <artifactId>web-conferencing-webrtc-services</artifactId>
-      <type>jar</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.exoplatform.addons.web-conferencing</groupId>
-      <artifactId>web-conferencing-webrtc-webapp</artifactId>
-      <type>war</type>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
   
   <build>
