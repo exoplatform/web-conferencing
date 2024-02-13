@@ -7,11 +7,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ActiveProviderInfo {
+public class ActiveCallProvider {
 
     private String name;
 
     private String url;
 
-    private boolean heavyConnector;
+    private boolean integratedConnector;
 }

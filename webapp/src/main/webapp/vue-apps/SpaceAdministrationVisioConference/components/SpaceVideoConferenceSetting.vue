@@ -56,14 +56,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
             <v-list-item-title class="subtitle-1">
               {{ provider.name }}
             </v-list-item-title>
-            <v-list-item-subtitle v-if="provider.heavyConnector">
+            <v-list-item-subtitle v-if="provider.integratedConnector">
               {{ $t(`videoConference.space.settings.${provider.title}.description`) }}
             </v-list-item-subtitle>
             <v-list-item-subtitle v-else>
               {{ provider.url ? $t('videoConference.space.settings.connector.link.descrition', {0: provider.url}) : $t('videoConference.space.settings.connector.descrition') }}
             </v-list-item-subtitle>
           </v-list-item-content>
-          <v-list-item-action class="pt-0 ma-0 mb-6" v-if="!provider.heavyConnector">
+          <v-list-item-action class="pt-0 ma-0 mb-6" v-if="!provider.integratedConnector">
             <v-btn 
               :title="$t('videoConference.space.settings.editConnector')"
               primary
@@ -103,8 +103,8 @@ export default {
       this.$videoConferenceService.getActiveProvidersForSpace(this.spaceId)
         .then((activeProviders) => {
           this.activeProviders = activeProviders.slice().sort((a, b) => {
-            // Tri en fonction de la valeur de l'attribut "heavyConnector"
-            return (a.heavyConnector === b.heavyConnector) ? 0 : a.heavyConnector ? -1 : 1;
+            // Tri en fonction de la valeur de l'attribut "integratedConnector"
+            return (a.integratedConnector === b.integratedConnector) ? 0 : a.integratedConnector ? -1 : 1;
           });
         });
     },

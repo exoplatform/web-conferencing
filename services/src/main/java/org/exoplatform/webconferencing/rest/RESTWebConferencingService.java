@@ -650,7 +650,7 @@ public class RESTWebConferencingService implements ResourceContainer {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
     try {
-      List<ActiveProviderInfo> activeProviderInfoList = webConferencing.getActiveProvidersForSpace(spaceId);
+      List<ActiveCallProvider> activeProviderInfoList = webConferencing.getActiveProvidersForSpace(spaceId);
       return Response.ok(activeProviderInfoList).build();
     } catch (Exception e) {
       LOG.warn("Error retrieving list of active providers for space", e);

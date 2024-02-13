@@ -8,7 +8,7 @@ let config = {
     admin: "./src/main/webapp/vue-apps/Admin/main.js",
     callButtons: "./src/main/webapp/vue-apps/CallButtons/main.js",
     webConferencingNotificationExtension: "./src/main/webapp/vue-apps/Web-conferencing-notifications/main.js",
-    webConferencing: './src/main/webapp/vue-apps/VideoConference/main.js'
+    webConferencing: './src/main/webapp/vue-apps/SpaceAdministrationVisioConference/main.js'
   },
   output: {
     filename: "js/[name].bundle.js",

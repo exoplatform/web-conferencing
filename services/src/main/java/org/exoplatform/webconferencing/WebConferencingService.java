@@ -4008,8 +4008,8 @@ public class WebConferencingService implements Startable {
     }
   }
   // <<<<<<< Call storage: wrappers to catch JPA exceptions
-  public List<ActiveProviderInfo> getActiveProvidersForSpace(String spaceId) {
-    List<ActiveProviderInfo> allProviders = new ArrayList<>();
+  public List<ActiveCallProvider> getActiveProvidersForSpace(String spaceId) {
+    List<ActiveCallProvider> allProviders = new ArrayList<>();
     for (CallProvider registeredProvider : providers.values()) {
       allProviders.addAll(registeredProvider.getActiveProvidersForSpace(spaceId));
     }

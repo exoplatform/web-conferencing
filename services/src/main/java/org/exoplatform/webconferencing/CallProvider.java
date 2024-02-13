@@ -286,5 +286,5 @@ public abstract class CallProvider extends BaseComponentPlugin {
    */
   public abstract IMInfo getIMInfo(String imId) throws CallProviderException;
 
-  public abstract List<ActiveProviderInfo> getActiveProvidersForSpace(String spaceId);
+  public abstract List<ActiveCallProvider> getActiveProvidersForSpace(String spaceId);
 }
