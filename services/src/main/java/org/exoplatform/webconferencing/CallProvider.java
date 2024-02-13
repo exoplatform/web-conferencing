@@ -18,10 +18,7 @@
  */
 package org.exoplatform.webconferencing;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import org.exoplatform.container.component.BaseComponentPlugin;
@@ -289,4 +286,5 @@ public abstract class CallProvider extends BaseComponentPlugin {
    */
   public abstract IMInfo getIMInfo(String imId) throws CallProviderException;
 
+  public abstract List<ActiveProviderInfo> getActiveProvidersForSpace(String spaceId);
 }

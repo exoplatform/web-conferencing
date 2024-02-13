@@ -18,6 +18,7 @@
  */
 package org.exoplatform.webconferencing.rest;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -48,6 +49,8 @@ import org.exoplatform.services.log.Log;
 import org.exoplatform.services.resources.LocaleConfigService;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
+import org.exoplatform.social.core.space.model.Space;
+import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.webconferencing.*;
 import org.exoplatform.webconferencing.client.ErrorInfo;
 import org.exoplatform.webconferencing.dao.StorageException;
@@ -76,15 +79,19 @@ public class RESTWebConferencingService implements ResourceContainer {
   /** The cache control. */
   private final CacheControl             cacheControl;
 
+  private final SpaceService spaceService;
+
+
   /**
    * Instantiates a new REST service for web conferencing.
    *
    * @param webConferencing the web conferencing
    */
-  public RESTWebConferencingService(WebConferencingService webConferencing, LocaleConfigService localeConfigService) {
+  public RESTWebConferencingService(WebConferencingService webConferencing, LocaleConfigService localeConfigService, SpaceService spaceService) {
     this.webConferencing = webConferencing;
     this.localeConfigService = localeConfigService;
     this.cacheControl = new CacheControl();
+    this.spaceService = spaceService;
     cacheControl.setNoCache(true);
     cacheControl.setNoStore(true);
   }
@@ -624,6 +631,30 @@ public class RESTWebConferencingService implements ResourceContainer {
                      .cacheControl(cacheControl)
                      .entity(ErrorInfo.accessError("Unauthorized user"))
                      .build();
+    }
+  }
+
+  @GET
+  @RolesAllowed("users")
+  @Path("{spaceId}/providers")
+  @Operation(summary = "Retrieves the list of active providers for space", method = "GET", description = "Retrieves the list of active providers for space")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized"),
+      @ApiResponse(responseCode = "500", description = "Internal server error"), })
+  public Response getActiveProvidersForSpace(@Parameter(description = "Space Id", required = true)
+  @PathParam("spaceId")
+  String spaceId) {
+    String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
+    Space space = spaceService.getSpaceById(spaceId);
+    if (space == null || (!spaceService.isMember(space, authenticatedUser) && !spaceService.isSuperManager(authenticatedUser))) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    try {
+      List<ActiveProviderInfo> activeProviderInfoList = webConferencing.getActiveProvidersForSpace(spaceId);
+      return Response.ok(activeProviderInfoList).build();
+    } catch (Exception e) {
+      LOG.warn("Error retrieving list of active providers for space", e);
+      return Response.serverError().entity(e.getMessage()).build();
     }
   }
 }
