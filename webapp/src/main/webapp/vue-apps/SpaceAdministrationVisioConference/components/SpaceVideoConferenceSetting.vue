@@ -20,10 +20,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
       <v-card class="pa-6 card-border-radius overflow-hidden" flat>
         <v-list-item class="px-0 mb-4">
           <v-list-item-content class="py-0">
-            <v-list-item-title class="my-0">
-              <h4 class="font-weight-bold mt-0">
-                {{ $t('videoConference.space.settings.title') }}
-              </h4>
+            <v-list-item-title class="title text-color my-0">
+              {{ $t('videoConference.space.settings.title') }}
             </v-list-item-title>
             <v-list-item-title class="pt-2">
               {{ $t('videoConference.event.settings.title') }}
@@ -57,7 +55,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
               {{ provider.name }}
             </v-list-item-title>
             <v-list-item-subtitle v-if="provider.integratedConnector">
-              {{ $t(`videoConference.space.settings.${provider.title}.description`) }}
+              {{ $t(`videoConference.space.settings.${provider.name}.description`) }}
             </v-list-item-subtitle>
             <v-list-item-subtitle v-else>
               {{ provider.url ? $t('videoConference.space.settings.connector.link.descrition', {0: provider.url}) : $t('videoConference.space.settings.connector.descrition') }}
