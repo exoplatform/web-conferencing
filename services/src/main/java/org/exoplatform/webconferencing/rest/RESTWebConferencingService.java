@@ -24,6 +24,7 @@ import java.util.Set;
 
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
+
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -31,6 +32,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -40,6 +42,7 @@ import javax.ws.rs.core.UriInfo;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -654,6 +657,38 @@ public class RESTWebConferencingService implements ResourceContainer {
       return Response.ok(activeProviderInfoList).build();
     } catch (Exception e) {
       LOG.warn("Error retrieving list of active providers for space", e);
+      return Response.serverError().entity(e.getMessage()).build();
+    }
+  }
+
+  @POST
+  @Path("/provider")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("users")
+  @Operation(summary = "Saves a new Video conference", description = "Creates a new Video conference", method = "POST")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled"),
+      @ApiResponse(responseCode = "400", description = "Invalid query input"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized"),
+      @ApiResponse(responseCode = "500", description = "Internal server error"), })
+  public Response saveVideoConference(@RequestBody(description = "VideoConference object to create", required = true)
+  ActiveCallProvider activeCallProvider,
+                                      @Parameter(description = "Space Id", required = true)
+                                      @QueryParam("spaceId")
+                                      String spaceId) {
+    if (activeCallProvider == null) {
+      return Response.status(Response.Status.BAD_REQUEST).entity("activeCallProvider object is mandatory").build();
+    }
+    String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
+    Space space = spaceService.getSpaceById(spaceId);
+    if (space == null || (!spaceService.isMember(space, authenticatedUser) && !spaceService.isSuperManager(authenticatedUser))) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    try {
+      webConferencing.saveActiveCallProvider(activeCallProvider, spaceId);
+      return Response.ok().build();
+    } catch (Exception e) {
+      LOG.warn("Error creating a VideoConference", e);
       return Response.serverError().entity(e.getMessage()).build();
     }
   }

@@ -3996,6 +3996,28 @@ public class WebConferencingService implements Startable {
     for (CallProvider registeredProvider : providers.values()) {
       allProviders.addAll(registeredProvider.getActiveProvidersForSpace(spaceId));
     }
-    return allProviders;
+
+    return allProviders.stream().map(provider -> updateCallProviderUrl(spaceId, provider)).toList();
+  }
+
+  public void saveActiveCallProvider(ActiveCallProvider activeCallProvider, String identityId) {
+    if (activeCallProvider == null) {
+      throw new IllegalArgumentException("activeCallProvider is mandatory");
+    }
+    settingService.remove(Context.GLOBAL, Scope.SPACE.id(identityId), activeCallProvider.getConnectorId());
+    settingService.set(Context.GLOBAL,
+                       Scope.SPACE.id(identityId),
+                       activeCallProvider.getConnectorId(),
+                       SettingValue.create(activeCallProvider.getUrl()));
+  }
+
+  public ActiveCallProvider updateCallProviderUrl(String identityId, ActiveCallProvider activeCallProvider) {
+    SettingValue<?> settingValue = settingService.get(Context.GLOBAL,
+                                                      Scope.SPACE.id(identityId),
+                                                      activeCallProvider.getConnectorId());
+    if (settingValue != null) {
+      activeCallProvider.setUrl(String.valueOf(settingValue.getValue()));
+    }
+    return activeCallProvider;
   }
 }
