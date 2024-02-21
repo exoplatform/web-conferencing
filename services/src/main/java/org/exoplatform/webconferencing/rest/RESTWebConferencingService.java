@@ -672,17 +672,20 @@ public class RESTWebConferencingService implements ResourceContainer {
       @ApiResponse(responseCode = "401", description = "Unauthorized"),
       @ApiResponse(responseCode = "500", description = "Internal server error"), })
   public Response saveVideoConference(@RequestBody(description = "VideoConference object to create", required = true)
-  ActiveCallProvider activeCallProvider) {
+  ActiveCallProvider activeCallProvider,
+                                      @Parameter(description = "Space Id", required = true)
+                                      @QueryParam("spaceId")
+                                      String spaceId) {
     if (activeCallProvider == null) {
       return Response.status(Response.Status.BAD_REQUEST).entity("activeCallProvider object is mandatory").build();
     }
     String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
-    Space space = spaceService.getSpaceById(activeCallProvider.getIdentity());
+    Space space = spaceService.getSpaceById(spaceId);
     if (space == null || (!spaceService.isMember(space, authenticatedUser) && !spaceService.isSuperManager(authenticatedUser))) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
     try {
-      webConferencing.saveActiveCallProvider(activeCallProvider);
+      webConferencing.saveActiveCallProvider(activeCallProvider, spaceId);
       return Response.ok().build();
     } catch (Exception e) {
       LOG.warn("Error creating a VideoConference", e);

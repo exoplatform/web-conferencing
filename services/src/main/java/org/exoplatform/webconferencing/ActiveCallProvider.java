@@ -11,8 +11,6 @@ public class ActiveCallProvider {
 
   private String  connectorId;
 
-  private String  identity;
-
   private String  name;
 
   private String  url;

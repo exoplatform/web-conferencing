@@ -12,9 +12,9 @@ export function getActiveProvidersForSpace(identityId) {
   });
 }
 
-export function saveActiveProvider(provider) {
+export function saveActiveProvider(provider, spaceId) {
 
-  return fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/webconferencing/provider`, {
+  return fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/webconferencing/provider?spaceId=${spaceId}`, {
     method: 'POST',
     credentials: 'include',
     headers: {

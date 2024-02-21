@@ -201,11 +201,6 @@ public class WebConferencingService implements Startable {
   /** The Constant PROVIDER_SCOPE_NAME. */
   protected static final String PROVIDER_SCOPE_NAME          = "webconferencing.provider".intern();
 
-  protected static final String CALL_PROVIDER_SCOPE_NAME     = "webconferencing.call.provider".intern();
-
-  protected static final String CALL_PROVIDER_KEY            = "activeCallProvider";
-
-  
   /** The Constant JWT_CONFIGURATION_PROPERTIES. */
   protected static final String JWT_CONFIGURATION_PROPERTIES = "jwt-configuration";
 
@@ -4018,66 +4013,27 @@ public class WebConferencingService implements Startable {
     for (CallProvider registeredProvider : providers.values()) {
       allProviders.addAll(registeredProvider.getActiveProvidersForSpace(spaceId));
     }
-    SettingValue<?> settingValue =
-                                 settingService.get(Context.GLOBAL, Scope.GLOBAL.id(CALL_PROVIDER_SCOPE_NAME), CALL_PROVIDER_KEY);
-    if (settingValue != null) {
-      allProviders = allProviders.stream().map(provider -> updateCallProviderUrl(settingValue, provider)).toList();
-    }
-    return allProviders;
+
+    return allProviders.stream().map(provider -> updateCallProviderUrl(spaceId, provider)).toList();
   }
 
-  public void saveActiveCallProvider(ActiveCallProvider activeCallProvider) {
+  public void saveActiveCallProvider(ActiveCallProvider activeCallProvider, String identityId) {
     if (activeCallProvider == null) {
       throw new IllegalArgumentException("activeCallProvider is mandatory");
     }
-    SettingValue<?> settingValue =
-                                 settingService.get(Context.GLOBAL, Scope.GLOBAL.id(CALL_PROVIDER_SCOPE_NAME), CALL_PROVIDER_KEY);
-    String res = updateCallProvider(settingValue, activeCallProvider);
-    settingService.set(Context.GLOBAL, Scope.GLOBAL.id(CALL_PROVIDER_SCOPE_NAME), CALL_PROVIDER_KEY, SettingValue.create(res));
+    settingService.remove(Context.GLOBAL, Scope.SPACE.id(identityId), activeCallProvider.getConnectorId());
+    settingService.set(Context.GLOBAL,
+                       Scope.SPACE.id(identityId),
+                       activeCallProvider.getConnectorId(),
+                       SettingValue.create(activeCallProvider.getUrl()));
   }
 
-  protected JSONObject activeProviderToJson(ActiveCallProvider activeCallProvider) throws JSONException {
-    JSONObject json = new JSONObject();
-
-    json.put("connectorId", activeCallProvider.getConnectorId());
-    json.put("identity", activeCallProvider.getIdentity());
-    json.put("url", activeCallProvider.getUrl());
-    return json;
-  }
-
-  public String updateCallProvider(SettingValue<?> settingValue, ActiveCallProvider activeCallProvider) {
-    if (settingValue == null) {
-      return activeProviderToJson(activeCallProvider).toString();
-    } else {
-      List<JSONObject> jsonObjectList = Stream.of(settingValue.getValue().toString().split(";"))
-                                              .map(JSONObject::new)
-                                              .collect(Collectors.toCollection(ArrayList::new));
-      JSONObject json = jsonObjectList.stream()
-                                      .filter(jsonObject -> jsonObject.getString("connectorId")
-                                                                      .equals(activeCallProvider.getConnectorId())
-                                          && jsonObject.getString("identity").equals(activeCallProvider.getIdentity()))
-                                      .findFirst()
-                                      .orElse(null);
-      if (json == null) {
-        jsonObjectList.add(activeProviderToJson(activeCallProvider));
-      } else {
-        json.put("url", activeCallProvider.getUrl());
-      }
-      return jsonObjectList.stream().map(JSONObject::toString).collect(Collectors.joining(";"));
-    }
-  }
-
-  public ActiveCallProvider updateCallProviderUrl(SettingValue<?> settingValue, ActiveCallProvider activeCallProvider) {
-
-    List<JSONObject> jsonObjectList = Stream.of(settingValue.getValue().toString().split(";")).map(JSONObject::new).toList();
-    JSONObject json = jsonObjectList.stream()
-                                    .filter(jsonObject -> jsonObject.getString("connectorId")
-                                                                    .equals(activeCallProvider.getConnectorId())
-                                        && jsonObject.getString("identity").equals(activeCallProvider.getIdentity()))
-                                    .findFirst()
-                                    .orElse(null);
-    if (json != null) {
-      activeCallProvider.setUrl(json.getString("url"));
+  public ActiveCallProvider updateCallProviderUrl(String identityId, ActiveCallProvider activeCallProvider) {
+    SettingValue<?> settingValue = settingService.get(Context.GLOBAL,
+                                                      Scope.SPACE.id(identityId),
+                                                      activeCallProvider.getConnectorId());
+    if (settingValue != null) {
+      activeCallProvider.setUrl(String.valueOf(settingValue.getValue()));
     }
     return activeCallProvider;
   }

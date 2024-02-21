@@ -79,6 +79,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 export default {
   data () {
     return {
+      spaceId: eXo.env.portal.spaceId,
       videoConference: null,
       videoConferenceLink: '',
       isValidForm: true,
@@ -112,13 +113,13 @@ export default {
     saveVideoConference() {
       const videoConference = {
         connectorId: this.videoConference.connectorId,
-        identity: eXo.env.portal.spaceId,
+        identity: this.spaceId,
         name: this.videoConference.name,
         url: this.videoConferenceLink,
         integratedConnector: this.videoConference.integratedConnector
 
       };
-      this.$videoConferenceService.saveActiveProvider(videoConference).then(() => {
+      this.$videoConferenceService.saveActiveProvider(videoConference, this.spaceId).then(() => {
         this.$root.$emit('alert-message', this.$t('videoConference.label.saveLink.success'), 'success');
         this.$root.$emit('refresh-video-conferences');
         this.close();
