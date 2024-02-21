@@ -15,9 +15,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 import SpaceVideoConferenceSetting from './components/SpaceVideoConferenceSetting.vue';
-
+import VideoConferenceLinkDrawer from './components/VideoConferenceLinkDrawer.vue';
 const components = {
   'space-video-conference-settings': SpaceVideoConferenceSetting,
+  'video-conference-link-drawer': VideoConferenceLinkDrawer
 };
 
 for (const key in components) {
