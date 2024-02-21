@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ActiveCallProvider {
 
+  private String  connectorId;
+
   private String  name;
 
   private String  url;
