@@ -3994,9 +3994,10 @@ public class WebConferencingService implements Startable {
   public List<ActiveCallProvider> getActiveProvidersForSpace(String spaceId) {
     List<ActiveCallProvider> allProviders = new ArrayList<>();
     for (CallProvider registeredProvider : providers.values()) {
-      allProviders.addAll(registeredProvider.getActiveProvidersForSpace(spaceId));
+      if(getProvider(registeredProvider.getType()).isActive()) {
+        allProviders.addAll(registeredProvider.getActiveProvidersForSpace(spaceId));
+      }
     }
-
     return allProviders.stream().map(provider -> updateCallProviderUrl(spaceId, provider)).toList();
   }
 
