@@ -36,7 +36,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
               :aria-label="this.$t(`videoConference.switch.label.${this.switchAriaLabel}`)" />
           </v-list-item-action>
         </v-list-item>
-        <v-list-item class="px-0">
+        <v-list-item class="px-0" v-if="active">
           <v-list-item-content>
             <v-list-item-title class="subtitle-1">
               {{ $t('videoConference.space.settings.list.title') }}
@@ -46,31 +46,33 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
             </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
-        <v-list-item
-          v-for="provider in activeProviders"
-          :key="provider"
-          class="px-0">
-          <v-list-item-content>
-            <v-list-item-title class="subtitle-1">
-              {{ provider.name }}
-            </v-list-item-title>
-            <v-list-item-subtitle v-if="provider.integratedConnector">
-              {{ $t(`videoConference.space.settings.${provider.name}.description`) }}
-            </v-list-item-subtitle>
-            <v-list-item-subtitle v-else>
-              {{ provider.url ? $t('videoConference.space.settings.connector.link.descrition', {0: provider.url}) : $t('videoConference.space.settings.connector.descrition') }}
-            </v-list-item-subtitle>
-          </v-list-item-content>
-          <v-list-item-action class="pt-0 ma-0 mb-6" v-if="!provider.integratedConnector">
-            <v-btn 
-              :title="$t('videoConference.space.settings.editConnector')"
-              primary
-              icon
-              @click="$root.$emit('open-video-conference-link-drawer', provider)">
-              <i class="uiIconEdit"></i>
-            </v-btn>
-          </v-list-item-action>
-        </v-list-item>
+        <div v-if="active">
+          <v-list-item
+            v-for="provider in activeProviders"
+            :key="provider"
+            class="px-0">
+            <v-list-item-content>
+              <v-list-item-title class="subtitle-1">
+                {{ provider.name }}
+              </v-list-item-title>
+              <v-list-item-subtitle v-if="provider.integratedConnector">
+                {{ $t(`videoConference.space.settings.${provider.name}.description`) }}
+              </v-list-item-subtitle>
+              <v-list-item-subtitle v-else>
+                {{ provider.url ? $t('videoConference.space.settings.connector.link.descrition', {0: provider.url}) : $t('videoConference.space.settings.connector.descrition') }}
+              </v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action class="pt-0 ma-0 mb-6" v-if="!provider.integratedConnector">
+              <v-btn 
+                :title="$t('videoConference.space.settings.editConnector')"
+                primary
+                icon
+                @click="$root.$emit('open-video-conference-link-drawer', provider)">
+                <i class="uiIconEdit"></i>
+              </v-btn>
+            </v-list-item-action>
+          </v-list-item>
+        </div>
         <video-conference-link-drawer />
       </v-card>
     </template>
@@ -85,6 +87,7 @@ export default {
     displayed: true,
   }),
   created() {
+    this.isVideoConferenceEnabled();
     this.getActiveProvidersForSpace();
     this.$root.$on('refresh-video-conferences', this.getActiveProvidersForSpace);
     document.addEventListener('hideSettingsApps', (event) => {
@@ -99,6 +102,11 @@ export default {
       return this.active && 'disable' || 'enable';
     },
   },
+  watch: {
+    active() {
+      this.updateVideoConferenceEnabled();
+    }
+  },
   methods: {
     getActiveProvidersForSpace() {
       this.$videoConferenceService.getActiveProvidersForSpace(this.spaceId)
@@ -107,6 +115,15 @@ export default {
             // Tri en fonction de la valeur de l'attribut "integratedConnector"
             return (a.integratedConnector === b.integratedConnector) ? 0 : a.integratedConnector ? -1 : 1;
           });
+        });
+    },
+    updateVideoConferenceEnabled() {
+      this.$videoConferenceService.updateVideoConferenceEnabled(this.spaceId, this.active);
+    },
+    isVideoConferenceEnabled() {
+      this.$videoConferenceService.isVideoConferenceEnabled(this.spaceId)
+        .then((enabled) => {
+          this.active = enabled;
         });
     },
   }
