@@ -207,7 +207,7 @@ public class WebConferencingService implements Startable {
   /** The Constant SECRET_KEY. */
   protected static final String SECRET_KEY                   = "secret-key";
 
-  protected static final String VIDEO_CONFERENCE_IS_ENABLED  = "videoConference:isEnabled";
+  protected static final String VIDEO_CONFERENCE_IS_ENABLED  = "videoConferenceEnabled";
 
   /**
    * Represent Space in calls.
