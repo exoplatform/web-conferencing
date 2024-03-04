@@ -65,11 +65,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
             <v-btn 
               :title="$t('videoConference.space.settings.editConnector')"
               primary
-              icon>
+              icon
+              @click="$root.$emit('open-video-conference-link-drawer', provider)">
               <i class="uiIconEdit"></i>
             </v-btn>
           </v-list-item-action>
         </v-list-item>
+        <video-conference-link-drawer />
       </v-card>
     </template>
   </v-app>
@@ -84,6 +86,7 @@ export default {
   }),
   created() {
     this.getActiveProvidersForSpace();
+    this.$root.$on('refresh-video-conferences', this.getActiveProvidersForSpace);
     document.addEventListener('hideSettingsApps', (event) => {
       if (event && event.detail && this.id !== event.detail) {
         this.displayed = false;

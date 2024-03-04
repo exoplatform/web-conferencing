@@ -7,7 +7,23 @@ export function getActiveProvidersForSpace(identityId) {
     if (resp.ok) {
       return resp.json();
     } else {
-      throw new Error('Error when retrieving external visio settings');
+      throw new Error('Error when retrieving active providers for space');
+    }
+  });
+}
+
+export function saveActiveProvider(provider, spaceId) {
+
+  return fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/webconferencing/provider?spaceId=${spaceId}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(provider),
+  }).then((resp) => {
+    if (!resp || !resp.ok) {
+      throw new Error('Error saving ActiveProvider');
     }
   });
 }
