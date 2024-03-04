@@ -70,6 +70,8 @@ export function create(context, target) {
             });
           }
         });
+      }).finally(() => {
+        Vue.prototype.$utils.includeExtensions('VisioConnector');
       });
     } else {
       const log = webConferencing.getLog('webconferencing');
