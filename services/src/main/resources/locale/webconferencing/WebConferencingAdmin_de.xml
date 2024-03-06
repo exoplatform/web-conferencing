@@ -16,7 +16,7 @@
       <title>Verwaltung von Webkonferenzen</title>
       <info>Webkonferenzen können von verschiedenen Anbietern betrieben werden. Sie können den von Ihnen benötigten Anbieter aktivieren und Einstellungen konfigurieren.</info>
       <section>
-        <title>Video conference</title>
+        <title>Videokonferenz</title>
       </section>
       <table>
         <Provider>Anbieter</Provider>
@@ -25,8 +25,8 @@
         <Permissions>Aktionen</Permissions>
       </table>
       <ExternalVisio>
-        <name>External Video Conference</name>
-        <description>Connect external video conferences via links</description>
+        <name>Externe Videokonferenz</name>
+        <description>Verbinde externe Videokonferenzen über Links</description>
       </ExternalVisio>
       <WebRTC>
         <name>WebRTC</name>
@@ -41,7 +41,7 @@
         <description>Jitsi-Anbieter für Webkonferenz</description>
       </Jitsi>
       <switch>
-        <label>Enable/Disable {0} video conference</label>
+        <label>{0} Videokonferenz aktivieren/deaktivieren</label>
       </switch>
       <modal>
         <title>Hersteller-Einstellungen</title>
