@@ -39,7 +39,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
         <v-list-item class="px-0" v-if="active">
           <v-list-item-content>
             <v-list-item-title class="subtitle-1">
-              {{ $t('videoConference.space.settings.list.title') }}
+              <h4 class="my-0 text-color">{{ $t('videoConference.space.settings.list.title') }}</h4>
             </v-list-item-title>
             <v-list-item-subtitle>
               {{ $t('videoConference.space.settings.list.description') }}
@@ -49,8 +49,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
         <div v-if="active">
           <v-list-item
             v-for="provider in activeProviders"
-            :key="provider"
-            class="px-0">
+            :key="provider">
             <v-list-item-content>
               <v-list-item-title class="subtitle-1">
                 {{ provider.name }}
