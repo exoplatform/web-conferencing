@@ -692,4 +692,59 @@ public class RESTWebConferencingService implements ResourceContainer {
       return Response.serverError().entity(e.getMessage()).build();
     }
   }
+
+  @POST
+  @Path("updateVideoConferenceEnabled")
+  @Produces(MediaType.TEXT_PLAIN)
+  @RolesAllowed("users")
+  @Operation(summary = "update a Video Conference enabled", method = "POST", description = "This updates a VideoConference enabled")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized"),
+      @ApiResponse(responseCode = "500", description = "Internal server error") })
+  public Response updateVideoConferenceEnabled(@Parameter(description = "Space Id", required = true)
+  @QueryParam("spaceId")
+  String spaceId,
+                                               @Parameter(description = "enabled", required = true)
+                                               @QueryParam("enabled")
+                                               boolean enabled) {
+
+    String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
+    Space space = spaceService.getSpaceById(spaceId);
+    if (space == null || (!spaceService.isMember(space, authenticatedUser) && !spaceService.isSuperManager(authenticatedUser))) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    try {
+      webConferencing.updateVideoConferenceEnabled(spaceId, enabled);
+      return Response.ok().build();
+    } catch (Exception e) {
+      LOG.warn("Error updating a VideoConference enabled", e);
+      return Response.serverError().entity(e.getMessage()).build();
+    }
+  }
+
+  @GET
+  @Path("isVideoConferenceEnabled")
+  @Produces(MediaType.TEXT_PLAIN)
+  @RolesAllowed("users")
+  @Operation(summary = "check if the video conference is enabled for space", method = "GET", description = "This checks if the video conference is enabled for space")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized"),
+      @ApiResponse(responseCode = "500", description = "Internal server error") })
+  public Response isVideoConferenceEnabled(@Parameter(description = "Space Id", required = true)
+  @QueryParam("spaceId")
+  String spaceId) {
+
+    String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
+    Space space = spaceService.getSpaceById(spaceId);
+    if (space == null || (!spaceService.isMember(space, authenticatedUser) && !spaceService.isSuperManager(authenticatedUser))) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    try {
+      boolean videoConferenceEnabled = webConferencing.isVideoConferenceEnabled(spaceId);
+      return Response.ok(String.valueOf(videoConferenceEnabled)).build();
+    } catch (Exception e) {
+      LOG.warn("Error checking a VideoConference enabled for space", e);
+      return Response.serverError().entity(e.getMessage()).build();
+    }
+  }
 }
