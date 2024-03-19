@@ -207,6 +207,7 @@ public class WebConferencingService implements Startable {
   /** The Constant SECRET_KEY. */
   protected static final String SECRET_KEY                   = "secret-key";
 
+  protected static final String VIDEO_CONFERENCE_IS_ENABLED  = "videoConferenceEnabled";
 
   /**
    * Represent Space in calls.
@@ -4036,5 +4037,15 @@ public class WebConferencingService implements Startable {
       activeCallProvider.setUrl(String.valueOf(settingValue.getValue()));
     }
     return activeCallProvider;
+  }
+
+  public void updateVideoConferenceEnabled(String spaceId, boolean enabled) {
+    settingService.remove(Context.GLOBAL, Scope.SPACE.id(spaceId), VIDEO_CONFERENCE_IS_ENABLED);
+    settingService.set(Context.GLOBAL, Scope.SPACE.id(spaceId), VIDEO_CONFERENCE_IS_ENABLED, SettingValue.create(enabled));
+  }
+
+  public boolean isVideoConferenceEnabled(String spaceId) {
+    SettingValue<?> settingValue = settingService.get(Context.GLOBAL, Scope.SPACE.id(spaceId), VIDEO_CONFERENCE_IS_ENABLED);
+    return settingValue == null || Boolean.parseBoolean(settingValue.getValue().toString());
   }
 }
