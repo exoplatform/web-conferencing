@@ -159,20 +159,27 @@ export default {
           webConferencing.getAllProviders().then(providers => {
             providers.map(provider => {
               if (provider.isInitialized) {
-                callButtons.push(provider.callButton(context));
+                provider.callButton(context).then(components => {
+                  callButtons.push(...components);
+                });
               }
             });
-            Promise.allSettled(callButtons).then(resCallButtons => {
-              resCallButtons.forEach(button => {
-                if (button.status === 'fulfilled') {
-                  this.providersButton.push(button.value);
-                  if (button.value.$data) {
-                    button.value.$data.header = 'CALL';
+            setTimeout(() => {
+              // Tri en fonction de la valeur de l'attribut "urlConnector"
+              callButtons.sort((a, b) => (b.callSettings.urlConnector ? 1 : -1) - (a.callSettings.urlConnector ? 1 : -1));
+              Promise.allSettled(callButtons).then(resCallButtons => {
+                resCallButtons.forEach(button => {
+                  if (button.status === 'fulfilled') {
+                    this.providersButton.push(button.value);
+                    if (button.value.$data) {
+                      button.value.$data.header = 'CALL';
+                    }
                   }
-                }
+                });
+                thevue.createButtons();
               });
-              thevue.createButtons();
-            });
+            }, 200);
+            
           });
         } else if (context && !context.details) {
           // mini chat - TODO whata a logic for mini chat with context w/o details??
@@ -354,6 +361,7 @@ export default {
       min-height: 10px;
       .dropdown-vue {
         .buttons-container {
+          position: absolute;
           &.left {
             right: -10px;
           }
@@ -403,7 +411,7 @@ export default {
 
     .buttons-container {
       top: 27px;
-      right: -70px!important;
+      right: -15px!important;
       z-index: 100;
     }
   }
