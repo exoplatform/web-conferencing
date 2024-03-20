@@ -1,28 +1,37 @@
 <template>
   <div
     :style="{ 'background-color': header.bgHover }"
-    class="dropdown-header"
-    @click="showdropdowncomponent(); passrefs()">
-    <div class="dropdown-heading d-flex d-row align-center justify-center">
+    class="dropdown-header">
+    <div
+      class="dropdown-heading d-flex d-row align-center justify-center ps-2"
+      @click="startCall()">
       <v-tooltip bottom>
         <template v-slot:activator="{ on, attrs }">
-          <i 
+          <v-icon
+            size="20"
             v-bind="attrs"
-            v-on="on" 
-            class="uiIconSocPhone uiIconSocBlue v-btn--icon v-size--default d-flex align-center justify-end pe-1"></i>
+            v-on="on">
+            fas fa-video
+          </v-icon>
         </template>
         <span>{{ $t("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
           : "Start Call" }}</span>
       </v-tooltip>
-      <span v-if="!isMobile">
+      <span v-if="!isMobile" class="ps-2 text-color">
         {{ $t("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
           : "Start Call" }}</span>
     </div>
-    <div class="pe-4 ps-2">
-      <i
-        :style="{ 'background-color': header.bgMini }"
-        :class="header.paddingClass"
-        class="uiIconMiniArrowDown uiIconLightGray "></i>
+    <v-divider 
+      class="mx-1 uiVertinalDividerMini"
+      dark  
+      inset
+      vertical />
+    <div class="px-1" @click="showdropdowncomponent(); passrefs()">
+      <v-icon
+        size="18"
+        class="pb-1">
+        fas fa-caret-down
+      </v-icon>
     </div>
   </div>
 </template>
@@ -40,6 +49,10 @@ export default {
       required: true
     },
     showdropdowncomponent: {
+      type: Function,
+      required: true
+    },
+    startCall: {
       type: Function,
       required: true
     },
@@ -66,7 +79,8 @@ export default {
     color: @primaryColor !important;
     letter-spacing: 0.09em;
     .uiIconMiniArrowDown {
-      color: var(--allPagesDarkGrey, #4d5466) !important;
+      font-size: 18px;
+      color: var(--allPagesDarkGrey, #000000) !important;
     }
     .dropdown-heading {
       i {
@@ -87,19 +101,22 @@ export default {
 }
 .call-button-mini {
   .dropdown-header {
-    min-height: 10px;
-    border: none;
+    border: none !important;
     background: transparent;
     .dropdown-heading {
       span {
         display: none;
       }
     }
+    .uiVertinalDividerMini {
+      display: none;
+    }
     .uiIconMiniArrowDown {
       position: absolute;
       top: 9px;
       right: 2px;
       text-align: center;
+      display: none;
       &::before {
         color: @primaryColor;
       }
