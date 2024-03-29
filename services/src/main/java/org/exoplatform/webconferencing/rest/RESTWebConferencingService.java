@@ -223,12 +223,17 @@ public class RESTWebConferencingService implements ResourceContainer {
   @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled. Providers configurations returned."),
     @ApiResponse(responseCode = "401", description = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
     @ApiResponse(responseCode = "500", description = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
-  public Response getProviderConfigs(@Context UriInfo uriInfo, @Context HttpServletRequest request) {
+  public Response getProviderConfigs(@Context
+  UriInfo uriInfo, @Context
+  HttpServletRequest request,
+                                     @Parameter(description = "Space pretty name", required = true)
+                                     @QueryParam("spaceIdentityId")
+                                     String spaceIdentityId) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
       try {
-        Set<CallProviderConfiguration> confs = webConferencing.getProviderConfigurations(request.getLocale());
+        Set<CallProviderConfiguration> confs = webConferencing.getProviderConfigurations(request.getLocale(), spaceIdentityId);
         return Response.ok().cacheControl(cacheControl).entity(confs).build();
       } catch (Throwable e) {
         LOG.error("Error reading providers configuration by '" + currentUserName + "'", e);
