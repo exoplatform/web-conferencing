@@ -156,7 +156,7 @@ export default {
         if (context && context.details && this.providersButton.length === 0) {
           const callButtons = [];
           context.parentClasses = this.parentClass;
-          webConferencing.getAllProviders().then(providers => {
+          webConferencing.getAllProviders(context.spaceId).then(providers => {
             providers.map(provider => {
               if (provider.isInitialized) {
                 provider.callButton(context).then(components => {
