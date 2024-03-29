@@ -1927,11 +1927,16 @@ public class WebConferencingService implements Startable {
    *          used
    * @return the provider configurations
    */
-  public Set<CallProviderConfiguration> getProviderConfigurations(Locale locale) {
+  public Set<CallProviderConfiguration> getProviderConfigurations(Locale locale, String spaceIdentityId) {
     Set<CallProvider> allProviders = new LinkedHashSet<>();
+    boolean isVideoConferenceEnabled = true;
+    if (spaceIdentityId != null) {
+      Space space = spaceService.getSpaceByPrettyName(spaceIdentityId);
+      isVideoConferenceEnabled = isVideoConferenceEnabled(space.getId());
+    }
     // Collect all registered providers via configuration
-    for (CallProvider registeredProvider : providers.values()) {
-      allProviders.add(registeredProvider);
+    if (isVideoConferenceEnabled) {
+      allProviders.addAll(providers.values());
     }
     // Read configurations saved in storage for each of them
     Set<CallProviderConfiguration> allConfs = new LinkedHashSet<>();
@@ -1966,7 +1971,7 @@ public class WebConferencingService implements Startable {
    * @return the provider configurations
    */
   public Set<CallProviderConfiguration> getProviderConfigurations() {
-    return this.getProviderConfigurations(Locale.getDefault());
+    return this.getProviderConfigurations(Locale.getDefault(), null);
   }
 
   /**
