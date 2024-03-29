@@ -688,11 +688,16 @@
 		return initRequest(request);
 	};
 	
-	var getProvidersConfig = function() {
+	var getProvidersConfig = function(spaceIdentityId) {
+		var url = prefixUrl + "/portal/rest/webconferencing/providers/configuration";
+
+		if (spaceIdentityId) {
+			url += `?spaceIdentityId=${spaceIdentityId}`;
+		}
 		var request = $.ajax({
 			async : true,
 			type : "GET",
-			url : prefixUrl + "/portal/rest/webconferencing/providers/configuration"
+			url : url
 		});
 		return initRequest(request);
 	};
@@ -1855,13 +1860,13 @@
 			return process.promise();
 		};
 
-		this.getProvidersConfig = function(forceUpdate) {
+		this.getProvidersConfig = function(spaceIdentityId, forceUpdate) {
 			var process;
-			if (!forceUpdate && providersConfig) {
+			if (spaceIdentityId == null && !forceUpdate && providersConfig) {
 				process = $.Deferred();
 				process.resolve(providersConfig);
 			} else {
-				process = getProvidersConfig();
+				process = getProvidersConfig(spaceIdentityId);
 				process.done(function(configs) {
 					providersConfig = configs;
 				}).fail(function(err) {
@@ -1982,11 +1987,11 @@
       return localContext.promise();
     }
 
-    this.getAllProviders = async function() {
+    this.getAllProviders = async function(spaceIdentityId) {
       const webConferencing = this;
       const allProviders = $.Deferred();
       contextInitializer.then(() => {
-        webConferencing.getProvidersConfig().then((providersConfig) => {
+        webConferencing.getProvidersConfig(spaceIdentityId, null).then((providersConfig) => {
           const providersTypes = providersConfig.map(provider => provider.type);
           Promise.all(
             providersTypes.map(type => webConferencing.getProvider(type))
