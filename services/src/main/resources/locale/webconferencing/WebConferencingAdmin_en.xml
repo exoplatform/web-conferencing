@@ -41,7 +41,12 @@
         <description>Jitsi provider for WebConferencing</description>
       </Jitsi>
       <switch>
-        <label>Enable/Disable {0} video conference</label>
+        <disable>
+          <label>Disable {0} video conference</label>
+        </disable>
+        <enable>
+          <label>Enable {0} video conference</label>
+        </enable>
       </switch>
       <modal>
         <title>Provider settings</title>
