@@ -27,7 +27,7 @@
           <v-switch
             :input-value="providerConfig.active"
             v-model="providerConfig.active"
-            :aria-label="$t('webconferencing.admin.switch.label', {0:providerConfig.title})"
+            :aria-label="providerConfig.active ? $t('webconferencing.admin.switch.disable.label', {0:providerConfig.title}) : $t('webconferencing.admin.switch.enable.label', {0:providerConfig.title})"
             color="primary"
             class="providersSwitcher"
             @change="changeActive(providerConfig)" />
