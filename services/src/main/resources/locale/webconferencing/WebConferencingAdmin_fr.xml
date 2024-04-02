@@ -43,6 +43,15 @@
       <switch>
         <label>Enable/Disable {0} video conference</label>
       </switch>
+
+      <switch>
+        <disable>
+          <label>Désactiver la video conference {0}</label>
+        </disable>
+        <enable>
+          <label>Activer la video conference {0}</label>
+        </enable>
+      </switch>
       <modal>
         <title>Paramètres du fournisseur</title>
         <SearchLabel>URL :</SearchLabel>
