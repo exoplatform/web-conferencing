@@ -214,7 +214,7 @@ public class RESTWebConferencingService implements ResourceContainer {
    * @return the provider configs
    */
   @GET
-  @RolesAllowed("administrators")
+  @RolesAllowed("users")
   @Path("/providers/configuration")
   @Operation(
           summary = "Read call providers configurations",
