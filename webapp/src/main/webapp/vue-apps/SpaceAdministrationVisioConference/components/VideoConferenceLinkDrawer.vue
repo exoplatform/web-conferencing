@@ -51,7 +51,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
               :rules="linkRules"
               class="pt-0"
               type="text"
-              required
               outlined
               dense />
           </v-card-text>
@@ -83,8 +82,8 @@ export default {
       videoConference: null,
       videoConferenceLink: '',
       isValidForm: true,
-      linkRules: [url => !!(url.match(/^((https?:\/\/)?(www\.)?[a-zA-Z0-9]+\.[^\s]{2,})|(javascript:)|(\/portal\/)/))
-              || ( !url.length && this.$t('videoConference.required.error.message') || this.$t('videoConference.label.invalidLink'))],
+      linkRules: [url => !url || url.length === 0 || !!(url.match(/^((https?:\/\/)?(www\.)?[a-zA-Z0-9]+\.[^\s]{2,})|(javascript:)|(\/portal\/)/))
+              || this.$t('videoConference.label.invalidLink')],
     };
   },
   created() {
@@ -92,7 +91,7 @@ export default {
   },
   computed: {
     disabled() { 
-      return !this.videoConferenceLink || this.videoConferenceLink === this.videoConference.url || !this.isValidForm;
+      return (this.videoConference &&this.videoConferenceLink === this.videoConference.url) || !this.isValidForm;
     },
     videoConferenceName() {
       return this.videoConference && this.videoConference.name;
@@ -102,7 +101,11 @@ export default {
     open(videoConference) {
       this.videoConference = videoConference;
       this.videoConferenceLink = videoConference.url;
-      this.$nextTick().then(() => this.$refs.videoConferenceLinkDrawer.open());
+      this.$nextTick().then(() => {
+        if (this.$refs.videoConferenceLinkDrawer) {
+          this.$refs.videoConferenceLinkDrawer.open();
+        }
+      });
     },
     close() {
       this.isValidForm = false;
