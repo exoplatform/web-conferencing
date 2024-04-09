@@ -129,6 +129,8 @@ public abstract class CallProvider extends BaseComponentPlugin {
   /** The active flag. */
   protected boolean                   active;
 
+
+
   /**
    * Instantiates a new web conferencing provider.
    *
@@ -287,4 +289,13 @@ public abstract class CallProvider extends BaseComponentPlugin {
   public abstract IMInfo getIMInfo(String imId) throws CallProviderException;
 
   public abstract List<ActiveCallProvider> getActiveProvidersForSpace(String spaceId);
+
+  public boolean canInvite() {
+    return true;
+  }
+
+  public boolean isConfiguredForIdentity(String identityId) {
+    return true;
+  }
+
 }
