@@ -157,14 +157,13 @@ export default {
           const callButtons = [];
           context.parentClasses = this.parentClass;
           webConferencing.getAllProviders(context.spaceId).then(providers => {
-            providers.map(provider => {
+            Promise.all(providers.map(provider => {
               if (provider.isInitialized) {
-                provider.callButton(context).then(components => {
+                return provider.callButton(context).then(components => {
                   callButtons.push(...components);
                 });
               }
-            });
-            setTimeout(() => {
+            })).then(() => {
               // Tri en fonction de la valeur de l'attribut "urlConnector"
               callButtons.sort((a, b) => (b.callSettings.urlConnector ? 1 : -1) - (a.callSettings.urlConnector ? 1 : -1));
               Promise.allSettled(callButtons).then(resCallButtons => {
@@ -178,7 +177,7 @@ export default {
                 });
                 thevue.createButtons();
               });
-            }, 200);
+            });
             
           });
         } else if (context && !context.details) {

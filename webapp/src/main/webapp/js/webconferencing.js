@@ -688,11 +688,15 @@
 		return initRequest(request);
 	};
 	
-	var getProvidersConfig = function(spaceIdentityId) {
+	var getProvidersConfig = function(spaceIdentityId, ignoreEnabled) {
 		var url = prefixUrl + "/portal/rest/webconferencing/providers/configuration";
 
 		if (spaceIdentityId) {
 			url += `?spaceIdentityId=${spaceIdentityId}`;
+			if (ignoreEnabled) {
+			  url += `&ignoreEnabled=${ignoreEnabled}`;
+			}
+			//no need to use ignoreEnabled if no spaecIdentityId
 		}
 		var request = $.ajax({
 			async : true,
@@ -1681,8 +1685,14 @@
               if (context && provider.getCallId && provider.hasOwnProperty("getCallId") && provider.getCallUrl && provider.hasOwnProperty("getCallUrl")) {
                 provider.getCallId(context).then(id => {
                   self.getCall(id).then(call => {
-                    call.url = provider.getCallUrl(id);
-                    process.resolve(call);
+                    provider.getCallUrl(id).then((url) => {
+                      call.url=url;
+                      if (!provider.supportInvitedUsers()) {
+                        call.inviteId=null;
+                      }
+                      process.resolve(call);
+                    });
+
                     // TODO - cleanup. Check if call does not exist already and update it
                     //  // Update the call
                     //  self.updateCall(id, callInfo).then(call => {
@@ -1692,7 +1702,7 @@
                     //  });
                   }).catch(err => {
                     if (err && err.code === "NOT_FOUND_ERROR") {
-                      processAddCall(id, callInfo, false, provider.getCallUrl(id));
+                      provider.getCallUrl(id).then((url) => processAddCall(id, callInfo, false, url));
                     } else {
                       process.reject(err);
                     }
@@ -1860,13 +1870,13 @@
 			return process.promise();
 		};
 
-		this.getProvidersConfig = function(spaceIdentityId, forceUpdate) {
+		this.getProvidersConfig = function(spaceIdentityId, forceUpdate, ignoreEnabled) {
 			var process;
 			if (spaceIdentityId == null && !forceUpdate && providersConfig) {
 				process = $.Deferred();
 				process.resolve(providersConfig);
 			} else {
-				process = getProvidersConfig(spaceIdentityId);
+				process = getProvidersConfig(spaceIdentityId,ignoreEnabled);
 				process.done(function(configs) {
 					providersConfig = configs;
 				}).fail(function(err) {
@@ -1987,14 +1997,21 @@
       return localContext.promise();
     }
 
-    this.getAllProviders = async function(spaceIdentityId) {
+    this.getAllProviders = async function(spaceIdentityId, ignoreEnabled) {
       const webConferencing = this;
       const allProviders = $.Deferred();
       contextInitializer.then(() => {
-        webConferencing.getProvidersConfig(spaceIdentityId, null).then((providersConfig) => {
+        webConferencing.getProvidersConfig(spaceIdentityId, null, ignoreEnabled).then((providersConfig) => {
           const providersTypes = providersConfig.map(provider => provider.type);
           Promise.all(
-            providersTypes.map(type => webConferencing.getProvider(type))
+            providersConfig.map(config => {
+              var configured = config.configured;
+              return webConferencing.getProvider(config.type).then((provider) => {
+                provider.configured = configured;
+                return provider;
+              });
+
+            })
           ).then(providers => {
             allProviders.resolve(providers);
           });
