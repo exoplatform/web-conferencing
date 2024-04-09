@@ -59,6 +59,16 @@ public class CallProviderConfiguration {
   /** The active. */
   protected boolean active;
 
+  public boolean isConfigured() {
+    return configured;
+  }
+
+  public void setConfigured(boolean configured) {
+    this.configured = configured;
+  }
+
+  protected boolean configured;
+
   /** The log enabled. */
   protected boolean logEnabled;
 

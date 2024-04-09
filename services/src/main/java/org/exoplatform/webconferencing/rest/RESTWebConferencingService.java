@@ -25,6 +25,7 @@ import java.util.Set;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 
+
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -42,6 +43,7 @@ import javax.ws.rs.core.UriInfo;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -219,21 +221,22 @@ public class RESTWebConferencingService implements ResourceContainer {
   @Operation(
           summary = "Read call providers configurations",
           method = "GET",
-          description = "Use this method to read all providers configuration. This operation only available to Administrator user.")
+          description = "Use this method to read all providers configuration. This operation only available to all users.")
   @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled. Providers configurations returned."),
     @ApiResponse(responseCode = "401", description = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
     @ApiResponse(responseCode = "500", description = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
-  public Response getProviderConfigs(@Context
-  UriInfo uriInfo, @Context
-  HttpServletRequest request,
+  public Response getProviderConfigs(@Context UriInfo uriInfo,
+                                     @Context HttpServletRequest request,
                                      @Parameter(description = "Space pretty name", required = true)
-                                     @QueryParam("spaceIdentityId")
-                                     String spaceIdentityId) {
+                                     @QueryParam("spaceIdentityId") String spaceIdentityId,
+                                     @Parameter(description= "Ignore Enabled space parameter") @Schema(defaultValue = "false")
+                                       @QueryParam("ignoreEnabled")
+                                       boolean ignoreEnabled) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
       try {
-        Set<CallProviderConfiguration> confs = webConferencing.getProviderConfigurations(request.getLocale(), spaceIdentityId);
+        Set<CallProviderConfiguration> confs = webConferencing.getProviderConfigurations(request.getLocale(), spaceIdentityId, ignoreEnabled);
         return Response.ok().cacheControl(cacheControl).entity(confs).build();
       } catch (Throwable e) {
         LOG.error("Error reading providers configuration by '" + currentUserName + "'", e);
