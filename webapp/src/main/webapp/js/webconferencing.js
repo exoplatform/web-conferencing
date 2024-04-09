@@ -1681,8 +1681,14 @@
               if (context && provider.getCallId && provider.hasOwnProperty("getCallId") && provider.getCallUrl && provider.hasOwnProperty("getCallUrl")) {
                 provider.getCallId(context).then(id => {
                   self.getCall(id).then(call => {
-                    call.url = provider.getCallUrl(id);
-                    process.resolve(call);
+                    provider.getCallUrl(id).then((url) => {
+                      call.url=url;
+                      if (!provider.supportInvitedUsers()) {
+                        call.inviteId=null;
+                      }
+                      process.resolve(call);
+                    });
+
                     // TODO - cleanup. Check if call does not exist already and update it
                     //  // Update the call
                     //  self.updateCall(id, callInfo).then(call => {
@@ -1692,7 +1698,7 @@
                     //  });
                   }).catch(err => {
                     if (err && err.code === "NOT_FOUND_ERROR") {
-                      processAddCall(id, callInfo, false, provider.getCallUrl(id));
+                      provider.getCallUrl(id).then((url) => processAddCall(id, callInfo, false, url));
                     } else {
                       process.reject(err);
                     }
@@ -1994,7 +2000,14 @@
         webConferencing.getProvidersConfig(spaceIdentityId, null).then((providersConfig) => {
           const providersTypes = providersConfig.map(provider => provider.type);
           Promise.all(
-            providersTypes.map(type => webConferencing.getProvider(type))
+            providersConfig.map(config => {
+              var configured = config.configured;
+              return webConferencing.getProvider(config.type).then((provider) => {
+                provider.configured = configured;
+                return provider;
+              });
+
+            })
           ).then(providers => {
             allProviders.resolve(providers);
           });

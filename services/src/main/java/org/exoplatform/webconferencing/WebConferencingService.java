@@ -1944,11 +1944,11 @@ public class WebConferencingService implements Startable {
    *          used
    * @return the provider configurations
    */
-  public Set<CallProviderConfiguration> getProviderConfigurations(Locale locale, String spaceIdentityId) {
+  public Set<CallProviderConfiguration> getProviderConfigurations(Locale locale, String remoteId) {
     Set<CallProvider> allProviders = new LinkedHashSet<>();
     boolean isVideoConferenceEnabled = true;
-    if (spaceIdentityId != null) {
-      Space space = spaceService.getSpaceByPrettyName(spaceIdentityId);
+    if (remoteId != null) {
+      Space space = spaceService.getSpaceByPrettyName(remoteId);
       isVideoConferenceEnabled = isVideoConferenceEnabled(space.getId());
     }
     // Collect all registered providers via configuration
@@ -1966,6 +1966,9 @@ public class WebConferencingService implements Startable {
           conf.setTitle(p.getTitle());
           conf.setDescription(p.getDescription(locale));
           conf.setLogEnabled(p.isLogEnabled());
+          if (remoteId!=null) {
+            conf.setConfigured(getProvider(conf.getType()).isConfiguredForIdentity(remoteId));
+          }
           allConfs.add(conf);
         } else {
           addDefault = true;
@@ -3031,7 +3034,9 @@ public class WebConferencingService implements Startable {
     for (OriginInfo o : call.getOrigins()) {
       originsStorage.create(createOriginEntity(callId, o));
     }
-    call.setInviteId(createInvite(callId));
+    if (getProvider(call.providerType).canInvite()) {
+      call.setInviteId(createInvite(callId));
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("<< txCreateCall: " + call.getId());
     }
@@ -4036,11 +4041,13 @@ public class WebConferencingService implements Startable {
   }
 
   public ActiveCallProvider updateCallProviderUrl(String identityId, ActiveCallProvider activeCallProvider) {
-    SettingValue<?> settingValue = settingService.get(Context.GLOBAL,
-                                                      Scope.SPACE.id(identityId),
-                                                      activeCallProvider.getConnectorId());
-    if (settingValue != null) {
-      activeCallProvider.setUrl(String.valueOf(settingValue.getValue()));
+    if (activeCallProvider.getConnectorId()!=null &&  !activeCallProvider.getConnectorId().isEmpty()) {
+      SettingValue<?> settingValue = settingService.get(Context.GLOBAL,
+                                                        Scope.SPACE.id(identityId),
+                                                        activeCallProvider.getConnectorId());
+      if (settingValue != null) {
+        activeCallProvider.setUrl(String.valueOf(settingValue.getValue()));
+      }
     }
     return activeCallProvider;
   }

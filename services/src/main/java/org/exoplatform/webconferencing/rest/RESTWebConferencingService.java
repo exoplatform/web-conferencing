@@ -219,7 +219,7 @@ public class RESTWebConferencingService implements ResourceContainer {
   @Operation(
           summary = "Read call providers configurations",
           method = "GET",
-          description = "Use this method to read all providers configuration. This operation only available to Administrator user.")
+          description = "Use this method to read all providers configuration. This operation only available to all users.")
   @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled. Providers configurations returned."),
     @ApiResponse(responseCode = "401", description = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
     @ApiResponse(responseCode = "500", description = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
