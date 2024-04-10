@@ -36,7 +36,7 @@
           <v-list-item-title class="subtitle-1 pt-2">
             {{ $t(`webconferencing.admin.${providerConfig.title}.name`)
               ? $t(`webconferencing.admin.${providerConfig.title}.name`)
-              : providerConfig.title }} 
+              : providerConfig.title }}
           </v-list-item-title>
           <v-list-item-subtitle>
             {{ $t(`webconferencing.admin.${providerConfig.title}.description`)
@@ -45,13 +45,15 @@
           </v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
-      <div  
-        v-for="extension in additionalVisioExtensions"
-        :key="extension">
-        <extension-registry-components
-          name="additional-visio-actions"
-          :type="extension.componentName" />
-      </div>
+      <v-list-item class="px-0">
+        <div
+          v-for="extension in additionalVisioExtensions"
+          :key="extension">
+          <extension-registry-components
+            name="additional-visio-actions"
+            :type="extension.componentName" />
+        </div>
+      </v-list-item>
     </v-card>
   </v-app>
 </template>
