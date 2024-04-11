@@ -298,4 +298,7 @@ public abstract class CallProvider extends BaseComponentPlugin {
     return true;
   }
 
+  public void setConfiguredForIdentity(String identityId, boolean configured) {
+  }
+
 }
