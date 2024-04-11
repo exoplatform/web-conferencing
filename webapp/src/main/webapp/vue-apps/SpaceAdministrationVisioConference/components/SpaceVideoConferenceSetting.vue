@@ -61,7 +61,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
                 {{ provider.url ? $t('videoConference.space.settings.connector.link.descrition', {0: provider.url}) : $t('videoConference.space.settings.connector.descrition') }}
               </v-list-item-subtitle>
             </v-list-item-content>
-            <v-list-item-action class="pt-0 ma-0 mb-6" v-if="!provider.integratedConnector">
+            <v-list-item-action v-if="provider.integratedConnector">
+              <v-switch
+                v-model="provider.enabled"
+                @change="updateVideoConferenceEnabled(provider.enabled, provider.connectorId)" />
+            </v-list-item-action>
+            <v-list-item-action class="pt-0 ma-0 mb-6" v-else>
               <v-btn 
                 :title="$t('videoConference.space.settings.editConnector')"
                 primary
@@ -103,7 +108,7 @@ export default {
   },
   watch: {
     active() {
-      this.updateVideoConferenceEnabled();
+      this.updateVideoConferenceEnabled(this.active);
     }
   },
   methods: {
@@ -116,8 +121,8 @@ export default {
           });
         });
     },
-    updateVideoConferenceEnabled() {
-      this.$videoConferenceService.updateVideoConferenceEnabled(this.spaceId, this.active);
+    updateVideoConferenceEnabled(enabled, provider) {
+      this.$videoConferenceService.updateVideoConferenceEnabled(this.spaceId, enabled,provider);
     },
     isVideoConferenceEnabled() {
       this.$videoConferenceService.isVideoConferenceEnabled(this.spaceId)
