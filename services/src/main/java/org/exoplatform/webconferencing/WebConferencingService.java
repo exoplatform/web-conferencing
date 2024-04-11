@@ -2614,15 +2614,18 @@ public class WebConferencingService implements Startable {
     try {
       String safeType = URLEncoder.encode(type, "UTF-8");
       SettingValue<?> val = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(PROVIDER_SCOPE_NAME), safeType);
-      if (val != null) {
-        String str = String.valueOf(val.getValue());
-        if (str.startsWith("{")) {
-          // Assuming it's JSON
-          CallProviderConfiguration conf = jsonToProviderConfig(new JSONObject(str));
-          return conf;
-        } else {
-          LOG.warn("Cannot parse saved CallProviderConfiguration: " + str);
-        }
+      String str;
+      if (val == null) {
+        str="{\"active\":true,\"type\":\""+type+"\"}";
+      } else {
+        str = String.valueOf(val.getValue());
+      }
+      if (str.startsWith("{")) {
+        // Assuming it's JSON
+        CallProviderConfiguration conf = jsonToProviderConfig(new JSONObject(str));
+        return conf;
+      } else {
+        LOG.warn("Cannot parse saved CallProviderConfiguration: " + str);
       }
     } catch (UnsupportedEncodingException e) {
       LOG.warn("UTF8 encoding required to read provider config", e);
