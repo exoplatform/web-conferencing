@@ -28,8 +28,12 @@ export function saveActiveProvider(provider, spaceId) {
   });
 }
 
-export function updateVideoConferenceEnabled(spaceId, enabled) {
-  return fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/webconferencing/updateVideoConferenceEnabled?spaceId=${spaceId}&enabled=${enabled}`, {
+export function updateVideoConferenceEnabled(spaceId, enabled,provider) {
+  let url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/webconferencing/updateVideoConferenceEnabled?spaceId=${spaceId}&enabled=${enabled}`;
+  if (provider) {
+    url = `${url}&provider=${provider}`;
+  }
+  return fetch(`${url}`, {
     method: 'POST',
     credentials: 'include',
     headers: {
