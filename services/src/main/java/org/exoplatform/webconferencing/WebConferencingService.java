@@ -1930,11 +1930,9 @@ public class WebConferencingService implements Startable {
   public Set<CallProviderConfiguration> getProviderConfigurations(Locale locale, String remoteId, boolean ignoreEnabled) {
     Set<CallProvider> allProviders = new LinkedHashSet<>();
     boolean isVideoConferenceEnabled = true;
-    String spaceId=null;
     if (remoteId != null) {
       Space space = spaceService.getSpaceByPrettyName(remoteId);
       isVideoConferenceEnabled = isVideoConferenceEnabled(space.getId());
-      spaceId = space.getId();
     }
     // Collect all registered providers via configuration
     if (ignoreEnabled || isVideoConferenceEnabled) {
@@ -1952,7 +1950,7 @@ public class WebConferencingService implements Startable {
           conf.setDescription(p.getDescription(locale));
           conf.setLogEnabled(p.isLogEnabled());
           if (remoteId!=null) {
-            conf.setConfigured(getProvider(conf.getType()).isConfiguredForIdentity(spaceId));
+            conf.setConfigured(getProvider(conf.getType()).isConfiguredForIdentity(remoteId));
           }
           allConfs.add(conf);
         } else {
@@ -2010,18 +2008,14 @@ public class WebConferencingService implements Startable {
    * @throws UnsupportedEncodingException if UTF8 not supported
    * @throws JSONException if cannot serialize to JSON
    */
-  public void saveProviderConfiguration(CallProviderConfiguration conf, String spaceId) throws UnsupportedEncodingException, JSONException {
-    if (spaceId == null) {
-      final String initialGlobalId = Scope.GLOBAL.getId();
-      try {
-        JSONObject json = providerConfigToJson(conf);
-        String safeType = URLEncoder.encode(conf.getType(), "UTF-8");
-        settingService.set(Context.GLOBAL, Scope.GLOBAL.id(PROVIDER_SCOPE_NAME), safeType, SettingValue.create(json.toString()));
-      } finally {
-        Scope.GLOBAL.id(initialGlobalId);
-      }
-    } else {
-      getProvider(conf.getType()).setConfiguredForIdentity(spaceId, conf.active);
+  public void saveProviderConfiguration(CallProviderConfiguration conf) throws UnsupportedEncodingException, JSONException {
+    final String initialGlobalId = Scope.GLOBAL.getId();
+    try {
+      JSONObject json = providerConfigToJson(conf);
+      String safeType = URLEncoder.encode(conf.getType(), "UTF-8");
+      settingService.set(Context.GLOBAL, Scope.GLOBAL.id(PROVIDER_SCOPE_NAME), safeType, SettingValue.create(json.toString()));
+    } finally {
+      Scope.GLOBAL.id(initialGlobalId);
     }
   }
 
@@ -4044,13 +4038,9 @@ public class WebConferencingService implements Startable {
     return activeCallProvider;
   }
 
-  public void updateVideoConferenceEnabled(String spaceId, boolean enabled, String provider) {
-    if (provider == null) {
-      settingService.remove(Context.GLOBAL, Scope.SPACE.id(spaceId), VIDEO_CONFERENCE_IS_ENABLED);
-      settingService.set(Context.GLOBAL, Scope.SPACE.id(spaceId), VIDEO_CONFERENCE_IS_ENABLED, SettingValue.create(enabled));
-    } else {
-      getProvider(provider).setConfiguredForIdentity(spaceId,enabled);
-    }
+  public void updateVideoConferenceEnabled(String spaceId, boolean enabled) {
+    settingService.remove(Context.GLOBAL, Scope.SPACE.id(spaceId), VIDEO_CONFERENCE_IS_ENABLED);
+    settingService.set(Context.GLOBAL, Scope.SPACE.id(spaceId), VIDEO_CONFERENCE_IS_ENABLED, SettingValue.create(enabled));
   }
 
   public boolean isVideoConferenceEnabled(String spaceId) {
