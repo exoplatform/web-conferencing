@@ -16,6 +16,4 @@ public class ActiveCallProvider {
   private String  url;
 
   private boolean integratedConnector;
-
-  private boolean enabled;
 }
