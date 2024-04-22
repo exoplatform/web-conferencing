@@ -1947,11 +1947,11 @@ public class WebConferencingService implements Startable {
   public Set<CallProviderConfiguration> getProviderConfigurations(Locale locale, String remoteId, boolean ignoreEnabled) {
     Set<CallProvider> allProviders = new LinkedHashSet<>();
     boolean isVideoConferenceEnabled = true;
-    String spaceId=null;
     if (remoteId != null) {
       Space space = spaceService.getSpaceByPrettyName(remoteId);
-      isVideoConferenceEnabled = isVideoConferenceEnabled(space.getId());
-      spaceId = space.getId();
+      if (space!=null) {
+        isVideoConferenceEnabled = isVideoConferenceEnabled(space.getId());
+      }
     }
     // Collect all registered providers via configuration
     if (ignoreEnabled || isVideoConferenceEnabled) {
@@ -1969,7 +1969,7 @@ public class WebConferencingService implements Startable {
           conf.setDescription(p.getDescription(locale));
           conf.setLogEnabled(p.isLogEnabled());
           if (remoteId!=null) {
-            conf.setConfigured(getProvider(conf.getType()).isConfiguredForIdentity(spaceId));
+            conf.setConfigured(getProvider(conf.getType()).isConfiguredForIdentity(remoteId));
           }
           allConfs.add(conf);
         } else {
