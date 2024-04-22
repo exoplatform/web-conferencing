@@ -983,7 +983,7 @@
           var isRoom = target.detail.type === "t"; // roomId && roomId.startsWith("team-");
           var isGroup = isSpace || isRoom;
           // roomName from its title - it is a logic used in Chat, so reuse it here:
-          var roomName = target.detail.prettyName;
+          var roomName = isSpace ? target.detail.prettyName : roomTitle.toLowerCase().split(" ").join("_");
           context = {
             currentUser: currentUser,
             roomId: target.detail.user,
