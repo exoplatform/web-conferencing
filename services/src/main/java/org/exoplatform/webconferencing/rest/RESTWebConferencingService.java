@@ -184,7 +184,7 @@ public class RESTWebConferencingService implements ResourceContainer {
           boolean activeVal = Boolean.valueOf(active);
           if (activeVal != conf.isActive()) {
             conf.setActive(activeVal);
-            webConferencing.saveProviderConfiguration(conf);
+            webConferencing.saveProviderConfiguration(conf, null);
           }
           return Response.ok().cacheControl(cacheControl).entity(conf).build();
         } else {
@@ -709,12 +709,9 @@ public class RESTWebConferencingService implements ResourceContainer {
   @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled"),
       @ApiResponse(responseCode = "401", description = "Unauthorized"),
       @ApiResponse(responseCode = "500", description = "Internal server error") })
-  public Response updateVideoConferenceEnabled(@Parameter(description = "Space Id", required = true)
-  @QueryParam("spaceId")
-  String spaceId,
-                                               @Parameter(description = "enabled", required = true)
-                                               @QueryParam("enabled")
-                                               boolean enabled) {
+  public Response updateVideoConferenceEnabled(@Parameter(description = "Space Id", required = true) @QueryParam("spaceId") String spaceId,
+                                               @Parameter(description = "enabled", required = true) @QueryParam("enabled") boolean enabled,
+                                               @Parameter(description = "provider", required = false) @QueryParam("provider") String provider) {
 
     String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
     Space space = spaceService.getSpaceById(spaceId);
@@ -722,7 +719,7 @@ public class RESTWebConferencingService implements ResourceContainer {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
     try {
-      webConferencing.updateVideoConferenceEnabled(spaceId, enabled);
+      webConferencing.updateVideoConferenceEnabled(spaceId, enabled, provider);
       return Response.ok().build();
     } catch (Exception e) {
       LOG.warn("Error updating a VideoConference enabled", e);
