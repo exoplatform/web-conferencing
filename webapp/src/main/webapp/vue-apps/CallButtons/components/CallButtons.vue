@@ -158,7 +158,7 @@ export default {
           context.parentClasses = this.parentClass;
           webConferencing.getAllProviders(context.spaceId).then(providers => {
             Promise.all(providers.map(provider => {
-              if (provider.isInitialized) {
+              if (provider.isInitialized && provider.configured) {
                 return provider.callButton(context).then(components => {
                   callButtons.push(...components);
                 });
