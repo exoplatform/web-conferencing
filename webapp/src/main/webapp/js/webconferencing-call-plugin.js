@@ -131,8 +131,6 @@
       // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
       enabled: function() {
         return true;
-      },
-      click: function(user) {
       }
     },
     {
