@@ -103,7 +103,7 @@
       target: "profile-extension",
       type: "action",
       id: "profile-webconferencing",
-      rank: 40,
+      order: 5,
 
       class: 'fas fa-video',
       // appClass is a class of container which consist of action button and WebConferencingCall component
