@@ -6,7 +6,7 @@
       :class="['call-button-container']">
       <dropdown
         v-click-outside="hideDropdown"
-        v-if="providersButton.length > 1"
+        v-if="!this.isSingleBtn"
         ref="dropdown"
         :positionclass="positionClass"
         :providersbutton="providersButton"
@@ -78,6 +78,9 @@ export default {
     };
   },
   computed: {
+    isSingleBtn: function() {
+      return !(this.providersButton.length > 1 && this.shouldDisplayDropdown);
+    },
     dropdown: function() {
       return this.$refs.callbutton.getBoundingClientRect();
     },
@@ -110,6 +113,9 @@ export default {
         this.parentClass.includes('call-button-mini') ||
         this.parentClass.includes('call-button--tiptip')
       );
+    },
+    shouldDisplayDropdown() {
+      return !this.$refs.callbutton.closest('#peopleCompactCardBottomDrawer');
     },
     header() {
       return this.condition
@@ -201,13 +207,14 @@ export default {
       let vm = null;
       if (this.providersButton.length !== 0) {
         for (const [index, pb] of this.providersButton.entries()) {
-          if (this.providersButton.length > 1) {
+          if (!this.isSingleBtn) {
             //add buttons to dropdown component
             if (this.isOpen) {
               ref = this.childRef.callbutton[index];
               // add vue button
               if (pb instanceof Vue) {
                 vm = pb.$mount(); // TODO why we need vm globaly?
+                pb.$children[0].setSingleBtn(this.isSingleBtn);
                 // vm.$el.innerHTML = "<span class='v-btn__content'><i class='uiIconSocPhone uiIconBlue'></i>Jitsi Call</span>";
                 ref.appendChild(vm.$el);
               } else {
@@ -223,11 +230,14 @@ export default {
             if (pb instanceof Vue) {
               // add vue button
               vm = pb.$mount(); // TODO why we need vm globaly?
+              pb.$children[0].setSingleBtn(this.isSingleBtn);
+
               callButton.appendChild(vm.$el);
             } else {
               // add button as DOM Element
               callButton.appendChild(pb);
             }
+            break;
           }
         }
       } else {

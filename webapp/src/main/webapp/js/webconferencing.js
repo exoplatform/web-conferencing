@@ -2007,8 +2007,9 @@
             providersConfig.map(config => {
               var configured = config.configured;
               return webConferencing.getProvider(config.type).then((provider) => {
-                provider.configured = configured;
-                return provider;
+                let cloneProvider = { ...provider};
+                cloneProvider.configured = configured;
+                return cloneProvider;
               });
 
             })
