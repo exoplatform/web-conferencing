@@ -26,7 +26,7 @@
       dark  
       inset
       vertical />
-    <div class="px-1" @click="showdropdowncomponent(); passrefs()">
+    <div class="px-1" @click.stop.prevent="showdropdowncomponent(); passrefs()">
       <v-icon
         size="18"
         class="pb-1">
