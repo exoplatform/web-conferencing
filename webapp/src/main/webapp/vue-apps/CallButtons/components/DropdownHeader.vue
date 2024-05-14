@@ -4,7 +4,7 @@
     class="dropdown-header">
     <div
       class="dropdown-heading d-flex d-row align-center justify-center ps-2"
-      @click="startCall()">
+      @click.stop.prevent="startCall()">
       <v-tooltip bottom>
         <template v-slot:activator="{ on, attrs }">
           <v-icon
