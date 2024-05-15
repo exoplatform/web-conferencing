@@ -4,7 +4,7 @@
     class="dropdown-header">
     <div
       class="dropdown-heading d-flex d-row align-center justify-center ps-2"
-      @click="startCall()">
+      @click.stop.prevent="startCall()">
       <v-tooltip bottom>
         <template v-slot:activator="{ on, attrs }">
           <v-icon
@@ -26,7 +26,7 @@
       dark  
       inset
       vertical />
-    <div class="px-1" @click="showdropdowncomponent(); passrefs()">
+    <div class="px-1" @click.stop.prevent="showdropdowncomponent(); passrefs()">
       <v-icon
         size="18"
         class="pb-1">
