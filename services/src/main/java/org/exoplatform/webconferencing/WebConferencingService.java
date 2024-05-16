@@ -2859,6 +2859,7 @@ public class WebConferencingService implements Startable {
    */
   private String createInvite(String callId) {
     String inviteId = codec.encode(callId);
+    inviteId = inviteId.substring(0,32);
     byte[] inviteIdBytes = Base64.getDecoder().decode(inviteId);
     inviteId = Base64.getUrlEncoder().withoutPadding().encodeToString(inviteIdBytes);
 
