@@ -49,6 +49,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
               v-model="videoConferenceLink"
               :placeholder="$t('videoConference.drawer.link.placeholder')"
               :rules="linkRules"
+              @input="checkUpdate"
+              clearable
               class="pt-0"
               type="text"
               outlined
@@ -81,7 +83,7 @@ export default {
       spaceId: eXo.env.portal.spaceId,
       videoConference: null,
       videoConferenceLink: '',
-      isValidForm: true,
+      isValidForm: false,
       linkRules: [url => !url || url.length === 0 || !!(url.match(/^((https?:\/\/)?(www\.)?[a-zA-Z0-9]+\.[^\s]{2,})|(javascript:)|(\/portal\/)/))
               || this.$t('videoConference.label.invalidLink'), url => !url || url.length <= 500 || this.$t('videoConference.label.tooLongLink')],
     };
@@ -108,7 +110,6 @@ export default {
       });
     },
     close() {
-      this.isValidForm = false;
       this.videoConferenceLink = '';
       this.videoConference = null;
       this.$nextTick().then(() => this.$refs.videoConferenceLinkDrawer.close());
@@ -129,5 +130,6 @@ export default {
       });
     }
   }
+
 };
 </script>
