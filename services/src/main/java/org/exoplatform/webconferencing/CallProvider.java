@@ -18,10 +18,7 @@
  */
 package org.exoplatform.webconferencing;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import org.exoplatform.container.component.BaseComponentPlugin;
@@ -131,6 +128,8 @@ public abstract class CallProvider extends BaseComponentPlugin {
 
   /** The active flag. */
   protected boolean                   active;
+
+
 
   /**
    * Instantiates a new web conferencing provider.
@@ -288,5 +287,18 @@ public abstract class CallProvider extends BaseComponentPlugin {
    *           an {@link IMInfo} object
    */
   public abstract IMInfo getIMInfo(String imId) throws CallProviderException;
+
+  public abstract List<ActiveCallProvider> getActiveProvidersForSpace(String spaceId);
+
+  public boolean canInvite() {
+    return true;
+  }
+
+  public boolean isConfiguredForIdentity(String identityId) {
+    return true;
+  }
+
+  public void setConfiguredForIdentity(String identityId, boolean configured) {
+  }
 
 }

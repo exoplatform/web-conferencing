@@ -15,12 +15,19 @@
       <page>Vídeo Chamada Web</page>
       <title>Administração de Vídeo Chamada Web</title>
       <info>Vídeo Chamada Web pode ser fornecida por diferentes operadores. Identifique e defina as configurações consoante o operador escolhido.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>Operador</Provider>
         <Description>Descrição</Description>
         <Active>Ativo</Active>
         <Permissions>Ações</Permissions>
       </table>
+      <ExternalVisio>
+        <name>External Video Conference</name>
+        <description>Connect external video conferences via links</description>
+      </ExternalVisio>
       <WebRTC>
         <name>WebRTC</name>
         <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
@@ -33,6 +40,9 @@
         <name>Jitsi</name>
         <description>Jitsi provider for WebConferencing</description>
       </Jitsi>
+      <switch>
+        <label>Enable/Disable {0} video conference</label>
+      </switch>
       <modal>
         <title>Provider settings</title>
         <SearchLabel>URL:</SearchLabel>

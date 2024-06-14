@@ -100,6 +100,41 @@
       enabled: true,
     },
     {
+      target: "profile-extension",
+      type: "action",
+      id: "profile-webconferencing",
+      order: 5,
+
+      class: 'fas fa-video',
+      // appClass is a class of container which consist of action button and WebConferencingCall component
+      appClass: CALL_BUTTON,
+      typeClass: "call-button-mini call-button-popover--profile",
+
+      component: {
+        name: "CallButtons",
+        events: [],
+      },
+      // html DOM element that will be added in the extension point
+      // init call button context in space popup
+      init: function(target, userId) {
+        const typeClass = this.typeClass
+        require([
+          "SHARED/webConferencing",
+          "SHARED/webConferencingCallButton",
+        ], function(webConferencing, callButtons) {
+          webConferencing.createUserContext(userId).then((context) => {
+            callButtons.create(context, target, typeClass);
+          });
+        });
+      },
+
+      // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
+      enabled: function(element) {
+        //return true only if the extension is used for a user card. We dont want it on a space card for the moment
+        return element?.username;
+      }
+    },
+    {
       target: "space-title-action-components",
       type: "action-component",
       // configuration defined here is used in exo-addons\web-conferencing\webapp\src\main\webapp\vue-apps
@@ -245,6 +280,7 @@
       iconName: "callButton",
       appClass: CALL_BUTTON,
       typeClass: "call-button--profile",
+      mobileClass: "call-button-mini",
       component: {
         name: "call-button",
         events: [],

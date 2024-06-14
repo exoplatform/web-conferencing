@@ -20,11 +20,13 @@
         xsi:schemaLocation="http://www.gatein.org/xml/ns/gatein_objects_1_6 http://www.gatein.org/xml/ns/gatein_objects_1_6"
         xmlns="http://www.gatein.org/xml/ns/gatein_objects_1_6">
   <priority>4</priority>
+  
   <page-nodes>
     <node>
       <name>analytics</name>
       <label>#{analytics.navigation.Analytics}</label>
       <visibility>SYSTEM</visibility>
+      <page-reference>portal::global::analytics</page-reference>
       <node>
         <name>webconferencing-analytics</name>
         <label>#{analytics.navigation.webconferencing}</label>

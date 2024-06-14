@@ -1,0 +1,21 @@
+package org.exoplatform.webconferencing;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ActiveCallProvider {
+
+  private String  connectorId;
+
+  private String  name;
+
+  private String  url;
+
+  private boolean integratedConnector;
+
+  private boolean enabled;
+}

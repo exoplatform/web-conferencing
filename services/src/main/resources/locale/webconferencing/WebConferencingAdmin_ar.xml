@@ -15,12 +15,19 @@
       <page>عقد المؤتمرات على الويب</page>
       <title>إدارة محتوى مؤتمرات الويب</title>
       <info>عقد المؤتمرات على الويب يمكن أن تعالج عن طريق عدة مزودي خدمات. يمكنك تفعيل مزود الخدمات الذي تحتاجه وتهيئة الإعدادات.</info>
+      <section>
+        <title>Video conference</title>
+      </section>
       <table>
         <Provider>مزود الخدمة</Provider>
         <Description>الوصف</Description>
         <Active>ناشط</Active>
         <Permissions>الإجراءات</Permissions>
       </table>
+      <ExternalVisio>
+        <name>External Video Conference</name>
+        <description>Connect external video conferences via links</description>
+      </ExternalVisio>
       <WebRTC>
         <name>WebRTC</name>
         <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
@@ -33,6 +40,9 @@
         <name>Jitsi</name>
         <description>مزود Jitsi لـ WebConference</description>
       </Jitsi>
+      <switch>
+        <label>Enable/Disable {0} video conference</label>
+      </switch>
       <modal>
         <title>إعدادات المزود</title>
         <SearchLabel>العنوان:</SearchLabel>

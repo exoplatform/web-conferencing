@@ -3,9 +3,9 @@ package org.exoplatform.webconferencing.dao;
 import java.util.Collections;
 import java.util.List;
 
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceException;
-import javax.persistence.TypedQuery;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceException;
+import jakarta.persistence.TypedQuery;
 
 import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.persistence.impl.GenericDAOJPAImpl;

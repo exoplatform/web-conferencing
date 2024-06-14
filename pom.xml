@@ -25,12 +25,12 @@
   <parent>
     <artifactId>addons-exo-parent-pom</artifactId>
     <groupId>org.exoplatform.addons</groupId>
-    <version>17-M04</version>
+    <version>18-M03</version>
   </parent>
 
   <groupId>org.exoplatform.addons.web-conferencing</groupId>
   <artifactId>web-conferencing</artifactId>
-  <version>2.5.x-SNAPSHOT</version>
+  <version>7.0.x-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>eXo Add-on:: eXo Web Conferencing</name>
   <description>eXo Web Conferencing portal extension</description>
@@ -38,7 +38,6 @@
   <modules>
     <module>services</module>
     <module>webapp</module>
-    <module>webrtc</module>
     <module>packaging</module>
   </modules>
 
@@ -54,7 +53,7 @@
     <!-- **************************************** -->
     <!-- Dependencies versions                    -->
     <!-- **************************************** -->
-    <addon.exo.ecms.version>6.5.x-SNAPSHOT</addon.exo.ecms.version>
+    <addon.exo.ecms.version>7.0.x-SNAPSHOT</addon.exo.ecms.version>
 
     <!-- Sonar properties -->
     <sonar.organization>exoplatform</sonar.organization>
@@ -81,19 +80,6 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>web-conferencing-webapp</artifactId>
-        <version>${project.version}</version>
-        <type>war</type>
-      </dependency>
-      <!-- WebRTC extension -->
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>web-conferencing-webrtc-services</artifactId>
-        <version>${project.version}</version>
-        <type>jar</type>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>web-conferencing-webrtc-webapp</artifactId>
         <version>${project.version}</version>
         <type>war</type>
       </dependency>

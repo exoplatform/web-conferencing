@@ -15,12 +15,19 @@
       <page>crwdns6858669:0crwdne6858669:0</page>
       <title>crwdns6858670:0crwdne6858670:0</title>
       <info>crwdns6858671:0crwdne6858671:0</info>
+      <section>
+        <title>crwdns7100170:0crwdne7100170:0</title>
+      </section>
       <table>
         <Provider>crwdns6966248:0crwdne6966248:0</Provider>
         <Description>crwdns6966250:0crwdne6966250:0</Description>
         <Active>crwdns6966252:0crwdne6966252:0</Active>
         <Permissions>crwdns6966254:0crwdne6966254:0</Permissions>
       </table>
+      <ExternalVisio>
+        <name>crwdns7100258:0crwdne7100258:0</name>
+        <description>crwdns7100260:0crwdne7100260:0</description>
+      </ExternalVisio>
       <WebRTC>
         <name>crwdns6966256:0crwdne6966256:0</name>
         <description>Default provider based on <![CDATA[<a href="https://webrtc.org/" target="_blank">WebRTC</a>]]> standard. Let users to place peer to peer call. No browser plugin needed.</description>
@@ -33,6 +40,9 @@
         <name>crwdns6966264:0crwdne6966264:0</name>
         <description>crwdns6966266:0crwdne6966266:0</description>
       </Jitsi>
+      <switch>
+        <label>crwdns7100268:0{0}crwdne7100268:0</label>
+      </switch>
       <modal>
         <title>crwdns6966268:0crwdne6966268:0</title>
         <SearchLabel>crwdns6966270:0crwdne6966270:0</SearchLabel>

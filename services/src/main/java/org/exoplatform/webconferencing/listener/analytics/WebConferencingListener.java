@@ -1,6 +1,6 @@
 package org.exoplatform.webconferencing.listener.analytics;
 
-import static org.exoplatform.analytics.utils.AnalyticsUtils.*;
+import static io.meeds.analytics.utils.AnalyticsUtils.*;
 
 import java.util.Collections;
 import java.util.Map;
@@ -8,7 +8,7 @@ import java.util.Set;
 
 import org.apache.commons.codec.binary.StringUtils;
 
-import org.exoplatform.analytics.model.StatisticData;
+import io.meeds.analytics.model.StatisticData;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.services.listener.*;

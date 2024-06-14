@@ -2,13 +2,13 @@ package org.exoplatform.webconferencing.server.filter;
 
 import java.io.IOException;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.exoplatform.web.filter.Filter;
 import org.exoplatform.webconferencing.WebConferencingService;
@@ -35,6 +35,8 @@ public class LogoutFilter implements Filter {
       Cookie cookie = new Cookie(WebConferencingService.SESSION_TOKEN_COOKIE, "");
       cookie.setPath("/");
       cookie.setMaxAge(0);
+      cookie.setHttpOnly(true);
+      cookie.setSecure(request.isSecure());
       httpResponse.addCookie(cookie);
     }
     chain.doFilter(request, response);

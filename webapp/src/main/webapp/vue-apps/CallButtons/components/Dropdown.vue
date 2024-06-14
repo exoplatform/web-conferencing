@@ -4,7 +4,8 @@
       ref="buttonsheader"
       :header="header"
       :showdropdowncomponent="showDropdownComponent"
-      :passrefs="passRefs" />
+      :passrefs="passRefs"
+      :start-call="startCall" />
     <div 
       v-show="isopen" 
       ref="buttonsContainer" 
@@ -63,6 +64,9 @@ export default {
     showDropdownComponent() {
       this.$emit('showDropdown');
     },
+    startCall() {
+      this.providersbutton[0].callSettings.onCallOpen();
+    },
     passRefs() {
       this.$emit('getRefs', this.$refs);
     },
@@ -84,7 +88,7 @@ export default {
   min-width: @width;
   max-width: @width + @width;
   box-shadow: @defaultShadow;
-  position: absolute;
+  position: fixed;
   [class^="call-button-container-"] {
     height: 36px;
     border-radius: 3px;

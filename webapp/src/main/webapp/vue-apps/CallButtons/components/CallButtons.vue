@@ -1,9 +1,12 @@
 <template>
   <v-app class="VuetifyApp ma-0">
-    <div ref="callbutton" :class="['call-button-container']">
+    <div
+      ref="callbutton"
+      v-show="providersButton.length"
+      :class="['call-button-container']">
       <dropdown
         v-click-outside="hideDropdown"
-        v-if="providersButton.length > 1"
+        v-if="!this.isSingleBtn"
         ref="dropdown"
         :positionclass="positionClass"
         :providersbutton="providersButton"
@@ -75,6 +78,9 @@ export default {
     };
   },
   computed: {
+    isSingleBtn: function() {
+      return !(this.providersButton.length > 1 && this.shouldDisplayDropdown);
+    },
     dropdown: function() {
       return this.$refs.callbutton.getBoundingClientRect();
     },
@@ -107,6 +113,9 @@ export default {
         this.parentClass.includes('call-button-mini') ||
         this.parentClass.includes('call-button--tiptip')
       );
+    },
+    shouldDisplayDropdown() {
+      return !this.$refs.callbutton.closest('#peopleCompactCardBottomDrawer');
     },
     header() {
       return this.condition
@@ -153,23 +162,30 @@ export default {
         if (context && context.details && this.providersButton.length === 0) {
           const callButtons = [];
           context.parentClasses = this.parentClass;
-          webConferencing.getAllProviders().then(providers => {
-            providers.map(provider => {
-              if (provider.isInitialized) {
-                callButtons.push(provider.callButton(context));
+          const id = context.isSpace ? context.spaceId : context.isUser ? context.userId : context.roomId;
+          webConferencing.getAllProviders(id).then(providers => {
+            Promise.all(providers.map(provider => {
+              if (provider.isInitialized && provider.configured) {
+                return provider.callButton(context).then(components => {
+                  callButtons.push(...components);
+                });
               }
-            });
-            Promise.allSettled(callButtons).then(resCallButtons => {
-              resCallButtons.forEach(button => {
-                if (button.status === 'fulfilled') {
-                  this.providersButton.push(button.value);
-                  if (button.value.$data) {
-                    button.value.$data.header = 'CALL';
+            })).then(() => {
+              // Tri en fonction de la valeur de l'attribut "urlConnector"
+              callButtons.sort((a, b) => (b.callSettings.urlConnector ? 1 : -1) - (a.callSettings.urlConnector ? 1 : -1));
+              Promise.allSettled(callButtons).then(resCallButtons => {
+                resCallButtons.forEach(button => {
+                  if (button.status === 'fulfilled') {
+                    this.providersButton.push(button.value);
+                    if (button.value.$data) {
+                      button.value.$data.header = 'CALL';
+                    }
                   }
-                }
+                });
+                thevue.createButtons();
               });
-              thevue.createButtons();
             });
+            
           });
         } else if (context && !context.details) {
           // mini chat - TODO whata a logic for mini chat with context w/o details??
@@ -191,13 +207,14 @@ export default {
       let vm = null;
       if (this.providersButton.length !== 0) {
         for (const [index, pb] of this.providersButton.entries()) {
-          if (this.providersButton.length > 1) {
+          if (!this.isSingleBtn) {
             //add buttons to dropdown component
             if (this.isOpen) {
               ref = this.childRef.callbutton[index];
               // add vue button
               if (pb instanceof Vue) {
                 vm = pb.$mount(); // TODO why we need vm globaly?
+                pb.$children[0].setSingleBtn(this.isSingleBtn);
                 // vm.$el.innerHTML = "<span class='v-btn__content'><i class='uiIconSocPhone uiIconBlue'></i>Jitsi Call</span>";
                 ref.appendChild(vm.$el);
               } else {
@@ -213,11 +230,14 @@ export default {
             if (pb instanceof Vue) {
               // add vue button
               vm = pb.$mount(); // TODO why we need vm globaly?
+              pb.$children[0].setSingleBtn(this.isSingleBtn);
+
               callButton.appendChild(vm.$el);
             } else {
               // add button as DOM Element
               callButton.appendChild(pb);
             }
+            break;
           }
         }
       } else {
@@ -351,6 +371,7 @@ export default {
       min-height: 10px;
       .dropdown-vue {
         .buttons-container {
+          position: absolute;
           &.left {
             right: -10px;
           }
@@ -358,9 +379,7 @@ export default {
       }
       &.single {
         padding: 0;
-        width: unset;
         border: none;
-        height: 20px;
         background-color: transparent !important;
         // &.single-btn-container {
         button {
@@ -402,7 +421,7 @@ export default {
 
     .buttons-container {
       top: 27px;
-      right: -70px!important;
+      right: -15px!important;
       z-index: 100;
     }
   }
@@ -482,9 +501,6 @@ export default {
   margin-right: 6px;
   .call-button-container {
     padding: 0 10px 10px 0;
-    &.single {
-      padding: 0 10px 10px 0;
-    }
   }
 }
 .space-title-action-components {
@@ -506,5 +522,15 @@ export default {
 #UIProfileHeaderContainer {
   position: relative;
   z-index: 100;
+}
+
+#identity-popover {
+  .call-button-popover--profile {
+    button {
+      i {
+        font-size:18px !important;
+      }
+    }
+  }
 }
 </style>

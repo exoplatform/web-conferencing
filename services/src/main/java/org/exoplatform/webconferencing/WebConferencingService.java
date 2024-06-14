@@ -25,28 +25,35 @@ import java.net.URLEncoder;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.*;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.persistence.PersistenceException;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.persistence.PersistenceException;
 
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.lang.RandomStringUtils;
-import org.exoplatform.commons.utils.CommonsUtils;
-import org.exoplatform.container.PortalContainer;
-import org.exoplatform.container.component.RequestLifeCycle;
-import org.exoplatform.services.cms.documents.DocumentService;
-import org.exoplatform.services.jcr.impl.core.NodeImpl;
-import org.exoplatform.services.wcm.utils.WCMCoreUtils;
-import org.exoplatform.web.security.codec.AbstractCodec;
-import org.exoplatform.web.security.codec.CodecInitializer;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -56,12 +63,16 @@ import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.ComponentPlugin;
+import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.ecm.utils.permission.PermissionUtil;
+import org.exoplatform.services.cms.documents.DocumentService;
 import org.exoplatform.services.cms.link.LinkManager;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.access.PermissionType;
@@ -70,6 +81,7 @@ import org.exoplatform.services.jcr.core.ManageableRepository;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
 import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
+import org.exoplatform.services.jcr.impl.core.NodeImpl;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -82,6 +94,7 @@ import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.services.wcm.core.NodetypeConstant;
+import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.model.Profile;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
@@ -93,6 +106,8 @@ import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.upload.UploadResource;
 import org.exoplatform.upload.UploadService;
 import org.exoplatform.wcm.ext.component.document.service.ShareDocumentService;
+import org.exoplatform.web.security.codec.AbstractCodec;
+import org.exoplatform.web.security.codec.CodecInitializer;
 import org.exoplatform.webconferencing.UserInfo.IMInfo;
 import org.exoplatform.webconferencing.dao.CallDAO;
 import org.exoplatform.webconferencing.dao.InviteDAO;
@@ -104,6 +119,8 @@ import org.exoplatform.webconferencing.domain.InviteEntity;
 import org.exoplatform.webconferencing.domain.OriginEntity;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Created by The eXo Platform SAS.
@@ -190,6 +207,7 @@ public class WebConferencingService implements Startable {
   /** The Constant SECRET_KEY. */
   protected static final String SECRET_KEY                   = "secret-key";
 
+  protected static final String VIDEO_CONFERENCE_IS_ENABLED  = "videoConferenceEnabled";
 
   /**
    * Represent Space in calls.
@@ -1926,11 +1944,18 @@ public class WebConferencingService implements Startable {
    *          used
    * @return the provider configurations
    */
-  public Set<CallProviderConfiguration> getProviderConfigurations(Locale locale) {
+  public Set<CallProviderConfiguration> getProviderConfigurations(Locale locale, String remoteId, boolean ignoreEnabled) {
     Set<CallProvider> allProviders = new LinkedHashSet<>();
+    boolean isVideoConferenceEnabled = true;
+    if (remoteId != null) {
+      Space space = spaceService.getSpaceByPrettyName(remoteId);
+      if (space!=null) {
+        isVideoConferenceEnabled = isVideoConferenceEnabled(space.getId());
+      }
+    }
     // Collect all registered providers via configuration
-    for (CallProvider registeredProvider : providers.values()) {
-      allProviders.add(registeredProvider);
+    if (ignoreEnabled || isVideoConferenceEnabled) {
+      allProviders.addAll(providers.values());
     }
     // Read configurations saved in storage for each of them
     Set<CallProviderConfiguration> allConfs = new LinkedHashSet<>();
@@ -1943,6 +1968,9 @@ public class WebConferencingService implements Startable {
           conf.setTitle(p.getTitle());
           conf.setDescription(p.getDescription(locale));
           conf.setLogEnabled(p.isLogEnabled());
+          if (remoteId!=null) {
+            conf.setConfigured(getProvider(conf.getType()).isConfiguredForIdentity(remoteId));
+          }
           allConfs.add(conf);
         } else {
           addDefault = true;
@@ -1965,7 +1993,7 @@ public class WebConferencingService implements Startable {
    * @return the provider configurations
    */
   public Set<CallProviderConfiguration> getProviderConfigurations() {
-    return this.getProviderConfigurations(Locale.getDefault());
+    return this.getProviderConfigurations(Locale.getDefault(), null, false);
   }
 
   /**
@@ -1999,14 +2027,18 @@ public class WebConferencingService implements Startable {
    * @throws UnsupportedEncodingException if UTF8 not supported
    * @throws JSONException if cannot serialize to JSON
    */
-  public void saveProviderConfiguration(CallProviderConfiguration conf) throws UnsupportedEncodingException, JSONException {
-    final String initialGlobalId = Scope.GLOBAL.getId();
-    try {
-      JSONObject json = providerConfigToJson(conf);
-      String safeType = URLEncoder.encode(conf.getType(), "UTF-8");
-      settingService.set(Context.GLOBAL, Scope.GLOBAL.id(PROVIDER_SCOPE_NAME), safeType, SettingValue.create(json.toString()));
-    } finally {
-      Scope.GLOBAL.id(initialGlobalId);
+  public void saveProviderConfiguration(CallProviderConfiguration conf, String spaceId) throws UnsupportedEncodingException, JSONException {
+    if (spaceId == null) {
+      final String initialGlobalId = Scope.GLOBAL.getId();
+      try {
+        JSONObject json = providerConfigToJson(conf);
+        String safeType = URLEncoder.encode(conf.getType(), "UTF-8");
+        settingService.set(Context.GLOBAL, Scope.GLOBAL.id(PROVIDER_SCOPE_NAME), safeType, SettingValue.create(json.toString()));
+      } finally {
+        Scope.GLOBAL.id(initialGlobalId);
+      }
+    } else {
+      getProvider(conf.getType()).setConfiguredForIdentity(spaceId, conf.active);
     }
   }
 
@@ -2605,15 +2637,18 @@ public class WebConferencingService implements Startable {
     try {
       String safeType = URLEncoder.encode(type, "UTF-8");
       SettingValue<?> val = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(PROVIDER_SCOPE_NAME), safeType);
-      if (val != null) {
-        String str = String.valueOf(val.getValue());
-        if (str.startsWith("{")) {
-          // Assuming it's JSON
-          CallProviderConfiguration conf = jsonToProviderConfig(new JSONObject(str));
-          return conf;
-        } else {
-          LOG.warn("Cannot parse saved CallProviderConfiguration: " + str);
-        }
+      String str;
+      if (val == null) {
+        str="{\"active\":true,\"type\":\""+type+"\"}";
+      } else {
+        str = String.valueOf(val.getValue());
+      }
+      if (str.startsWith("{")) {
+        // Assuming it's JSON
+        CallProviderConfiguration conf = jsonToProviderConfig(new JSONObject(str));
+        return conf;
+      } else {
+        LOG.warn("Cannot parse saved CallProviderConfiguration: " + str);
       }
     } catch (UnsupportedEncodingException e) {
       LOG.warn("UTF8 encoding required to read provider config", e);
@@ -2841,6 +2876,9 @@ public class WebConferencingService implements Startable {
    */
   private String createInvite(String callId) {
     String inviteId = codec.encode(callId);
+    if (inviteId.length()>32) {
+      inviteId = inviteId.substring(0, 32);
+    }
     byte[] inviteIdBytes = Base64.getDecoder().decode(inviteId);
     inviteId = Base64.getUrlEncoder().withoutPadding().encodeToString(inviteIdBytes);
 
@@ -3008,7 +3046,9 @@ public class WebConferencingService implements Startable {
     for (OriginInfo o : call.getOrigins()) {
       originsStorage.create(createOriginEntity(callId, o));
     }
-    call.setInviteId(createInvite(callId));
+    if (getProvider(call.providerType).canInvite()) {
+      call.setInviteId(createInvite(callId));
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("<< txCreateCall: " + call.getId());
     }
@@ -3509,7 +3549,7 @@ public class WebConferencingService implements Startable {
     //Clear storage session:
     // XXX It is REQUIRED stuff (actual when something were deleted above), otherwise
     // ExoTx/Hibernate will fail to enter into the transaction in createCall() with an exception:
-    // javax.persistence.EntityExistsException: a different object with the same identifier value
+    // jakarta.persistence.EntityExistsException: a different object with the same identifier value
     // was already associated with the session, e.g.:
     // [org.exoplatform.webconferencing.domain.ParticipantEntity#org.exoplatform.webconferencing.domain.ParticipantId@4aa63de3]
     try {
@@ -3991,4 +4031,50 @@ public class WebConferencingService implements Startable {
     }
   }
   // <<<<<<< Call storage: wrappers to catch JPA exceptions
+  public List<ActiveCallProvider> getActiveProvidersForSpace(String spaceId) {
+    List<ActiveCallProvider> allProviders = new ArrayList<>();
+    for (CallProvider registeredProvider : providers.values()) {
+      if(getProvider(registeredProvider.getType()).isActive()) {
+        allProviders.addAll(registeredProvider.getActiveProvidersForSpace(spaceId));
+      }
+    }
+    return allProviders.stream().map(provider -> updateCallProviderUrl(spaceId, provider)).toList();
+  }
+
+  public void saveActiveCallProvider(ActiveCallProvider activeCallProvider, String identityId) {
+    if (activeCallProvider == null) {
+      throw new IllegalArgumentException("activeCallProvider is mandatory");
+    }
+    settingService.remove(Context.GLOBAL, Scope.SPACE.id(identityId), activeCallProvider.getConnectorId());
+    settingService.set(Context.GLOBAL,
+                       Scope.SPACE.id(identityId),
+                       activeCallProvider.getConnectorId(),
+                       SettingValue.create(activeCallProvider.getUrl()));
+  }
+
+  public ActiveCallProvider updateCallProviderUrl(String identityId, ActiveCallProvider activeCallProvider) {
+    if (activeCallProvider.getConnectorId()!=null &&  !activeCallProvider.getConnectorId().isEmpty()) {
+      SettingValue<?> settingValue = settingService.get(Context.GLOBAL,
+                                                        Scope.SPACE.id(identityId),
+                                                        activeCallProvider.getConnectorId());
+      if (settingValue != null) {
+        activeCallProvider.setUrl(String.valueOf(settingValue.getValue()));
+      }
+    }
+    return activeCallProvider;
+  }
+
+  public void updateVideoConferenceEnabled(String spaceId, boolean enabled, String provider) {
+    if (provider == null) {
+      settingService.remove(Context.GLOBAL, Scope.SPACE.id(spaceId), VIDEO_CONFERENCE_IS_ENABLED);
+      settingService.set(Context.GLOBAL, Scope.SPACE.id(spaceId), VIDEO_CONFERENCE_IS_ENABLED, SettingValue.create(enabled));
+    } else {
+      getProvider(provider).setConfiguredForIdentity(spaceId,enabled);
+    }
+  }
+
+  public boolean isVideoConferenceEnabled(String spaceId) {
+    SettingValue<?> settingValue = settingService.get(Context.GLOBAL, Scope.SPACE.id(spaceId), VIDEO_CONFERENCE_IS_ENABLED);
+    return settingValue == null || Boolean.parseBoolean(settingValue.getValue().toString());
+  }
 }

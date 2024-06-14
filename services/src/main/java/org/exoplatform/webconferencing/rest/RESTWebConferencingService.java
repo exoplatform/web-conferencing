@@ -18,10 +18,14 @@
  */
 package org.exoplatform.webconferencing.rest;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import javax.annotation.security.RolesAllowed;
-import javax.servlet.http.HttpServletRequest;
+
+
+import jakarta.servlet.http.HttpServletRequest;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -29,6 +33,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -38,20 +43,23 @@ import javax.ws.rs.core.UriInfo;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.apache.commons.lang.StringUtils;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.resources.LocaleConfigService;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
-import org.exoplatform.webconferencing.CallProviderConfiguration;
-import org.exoplatform.webconferencing.GroupInfo;
-import org.exoplatform.webconferencing.IdentityStateException;
-import org.exoplatform.webconferencing.UserInfo;
-import org.exoplatform.webconferencing.WebConferencingService;
+import org.exoplatform.social.core.space.model.Space;
+import org.exoplatform.social.core.space.spi.SpaceService;
+import org.exoplatform.webconferencing.*;
 import org.exoplatform.webconferencing.client.ErrorInfo;
 import org.exoplatform.webconferencing.dao.StorageException;
+import org.exoplatform.ws.frameworks.json.impl.JsonException;
 
 
 /**
@@ -71,17 +79,24 @@ public class RESTWebConferencingService implements ResourceContainer {
   /** The web conferencing. */
   protected final WebConferencingService webConferencing;
 
+  protected final LocaleConfigService localeConfigService;
+
   /** The cache control. */
   private final CacheControl             cacheControl;
+
+  private final SpaceService spaceService;
+
 
   /**
    * Instantiates a new REST service for web conferencing.
    *
    * @param webConferencing the web conferencing
    */
-  public RESTWebConferencingService(WebConferencingService webConferencing) {
+  public RESTWebConferencingService(WebConferencingService webConferencing, LocaleConfigService localeConfigService, SpaceService spaceService) {
     this.webConferencing = webConferencing;
+    this.localeConfigService = localeConfigService;
     this.cacheControl = new CacheControl();
+    this.spaceService = spaceService;
     cacheControl.setNoCache(true);
     cacheControl.setNoStore(true);
   }
@@ -169,7 +184,7 @@ public class RESTWebConferencingService implements ResourceContainer {
           boolean activeVal = Boolean.valueOf(active);
           if (activeVal != conf.isActive()) {
             conf.setActive(activeVal);
-            webConferencing.saveProviderConfiguration(conf);
+            webConferencing.saveProviderConfiguration(conf, null);
           }
           return Response.ok().cacheControl(cacheControl).entity(conf).build();
         } else {
@@ -201,21 +216,27 @@ public class RESTWebConferencingService implements ResourceContainer {
    * @return the provider configs
    */
   @GET
-  @RolesAllowed("administrators")
+  @RolesAllowed("users")
   @Path("/providers/configuration")
   @Operation(
           summary = "Read call providers configurations",
           method = "GET",
-          description = "Use this method to read all providers configuration. This operation only available to Administrator user.")
+          description = "Use this method to read all providers configuration. This operation only available to all users.")
   @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled. Providers configurations returned."),
     @ApiResponse(responseCode = "401", description = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
     @ApiResponse(responseCode = "500", description = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
-  public Response getProviderConfigs(@Context UriInfo uriInfo, @Context HttpServletRequest request) {
+  public Response getProviderConfigs(@Context UriInfo uriInfo,
+                                     @Context HttpServletRequest request,
+                                     @Parameter(description = "Space pretty name", required = true)
+                                     @QueryParam("spaceIdentityId") String spaceIdentityId,
+                                     @Parameter(description= "Ignore Enabled space parameter") @Schema(defaultValue = "false")
+                                       @QueryParam("ignoreEnabled")
+                                       boolean ignoreEnabled) {
     ConversationState convo = ConversationState.getCurrent();
     if (convo != null) {
       String currentUserName = convo.getIdentity().getUserId();
       try {
-        Set<CallProviderConfiguration> confs = webConferencing.getProviderConfigurations(request.getLocale());
+        Set<CallProviderConfiguration> confs = webConferencing.getProviderConfigurations(request.getLocale(), spaceIdentityId, ignoreEnabled);
         return Response.ok().cacheControl(cacheControl).entity(confs).build();
       } catch (Throwable e) {
         LOG.error("Error reading providers configuration by '" + currentUserName + "'", e);
@@ -287,6 +308,69 @@ public class RESTWebConferencingService implements ResourceContainer {
                      .cacheControl(cacheControl)
                      .entity(ErrorInfo.accessError("Unauthorized user"))
                      .build();
+    }
+  }
+
+
+  /**
+   * Gets the Call context info.
+   *
+   * @param uriInfo
+   *          the uri info
+   * @param userName
+   *          the id
+   * @param language
+   *          the current language of the user
+   * @return the user info response
+   */
+  @GET
+  @RolesAllowed("users")
+  @Path("/context")
+  @Operation(
+          summary = "Return the current context of the call",
+          method = "GET",
+          description = "Use this method to read the current context of the call. This operation is available to all Platform users.")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled. Call context object returned."),
+    @ApiResponse(responseCode = "400", description = "Wrong request parameters: name or language. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),
+    @ApiResponse(responseCode = "401", description = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
+     @ApiResponse(responseCode = "500", description = "Internal server error due to data encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
+  public Response getContext(@Context UriInfo uriInfo,
+                              @Parameter(description = "User name", required = true) @QueryParam("name") String userName,
+                              @Parameter(description = "Space Id", required = true) @QueryParam("spaceId") String spaceId,
+                              @Parameter(description = "Language", required = true) @QueryParam("lang") String language) {
+    Locale currentLocale = localeConfigService.getDefaultLocaleConfig().getLocale();
+    if(StringUtils.isBlank(userName)) {
+      return Response.status(Status.BAD_REQUEST)
+              .cacheControl(cacheControl)
+              .entity(ErrorInfo.clientError("Wrong request parameters: name"))
+              .build();
+    }
+    if(StringUtils.isNotBlank(language)) {
+      currentLocale = Locale.forLanguageTag(language);
+    }
+    ConversationState convo = ConversationState.getCurrent();
+    if (convo != null) {
+      String currentUserName = convo.getIdentity().getUserId();
+      if (StringUtils.isNotBlank(userName) && userName.equals(currentUserName)) {
+        ContextInfo context = Utils.getCurrentContext(userName, spaceId, currentLocale);
+        try {
+          return Response.ok().cacheControl(cacheControl).entity(Utils.asJSON(context)).build();
+        } catch (JsonException jsonException) {
+          return Response.serverError()                         .cacheControl(cacheControl)
+                  .entity(ErrorInfo.serverError("Error creating Json for context "))
+                  .build();
+        }
+      } else {
+        return Response.status(Status.UNAUTHORIZED)
+                .cacheControl(cacheControl)
+                .entity(ErrorInfo.accessError("Unauthorized user"))
+                .build();
+      }
+    } else {
+      return Response.status(Status.UNAUTHORIZED)
+              .cacheControl(cacheControl)
+              .entity(ErrorInfo.accessError("Unauthorized user"))
+              .build();
     }
   }
 
@@ -558,6 +642,114 @@ public class RESTWebConferencingService implements ResourceContainer {
                      .cacheControl(cacheControl)
                      .entity(ErrorInfo.accessError("Unauthorized user"))
                      .build();
+    }
+  }
+
+  @GET
+  @RolesAllowed("users")
+  @Path("{spaceId}/providers")
+  @Operation(summary = "Retrieves the list of active providers for space", method = "GET", description = "Retrieves the list of active providers for space")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized"),
+      @ApiResponse(responseCode = "500", description = "Internal server error"), })
+  public Response getActiveProvidersForSpace(@Parameter(description = "Space Id", required = true)
+  @PathParam("spaceId")
+  String spaceId) {
+    String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
+    Space space = spaceService.getSpaceById(spaceId);
+    if (space == null || (!spaceService.isMember(space, authenticatedUser) && !spaceService.isSuperManager(authenticatedUser))) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    try {
+      List<ActiveCallProvider> activeProviderInfoList = webConferencing.getActiveProvidersForSpace(spaceId);
+      return Response.ok(activeProviderInfoList).build();
+    } catch (Exception e) {
+      LOG.warn("Error retrieving list of active providers for space", e);
+      return Response.serverError().entity(e.getMessage()).build();
+    }
+  }
+
+  @POST
+  @Path("/provider")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("users")
+  @Operation(summary = "Saves a new Video conference", description = "Creates a new Video conference", method = "POST")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled"),
+      @ApiResponse(responseCode = "400", description = "Invalid query input"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized"),
+      @ApiResponse(responseCode = "500", description = "Internal server error"), })
+  public Response saveVideoConference(@RequestBody(description = "VideoConference object to create", required = true)
+  ActiveCallProvider activeCallProvider,
+                                      @Parameter(description = "Space Id", required = true)
+                                      @QueryParam("spaceId")
+                                      String spaceId) {
+    if (activeCallProvider == null) {
+      return Response.status(Response.Status.BAD_REQUEST).entity("activeCallProvider object is mandatory").build();
+    }
+    String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
+    Space space = spaceService.getSpaceById(spaceId);
+    if (space == null || (!spaceService.isMember(space, authenticatedUser) && !spaceService.isSuperManager(authenticatedUser))) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    try {
+      webConferencing.saveActiveCallProvider(activeCallProvider, spaceId);
+      return Response.ok().build();
+    } catch (Exception e) {
+      LOG.warn("Error creating a VideoConference", e);
+      return Response.serverError().entity(e.getMessage()).build();
+    }
+  }
+
+  @POST
+  @Path("updateVideoConferenceEnabled")
+  @Produces(MediaType.TEXT_PLAIN)
+  @RolesAllowed("users")
+  @Operation(summary = "update a Video Conference enabled", method = "POST", description = "This updates a VideoConference enabled")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized"),
+      @ApiResponse(responseCode = "500", description = "Internal server error") })
+  public Response updateVideoConferenceEnabled(@Parameter(description = "Space Id", required = true) @QueryParam("spaceId") String spaceId,
+                                               @Parameter(description = "enabled", required = true) @QueryParam("enabled") boolean enabled,
+                                               @Parameter(description = "provider", required = false) @QueryParam("provider") String provider) {
+
+    String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
+    Space space = spaceService.getSpaceById(spaceId);
+    if (space == null || (!spaceService.isMember(space, authenticatedUser) && !spaceService.isSuperManager(authenticatedUser))) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    try {
+      webConferencing.updateVideoConferenceEnabled(spaceId, enabled, provider);
+      return Response.ok().build();
+    } catch (Exception e) {
+      LOG.warn("Error updating a VideoConference enabled", e);
+      return Response.serverError().entity(e.getMessage()).build();
+    }
+  }
+
+  @GET
+  @Path("isVideoConferenceEnabled")
+  @Produces(MediaType.TEXT_PLAIN)
+  @RolesAllowed("users")
+  @Operation(summary = "check if the video conference is enabled for space", method = "GET", description = "This checks if the video conference is enabled for space")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized"),
+      @ApiResponse(responseCode = "500", description = "Internal server error") })
+  public Response isVideoConferenceEnabled(@Parameter(description = "Space Id", required = true)
+  @QueryParam("spaceId")
+  String spaceId) {
+
+    String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
+    Space space = spaceService.getSpaceById(spaceId);
+    if (space == null || (!spaceService.isMember(space, authenticatedUser) && !spaceService.isSuperManager(authenticatedUser))) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+    try {
+      boolean videoConferenceEnabled = webConferencing.isVideoConferenceEnabled(spaceId);
+      return Response.ok(String.valueOf(videoConferenceEnabled)).build();
+    } catch (Exception e) {
+      LOG.warn("Error checking a VideoConference enabled for space", e);
+      return Response.serverError().entity(e.getMessage()).build();
     }
   }
 }
