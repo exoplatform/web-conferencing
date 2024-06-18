@@ -36,7 +36,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
               :aria-label="this.$t(`videoConference.switch.label.${this.switchAriaLabel}`)" />
           </v-list-item-action>
         </v-list-item>
-        <v-list-item class="px-0" v-if="active">
+        <v-list-item class="px-0" v-if="active && shouldDisplayProvidersList">
           <v-list-item-content>
             <v-list-item-title class="subtitle-1">
               <h4 class="my-0 text-color">{{ $t('videoConference.space.settings.list.title') }}</h4>
@@ -46,7 +46,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
             </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
-        <div v-if="active">
+        <div v-if="active && shouldDisplayProvidersList">
           <v-list-item
             v-for="provider in activeProviders"
             :key="provider"
@@ -105,6 +105,11 @@ export default {
   computed: {
     switchAriaLabel() {
       return this.active && 'disable' || 'enable';
+    },
+    shouldDisplayProvidersList() {
+      //we display provider list if there is at least on external connector available to configure
+      //or if there is more than one integrated connector
+      return this.activeProviders.some((provider) => !provider.integratedConnector ) || this.activeProviders.filter((provider) => provider.integratedConnector ).length > 1;
     },
   },
   watch: {
