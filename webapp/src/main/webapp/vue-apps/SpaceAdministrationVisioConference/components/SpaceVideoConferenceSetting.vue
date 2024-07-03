@@ -17,10 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 <template>
   <v-app>
     <template v-if="displayed">
-      <v-card class="pa-6 application-body" flat>
+      <v-card class="px-5 application-body" flat>
         <v-list-item class="px-0 mb-4">
           <v-list-item-content class="py-0">
-            <v-list-item-title class="title text-color my-0">
+            <v-list-item-title class="text-title my-0">
               {{ $t('videoConference.space.settings.title') }}
             </v-list-item-title>
             <v-list-item-title class="pt-2">
