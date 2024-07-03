@@ -38,10 +38,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
         <v-form v-model="isValidForm">
           <v-card-text class="d-flex pb-2">
             <v-label>
-              <span class="text-color font-weight-bold text-start text-truncate-2">
+              <span class="font-weight-bold text-start text-truncate-2">
                 {{ $t('videoConference.drawer.link.title') }}           
               </span>
-              <p class="caption">{{ $t('videoConference.drawer.link.description') }}</p>
+              <p class="text-subtitle">{{ $t('videoConference.drawer.link.description') }}</p>
             </v-label>
           </v-card-text>
           <v-card-text class="d-flex py-0">
