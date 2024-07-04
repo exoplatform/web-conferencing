@@ -13,7 +13,7 @@
               {{ $t("webconferencing.admin.title") }}
             </h4>
           </v-list-item-title>
-          <v-list-item-subtitle class="pt-4">
+          <v-list-item-subtitle class="text-body pt-4">
             {{ $t("webconferencing.admin.section.title") }}
           </v-list-item-subtitle>
         </v-list-item-content>
