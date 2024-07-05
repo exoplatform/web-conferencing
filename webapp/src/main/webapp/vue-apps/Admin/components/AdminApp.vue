@@ -1,6 +1,6 @@
 <template>
   <v-app id="web-conferencing-admin">
-    <v-card class="px-6 card-border-radius overflow-hidden" flat>
+    <v-card class="px-6 application-body" flat>
       <div
         v-show="error"
         class="alert alert-error">
@@ -9,12 +9,12 @@
       <v-list-item class="px-0 mb-2 mt-4">
         <v-list-item-content class="py-0">
           <v-list-item-title class="my-0">
-            <h4 class="font-weight-bold mt-0">
+            <h4 class="text-title mt-0">
               {{ $t("webconferencing.admin.title") }}
             </h4>
           </v-list-item-title>
-          <v-list-item-subtitle class="pt-4">
-            <h4 class="my-0 text-color">{{ $t("webconferencing.admin.section.title") }}</h4>
+          <v-list-item-subtitle class="text-body pt-4">
+            {{ $t("webconferencing.admin.section.title") }}
           </v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
