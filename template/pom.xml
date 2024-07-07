@@ -49,8 +49,8 @@
     <!-- **************************************** -->
     <!-- Dependencies versions                    -->
     <!-- **************************************** -->
-    <addon.exo.ecms.version>7.0.x-SNAPSHOT</addon.exo.ecms.version>
-    <addon.exo.jcr.version>7.0.x-SNAPSHOT</addon.exo.jcr.version>
+    <addon.exo.ecms.version>7.0.0-20240707</addon.exo.ecms.version>
+    <addon.exo.jcr.version>7.0.0-20240707</addon.exo.jcr.version>
     <io.meeds.social.version>7.0.x-SNAPSHOT</io.meeds.social.version>
     <io.meeds.platform-ui.version>7.0.x-SNAPSHOT</io.meeds.platform-ui.version>
     <web-conferencing.version>7.0.x-SNAPSHOT</web-conferencing.version>
