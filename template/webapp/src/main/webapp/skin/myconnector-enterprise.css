@@ -1,9 +1,0 @@
-/* Styles for My Connector in Enterprise Skin */
-
-.uiIconSocMyconnector:before {
-	content: "\e829";
-}
-
-.spaceCall i.uiIconMyCall {
-	font-size: 14px;
-}
