@@ -20,6 +20,8 @@ import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.notification.impl.NotificationContextImpl;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
 import org.exoplatform.social.core.manager.IdentityManager;
@@ -75,6 +77,7 @@ public class CallRecordingNotificationListener extends Listener<CallInfo, Map<? 
       }
       NotificationContext ctx = NotificationContextImpl.cloneInstance();
       String fileUrl = webConferencingService.getRecordingUrl(identity, fileName, callType);
+      fileUrl=fileUrl.replace(CommonsUtils.getCurrentDomain(),"");
       ctx.append(NotificationConstants.RECORDED_FILE_URL, fileUrl);
       ctx.append(NotificationConstants.CALL_PARTICIPANTS, participants);
       ctx.append(NotificationConstants.FILE_NAME, fileName);
@@ -99,6 +102,7 @@ public class CallRecordingNotificationListener extends Listener<CallInfo, Map<? 
         List<String> part = new ArrayList<>();
         part.add(participant);
         String fileUrl = webConferencingService.getRecordingUrl(participant, fileName, callType);
+        fileUrl=fileUrl.replace(CommonsUtils.getCurrentDomain(),"");
         ctx.append(NotificationConstants.FILE_NAME, fileName);
         ctx.append(NotificationConstants.RECORDING_STATUS, status);
         ctx.append(NotificationConstants.RECORDED_FILE_URL, fileUrl);

@@ -4025,12 +4025,25 @@ public class WebConferencingService implements Startable {
 
   public String getRecordingUrl(String identity, String fileName, String type) throws Exception {
     if(!fileName.isEmpty()) {
-     DocumentService documentService = WCMCoreUtils.getService(DocumentService.class);
-     Node rootNode = getRootFolderNode(identity, type);
-     Node recordingsFolder = getRecordingsFolder(rootNode);
-     Node fileRecorded = recordingsFolder.getNode(fileName);
-     String shortLink = documentService.getShortLinkInDocumentsApp(fileRecorded.getSession().getWorkspace().getName(), ((NodeImpl) fileRecorded).getInternalIdentifier());
-     return CommonsUtils.getCurrentDomain() + shortLink;
+
+      Node rootNode = getRootFolderNode(identity, type);
+      Node recordingsFolder = getRecordingsFolder(rootNode);
+      Node fileRecorded = recordingsFolder.getNode(fileName);
+
+      StringBuilder stringBuilder = new StringBuilder();
+      String portalOwner = CommonsUtils.getCurrentPortalOwner();
+      String domain = CommonsUtils.getCurrentDomain();
+      stringBuilder.append(domain)
+                   .append("/")
+                   .append(LinkProvider.getPortalName(null)).append("/");
+
+      stringBuilder.append(portalOwner).append("/documents");
+      stringBuilder.append("?documentPreviewId=");
+
+      stringBuilder.append(((NodeImpl) fileRecorded).getIdentifier());
+      LOG.info("filename {} for user {}, with type {}, generate shortlink={}",fileRecorded.getPath(),identity,type,stringBuilder.toString());
+      return stringBuilder.toString();
+
     } else {
       return  "#";
     }
