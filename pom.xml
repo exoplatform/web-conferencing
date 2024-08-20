@@ -69,7 +69,6 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      
       <!-- Video Calls extension -->
       <dependency>
         <groupId>${project.groupId}</groupId>

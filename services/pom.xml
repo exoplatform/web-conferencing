@@ -81,6 +81,10 @@
       <artifactId>ecms-social-integration</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>io.meeds.pwa</groupId>
+      <artifactId>pwa-service</artifactId>
+    </dependency>
   </dependencies>
   <build>
     <resources>
