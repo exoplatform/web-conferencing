@@ -2205,11 +2205,16 @@ public class WebConferencingService implements Startable {
       LOG.error("Cannot set conversation state for user: " + user, e);
       throw new UploadFileException("Cannot set conversation state for user: " + user);
     }
-
     ManageableRepository repository = repositoryService.getCurrentRepository();
-    SessionProvider systemSessionProvider = sessionProviders.getSystemSessionProvider(null);
-    Session session = systemSessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
-    // Get node under system session
+    SessionProvider sessionProvider = sessionProviders.getSessionProvider(state);
+    sessionProviders.setSessionProvider(null, sessionProvider);
+    if (parent.getPath().contains("Groups/spaces")) {
+      Space space = spaceService.getSpaceByGroupId(parent.getPath().split("/Groups")[1].split("/Documents")[0]);
+      if (space == null || !spaceService.isMember(space, user)) { // If user is not member of the space we use system session
+        sessionProvider = sessionProviders.getSystemSessionProvider(null);
+      }
+    }
+    Session session = sessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
     Node folder = (Node) session.getItem(parent.getPath());
     Node recordingsFolder = getRecordingsFolder(folder);
 
