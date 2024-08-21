@@ -3052,6 +3052,11 @@ public class WebConferencingService implements Startable {
       originsStorage.create(createOriginEntity(callId, o));
     }
     if (getProvider(call.providerType).canInvite()) {
+      // Check if invitation for this call exist
+      List<InviteEntity> invites = inviteStorage.findCallInvites(callId);
+      if (!invites.isEmpty()) {
+        inviteStorage.deleteCallInvites(callId);
+      }
       call.setInviteId(createInvite(callId));
     }
     if (LOG.isDebugEnabled()) {
