@@ -47,7 +47,6 @@ public class InviteDAO extends GenericDAOJPAImpl<InviteEntity, InviteId> {
    * @throws IllegalStateException the illegal state exception
    * @throws IllegalArgumentException the illegal argument exception
    */
-  @Deprecated // TODO not used
   public int deleteCallInvites(String callId) throws PersistenceException, IllegalStateException, IllegalArgumentException {
     return getEntityManager().createNamedQuery("WebConfInvite.deleteCallInvites").setParameter("callId", callId).executeUpdate();
   }
