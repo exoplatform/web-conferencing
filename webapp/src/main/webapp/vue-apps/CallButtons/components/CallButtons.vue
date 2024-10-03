@@ -358,6 +358,19 @@ export default {
       }
     }
   }
+  #peopleCompactCardBottomDrawer .call-button-container.single {
+    border: 0;
+    padding: 0;
+  }
+  #peopleCompactCardBottomDrawer .single-btn-container {
+    font-size: 1rem;
+  }
+  #peopleCompactCardBottomDrawer .call-button {
+    padding: 0 8px;
+    > div {
+      width: 100%;
+    }
+  }
 }
 .call-button-mini {
   .VuetifyApp {
