@@ -26,7 +26,6 @@
   <priority>1</priority>
   <page-nodes>
     <node>
-      <uri>webconferencing</uri>
       <name>webconferencing</name>
       <label>#{webconferencing.admin.page}</label>
       <page-reference>group::/platform/administrators::webconferencing</page-reference>
