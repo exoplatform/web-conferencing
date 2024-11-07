@@ -14,26 +14,28 @@
     <validCheckSum>7:a1c59638496075ebd6a85cc721f06057</validCheckSum><!-- 1.1.0-RC06 -> 1.1.0-RC07 mysql -->
     <validCheckSum>7:0a9ef25bb2b25ac8cd8008580abc4ced</validCheckSum><!-- 1.1.0-RC09 -> 1.1.0-RC10 others -->
     <validCheckSum>7:09c91f7cdf307a4b99fdf57417449577</validCheckSum><!-- 1.1.0-RC09 -> 1.1.0-RC10 mysql -->
+    <validCheckSum>9:0c0ebfce4053125c394b411772bab343</validCheckSum>
+    <validCheckSum>9:7b3b7213fedd54093dccdf13bfdd554f</validCheckSum>
     <createTable tableName="WBC_CALLS">
-      <column name="ID" type="NVARCHAR(255)">
+      <column name="ID" type="VARCHAR(255)">
         <constraints nullable="false" primaryKey="true" primaryKeyName="PK_WBC_CALLID" />
       </column>
-      <column name="PROVIDER_TYPE" type="NVARCHAR(32)">
+      <column name="PROVIDER_TYPE" type="VARCHAR(32)">
         <constraints nullable="false" />
       </column>
-      <column name="OWNER_ID" type="NVARCHAR(255)">
+      <column name="OWNER_ID" type="VARCHAR(255)">
         <constraints nullable="false" />
       </column>
-      <column name="OWNER_TYPE" type="NVARCHAR(32)">
+      <column name="OWNER_TYPE" type="VARCHAR(32)">
         <constraints nullable="false" />
       </column>
-      <column name="STATE" type="NVARCHAR(32)">
+      <column name="STATE" type="VARCHAR(32)">
         <constraints nullable="true" />
       </column>
-      <column name="TITLE" type="NVARCHAR(255)">
+      <column name="TITLE" type="VARCHAR(255)">
         <constraints nullable="true" />
       </column>
-      <column name="SETTINGS" type="NVARCHAR(2000)">
+      <column name="SETTINGS" type="VARCHAR(2000)">
         <constraints nullable="true" />
       </column>
       <column name="LAST_DATE" type="TIMESTAMP" defaultValue="${now}">
@@ -47,7 +49,7 @@
       </column>
     </createTable>
     <modifySql dbms="mysql">
-      <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci" />
+      <append value=" ENGINE=INNODB CHARSET=UTF8MB4 COLLATE utf8mb4_0900_ai_ci" />
     </modifySql>
   </changeSet>
   
@@ -58,25 +60,27 @@
   
   <!-- Definition of WBC_PARTICIPANTS table -->
   <changeSet author="web-conferencing" id="1.0.0-3">
+    <validCheckSum>9:6d59f1a8eabbee946fccc2cb56f1d33e</validCheckSum>
+    <validCheckSum>9:f71504b750f612c62e152b8dcb3d81dc</validCheckSum>
     <createTable tableName="WBC_PARTICIPANTS">
-      <column name="ID" type="NVARCHAR(255)">
+      <column name="ID" type="VARCHAR(255)">
         <constraints nullable="false" />
       </column>
-      <column name="CALL_ID" type="NVARCHAR(255)">
+      <column name="CALL_ID" type="VARCHAR(255)">
         <constraints nullable="false" />
       </column>
-      <column name="TYPE" type="NVARCHAR(32)">
+      <column name="TYPE" type="VARCHAR(32)">
         <constraints nullable="false" />
       </column>
-      <column name="STATE" type="NVARCHAR(32)">
+      <column name="STATE" type="VARCHAR(32)">
         <constraints nullable="true" />
       </column>
-      <column name="CLIENT_ID" type="NVARCHAR(255)">
+      <column name="CLIENT_ID" type="VARCHAR(255)">
         <constraints nullable="true" />
       </column>
     </createTable>
     <modifySql dbms="mysql">
-      <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci" />
+      <append value=" ENGINE=INNODB CHARSET=UTF8MB4 COLLATE utf8mb4_0900_ai_ci" />
     </modifySql>
   </changeSet>
 
@@ -90,22 +94,24 @@
   
   <!-- Definition of WBC_INVITES table -->
   <changeSet author="web-conferencing" id="1.0.0-5">
+    <validCheckSum>9:ebcae5d3c3db38200e68aa78f561abde</validCheckSum>
+    <validCheckSum>9:5e3edf9d49b5cb03db8cd4b692fe06dc</validCheckSum>
     <createTable tableName="WBC_INVITES">
-      <column name="CALL_ID" type="NVARCHAR(255)">
+      <column name="CALL_ID" type="VARCHAR(255)">
         <constraints nullable="false" />
       </column>
-      <column name="IDENTITY" type="NVARCHAR(255)">
+      <column name="IDENTITY" type="VARCHAR(255)">
         <constraints nullable="false" />
       </column>
-      <column name="IDENTITY_TYPE" type="NVARCHAR(32)">
+      <column name="IDENTITY_TYPE" type="VARCHAR(32)">
         <constraints nullable="false" />
       </column>
-      <column name="INVITATION_ID" type="NVARCHAR(32)">
+      <column name="INVITATION_ID" type="VARCHAR(32)">
         <constraints nullable="true" />
       </column>
     </createTable>
     <modifySql dbms="mysql">
-      <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci" />
+      <append value=" ENGINE=INNODB CHARSET=UTF8MB4 COLLATE utf8mb4_0900_ai_ci" />
     </modifySql>
   </changeSet>
   
@@ -116,22 +122,24 @@
   
   <!-- Definition of WBC_ORIGINS table -->
   <changeSet author="web-conferencing" id="1.0.0-7">
+    <validCheckSum>9:f17e3e6c4f42709cfcb0969275568ff9</validCheckSum>
+    <validCheckSum>9:ff0d85182e5ec396a9fefe94a09a5910</validCheckSum>
     <createTable tableName="WBC_ORIGINS">
-      <column name="ID" type="NVARCHAR(255)">
+      <column name="ID" type="VARCHAR(255)">
         <constraints nullable="false" />
       </column>
-      <column name="CALL_ID" type="NVARCHAR(255)">
+      <column name="CALL_ID" type="VARCHAR(255)">
         <constraints nullable="false" />
       </column>
-      <column name="TYPE" type="NVARCHAR(32)">
+      <column name="TYPE" type="VARCHAR(32)">
         <constraints nullable="false" />
       </column>
-      <column name="STATE" type="NVARCHAR(32)">
+      <column name="STATE" type="VARCHAR(32)">
         <constraints nullable="true" />
       </column>
     </createTable>
     <modifySql dbms="mysql">
-      <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci" />
+      <append value=" ENGINE=INNODB CHARSET=UTF8MB4 COLLATE utf8mb4_0900_ai_ci" />
     </modifySql>
   </changeSet>
 
@@ -161,10 +169,18 @@
   </changeSet>
 
   <changeSet author="web-conferencing" id="1.0.0-11">
+    <validCheckSum>9:8f8905b116f66a95217c5bef649811e1</validCheckSum>
     <modifyDataType tableName="WBC_INVITES"
                     columnName="INVITATION_ID"
-                    newDataType="NVARCHAR(64)"
+                    newDataType="VARCHAR(64)"
     />
   </changeSet>
-
+  <changeSet author="web-conferencing" id="1.0.0-12">
+    <sql dbms="mysql">
+      ALTER TABLE WBC_CALLS CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+      ALTER TABLE WBC_PARTICIPANTS CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+      ALTER TABLE WBC_INVITES CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+      ALTER TABLE WBC_ORIGINS CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+    </sql>
+  </changeSet>
 </databaseChangeLog>
