@@ -20,10 +20,8 @@ package org.exoplatform.webconferencing.admin.portlet;
 
 import static org.exoplatform.webconferencing.Utils.asJSON;
 import static org.exoplatform.webconferencing.Utils.getCurrentContext;
-import static org.exoplatform.webconferencing.Utils.getResourceMessages;
 
 import java.io.IOException;
-import java.util.Map;
 
 import javax.portlet.GenericPortlet;
 import javax.portlet.PortletException;
@@ -33,13 +31,13 @@ import javax.portlet.RenderResponse;
 
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.webconferencing.ContextInfo;
 import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.WebConferencingService;
-import org.exoplatform.webui.application.WebuiRequestContext;
 
 /**
  * Created by The eXo Platform SAS
@@ -99,7 +97,7 @@ public class WebConferencingAdminPortlet extends GenericPortlet {
         String contextJson = asJSON(context);
 
         // Javascript
-        JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
+        JavascriptManager js = PortalRequestContext.getCurrentInstance().getJavascriptManager();
         js.require("SHARED/webConferencingPortlet", "webConferencingPortlet")
           .require("PORTLET/webconferencing/webConferencingAdminPortlet", "webConferencingAdminPortlet")
           .addScripts("webConferencingPortlet.start(" + exoUserJson + "," + contextJson + ");")
