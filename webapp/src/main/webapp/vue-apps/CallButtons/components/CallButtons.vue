@@ -532,11 +532,6 @@ export default {
   }
 }
 
-#UIProfileHeaderContainer {
-  position: relative;
-  z-index: 100;
-}
-
 #identity-popover {
   .call-button-popover--profile {
     button {
