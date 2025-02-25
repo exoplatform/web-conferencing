@@ -37,15 +37,14 @@ import javax.portlet.RenderResponse;
 
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.resources.ResourceBundleService;
 import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.webconferencing.ContextInfo;
 import org.exoplatform.webconferencing.UserInfo;
-import org.exoplatform.webconferencing.Utils;
 import org.exoplatform.webconferencing.WebConferencingService;
-import org.exoplatform.webui.application.WebuiRequestContext;
 
 /**
  * Created by The eXo Platform SAS.
@@ -84,7 +83,7 @@ public class WebConferencingPortlet extends GenericPortlet {
       UserInfo exoUser = webConferencing.getUserInfo(remoteUser);
       if (exoUser != null) {
         String exoUserJson = asJSON(exoUser);
-        JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
+        JavascriptManager js = PortalRequestContext.getCurrentInstance().getJavascriptManager();
         js.require("SHARED/webConferencingPortlet", "webConferencingPortlet")
           .addScripts("webConferencingPortlet.start(" + exoUserJson + "," + contextJson + ");");
       } else {

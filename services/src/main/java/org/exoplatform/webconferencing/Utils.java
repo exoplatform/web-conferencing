@@ -37,7 +37,6 @@ import org.exoplatform.social.core.space.SpaceUtils;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.webconferencing.cometd.CometdWebConferencingService;
-import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.ws.frameworks.json.impl.JsonException;
 import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
 
@@ -76,9 +75,9 @@ public class Utils {
    * @return the space by context
    */
   public static Space getSpaceByContext() {
-    WebuiRequestContext webuiContext = WebuiRequestContext.getCurrentInstance();
-    if (webuiContext != null) {
-      SpaceService spaceService = webuiContext.getUIApplication().getApplicationComponent(SpaceService.class);
+    PortalRequestContext requestContext = PortalRequestContext.getCurrentInstance();
+    if (requestContext != null) {
+      SpaceService spaceService = requestContext.getUIApplication().getApplicationComponent(SpaceService.class);
       if (spaceService != null) {
         String spacePrettyName = getSpaceNameByContext();
         if (spacePrettyName != null) {
@@ -96,22 +95,14 @@ public class Utils {
    */
   public static String getSpaceNameByContext() {
     // Idea of this method build on SpaceUtils.getSpaceByContext()
-    PortalRequestContext portlalContext;
-    WebuiRequestContext webuiContext = WebuiRequestContext.getCurrentInstance();
-    if (webuiContext != null) {
-      if (webuiContext instanceof PortalRequestContext) {
-        portlalContext = (PortalRequestContext) webuiContext;
-      } else {
-        portlalContext = (PortalRequestContext) webuiContext.getParentAppRequestContext();
-      }
-
+    PortalRequestContext portlalContext = PortalRequestContext.getCurrentInstance();
+    if (portlalContext != null) {
       String requestPath = portlalContext.getControllerContext().getParameter(RequestNavigationData.REQUEST_PATH);
       Route route = ExoRouter.route(requestPath);
-      if (route != null) {
-        if (portlalContext.getSiteType().equals(SiteType.GROUP)
-            && portlalContext.getSiteName().startsWith(SpaceUtils.SPACE_GROUP)) {
-          return route.localArgs.get("spacePrettyName");
-        }
+      if (route != null
+          && portlalContext.getSiteType().equals(SiteType.GROUP)
+          && portlalContext.getSiteName().startsWith(SpaceUtils.SPACE_GROUP)) {
+        return route.localArgs.get("spacePrettyName");
       }
     }
     return null;
