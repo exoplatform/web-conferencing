@@ -33,6 +33,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
           <v-list-item-action class="pt-6">
             <v-switch
               v-model="active"
+              @change="updateVideoConferenceEnabled(active, undefined)"
               :aria-label="this.$t(`videoConference.switch.label.${this.switchAriaLabel}`)" />
           </v-list-item-action>
         </v-list-item>
@@ -112,11 +113,6 @@ export default {
       return this.activeProviders.some((provider) => !provider.integratedConnector ) || this.activeProviders.filter((provider) => provider.integratedConnector ).length > 1;
     },
   },
-  watch: {
-    active() {
-      this.updateVideoConferenceEnabled(this.active);
-    }
-  },
   methods: {
     getActiveProvidersForSpace() {
       this.$videoConferenceService.getActiveProvidersForSpace(this.spaceId)
@@ -128,7 +124,12 @@ export default {
         });
     },
     updateVideoConferenceEnabled(enabled, provider) {
-      this.$videoConferenceService.updateVideoConferenceEnabled(this.spaceId, enabled,provider);
+      this.$videoConferenceService.updateVideoConferenceEnabled(this.spaceId, enabled,provider).then(() => {
+        this.active=enabled;
+      }).catch(() => {
+        this.active=!enabled;
+        this.$root.$emit('alert-message', this.$t('videoConference.error.unknownErrorWhenSavingSpace'), 'error');
+      });
     },
     isVideoConferenceEnabled() {
       this.$videoConferenceService.isVideoConferenceEnabled(this.spaceId)
