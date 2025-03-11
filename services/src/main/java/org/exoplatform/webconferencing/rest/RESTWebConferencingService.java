@@ -715,7 +715,7 @@ public class RESTWebConferencingService implements ResourceContainer {
 
     String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
     Space space = spaceService.getSpaceById(spaceId);
-    if (space == null || (!spaceService.isMember(space, authenticatedUser) && !spaceService.isSuperManager(authenticatedUser))) {
+    if (space == null || (!spaceService.isManager(space, authenticatedUser) && !spaceService.isSuperManager(authenticatedUser))) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
     try {
