@@ -9,10 +9,11 @@ const app = "webconferencing";
 const exoServerPath = "/exo-server";
 
 let config = merge(webpackCommonConfig, {
-	output: {
-		path: path.resolve(`${exoServerPath}/webapps/${app}/`)
-	},
-	devtool: "eval-source-map"
+  output: {
+    path: path.resolve(`${exoServerPath}/webapps/${app}/`)
+  },
+  mode: 'development',
+  devtool: "eval-source-map"
 });
 
 module.exports = config;
