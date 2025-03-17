@@ -100,6 +100,31 @@
       enabled: true,
     },
     {
+      target: "chat",
+      type: "chat-drawer-title-action-component",
+      key: "chatDrawerCallButton",
+      rank: 21,
+      iconName: "callButton",
+      appClass: CALL_BUTTON,
+      typeClass: "call-button-mini call-button--chat-drawer",
+      component: {
+        name: "CallButtons",
+        events: [],
+      },
+      init: function(target, chat) {
+        const typeClass = this.typeClass
+        require([
+          "SHARED/webConferencing",
+          "SHARED/webConferencingCallButton",
+        ], function(webConferencing, callButtons) {
+            webConferencing.createMatrixChatContext(chat).then(context => {
+              return callButtons.create(context, target, typeClass);
+            });
+        });
+      },
+      enabled: true,
+    },
+    {
       target: "profile-extension",
       type: "action",
       id: "profile-webconferencing",
