@@ -1972,6 +1972,26 @@
       return localContext.promise();
     };
 
+    // Create context for Matrix chat integration : users and spaces
+    this.createMatrixChatContext = async function(chat) {
+      const localContext = $.Deferred();
+      contextInitializer.then(() => {
+        var isUser = chat.type === "u"; // roomId is an user name in system;
+        var isSpace = chat.type === "s";
+        if (chat) {
+          if(isSpace) {
+            localContext.resolve(spaceContext(chat.prettyName));
+          } else if (isUser) {
+            localContext.resolve(userContext(chat.user));
+          }
+        } else {
+          log.warn("Failed to create the chat context for Matrix: no required data");
+          localContext.reject("Failed to create the chat context for Matrix: no required data");
+        }
+      });
+      return localContext.promise();
+    };
+
     this.createSpaceContext = async function(spaceId) {
       const localContext = $.Deferred();
       contextInitializer.then(() => {
