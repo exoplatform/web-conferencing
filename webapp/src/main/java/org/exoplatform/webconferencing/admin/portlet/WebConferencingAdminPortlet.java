@@ -90,19 +90,16 @@ public class WebConferencingAdminPortlet extends GenericPortlet {
         
         // Markup
         //request.setAttribute("messages", messages);
-        PortletRequestDispatcher prDispatcher = getPortletContext().getRequestDispatcher("/WEB-INF/pages/admin.jsp");
-        prDispatcher.include(request, response);
+
         String exoUserJson = asJSON(exoUser);
         ContextInfo context = getCurrentContext(remoteUser, request.getLocale());
         String contextJson = asJSON(context);
 
-        // Javascript
-        JavascriptManager js = PortalRequestContext.getCurrentInstance().getJavascriptManager();
-        js.require("SHARED/webConferencingPortlet", "webConferencingPortlet")
-          .require("PORTLET/webconferencing/webConferencingAdminPortlet", "webConferencingAdminPortlet")
-          .addScripts("webConferencingPortlet.start(" + exoUserJson + "," + contextJson + ");")
-          .addScripts("webConferencingAdminPortlet.init();"); // messages: " + asJSON(messages) + " - i18n not yet required by the script
+        request.setAttribute("user",exoUserJson);
+        request.setAttribute("context",contextJson);
 
+        PortletRequestDispatcher prDispatcher = getPortletContext().getRequestDispatcher("/WEB-INF/pages/admin.jsp");
+        prDispatcher.include(request, response);
       } else {
         LOG.warn("Web Conferencing Admin portlet cannot be initialized: user info cannot be obtained for " + remoteUser);
       }
