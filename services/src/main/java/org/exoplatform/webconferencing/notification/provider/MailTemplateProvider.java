@@ -28,53 +28,58 @@ import org.exoplatform.commons.api.notification.service.template.TemplateContext
 import org.exoplatform.commons.notification.template.TemplateUtils;
 import org.exoplatform.commons.utils.HTMLEntityEncoder;
 import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.social.notification.LinkProviderUtils;
 import org.exoplatform.webconferencing.notification.plugin.CallRecordingPlugin;
 import org.exoplatform.webconferencing.notification.utils.NotificationConstants;
 
 import java.io.Writer;
 
 @TemplateConfigs(templates = {
-        @TemplateConfig(pluginId = CallRecordingPlugin.ID, template = "war:/notification/templates/mail/CallRecordingPlugin.gtmpl") })
+    @TemplateConfig(pluginId = CallRecordingPlugin.ID, template = "war:/notification/templates/mail/CallRecordingPlugin.gtmpl") })
 public class MailTemplateProvider extends TemplateProvider {
 
-    public MailTemplateProvider(InitParams initParams) {
-        super(initParams);
-        this.templateBuilders.put(PluginKey.key(CallRecordingPlugin.ID), new TemplateBuilder());}
-    private class TemplateBuilder extends AbstractTemplateBuilder {
+  public MailTemplateProvider(InitParams initParams) {
+    super(initParams);
+    this.templateBuilders.put(PluginKey.key(CallRecordingPlugin.ID), new TemplateBuilder());
+  }
 
-        @Override
-        protected MessageInfo makeMessage(NotificationContext notificationContext) {
-            NotificationInfo notificationInfo = notificationContext.getNotificationInfo();
-            String pluginId = notificationInfo.getKey().getId();
+  private class TemplateBuilder extends AbstractTemplateBuilder {
 
-            String language = getLanguage(notificationInfo);
-            HTMLEntityEncoder encoder = HTMLEntityEncoder.getInstance();
-            TemplateContext templateContext = TemplateContext.newChannelInstance(getChannelKey(), pluginId, language);
-            String recordingStatus = notificationInfo.getValueOwnerParameter(NotificationConstants.RECORDING_STATUS.getKey());
-            String fileName = notificationInfo.getValueOwnerParameter(NotificationConstants.FILE_NAME.getKey());
-            String fileUrl = notificationInfo.getValueOwnerParameter(NotificationConstants.RECORDED_FILE_URL.getKey());
-            String avatarUrl = notificationInfo.getValueOwnerParameter(NotificationConstants.AVATAR_URL.getKey());
-            String callOwner = notificationInfo.getValueOwnerParameter(NotificationConstants.CALL_OWNER.getKey());
-            templateContext.put("RECORDING_STATUS", encoder.encode(recordingStatus));
-            templateContext.put("FILE_URL", encoder.encode(fileUrl));
-            templateContext.put("FILE_NAME", encoder.encode(fileName));
-            templateContext.put("AVATAR_URL", encoder.encode(avatarUrl));
-            templateContext.put("CALL_OWNER", encoder.encode(callOwner));
-            String user = notificationInfo.getTo();
-            templateContext.put("USER", encoder.encode(user));
-            templateContext.put("NOTIFICATION_ID", notificationInfo.getId());
-            String subject = TemplateUtils.processSubject(templateContext);
-            String body = TemplateUtils.processGroovy(templateContext);
+    @Override
+    protected MessageInfo makeMessage(NotificationContext notificationContext) {
+      NotificationInfo notificationInfo = notificationContext.getNotificationInfo();
+      String pluginId = notificationInfo.getKey().getId();
 
-            notificationContext.setException(templateContext.getException());
-            MessageInfo messageInfo = new MessageInfo();
-                return messageInfo.subject(subject).body(body).end();
-        }
+      String language = getLanguage(notificationInfo);
+      HTMLEntityEncoder encoder = HTMLEntityEncoder.getInstance();
+      TemplateContext templateContext = TemplateContext.newChannelInstance(getChannelKey(), pluginId, language);
+      String recordingStatus = notificationInfo.getValueOwnerParameter(NotificationConstants.RECORDING_STATUS.getKey());
+      String fileName = notificationInfo.getValueOwnerParameter(NotificationConstants.FILE_NAME.getKey());
+      String fileUrl = notificationInfo.getValueOwnerParameter(NotificationConstants.RECORDED_FILE_URL.getKey());
+      String avatarUrl = notificationInfo.getValueOwnerParameter(NotificationConstants.AVATAR_URL.getKey());
+      String callOwner = notificationInfo.getValueOwnerParameter(NotificationConstants.CALL_OWNER.getKey());
+      templateContext.put("RECORDING_STATUS", encoder.encode(recordingStatus));
+      templateContext.put("FILE_URL", encoder.encode(fileUrl));
+      templateContext.put("FILE_NAME", encoder.encode(fileName));
+      templateContext.put("AVATAR_URL", encoder.encode(avatarUrl));
+      templateContext.put("CALL_OWNER", encoder.encode(callOwner));
+      String user = notificationInfo.getTo();
+      templateContext.put("USER", encoder.encode(user));
+      templateContext.put("NOTIFICATION_ID", notificationInfo.getId());
+      templateContext.put("COMPANY_LINK", LinkProviderUtils.getBaseUrl());
 
-        @Override
-        protected boolean makeDigest(NotificationContext notificationContext, Writer writer) {
-            return false;
-        }
+      String subject = TemplateUtils.processSubject(templateContext);
+      String body = TemplateUtils.processGroovy(templateContext);
+
+      notificationContext.setException(templateContext.getException());
+      MessageInfo messageInfo = new MessageInfo();
+      return messageInfo.subject(subject).body(body).end();
     }
+
+    @Override
+    protected boolean makeDigest(NotificationContext notificationContext, Writer writer) {
+      return false;
+    }
+  }
 
 }
