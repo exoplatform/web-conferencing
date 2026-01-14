@@ -15,6 +15,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 import './initComponents.js';
+import { hasActiveProviders } from './VideoConferenceService.js';
 
 const lang = eXo && eXo.env.portal.language || 'en';
 
@@ -23,10 +24,19 @@ const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/locale
 
 exoi18n.loadLanguageAsync(lang, url);
 
-if (extensionRegistry) {
-  extensionRegistry.registerComponent('SpaceSettings', 'space-settings-components', {
-    id: 'video-conference-space-setting',
-    vueComponent: Vue.options.components['space-video-conference-settings'],
-    rank: 15,
-  });
-}
+(async () => {
+  const hasProviders = await hasActiveProviders();
+
+  if (extensionRegistry && hasProviders) {
+    extensionRegistry.registerComponent(
+      'SpaceSettings',
+      'space-settings-components',
+      {
+        id: 'video-conference-space-setting',
+        vueComponent:
+          Vue.options.components['space-video-conference-settings'],
+        rank: 15,
+      }
+    );
+  }
+})();
