@@ -59,4 +59,24 @@ export function isVideoConferenceEnabled(spaceId) {
   });
 }
 
+export async function hasActiveProviders() {
+  try {
+    const response = await fetch(
+      `${eXo.env.portal.context}/${eXo.env.portal.rest}/webconferencing/providers/configuration`,
+      {
+        method: 'GET',
+        credentials: 'include',
+      }
+    );
+
+    if (!response.ok) {
+      return false;
+    }
+    const settings = await response.json();
+    return Array.isArray(settings) && settings.some(provider => provider.active === true);
+
+  } catch (e) {
+    return false;
+  }
+}
 
