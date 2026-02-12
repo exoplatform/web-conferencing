@@ -560,8 +560,6 @@ public class WebConferencingService implements Startable {
           Profile socialProfile = userIdentity.getProfile();
 
           UserInfo info = new UserInfo(user.getUserName(), user.getFirstName(), user.getLastName());
-          // Add IMs accounts
-          getUserIMs(socialProfile).forEach(im -> info.addImAccount(im));
           info.setAvatarLink(socialProfile.getAvatarUrl());
           info.setProfileLink(LinkProvider.getUserProfileUri(id));
           return info;
@@ -2580,39 +2578,6 @@ public class WebConferencingService implements Startable {
     conf.setType(type);
 
     return conf;
-  }
-
-  /**
-   * Gets the user IM accounts.
-   *
-   * @param profile the profile
-   * @return the user I ms
-   */
-  protected List<IMInfo> getUserIMs(Profile profile) {
-    List<IMInfo> activeIMs = new ArrayList<>();
-    @SuppressWarnings("unchecked")
-    List<Map<String, String>> ims = (List<Map<String, String>>) profile.getProperty(Profile.CONTACT_IMS);
-    if (ims != null) {
-      for (Map<String, String> m : ims) {
-        String imType = m.get("key");
-        String imId = m.get("value");
-        if (imId != null && imId.length() > 0) {
-          CallProvider provider = getProvider(imType);
-          // Here we take in account that provider may change its supported types in runtime
-          if (provider != null && provider.isActive() && provider.isSupportedType(imType)) {
-            try {
-              IMInfo im = provider.getIMInfo(imId);
-              if (im != null) {
-                activeIMs.add(im);
-              } // otherwise provider doesn't have an IM type at all
-            } catch (CallProviderException e) {
-              LOG.warn(e.getMessage());
-            }
-          }
-        }
-      }
-    }
-    return activeIMs;
   }
 
   /**
