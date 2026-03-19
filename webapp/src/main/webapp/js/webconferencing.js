@@ -1069,7 +1069,7 @@
 			return context;
 		};
 
-    var spaceEventContext = function(spaceId, participants, spaces) {
+    var spaceEventContext = function(spaceId, participants, spaces, startDate, endDate, recurrence) {
       var context = {
         currentUser : currentUser,
         spaceId : spaceId,
@@ -1087,7 +1087,10 @@
             log.trace("Error getting space event info " + spaceId + " for space event context", err);
           });
           return space;
-        }
+        },
+        startDate : startDate,
+        endDate : endDate,
+        recurrence: recurrence
       };
       return context;
     };
@@ -1543,7 +1546,19 @@
 		 * Update call state or its all information in the backend.
 		 */
 		this.updateCall = function(id, stateInfo) {
+
       let process = $.Deferred();
+
+      var providerName = stateInfo.provider;
+      if (providerName && typeof providerName === "string") {
+        self.getProvider(providerName).then(provider => {
+          if (provider.updateCall) {
+            provider.updateCall(id, stateInfo);
+          }
+        });
+      }
+
+
 			if (cometd) {
         function processUpdateCall(id, state, info) {
           let callProps;
@@ -1602,7 +1617,15 @@
 		/**
 		 * Remove call in server side database.
 		 */
-		this.deleteCall = function(id) {
+		this.deleteCall = function(id, type) {
+      if (type && typeof type === "string") {
+        self.getProvider(type).then(provider => {
+          if (provider.deleteCall) {
+            provider.deleteCall(id);
+          }
+        });
+      }
+
 			if (cometd) {
 				var process = $.Deferred();
 				var callProps = cometdParams({
@@ -1673,7 +1696,7 @@
               } else if (callInfo.ownerType === "space") {
                 context = spaceContext(callInfo.owner);
               } else if (callInfo.ownerType === "space_event") {
-                context = spaceEventContext(callInfo.owner, callInfo.participants, callInfo.spaces);
+                context = spaceEventContext(callInfo.owner, callInfo.participants, callInfo.spaces, callInfo.startDate, callInfo.endDate, callInfo.recurrence);
               } else if (callInfo.ownerType === "chat_room") {
                 if (callInfo.chatContact && typeof chatContact === "object" && callInfo.chatUser && typeof chatUser === "object") {
                   context = chatContextForRoom(callInfo.chatContact, callInfo.chatUser);
@@ -2009,10 +2032,10 @@
       return localContext.promise();
     };
 
-    this.createSpaceEventContext = async function(spaceId, participants, spaces) {
+    this.createSpaceEventContext = async function(spaceId, participants, spaces, startDate, endDate, recurrence) {
       const localContext = $.Deferred();
       contextInitializer.then(() => {
-        localContext.resolve(spaceEventContext(spaceId, participants, spaces));
+        localContext.resolve(spaceEventContext(spaceId, participants, spaces,startDate, endDate, recurrence));
       });
       return localContext.promise();
     }

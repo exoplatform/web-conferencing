@@ -156,7 +156,7 @@
       // enabled just show that this extension is enabled, if enabled: false WebConferencingCallComponent will not appear on page
       enabled: function(element) {
         //return true only if the extension is used for a user card. We dont want it on a space card for the moment
-        return element?.username && element?.username !== eXo.env.portal.userName && eXo?.webConferencing?.jitsi?.isInitialized;
+        return element?.username && element?.username !== eXo.env.portal.userName;
       }
     },
     {
