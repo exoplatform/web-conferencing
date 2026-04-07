@@ -16,7 +16,7 @@
       <div
         v-for="(button, index) in providersbutton"
         :key="index"
-        :class="`call-button-container-${index}`"
+        :class="`call-button-container-${index} me-2`"
         :ref="`callbutton`"
         @click="selectProvider"></div>
     </div>
