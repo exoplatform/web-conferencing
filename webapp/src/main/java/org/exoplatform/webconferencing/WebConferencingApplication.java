@@ -17,7 +17,7 @@
 package org.exoplatform.webconferencing;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration;
+import org.springframework.boot.liquibase.autoconfigure.LiquibaseAutoConfiguration;
 import org.springframework.context.annotation.PropertySource;
 
 import io.meeds.spring.AvailableIntegration;
@@ -31,9 +31,9 @@ import io.meeds.spring.kernel.PortalApplicationContextInitializer;
  * Application Center badge means contributing a Spring bean, and a bean needs a
  * context to live in. Extending {@link PortalApplicationContextInitializer}
  * registers this WAR's context with the Kernel before the portal container
- * boots, so beans of this add-on and of the platform become mutually
- * injectable — which is how {@code VisioApplicationBadgePlugin} can
- * {@code @Autowired} the Kernel-side {@link WebConferencingService}.
+ * boots, so beans of this add-on and of the platform become mutually injectable
+ * — which is how {@code VisioApplicationBadgePlugin} can {@code @Autowired} the
+ * Kernel-side {@link WebConferencingService}.
  * <p>
  * The scan is deliberately narrow. Only {@link #MODULE_NAME} is scanned, and
  * every class currently shipped under that package by this add-on, by
@@ -65,13 +65,19 @@ import io.meeds.spring.kernel.PortalApplicationContextInitializer;
  * The JPA auto-configuration is deliberately <em>not</em> excluded, even though
  * this add-on owns no Spring-managed entity. Removing it was tried and broke
  * the boot differently: the platform modules scanned above expect an
- * {@code entityManagerFactory} to exist ({@code jpaSharedEM_entityManagerFactory}
- * resolves against it), so denying them one merely swaps a Liquibase failure
- * for a missing-bean one. The add-on continues to manage its own schema through
- * the Kernel regardless; the factory simply goes unused here.
+ * {@code entityManagerFactory} to exist
+ * ({@code jpaSharedEM_entityManagerFactory} resolves against it), so denying
+ * them one merely swaps a Liquibase failure for a missing-bean one. The add-on
+ * continues to manage its own schema through the Kernel regardless; the factory
+ * simply goes unused here.
  */
-@SpringBootApplication(scanBasePackages = { WebConferencingApplication.MODULE_NAME, AvailableIntegration.KERNEL_MODULE,
-    AvailableIntegration.WEB_MODULE }, exclude = { LiquibaseAutoConfiguration.class })
+@SpringBootApplication(scanBasePackages = {
+  WebConferencingApplication.MODULE_NAME,
+  AvailableIntegration.KERNEL_MODULE,
+  AvailableIntegration.WEB_MODULE
+}, exclude = {
+  LiquibaseAutoConfiguration.class,
+})
 @PropertySource("classpath:application.properties")
 @PropertySource("classpath:application-common.properties")
 public class WebConferencingApplication extends PortalApplicationContextInitializer {

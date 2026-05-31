@@ -1,0 +1,4 @@
+org.exoplatform.webconferencing.domain.CallEntity
+org.exoplatform.webconferencing.domain.InviteEntity
+org.exoplatform.webconferencing.domain.OriginEntity
+org.exoplatform.webconferencing.domain.ParticipantEntity

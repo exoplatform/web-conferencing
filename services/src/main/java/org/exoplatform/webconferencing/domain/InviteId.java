@@ -91,11 +91,9 @@ public class InviteId implements Serializable {
    */
   @Override
   public boolean equals(Object obj) {
-    if (obj != null) {
-      if (InviteId.class.isAssignableFrom(obj.getClass())) {
-        InviteId other = InviteId.class.cast(obj);
-        return callId.equals(other.getCallId()) && identity.equals(other.getIdentity());
-      }
+    if (obj != null && InviteId.class.isAssignableFrom(obj.getClass())) {
+      InviteId other = InviteId.class.cast(obj);
+      return callId.equals(other.getCallId()) && identity.equals(other.getIdentity());
     }
     return false;
   }

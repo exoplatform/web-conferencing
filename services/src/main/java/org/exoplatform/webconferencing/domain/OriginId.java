@@ -28,6 +28,8 @@ import java.io.Serializable;
  */
 public class OriginId implements Serializable {
 
+  private static final long serialVersionUID = -6786134308978492369L;
+
   /** The id. */
   protected String id;
 
@@ -61,11 +63,9 @@ public class OriginId implements Serializable {
    * {@inheritDoc}
    */
   public boolean equals(Object o) {
-    if (o != null) {
-      if (OriginId.class.isAssignableFrom(o.getClass())) {
-        OriginId other = OriginId.class.cast(o);
-        return id.equals(other.getId()) && callId.equals(other.getCallId()) && type.equals(other.getType());
-      }
+    if (o != null && OriginId.class.isAssignableFrom(o.getClass())) {
+      OriginId other = OriginId.class.cast(o);
+      return id.equals(other.getId()) && callId.equals(other.getCallId()) && type.equals(other.getType());
     }
     return false;
   }

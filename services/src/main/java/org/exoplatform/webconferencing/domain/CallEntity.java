@@ -26,33 +26,21 @@ import java.util.Date;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
-import org.exoplatform.commons.api.persistence.ExoEntity;
-import org.exoplatform.webconferencing.WebConferencingService;
-
-/**
- * Created by The eXo Platform SAS.
- *
- * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: CallEntity.java 00000 Dec 22, 2017 pnedonosko $
- */
 @Entity(name = "WebConfCall")
-@ExoEntity
 @Table(name = "WBC_CALLS")
-@NamedQueries({
-    @NamedQuery(name = "WebConfCall.findGroupCallByOwnerId", // XXX skip OWNER_TYPE_SPACEEVENT to do get only spaces and user 
-                query = "SELECT c FROM WebConfCall c WHERE c.isGroup = true AND c.ownerType != '" + OWNER_TYPE_SPACEEVENT + "' AND c.ownerId = :ownerId"),
-    @NamedQuery(name = "WebConfCall.findGroupCallByOwnerTypeId",
-                query = "SELECT c FROM WebConfCall c WHERE c.isGroup = true AND c.ownerType = :ownerType AND c.ownerId = :ownerId ORDER BY c.lastDate"), // TODO order by startDate
-    @NamedQuery(name = "WebConfCall.findUserGroupCalls",
-                query = "SELECT c FROM WebConfCall c, WebConfParticipant p WHERE c.id = p.callId AND p.id = :userId ORDER BY c.lastDate"),
-    @NamedQuery(name = "WebConfCall.deleteOwnerOlderCalls",
-                query = "DELETE FROM WebConfCall WHERE ownerType = :ownerType AND lastDate <= :expiredDate"),
-    @NamedQuery(name = "WebConfCall.findGroupCallsByState",
-                query = "SELECT c FROM WebConfCall c WHERE c.state = :state AND c.ownerType != '" + OWNER_TYPE_USER + "'")})
+@NamedQuery(name = "WebConfCall.findGroupCallByOwnerId", // XXX skip OWNER_TYPE_SPACEEVENT to do get only spaces and user 
+            query = "SELECT c FROM WebConfCall c WHERE c.isGroup = true AND c.ownerType != '" + OWNER_TYPE_SPACEEVENT + "' AND c.ownerId = :ownerId")
+@NamedQuery(name = "WebConfCall.findGroupCallByOwnerTypeId",
+            query = "SELECT c FROM WebConfCall c WHERE c.isGroup = true AND c.ownerType = :ownerType AND c.ownerId = :ownerId ORDER BY c.lastDate") // TODO order by startDate
+@NamedQuery(name = "WebConfCall.findUserGroupCalls",
+            query = "SELECT c FROM WebConfCall c, WebConfParticipant p WHERE c.id = p.callId AND p.id = :userId ORDER BY c.lastDate")
+@NamedQuery(name = "WebConfCall.deleteOwnerOlderCalls",
+            query = "DELETE FROM WebConfCall WHERE ownerType = :ownerType AND lastDate <= :expiredDate")
+@NamedQuery(name = "WebConfCall.findGroupCallsByState",
+            query = "SELECT c FROM WebConfCall c WHERE c.state = :state AND c.ownerType != '" + OWNER_TYPE_USER + "'")
 public class CallEntity {
 
   /** The id. */
@@ -103,12 +91,6 @@ public class CallEntity {
   /** The is user. */
   @Column(name = "IS_USER")
   protected boolean isUser;
-
-  /**
-   * Instantiates a new call entity.
-   */
-  public CallEntity() {
-  }
 
   /**
    * Gets the id.

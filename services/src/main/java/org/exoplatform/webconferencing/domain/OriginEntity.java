@@ -22,28 +22,18 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
-import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
-import org.exoplatform.commons.api.persistence.ExoEntity;
-
 /**
  * Call origins (from where participants are from).
- * 
- * Created by The eXo Platform SAS.
- *
- * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: OriginEntity.java 00000 Dec 18, 2020 pnedonosko $
  */
 @Entity(name = "WebConfOrigin")
-@ExoEntity
 @Table(name = "WBC_ORIGINS")
 @IdClass(OriginId.class)
-@NamedQueries({
-    @NamedQuery(name = "WebConfOrigin.findCallOrigins",
-                query = "SELECT o FROM WebConfOrigin o WHERE o.callId = :callId AND o.type = :type ORDER BY o.type, o.state"),
-    @NamedQuery(name = "WebConfOrigin.deleteCallOrigins", query = "DELETE FROM WebConfOrigin WHERE callId = :callId") })
+@NamedQuery(name = "WebConfOrigin.findCallOrigins",
+            query = "SELECT o FROM WebConfOrigin o WHERE o.callId = :callId AND o.type = :type ORDER BY o.type, o.state")
+@NamedQuery(name = "WebConfOrigin.deleteCallOrigins", query = "DELETE FROM WebConfOrigin WHERE callId = :callId")
 public class OriginEntity {
 
   /** The id. */
@@ -63,12 +53,6 @@ public class OriginEntity {
   /** The state. */
   @Column(name = "STATE")
   protected String state;
-
-  /**
-   * Instantiates a new origin entity.
-   */
-  public OriginEntity() {
-  }
 
   /**
    * Gets the id.

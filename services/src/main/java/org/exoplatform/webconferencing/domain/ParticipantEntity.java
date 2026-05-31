@@ -22,26 +22,18 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
-import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
-import org.exoplatform.commons.api.persistence.ExoEntity;
-
 /**
  * Created by The eXo Platform SAS.
- *
- * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: ParticipantEntity.java 00000 Dec 22, 2017 pnedonosko $
  */
 @Entity(name = "WebConfParticipant")
-@ExoEntity
 @Table(name = "WBC_PARTICIPANTS")
 @IdClass(ParticipantId.class)
-@NamedQueries({
-    @NamedQuery(name = "WebConfCall.findCallParts",
-                query = "SELECT p FROM WebConfParticipant p WHERE p.callId = :callId ORDER BY p.state, p.type"),
-    @NamedQuery(name = "WebConfCall.deleteCallParts", query = "DELETE FROM WebConfParticipant WHERE callId = :callId") })
+@NamedQuery(name = "WebConfCall.findCallParts",
+            query = "SELECT p FROM WebConfParticipant p WHERE p.callId = :callId ORDER BY p.state, p.type")
+@NamedQuery(name = "WebConfCall.deleteCallParts", query = "DELETE FROM WebConfParticipant WHERE callId = :callId")
 public class ParticipantEntity {
 
   /** The id. */
@@ -65,12 +57,6 @@ public class ParticipantEntity {
   /** The client id. */
   @Column(name = "CLIENT_ID")
   protected String clientId;
-
-  /**
-   * Instantiates a new participant entity.
-   */
-  public ParticipantEntity() {
-  }
 
   /**
    * Gets the id.

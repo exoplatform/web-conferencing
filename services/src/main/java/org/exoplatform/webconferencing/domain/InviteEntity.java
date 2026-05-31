@@ -4,22 +4,16 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
-import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
-
-import org.exoplatform.commons.api.persistence.ExoEntity;
 
 /**
  * The Class InviteEntity.
  */
 @Entity(name = "WebConfInvite")
-@ExoEntity
 @Table(name = "WBC_INVITES")
-@NamedQueries({ 
-  @NamedQuery(name = "WebConfInvite.deleteCallInvites", query = "DELETE FROM WebConfInvite WHERE callId = :callId"),
-  @NamedQuery(name = "WebConfInvite.findCallInvites", query = "SELECT i FROM WebConfInvite i WHERE i.callId = :callId ORDER BY i.identity")
-})
+@NamedQuery(name = "WebConfInvite.deleteCallInvites", query = "DELETE FROM WebConfInvite WHERE callId = :callId")
+@NamedQuery(name = "WebConfInvite.findCallInvites", query = "SELECT i FROM WebConfInvite i WHERE i.callId = :callId ORDER BY i.identity")
 @IdClass(InviteId.class)
 public class InviteEntity {
 
