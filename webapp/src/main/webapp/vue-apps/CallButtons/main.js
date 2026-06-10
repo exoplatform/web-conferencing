@@ -11,7 +11,7 @@ const resourceBundleName = 'WebConferencingClient';
 const url = `${eXo.env.portal.context}/${eXo.env.portal.rest}/i18n/bundle/${localePortlet}.${resourceBundleName}-${lang}.json`;
 const log = webConferencing.getLog('webconferencing');
 
-export function create(context, target) {
+export function create(context, target, typeClass ,params) {
   const result = new Promise((resolve, reject) => {
     if (target) {
       const mountEl = document.createElement('div'); // div for vue mounting
@@ -47,6 +47,7 @@ export function create(context, target) {
                 language: lang,
                 resourceBundleName,
                 callContext: this.callContext,
+                params: params,
               },
               on: {
                 created: function() {
