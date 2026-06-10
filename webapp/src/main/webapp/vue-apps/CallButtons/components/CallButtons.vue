@@ -4,10 +4,11 @@
       ref="callbutton"
       v-show="providersButton.length"
       :class="['call-button-container']">
-      <dropdown
-        v-click-outside="hideDropdown"
-        v-if="!this.isSingleBtn"
+      <component
+        :is="isMenu ? 'menuItems' : 'dropdown'"
+        v-if="!isSingleBtn"
         ref="dropdown"
+        v-click-outside="hideDropdown"
         :positionclass="positionClass"
         :providersbutton="providersButton"
         :isopen="isOpen"
@@ -24,13 +25,15 @@
 
 <script>
 import Dropdown from './Dropdown.vue';
+import menuItems from './MenuItems.vue';
 import singlebtn from './SingleButton.vue';
 
 export default {
   name: 'CallButtons',
   components: {
     Dropdown,
-    singlebtn
+    singlebtn,
+    menuItems
   },
   directives: {
     'click-outside': {
@@ -64,6 +67,10 @@ export default {
     callContext: {
       type: Object,
       required: true
+    },
+    params: {
+      type: Object,
+      required: false
     }
   },
   data() {
@@ -128,7 +135,10 @@ export default {
           bgHover: this.isOpen ? 'var(--allPagesGreyColor, #e1e8ee)' : 'white'
           // paddingClass: "px-2"
         };
-    }
+    },
+    isMenu() {
+      return this.params && this.params.isMenu;
+    },
   },
   watch: {
     callContext() {
@@ -281,11 +291,6 @@ export default {
   .call-button-container {
     min-width: 64px;
     max-width: 240px;
-    &:hover {
-      .dropdown-header {
-        background-color: var(--allPagesGreyColor, #e1e8ee);
-      }
-    }
     button {
       .v-btn__content {
         letter-spacing: normal;
@@ -314,10 +319,7 @@ export default {
         }
       }
       &:hover {
-        background-color: var(--allPagesGreyColor, #e1e8ee);
-        // .single-btn-container {
-        background-color: var(--allPagesGreyColor, #e1e8ee);
-        // }
+      
         a:hover {
           i {
             color: @primaryColor;

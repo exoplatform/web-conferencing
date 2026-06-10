@@ -141,14 +141,14 @@
       },
       // html DOM element that will be added in the extension point
       // init call button context in space popup
-      init: function(target, userId) {
+      init: function(target, userId, params) {
         const typeClass = this.typeClass
         require([
           "SHARED/webConferencing",
           "SHARED/webConferencingCallButton",
         ], function(webConferencing, callButtons) {
           webConferencing.createUserContext(userId).then((context) => {
-            callButtons.create(context, target, typeClass);
+            callButtons.create(context, target, typeClass, params);
           });
         });
       },
