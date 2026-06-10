@@ -1,13 +1,14 @@
 <template>
   <div
-    :style="{ 'background-color': header.bgHover }"
     class="dropdown-header">
     <div
-      class="dropdown-heading d-flex d-row align-center justify-center ps-2"
+      class="dropdown-heading d-flex d-row align-center justify-center"
+      :class="!isMenu && ps-2"
       @click.stop.prevent="startCall()">
       <v-tooltip bottom>
         <template v-slot:activator="{ on, attrs }">
           <v-icon
+            class="align-center d-flex"
             size="20"
             v-bind="attrs"
             v-on="on">
@@ -17,11 +18,15 @@
         <span>{{ $t("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
           : "Start Call" }}</span>
       </v-tooltip>
-      <span v-if="!isMobile" class="ps-2 text-color">
+      <span 
+        v-if="!isMobile" 
+        :class="isMenu ? 'ms-3' : 'ps-2'"
+        class="text-color">
         {{ $t("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
           : "Start Call" }}</span>
     </div>
     <v-divider 
+      v-if="!isMenu"
       class="mx-1 uiVertinalDividerMini"
       dark  
       inset
@@ -30,7 +35,7 @@
       <v-icon
         size="18"
         class="pb-1">
-        fas fa-caret-down
+        {{ iconName }}
       </v-icon>
     </div>
   </div>
@@ -42,6 +47,9 @@ export default {
     isMobile() {
       return this.$vuetify && this.$vuetify.breakpoint && this.$vuetify.breakpoint.name === 'xs';
     },
+    iconName () {
+      return this.isMenu ? 'fas fa-caret-right' : 'fas fa-caret-down';
+    }
   },
   props: {
     header: {
@@ -59,6 +67,10 @@ export default {
     passrefs: {
       type: Function,
       required: true
+    },
+    isMenu: {
+      type: Boolean,
+      default: false
     }
   }
 };
@@ -72,8 +84,6 @@ export default {
     display: inline-flex;
     align-items: center;
     background-color: white;
-    border-radius: 4px;
-    border: 1px solid var(--allPagesBtnBorder, var(--allPagesGreyColor, #e1e8ee)) !important;
     width: 100%;
     min-height: 36px;
     color: @primaryColor !important;
