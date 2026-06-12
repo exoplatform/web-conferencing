@@ -9,7 +9,7 @@
         <template v-slot:activator="{ on, attrs }">
           <v-icon
             class="align-center d-flex"
-            size="20"
+            :size="isMenu ? '18' : '20'"
             v-bind="attrs"
             v-on="on">
             fas fa-video
@@ -20,7 +20,7 @@
       </v-tooltip>
       <span 
         v-if="!isMobile" 
-        :class="isMenu ? 'ms-3' : 'ps-2'"
+        :class="isMenu ? 'ms-4' : 'ps-2'"
         class="text-color">
         {{ $t("webconferencing.callHeader") ? $i18n.t("webconferencing.callHeader")
           : "Start Call" }}</span>
@@ -31,7 +31,9 @@
       dark  
       inset
       vertical />
-    <div class="px-1" @click.stop.prevent="showdropdowncomponent(); passrefs()">
+    <div 
+      :class="isMenu ? 'ps-3' : 'px-1'"
+      @click.stop.prevent="showdropdowncomponent(); passrefs()">
       <v-icon
         size="18"
         class="pb-1">
@@ -83,7 +85,7 @@ export default {
   .dropdown-header {
     display: inline-flex;
     align-items: center;
-    background-color: white;
+    background-color: unset;
     width: 100%;
     min-height: 36px;
     color: @primaryColor !important;

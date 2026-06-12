@@ -288,6 +288,9 @@ export default {
 @import "../../../skin/less/variables.less";
 @import "../../../skin/less/mixins.less";
 .VuetifyApp {
+  .v-list-item.call-button:hover{
+    background-color: var(--allPagesPrimaryBackground, #f0f0f0) !important;
+  }
   .call-button-container {
     min-width: 64px;
     max-width: 240px;
@@ -300,10 +303,7 @@ export default {
     &.single {
       // width: @width - 14px;
       height: 36px;
-      border: 1px solid rgb(232, 238, 242);
       border-radius: 3px;
-      background-color: var(--allPagesBaseBackground, #ffffff) !important;;
-      padding: 0 10px;
       .single-btn-container {
         height: inherit;
         a {
@@ -314,6 +314,9 @@ export default {
           [class^="uiIcon"] {
             &::before {
               vertical-align: super;
+            }
+            &:hover{
+              background-color: unset;
             }
           }
         }
