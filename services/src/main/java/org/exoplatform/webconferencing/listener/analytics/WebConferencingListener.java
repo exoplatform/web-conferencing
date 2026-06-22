@@ -116,22 +116,22 @@ public class WebConferencingListener extends Listener<CallInfo, Map<? extends St
                                              .filter(participant -> StringUtils.equals(UserState.JOINED, participant.getState()))
                                              .count();
 
-    statisticData.addParameter("participantsCount", participantsCount);
-    statisticData.addParameter("activeParticipantsCount", activeParticipantsCount);
-    statisticData.addParameter("callId", callInfo.getId());
-    statisticData.addParameter("callType", callType);
-    statisticData.addParameter("callOwnerType", callInfo.getOwner().getType());
-    statisticData.addParameter("callStartDate", callInfo.getStartDate());
-    statisticData.addParameter("callEndDate", callInfo.getEndDate());
-    statisticData.addParameter("callState", callInfo.getState());
+    statisticData.addLong("participantsCount", participantsCount);
+    statisticData.addLong("activeParticipantsCount", activeParticipantsCount);
+    statisticData.addKeyword("callId", callInfo.getId());
+    statisticData.addKeyword("callType", callType);
+    statisticData.addKeyword("callOwnerType", callInfo.getOwner().getType());
+    statisticData.addDate("callStartDate", callInfo.getStartDate());
+    statisticData.addDate("callEndDate", callInfo.getEndDate());
+    statisticData.addKeyword("callState", callInfo.getState());
     if (callDuration > 0) {
-      statisticData.addParameter("callDuration", callDuration);
+      statisticData.addLong("callDuration", callDuration);
     }
     if (info.get("status") != null) {
       statisticData.setStatus(info.get("status").equals(WebConferencingService.STATUS_OK) ? StatisticData.StatisticStatus.OK : StatisticData.StatisticStatus.KO);
     }
     if(info.containsKey("file_size")) {
-      statisticData.addParameter("recordedFileSizeInMB", info.get("file_size"));
+      statisticData.addDouble("recordedFileSizeInMB", info.get("file_size"));
     }
     addStatisticData(statisticData);
   }
