@@ -84,7 +84,7 @@ export default {
       videoConference: null,
       videoConferenceLink: '',
       isValidForm: false,
-      linkRules: [url => !url || url.length === 0 || !!(url.match(/^((https?:\/\/)?(www\.)?[a-zA-Z0-9]+\.[^\s]{2,})|(javascript:)|(\/portal\/)/))
+      linkRules: [url => !url || url.length === 0 || !!(url.match(/^((https?:\/\/)?(www\.)?[a-zA-Z0-9]+[a-zA-Z0-9_-]*\.[^\s]{2,})|(javascript:)|(\/portal\/)/))
               || this.$t('videoConference.label.invalidLink'), url => !url || url.length <= 500 || this.$t('videoConference.label.tooLongLink')],
     };
   },
