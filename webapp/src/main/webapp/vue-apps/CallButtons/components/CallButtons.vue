@@ -517,9 +517,6 @@ export default {
 }
 .call-button-mini.call-button--chat-drawer {
   margin-right: 6px;
-  .call-button-container {
-    padding: 0 10px 10px 0;
-  }
 }
 .space-title-action-components {
   .call-button.call-button--space {
