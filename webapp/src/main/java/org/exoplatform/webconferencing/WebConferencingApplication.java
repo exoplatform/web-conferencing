@@ -19,6 +19,7 @@
 package org.exoplatform.webconferencing;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration;
 import org.springframework.context.annotation.PropertySource;
 
 import io.meeds.spring.AvailableIntegration;
@@ -51,9 +52,28 @@ import io.meeds.spring.kernel.PortalApplicationContextInitializer;
  * Spring context before this one ({@code agenda}, {@code email-connector})
  * declares it. Dropping it would leave Spring Boot's default security
  * auto-configuration unadjusted over this WAR's existing url space.
+ * <p>
+ * {@code LiquibaseAutoConfiguration} is excluded, and the exclusion is what
+ * actually enforces the "no second schema bootstrap" intent. Declining to list
+ * {@code LIQUIBASE_MODULE} in the scan is not enough: Spring Boot
+ * auto-configuration triggers on what is present on the <em>classpath</em>, not
+ * on what is scanned, and Liquibase is on every platform's classpath. Left
+ * alone it looks for its default {@code db/changelog/db.changelog-master.yaml},
+ * does not find one here, and fails the {@code liquibase} bean — which fails
+ * {@code entityManagerFactory} behind it, stops this context, and through the
+ * Kernel/Spring bridge takes the portal itself to a 500. Observed on a running
+ * server, not theorised. {@code agenda} excludes the same configuration.
+ * <p>
+ * The JPA auto-configuration is deliberately <em>not</em> excluded, even though
+ * this add-on owns no Spring-managed entity. Removing it was tried and broke
+ * the boot differently: the platform modules scanned above expect an
+ * {@code entityManagerFactory} to exist ({@code jpaSharedEM_entityManagerFactory}
+ * resolves against it), so denying them one merely swaps a Liquibase failure
+ * for a missing-bean one. The add-on continues to manage its own schema through
+ * the Kernel regardless; the factory simply goes unused here.
  */
 @SpringBootApplication(scanBasePackages = { WebConferencingApplication.MODULE_NAME, AvailableIntegration.KERNEL_MODULE,
-    AvailableIntegration.WEB_MODULE })
+    AvailableIntegration.WEB_MODULE }, exclude = { LiquibaseAutoConfiguration.class })
 @PropertySource("classpath:application.properties")
 @PropertySource("classpath:application-common.properties")
 public class WebConferencingApplication extends PortalApplicationContextInitializer {
