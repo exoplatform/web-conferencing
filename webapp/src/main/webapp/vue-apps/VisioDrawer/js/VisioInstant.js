@@ -160,6 +160,7 @@ export function instantEntries(rooms, startedIds) {
     providerType: room.providerType || '',
     callId: room.callId,
     instant: true,
+    people: room.people || [],
     state: isRoomLive(room, started) && LIVE || READY,
   }));
 }

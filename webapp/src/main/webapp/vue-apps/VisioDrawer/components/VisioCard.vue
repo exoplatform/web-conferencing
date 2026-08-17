@@ -76,35 +76,50 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
         {{ countdownLabel }}
       </div>
       <div class="d-flex align-center justify-space-between mt-3">
+        <!-- Who is in there, where the eye lands first. Two faces already
+             inside is a different invitation from a green chip, and it is the
+             thing that actually decides whether somebody joins.
+
+             eXo people go through the platform's own avatars list, the same
+             component the task cards use, so they get the avatar, the popover
+             and the sizing everyone else has. Guests cannot: that component
+             resolves a profile by username, and a guest has no profile to
+             resolve — it would ask the server for one and come back with
+             nothing. They are counted instead, which is also the more useful
+             fact about them. -->
+        <div v-if="people.length" class="d-flex align-center">
+          <exo-user-avatars-list
+            v-if="members.length"
+            :users="members"
+            :max="3"
+            :icon-size="22"
+            :margin-left="members.length > 1 && 'ml-n2' || ''"
+            :compact="members.length > 1"
+            clickable="'false'"
+            retrieve-extra-information />
+          <span class="text-caption text-sub-title ms-2">{{ peopleLabel }}</span>
+        </div>
+        <!-- And when nobody is in it, say so. An empty room reads as broken
+             otherwise: the card announces itself ready, and shows nothing at
+             all about the one thing the opener is waiting for. -->
+        <div
+          v-else-if="showsEmptyRoom"
+          class="d-flex align-center text-caption text-sub-title">
+          <v-icon size="12" class="me-1">fa-user-slash</v-icon>
+          {{ $t('visio.drawer.nobodyIn') }}
+        </div>
         <a
-          v-if="eventLink"
+          v-else-if="eventLink"
           :href="eventLink"
           class="text-caption">{{ $t('visio.drawer.openEvent') }}</a>
         <span v-else></span>
         <div class="d-flex align-center">
-          <!-- Only on a room of your own that nobody is in: the list is yours
-               to tidy, but a room somebody may be sitting in is not something
-               to make disappear with one click. -->
-          <v-tooltip v-if="forgettable" bottom>
-            <template #activator="{on, attrs}">
-              <v-btn
-                v-bind="attrs"
-                icon
-                small
-                :aria-label="$t('visio.instant.forget')"
-                v-on="on"
-                @click="forget">
-                <v-icon size="14">fa-times</v-icon>
-              </v-btn>
-            </template>
-            <span>{{ $t('visio.instant.forget') }}</span>
-          </v-tooltip>
-          <visio-copy-link v-if="entry.shareUrl" :url="entry.shareUrl" />
           <!-- Filled only where joining is the thing to do now. An upcoming
                meeting's room is joinable too, but almost nobody wants to, and
                giving every card the same weight makes the live one no easier to
                find than the rest. -->
           <v-btn
+            v-if="canJoin"
             small
             :depressed="prominent"
             :text="!prominent"
@@ -114,18 +129,87 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
             <v-icon size="14" class="me-1">fa-video</v-icon>
             {{ joinLabel }}
           </v-btn>
+          <!-- Secondary actions live behind the overflow, named rather than
+               drawn. A cross said "delete" for something that only ever removes
+               the room from your own list — the meeting carries on without you,
+               and no icon can say that. Words can. -->
+          <v-menu v-if="hasMenu" offset-y>
+            <template #activator="{on, attrs}">
+              <v-btn
+                v-bind="attrs"
+                icon
+                small
+                :aria-label="$t('visio.drawer.moreActions')"
+                v-on="on">
+                <v-icon size="14">fas fa-ellipsis-v</v-icon>
+              </v-btn>
+            </template>
+            <v-list class="pa-0" dense>
+              <v-list-item v-if="entry.shareUrl" @click="copyLink">
+                <v-list-item-icon class="me-2 my-2">
+                  <v-icon size="16">{{ copied && 'fas fa-check' || 'fas fa-link' }}</v-icon>
+                </v-list-item-icon>
+                <v-list-item-title>
+                  {{ copied && $t('visio.instant.copied') || $t('visio.drawer.copyLink') }}
+                </v-list-item-title>
+              </v-list-item>
+              <v-list-item v-if="mailAvailable && entry.shareUrl" @click="sendByMail">
+                <v-list-item-icon class="me-2 my-2">
+                  <v-icon size="16">fas fa-envelope</v-icon>
+                </v-list-item-icon>
+                <v-list-item-title>
+                  {{ $t('visio.drawer.sendByMail') }}
+                </v-list-item-title>
+              </v-list-item>
+              <v-list-item v-if="chatAvailable && entry.shareUrl" @click="sendByChat">
+                <v-list-item-icon class="me-2 my-2">
+                  <v-icon size="16">fas fa-comment</v-icon>
+                </v-list-item-icon>
+                <v-list-item-title>
+                  {{ $t('visio.drawer.sendByChat') }}
+                </v-list-item-title>
+              </v-list-item>
+              <v-list-item v-if="deletable" @click="$refs.deleteConfirm.open()">
+                <v-list-item-icon class="me-2 my-2">
+                  <v-icon size="16">fas fa-trash</v-icon>
+                </v-list-item-icon>
+                <v-list-item-title>
+                  {{ $t('visio.instant.delete') }}
+                </v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
         </div>
       </div>
       <div v-if="joinError" class="text-caption error--text mt-1">
         {{ $t('visio.drawer.join.unavailable') }}
       </div>
+      <!-- A confirm, because the whole point of this feature is that the link
+           travels before anyone arrives: "nobody joined yet" is not the same as
+           "nobody is about to", and the person most likely to press this is the
+           one who just mailed the link to a customer. -->
+      <exo-confirm-dialog
+        ref="deleteConfirm"
+        :title="$t('visio.instant.delete')"
+        :message="$t('visio.instant.delete.confirm')"
+        :ok-label="$t('visio.instant.delete')"
+        :cancel-label="$t('visio.instant.delete.cancel')"
+        @ok="destroy" />
     </v-card>
   </v-hover>
 </template>
 
 <script>
-import {LIVE, NOW, READY} from '../js/VisioMerge.js';
+import {LIVE, NOW, READY, UPCOMING} from '../js/VisioMerge.js';
 import {formatTime, formatDay, isSameDay, splitDuration} from '../js/VisioFormat.js';
+import {copyText} from '../js/VisioClipboard.js';
+
+/**
+ * How close an upcoming meeting must be before joining it is offered. Arriving
+ * a quarter of an hour early is intent; a button on next week's meeting is a
+ * mis-click waiting to announce a meeting that is not happening.
+ */
+const JOIN_AHEAD_MS = 15 * 60 * 1000;
 
 export default {
   props: {
@@ -145,6 +229,9 @@ export default {
   data: () => ({
     joining: false,
     joinError: false,
+    copied: false,
+    confirmDelete: false,
+    deleteError: false,
   }),
   computed: {
     title() {
@@ -167,9 +254,14 @@ export default {
      * @returns {String} a Vuetify colour name, or null to keep the default
      */
     color() {
+      // Ready shares live's green: a room you opened is standing open, which
+      // belongs to the same family as one people are in. It stays the quieter
+      // of the two — no accent stripe, and the chip is outlined like every
+      // other — so "somebody is actually in it" remains its own answer rather
+      // than becoming a shade of green nobody can tell apart.
       return this.entry.state === LIVE && 'success'
           || this.entry.state === NOW && 'warning'
-          || this.entry.state === READY && 'info'
+          || this.entry.state === READY && 'success'
           || null;
     },
     /**
@@ -212,8 +304,132 @@ export default {
      *
      * @returns {Boolean} true when the join button should be prominent
      */
+    /**
+     * Whether the card has any secondary action worth an overflow menu.
+     *
+     * @returns {Boolean} true when the menu should be offered
+     */
+    hasMenu() {
+      return !!this.entry.shareUrl || this.deletable;
+    },
+    /**
+     * The people actually in the room right now.
+     *
+     * @returns {Array} joined participants, possibly empty
+     */
+    /**
+     * Whether the chat add-on is on this page to receive a share.
+     *
+     * The share travels as a document event, so dispatching it where nothing
+     * listens fails silently — worse than not offering it. Matrix registers its
+     * constants on the Vue prototype when its app mounts, which is the honest
+     * signal that something is listening.
+     *
+     * @returns {Boolean} true when the chat can be handed a link
+     */
+    /**
+     * Whether the mail add-on is deployed.
+     *
+     * Its quick action registers a module by name, which is how the platform
+     * itself discovers extensions — present means the composer can be required.
+     *
+     * @returns {Boolean} true when the mail composer can be opened
+     */
+    mailAvailable() {
+      const modules = window.requireJsModules || {};
+      return Object.keys(modules).some(name => name.indexOf('emailConnectorQuickActionExtension') !== -1);
+    },
+    chatAvailable() {
+      return !!(window.Vue && window.Vue.prototype && window.Vue.prototype.$chatConstants);
+    },
+    /**
+     * Whether to say that nobody is inside.
+     *
+     * Only where somebody could be: a room standing open, or a call the
+     * schedule says is happening. On a meeting next week it is not news.
+     *
+     * @returns {Boolean} true when the empty-room line belongs
+     */
+    showsEmptyRoom() {
+      return !this.people.length && (this.entry.state === READY || this.entry.state === NOW);
+    },
+    people() {
+      return this.entry.people || [];
+    },
+    /**
+     * At most three faces; the rest become a count.
+     *
+     * @returns {Array} the participants to draw
+     */
+    /**
+     * The eXo people inside, in the shape the platform's avatars list wants:
+     * it renders exo-user-avatar by profile id, so a username is the whole
+     * contract.
+     *
+     * @returns {Array} the members, possibly empty
+     */
+    members() {
+      return this.people
+        .filter(person => person.type !== 'guest')
+        .map(person => ({userName: person.id, fullname: person.title, ariaLabel: person.title}));
+    },
+    /**
+     * How many of the people inside are guests — someone who followed the link
+     * without an eXo account, and therefore has no profile to draw.
+     *
+     * @returns {Number} the guest count
+     */
+    guestCount() {
+      return this.people.filter(person => person.type === 'guest').length;
+    },
+    /**
+     * How many are inside, said in words.
+     *
+     * @returns {String} the translated count
+     */
+    peopleLabel() {
+      return this.guestCount
+          && this.$t('visio.drawer.peopleInWithGuests', {0: this.people.length, 1: this.guestCount})
+          || this.$t('visio.drawer.peopleIn', {0: this.people.length});
+    },
+    /**
+     * Whether this room can be destroyed outright.
+     *
+     * Only a room of your own that nobody has ever entered: with people inside
+     * there is a meeting to interrupt, and on a visio that came from an agenda
+     * event the room belongs to the event rather than to this list.
+     *
+     * @returns {Boolean} true when deleting is offered
+     */
+    deletable() {
+      return !!this.entry.instant && this.entry.state === READY && !this.people.length;
+    },
     prominent() {
       return this.entry.state === LIVE || this.entry.state === NOW;
+    },
+    /**
+     * Whether joining is offered at all.
+     *
+     * Not a tidiness rule. Joining a meeting scheduled for tomorrow is not
+     * merely useless, it has consequences: entering the room marks its call
+     * started, which shows it live to everyone else in it and counts it in the
+     * ongoing-visio badge. A mis-click on a card for next week would announce a
+     * meeting that is not happening.
+     *
+     * So the button appears where joining is a real intention — a call in
+     * progress, one scheduled for now, a room standing open — and on an
+     * upcoming meeting only once it is close enough that arriving early is the
+     * point rather than an accident. Sharing has no such cost, so the copy
+     * affordance stays on every card regardless.
+     *
+     * @returns {Boolean} true when the join button should be offered
+     */
+    canJoin() {
+      if (this.entry.state !== UPCOMING) {
+        return true;
+      }
+      return !!this.entry.start
+          && this.entry.start.getTime() - this.now.getTime() <= JOIN_AHEAD_MS;
     },
     /**
      * Label of the join button.
@@ -273,17 +489,6 @@ export default {
           || this.$t('visio.drawer.duration.soon');
       return this.$t('visio.drawer.countdown', {0: duration});
     },
-    /**
-     * Whether this card can be taken off the list.
-     *
-     * Only a room this user opened, and only while it is empty: the list of
-     * rooms is a note to self, the meetings in it are not.
-     *
-     * @returns {Boolean} true when the card can be dismissed
-     */
-    forgettable() {
-      return !!this.entry.instant && this.entry.state === READY;
-    },
     eventLink() {
       // The event a visio was scheduled from: its description, its attendees,
       // its attachments — the context a bare join link loses. An occurrence of a
@@ -301,13 +506,70 @@ export default {
   },
   methods: {
     /**
+     * Puts the share link in the clipboard.
+     *
+     * @returns {void}
+     */
+    copyLink() {
+      copyText(this.entry.shareUrl).then(() => {
+        this.copied = true;
+        window.setTimeout(() => this.copied = false, 3000);
+      }).catch(() => this.copied = false);
+    },
+    /**
      * Takes the room off this browser's list, leaving the call untouched.
      *
      * @returns {void}
      */
-    forget() {
-      this.$visioService.forgetInstantVisio(this.entry.callId);
-      this.$root.$emit('visio-rooms-changed');
+    /**
+     * Destroys the room for everyone, once confirmed.
+     *
+     * @returns {void}
+     */
+    /**
+     * Hands the link to the chat, which asks the user which conversation it
+     * goes into. The payload is the shape the chat's own share action sends.
+     *
+     * @returns {void}
+     */
+    sendByChat() {
+      document.dispatchEvent(new CustomEvent('meeds-chat-share', {
+        detail: {link: {url: this.entry.shareUrl, title: this.title}},
+      }));
+    },
+    /**
+     * Opens the eXo mail composer on this link, the way Contacts opens it on a
+     * card: the mail add-on's own modules are required first, so the composer
+     * exists even on a page where the mailbox has never been opened.
+     * <p>
+     * The link goes to the clipboard in the same gesture, and that is a
+     * workaround rather than a design. The composer's prefill carries
+     * recipients only — its open() reads prefill.to and nothing else — so there
+     * is no way from outside to seed a body with the link. Sending subject and
+     * body anyway costs nothing and starts working the day the mail add-on
+     * honours them; until then the user pastes, and is told so.
+     *
+     * @returns {void}
+     */
+    sendByMail() {
+      const subject = this.$t('visio.drawer.sendByMail.subject', {0: this.title});
+      const body = this.$t('visio.drawer.sendByMail.body', {0: this.entry.shareUrl});
+      copyText(this.entry.shareUrl).then(() => {
+        this.copied = true;
+        window.setTimeout(() => this.copied = false, 3000);
+      }).catch(() => this.copied = false);
+      window.require([
+        'SHARED/eXoVueI18n',
+        'PORTLET/email-connector/EmailConnectorUserSetting',
+        'SHARED/emailConnectorQuickActionExtension',
+      ], () => document.dispatchEvent(new CustomEvent('open-email-composer', {
+        detail: {to: [], subject: subject, body: body},
+      })));
+    },
+    destroy() {
+      this.$visioService.deleteInstantVisio(this.entry.callId, this.entry.providerType)
+        .then(() => this.$root.$emit('visio-rooms-changed'))
+        .catch(() => this.deleteError = true);
     },
     /**
      * Opens the meeting room.

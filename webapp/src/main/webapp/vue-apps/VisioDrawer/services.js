@@ -320,18 +320,25 @@ export function refreshInstantRooms(core, now) {
     // register one that is merely open — so "started" would call every fresh
     // room live before anyone walked in. Who is actually inside is right there
     // in the call that was just read, and it is the honest answer.
-    return Object.assign({}, room, patch, {joined: isAnybodyIn(call)});
+    const inside = whoIsIn(call);
+    return Object.assign({}, room, patch, {joined: inside.length > 0, people: inside});
   })));
 }
 
 /**
- * Whether somebody is in the room at this moment.
+ * Who is in the room at this moment.
+ * <p>
+ * The call the drawer already reads carries every participant with the state
+ * the server has for them, so the people inside cost nothing extra to know —
+ * they were previously reduced to a yes/no and thrown away. A name and a face
+ * are what decide whether somebody joins: "two people are already in there" is
+ * a different invitation from a bare green chip.
  *
  * @param {object} call - the call as the server describes it
- * @returns {boolean} true when at least one participant has joined
+ * @returns {Array} the participants who have joined, possibly empty
  */
-function isAnybodyIn(call) {
-  return (call.participants || []).some(participant => participant && participant.state === 'joined');
+function whoIsIn(call) {
+  return (call.participants || []).filter(participant => participant && participant.state === 'joined');
 }
 
 /**
@@ -352,36 +359,76 @@ export function createInstantVisio(title) {
     if (!core || !core.addCall || !core.getUser || !core.getUser()) {
       throw new Error('Web conferencing is not available');
     }
-    return resolveProvider(core).then(provider => {
-      if (!provider) {
+    return resolveProviders(core).then(providers => {
+      if (!providers.length) {
         throw new Error('No web conferencing provider is available');
       }
-      const providerType = provider.getType();
-      const roomName = `visio-${randomId()}`;
-      return promised(() => provider.getCallId(roomContext(core, roomName))).then(callId => {
-        const userId = core.getUser().id;
-        return promised(() => core.addCall(callId, {
-          owner: roomName,
-          ownerType: 'chat_room',
-          provider: providerType,
-          title: title,
-          participants: userId,
-          group: true,
-        })).then(call => promised(() => provider.getCallUrl(callId)).then(url => {
+      return providers.reduce(
+        (previous, provider) => previous.then(room => room || openRoomWith(core, provider, title, now)),
+        Promise.resolve(null))
+        .then(room => {
+          if (!room) {
+            throw new Error('No provider could open a room');
+          }
+          return room;
+        });
+    });
+  });
+}
+
+/**
+ * Opens a room with one provider, or gives up on it.
+ * <p>
+ * Every step is bounded. Not defensiveness for its own sake: a provider that
+ * cannot serve the request may reject, but it may equally hand back a promise
+ * it then abandons — external-visio does exactly that, throwing inside its own
+ * chain when the identity it wanted turns out to be undefined. An unbounded
+ * wait on that is indistinguishable, from the user's side, from a button that
+ * does nothing at all. Bounded, it becomes "that provider could not", and the
+ * next one gets its turn.
+ *
+ * @param {object} core - the web conferencing module
+ * @param {object} provider - the provider to try
+ * @param {string} title - the room's title
+ * @param {Date} now - creation instant
+ * @returns {Promise} resolved with the room, or null when this provider cannot
+ */
+function openRoomWith(core, provider, title, now) {
+  const providerType = provider.getType();
+  const roomName = `visio-${randomId()}`;
+  return withTimeout(promised(() => provider.getCallId(roomContext(core, roomName))).catch(() => null), null)
+    .then(callId => {
+      if (!callId) {
+        return null;
+      }
+      return withTimeout(promised(() => core.addCall(callId, {
+        owner: roomName,
+        ownerType: 'chat_room',
+        provider: providerType,
+        title: title,
+        participants: core.getUser().id,
+        group: true,
+      })).catch(() => null), null, COMETD_TIMEOUT_MS).then(call => {
+        if (!call) {
+          return null;
+        }
+        return withTimeout(promised(() => provider.getCallUrl(callId)).catch(() => null), null).then(url => {
+          if (!url) {
+            return null;
+          }
           const room = {
             callId: callId,
-            title: call && call.title || title,
+            title: call.title || title,
             providerType: providerType,
             url: url,
-            shareUrl: appendInvite(url, call && call.inviteId),
+            shareUrl: appendInvite(url, call.inviteId),
             createdAt: now.getTime(),
           };
           addRoom(currentUserName(), room, now);
           return room;
-        }));
+        });
       });
     });
-  });
 }
 
 /**
@@ -427,15 +474,30 @@ export function renameInstantVisio(room, title) {
 }
 
 /**
- * Forgets a room, in this browser only: the call itself is left alone, because
- * somebody may well be in it.
+ * Destroys a room for everyone.
+ * <p>
+ * Not the same act as forgetting one: this removes the call itself, so the
+ * link stops working for whoever was sent it. Offered only where nobody has
+ * ever joined, and always behind a confirmation.
  *
- * @param {string} callId - the room's call id
- * @returns {void}
+ * @param {string} callId - the call to delete
+ * @param {string} providerType - the provider that owns it
+ * @returns {Promise} resolved once the room is gone from the server and the list
  */
-export function forgetInstantVisio(callId) {
-  removeRoom(currentUserName(), callId, new Date());
+export function deleteInstantVisio(callId, providerType) {
+  return getWebConferencing().then(core => {
+    if (!core || !core.deleteCall) {
+      throw new Error('Web conferencing is not available');
+    }
+    return withTimeout(promised(() => core.deleteCall(callId, providerType)).catch(() => null),
+      null, COMETD_TIMEOUT_MS).then(() => {
+      // Whatever the server made of it, the shortcut goes: a room that cannot
+      // be deleted is not one to keep offering a delete button for.
+      removeRoom(currentUserName(), callId, new Date());
+    });
+  });
 }
+
 
 /**
  * The link that lets anyone in, account or not.
@@ -489,9 +551,34 @@ function roomContext(core, roomName) {
  * @returns {Promise} resolved with a usable provider, or null
  */
 export function resolveProvider(core) {
+  return resolveProviders(core).then(providers => providers[0] || null);
+}
+
+/**
+ * Every provider this deployment has, in the order worth trying.
+ * <p>
+ * Taking the first configured provider was wrong, and wrong in a way that hung
+ * the drawer rather than failing it. A deployment can have several: this one
+ * reports <code>externalVisio</code> before <code>jitsi</code>, and
+ * external-visio exists to point at meetings held somewhere else — asked to
+ * name a room it fetches a social identity it was never given, receives a 404,
+ * and throws that rejection inside its own promise chain. The deferred it
+ * handed back is then never settled either way, so the caller waits for ever.
+ * <p>
+ * So the resolution returns candidates rather than a winner, and the caller
+ * tries them in turn under a timeout. Order is the server's, with one
+ * exception: a provider that cannot be asked to invent a room is no use for an
+ * on-the-fly one, and the only honest way to find that out is to ask it and
+ * bound the wait.
+ *
+ * @param {object} core - the web conferencing module
+ * @returns {Promise} resolved with an array of usable providers, possibly empty
+ */
+export function resolveProviders(core) {
   return getProviderTypes().then(types => types.reduce(
-    (previous, type) => previous.then(found => found || loadProvider(core, type)),
-    Promise.resolve(null)));
+    (previous, type) => previous.then(found => loadProvider(core, type)
+      .then(provider => provider && found.concat([provider]) || found)),
+    Promise.resolve([])));
 }
 
 /**

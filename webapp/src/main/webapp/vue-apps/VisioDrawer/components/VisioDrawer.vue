@@ -180,15 +180,41 @@ export default {
         .finally(() => this.creating = false);
     },
     /**
-     * The name a room gets when nobody chose one.
+     * The name a room gets, since nobody is asked for one.
+     * <p>
+     * Numbered, because a person opening a second room while the first is still
+     * listed needs to tell them apart — and the number they expect is the next
+     * one, not a count. It is taken from the highest number already on the list
+     * rather than from its length, so deleting the second of three rooms does
+     * not make the next one collide with the third.
      *
-     * @returns {String} the prefilled room name
+     * @returns {String} the room name
      */
     defaultRoomName() {
       const portal = eXo && eXo.env && eXo.env.portal;
       const owner = portal && (portal.userFullName || portal.fullName || portal.userName) || '';
-      return owner && this.$t('visio.instant.defaultName', {0: owner})
-          || this.$t('visio.instant.defaultNameAnonymous');
+      const next = this.nextRoomNumber(owner);
+      return owner && this.$t('visio.instant.defaultName', {0: owner, 1: next})
+          || this.$t('visio.instant.defaultNameAnonymous', {0: next});
+    },
+    /**
+     * The number the next room takes: one past the highest already used.
+     *
+     * @param {String} owner - the room owner's display name
+     * @returns {Number} the number to give the new room
+     */
+    nextRoomNumber(owner) {
+      const prefix = owner && this.$t('visio.instant.defaultName', {0: owner, 1: ''}) || '';
+      const used = (this.entries || [])
+        .filter(entry => entry.instant && entry.title)
+        .map(entry => {
+          const tail = prefix && entry.title.indexOf(prefix) === 0
+            ? entry.title.slice(prefix.length)
+            : entry.title;
+          const found = /(\d+)\s*$/.exec(tail);
+          return found && parseInt(found[1], 10) || 0;
+        });
+      return used.length && Math.max.apply(null, used) + 1 || 1;
     },
     /**
      * Reflects a renamed room in the list underneath the panel.

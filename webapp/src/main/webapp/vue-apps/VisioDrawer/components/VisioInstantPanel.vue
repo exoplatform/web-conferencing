@@ -27,7 +27,7 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
     outlined
     flat>
     <div class="d-flex align-center justify-space-between">
-      <span class="text-body font-weight-bold">{{ $t('visio.instant.ready') }}</span>
+      <span class="subtitle-2 font-weight-bold">{{ $t('visio.instant.ready') }}</span>
       <v-btn
         icon
         small
@@ -36,23 +36,9 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
         <v-icon size="16">fa-times</v-icon>
       </v-btn>
     </div>
+    <div class="text-caption text-sub-title mt-3">{{ $t('visio.instant.link') }}</div>
     <v-text-field
-      v-model="name"
-      class="mt-2"
-      :label="$t('visio.instant.name')"
-      :disabled="renaming"
-      :loading="renaming"
-      dense
-      outlined
-      hide-details
-      maxlength="100"
-      @change="rename" />
-    <div v-if="renameError" class="text-caption error--text mt-1">
-      {{ renameError }}
-    </div>
-    <v-text-field
-      class="mt-3"
-      :label="$t('visio.instant.link')"
+      class="pt-0 mt-0"
       :value="room.shareUrl"
       readonly
       dense
@@ -107,17 +93,12 @@ export default {
   },
   data() {
     return {
-      name: this.room && this.room.title || '',
-      renaming: false,
-      renameError: '',
       copied: false,
       copyError: false,
     };
   },
   watch: {
     room() {
-      this.name = this.room && this.room.title || '';
-      this.renameError = '';
       this.copied = false;
       this.copyError = false;
     },
@@ -144,29 +125,6 @@ export default {
      */
     join() {
       window.open(this.room.shareUrl || this.room.url, '_blank', 'noopener');
-    },
-    /**
-     * Renames the room, unless people are already in it.
-     *
-     * @returns {void}
-     */
-    rename() {
-      const title = (this.name || '').trim();
-      this.renameError = '';
-      if (!title || title === this.room.title) {
-        this.name = this.room.title;
-        return;
-      }
-      this.renaming = true;
-      this.$visioService.renameInstantVisio(this.room, title)
-        .then(renamed => this.$emit('renamed', renamed))
-        .catch(error => {
-          this.name = this.room.title;
-          this.renameError = error && error.running
-            && this.$t('visio.instant.renameRunning')
-            || this.$t('visio.instant.renameFailed');
-        })
-        .finally(() => this.renaming = false);
     },
     /**
      * Selects the whole link, so it can be copied by hand wherever the
