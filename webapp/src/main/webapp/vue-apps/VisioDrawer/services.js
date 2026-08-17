@@ -17,7 +17,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-import {normalizeEvent, startedCallIds, buildEntries} from './js/VisioMerge.js';
+import {normalizeEvent, startedCallIds, buildEntries, LIVE} from './js/VisioMerge.js';
 import {loadRooms, addRoom, patchRoom, removeRoom, instantEntries} from './js/VisioInstant.js';
 
 /** How far back the schedule is read: enough to catch a meeting already running. */
@@ -272,7 +272,8 @@ export function getVisios(now) {
           adhocCalls: adhocCalls,
           instant: instantEntries(rooms, startedIds),
           now: reference,
-        }));
+        }))
+        .then(entries => withPeople(core, entries));
     });
   });
 }
@@ -323,6 +324,41 @@ export function refreshInstantRooms(core, now) {
     const inside = whoIsIn(call);
     return Object.assign({}, room, patch, {joined: inside.length > 0, people: inside});
   })));
+}
+
+/**
+ * Fills in who is inside, for entries that are live and do not know yet.
+ * <p>
+ * A room opened from here already carries its people: the call was read to
+ * decide whether anybody had joined. A visio that came from the schedule does
+ * not — its liveness arrives as a bare list of started call ids, so the card
+ * could say a meeting was live while saying nothing about who was in it, which
+ * is the half people actually want.
+ * <p>
+ * One call per live entry, and live entries are few: a user is in nought or one
+ * meeting, occasionally two. Bounded like every other provider round trip, and
+ * a call that does not answer leaves the entry exactly as it was rather than
+ * emptying it.
+ *
+ * @param {object} core - the web conferencing module, may be null
+ * @param {Array} entries - the merged drawer entries
+ * @returns {Promise} resolved with the same entries, the live ones peopled
+ */
+function withPeople(core, entries) {
+  if (!core) {
+    return Promise.resolve(entries);
+  }
+  const pending = (entries || []).filter(entry => entry.state === LIVE && entry.callId && !entry.people);
+  if (!pending.length) {
+    return Promise.resolve(entries);
+  }
+  return Promise.all(pending.map(entry => getCall(core, entry.callId)
+    .then(call => {
+      if (call) {
+        entry.people = whoIsIn(call);
+      }
+    })
+    .catch(() => null))).then(() => entries);
 }
 
 /**
