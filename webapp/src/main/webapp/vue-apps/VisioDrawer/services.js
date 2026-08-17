@@ -18,6 +18,7 @@
  */
 
 import {normalizeEvent, startedCallIds, buildEntries} from './js/VisioMerge.js';
+import {loadRooms, addRoom, patchRoom, removeRoom, instantEntries} from './js/VisioInstant.js';
 
 /** How far back the schedule is read: enough to catch a meeting already running. */
 const PAST_WINDOW_MS = 4 * 60 * 60 * 1000;
@@ -126,6 +127,12 @@ export function getScheduledVisios(now) {
     method: 'GET',
     credentials: 'include',
   }).then(resp => {
+    if (resp.status === 404) {
+      // Web conferencing has no dependency on agenda: a deployment can run
+      // without it. A missing add-on is not a failure — there is simply no
+      // schedule to read, and the rooms opened from here still work.
+      return {events: []};
+    }
     if (!resp.ok) {
       throw new Error(`Agenda events request failed with status ${resp.status}`);
     }
@@ -237,7 +244,8 @@ export function getCallUrl(core, providerType, callId) {
 }
 
 /**
- * Everything the drawer shows, assembled from the two sources.
+ * Everything the drawer shows, assembled from the two sources plus the rooms
+ * this user opened on the fly.
  *
  * @param {Date} now - the reference instant
  * @returns {Promise} resolved with the sorted entries
@@ -250,16 +258,302 @@ export function getVisios(now) {
     const events = loaded[0];
     const core = loaded[1].core;
     const startedIds = startedCallIds(loaded[1].states);
-    return Promise.all(events.map(event => findCallId(core, event.url, event.providerType)
-      .then(callId => Object.assign(event, {callId: callId}))))
-      .then(resolved => describeAdhocCalls(core, resolved, startedIds)
+    return Promise.all([
+      Promise.all(events.map(event => findCallId(core, event.url, event.providerType)
+        .then(callId => Object.assign(event, {callId: callId})))),
+      refreshInstantRooms(core, reference),
+    ]).then(both => {
+      const resolved = both[0];
+      const rooms = both[1];
+      return describeAdhocCalls(core, resolved, startedIds)
         .then(adhocCalls => buildEntries({
           events: resolved,
           startedIds: startedIds,
           adhocCalls: adhocCalls,
+          instant: instantEntries(rooms, startedIds),
           now: reference,
-        })));
+        }));
+    });
   });
+}
+
+/**
+ * The user name every remembered room is filed under.
+ *
+ * @returns {string} the current eXo user name
+ */
+function currentUserName() {
+  return eXo && eXo.env && eXo.env.portal && eXo.env.portal.userName || '';
+}
+
+/**
+ * The rooms this user opened, with their share link checked against the server.
+ * <p>
+ * A room's invitation is deleted server side when the room empties and
+ * recreated the next time the call is read, so the link stored at creation can
+ * go stale. Reading each room here keeps what the drawer offers to copy in step
+ * with what the server would accept, and — as a side effect the platform
+ * intends — has the server recreate a missing invitation before anybody clicks
+ * a link that would be refused.
+ *
+ * @param {object} core - the web conferencing module, may be null
+ * @param {Date} now - the reference instant
+ * @returns {Promise} resolved with the remembered rooms
+ */
+export function refreshInstantRooms(core, now) {
+  const userName = currentUserName();
+  const rooms = loadRooms(userName, now);
+  if (!rooms.length || !core) {
+    return Promise.resolve(rooms);
+  }
+  return Promise.all(rooms.map(room => getCall(core, room.callId).then(call => {
+    if (!call) {
+      // A call that cannot be read is indistinguishable here from one that
+      // timed out — the core reports both as nothing — so the room is kept as
+      // it was rather than forgotten on a slow connection.
+      return room;
+    }
+    const shareUrl = call.inviteId && appendInvite(room.url, call.inviteId) || room.shareUrl;
+    const patch = {title: call.title || room.title, shareUrl: shareUrl};
+    patchRoom(userName, room.callId, patch, now);
+    // A room is created in the started state — the platform has no way to
+    // register one that is merely open — so "started" would call every fresh
+    // room live before anyone walked in. Who is actually inside is right there
+    // in the call that was just read, and it is the honest answer.
+    return Object.assign({}, room, patch, {joined: isAnybodyIn(call)});
+  })));
+}
+
+/**
+ * Whether somebody is in the room at this moment.
+ *
+ * @param {object} call - the call as the server describes it
+ * @returns {boolean} true when at least one participant has joined
+ */
+function isAnybodyIn(call) {
+  return (call.participants || []).some(participant => participant && participant.state === 'joined');
+}
+
+/**
+ * Opens a meeting room, right now, with nothing asked.
+ * <p>
+ * The room is a group call owned by nothing but itself: it is created with a
+ * chat-room owner because that is the only owner type the platform models as
+ * "a group call whose members are just these people" — a user owner means a one
+ * to one call, and a space-event owner requires a real space. See the report:
+ * this is a constraint of the existing model, not a preference.
+ *
+ * @param {string} title - the room's name
+ * @returns {Promise} resolved with the created room
+ */
+export function createInstantVisio(title) {
+  const now = new Date();
+  return getWebConferencing().then(core => {
+    if (!core || !core.addCall || !core.getUser || !core.getUser()) {
+      throw new Error('Web conferencing is not available');
+    }
+    return resolveProvider(core).then(provider => {
+      if (!provider) {
+        throw new Error('No web conferencing provider is available');
+      }
+      const providerType = provider.getType();
+      const roomName = `visio-${randomId()}`;
+      return promised(() => provider.getCallId(roomContext(core, roomName))).then(callId => {
+        const userId = core.getUser().id;
+        return promised(() => core.addCall(callId, {
+          owner: roomName,
+          ownerType: 'chat_room',
+          provider: providerType,
+          title: title,
+          participants: userId,
+          group: true,
+        })).then(call => promised(() => provider.getCallUrl(callId)).then(url => {
+          const room = {
+            callId: callId,
+            title: call && call.title || title,
+            providerType: providerType,
+            url: url,
+            shareUrl: appendInvite(url, call && call.inviteId),
+            createdAt: now.getTime(),
+          };
+          addRoom(currentUserName(), room, now);
+          return room;
+        }));
+      });
+    });
+  });
+}
+
+/**
+ * Renames a room.
+ * <p>
+ * Refused while the room is in use, on purpose: the platform's call update
+ * rebuilds the call from what it is given and clears its state in the process,
+ * so renaming a running room would drop it out of the live list for everyone
+ * watching. Better to say no than to break the very thing the drawer reports.
+ *
+ * @param {object} room - the remembered room
+ * @param {string} title - the new name
+ * @returns {Promise} resolved with the renamed room, rejected when in use
+ */
+export function renameInstantVisio(room, title) {
+  const now = new Date();
+  return getWebConferencing().then(core => {
+    if (!core || !core.updateCall) {
+      throw new Error('Web conferencing is not available');
+    }
+    // The core resolves its own update through the provider, so a page where
+    // no provider ever loaded would leave the rename hanging forever.
+    return Promise.all([resolveProvider(core), getCall(core, room.callId)]).then(loaded => {
+      const call = loaded[1];
+      if (call && call.state === 'started') {
+        const running = new Error('The room is in use');
+        running.running = true;
+        throw running;
+      }
+      return promised(() => core.updateCall(room.callId, {
+        owner: call && call.owner && call.owner.id || null,
+        ownerType: 'chat_room',
+        provider: room.providerType,
+        title: title,
+        participants: core.getUser && core.getUser() && core.getUser().id || null,
+        group: true,
+      })).then(() => {
+        patchRoom(currentUserName(), room.callId, {title: title}, now);
+        return Object.assign({}, room, {title: title});
+      });
+    });
+  });
+}
+
+/**
+ * Forgets a room, in this browser only: the call itself is left alone, because
+ * somebody may well be in it.
+ *
+ * @param {string} callId - the room's call id
+ * @returns {void}
+ */
+export function forgetInstantVisio(callId) {
+  removeRoom(currentUserName(), callId, new Date());
+}
+
+/**
+ * The link that lets anyone in, account or not.
+ *
+ * @param {string} url - the call URL
+ * @param {string} inviteId - the call's invitation id, may be missing
+ * @returns {string} the shareable URL
+ */
+function appendInvite(url, inviteId) {
+  if (!url) {
+    return '';
+  }
+  return inviteId && `${url}?inviteId=${encodeURIComponent(inviteId)}` || url;
+}
+
+/**
+ * The context a provider builds a fresh group call id from.
+ * <p>
+ * Shaped like the contexts the core itself passes: a group that is neither a
+ * space nor a space event, so the provider names the room after it and returns
+ * an id nothing else can collide with.
+ *
+ * @param {object} core - the web conferencing module
+ * @param {string} roomName - the generated room name
+ * @returns {object} the provider context
+ */
+function roomContext(core, roomName) {
+  return {
+    currentUser: core.getUser(),
+    roomName: roomName,
+    roomTitle: roomName,
+    isGroup: true,
+    isSpace: false,
+    isSpaceEvent: false,
+    isRoom: true,
+    isUser: false,
+    details: () => Promise.resolve({id: roomName, title: roomName, members: {}}),
+  };
+}
+
+/**
+ * A provider able to name a room and give it a URL.
+ * <p>
+ * A provider only exists in this page once its own module has run, and nothing
+ * runs it on a page that has no call button — so the configured types are read
+ * from the server and their modules required by the platform's naming
+ * convention. When none answers, the caller says so instead of half creating
+ * something.
+ *
+ * @param {object} core - the web conferencing module
+ * @returns {Promise} resolved with a usable provider, or null
+ */
+export function resolveProvider(core) {
+  return getProviderTypes().then(types => types.reduce(
+    (previous, type) => previous.then(found => found || loadProvider(core, type)),
+    Promise.resolve(null)));
+}
+
+/**
+ * The provider types this deployment has active.
+ *
+ * @returns {Promise} resolved with the type names, empty when unreadable
+ */
+function getProviderTypes() {
+  return fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/webconferencing/providers/configuration`, {
+    credentials: 'include',
+  }).then(resp => resp.ok && resp.json() || [])
+    .then(configs => (configs || []).filter(config => config && config.type && config.active !== false)
+      .map(config => config.type))
+    .catch(() => []);
+}
+
+/**
+ * One provider, its module loaded if need be.
+ *
+ * @param {object} core - the web conferencing module
+ * @param {string} type - the provider type
+ * @returns {Promise} resolved with the provider, or null
+ */
+function loadProvider(core, type) {
+  const registered = core.findProvider && core.findProvider(type);
+  if (isUsableProvider(registered)) {
+    return Promise.resolve(registered);
+  }
+  return new Promise(resolve => {
+    // The provider modules are named after their type by the platform's own
+    // convention (webConferencing_jitsi for the jitsi provider). A deployment
+    // whose provider does not follow it simply does not answer here.
+    window.require([`SHARED/webConferencing_${type}`], () => resolve(), () => resolve());
+  }).then(() => withTimeout(promised(() => core.getProvider(type)).catch(() => null), null))
+    .then(provider => isUsableProvider(provider) && provider
+      || isUsableProvider(core.findProvider && core.findProvider(type)) && core.findProvider(type)
+      || null);
+}
+
+/**
+ * Whether a provider can open a room: name it, and say where it is.
+ *
+ * @param {object} provider - a provider, may be null
+ * @returns {boolean} true when the provider can do both
+ */
+function isUsableProvider(provider) {
+  return !!provider && !!provider.getCallId && !!provider.getCallUrl && !!provider.getType && !!provider.getType();
+}
+
+/**
+ * An identifier nothing else will produce.
+ *
+ * @returns {string} a random hexadecimal string
+ */
+function randomId() {
+  const crypto = window.crypto || window.msCrypto;
+  if (crypto && crypto.getRandomValues) {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.prototype.map.call(bytes, byte => `0${byte.toString(16)}`.slice(-2)).join('');
+  }
+  return `${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`;
 }
 
 /**

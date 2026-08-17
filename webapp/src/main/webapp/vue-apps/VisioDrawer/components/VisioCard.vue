@@ -81,20 +81,40 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
           :href="eventLink"
           class="text-caption">{{ $t('visio.drawer.openEvent') }}</a>
         <span v-else></span>
-        <!-- Filled only where joining is the thing to do now. An upcoming
-             meeting's room is joinable too, but almost nobody wants to, and
-             giving every card the same weight makes the live one no easier to
-             find than the rest. -->
-        <v-btn
-          small
-          :depressed="prominent"
-          :text="!prominent"
-          :color="prominent && 'primary' || ''"
-          :loading="joining"
-          @click="join">
-          <v-icon size="14" class="me-1">fa-video</v-icon>
-          {{ joinLabel }}
-        </v-btn>
+        <div class="d-flex align-center">
+          <!-- Only on a room of your own that nobody is in: the list is yours
+               to tidy, but a room somebody may be sitting in is not something
+               to make disappear with one click. -->
+          <v-tooltip v-if="forgettable" bottom>
+            <template #activator="{on, attrs}">
+              <v-btn
+                v-bind="attrs"
+                icon
+                small
+                :aria-label="$t('visio.instant.forget')"
+                v-on="on"
+                @click="forget">
+                <v-icon size="14">fa-times</v-icon>
+              </v-btn>
+            </template>
+            <span>{{ $t('visio.instant.forget') }}</span>
+          </v-tooltip>
+          <visio-copy-link v-if="entry.shareUrl" :url="entry.shareUrl" />
+          <!-- Filled only where joining is the thing to do now. An upcoming
+               meeting's room is joinable too, but almost nobody wants to, and
+               giving every card the same weight makes the live one no easier to
+               find than the rest. -->
+          <v-btn
+            small
+            :depressed="prominent"
+            :text="!prominent"
+            :color="prominent && 'primary' || ''"
+            :loading="joining"
+            @click="join">
+            <v-icon size="14" class="me-1">fa-video</v-icon>
+            {{ joinLabel }}
+          </v-btn>
+        </div>
       </div>
       <div v-if="joinError" class="text-caption error--text mt-1">
         {{ $t('visio.drawer.join.unavailable') }}
@@ -104,7 +124,7 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 </template>
 
 <script>
-import {LIVE, NOW} from '../js/VisioMerge.js';
+import {LIVE, NOW, READY} from '../js/VisioMerge.js';
 import {formatTime, formatDay, isSameDay, splitDuration} from '../js/VisioFormat.js';
 
 export default {
@@ -149,6 +169,7 @@ export default {
     color() {
       return this.entry.state === LIVE && 'success'
           || this.entry.state === NOW && 'warning'
+          || this.entry.state === READY && 'info'
           || null;
     },
     /**
@@ -178,6 +199,7 @@ export default {
     icon() {
       return this.entry.state === LIVE && 'fa-video'
           || this.entry.state === NOW && 'fa-user-clock'
+          || this.entry.state === READY && 'fa-door-open'
           || 'fa-clock';
     },
     stateLabel() {
@@ -209,6 +231,12 @@ export default {
     },
     timeLabel() {
       const start = formatTime(this.entry.start);
+      if (this.entry.state === READY) {
+        // A room you opened has no schedule at all: the only time it has is
+        // when you opened it, and saying "started" about an empty room would
+        // be the very confusion the drawer exists to remove.
+        return start && this.$t('visio.drawer.openedAt', {0: start}) || '';
+      }
       if (!this.entry.end) {
         return start && this.$t('visio.drawer.startedAt', {0: start}) || '';
       }
@@ -245,6 +273,17 @@ export default {
           || this.$t('visio.drawer.duration.soon');
       return this.$t('visio.drawer.countdown', {0: duration});
     },
+    /**
+     * Whether this card can be taken off the list.
+     *
+     * Only a room this user opened, and only while it is empty: the list of
+     * rooms is a note to self, the meetings in it are not.
+     *
+     * @returns {Boolean} true when the card can be dismissed
+     */
+    forgettable() {
+      return !!this.entry.instant && this.entry.state === READY;
+    },
     eventLink() {
       // The event a visio was scheduled from: its description, its attendees,
       // its attachments — the context a bare join link loses. An occurrence of a
@@ -261,6 +300,15 @@ export default {
     },
   },
   methods: {
+    /**
+     * Takes the room off this browser's list, leaving the call untouched.
+     *
+     * @returns {void}
+     */
+    forget() {
+      this.$visioService.forgetInstantVisio(this.entry.callId);
+      this.$root.$emit('visio-rooms-changed');
+    },
     /**
      * Opens the meeting room.
      * <p>

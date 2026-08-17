@@ -38,6 +38,14 @@ export const NOW = 'now';
 /** Still to come. */
 export const UPCOMING = 'upcoming';
 
+/**
+ * A room this user opened on the fly, that nobody is in right now. Said as
+ * plainly as NOW is: the link works, the room is empty. It is a state of its
+ * own rather than a flavour of LIVE, because "the room is ready" and "people
+ * are in the room" are the two different things a host needs to tell apart.
+ */
+export const READY = 'ready';
+
 /** The call state web conferencing persists for a running call. */
 const STATE_STARTED = 'started';
 
@@ -151,13 +159,17 @@ export function matchStartedCallId(url, ids) {
  * at all — created through MCP, or a hand-pasted URL — stays schedule-only with
  * a working Join; it is never promoted to LIVE.
  *
- * @param {object} args - {events, startedIds, adhocCalls, now}
+ * @param {object} args - {events, startedIds, adhocCalls, instant, now}
  * @returns {Array} the drawer entries, sorted by state then by start time
  */
-export function buildEntries({events, startedIds, adhocCalls, now}) {
+export function buildEntries({events, startedIds, adhocCalls, instant, now}) {
   const nowTime = (now || new Date()).getTime();
-  const matched = [];
-  const entries = [];
+  // The rooms opened from this drawer are listed from what the browser
+  // remembered, which carries their invitation link. They are also, while
+  // running, ordinary started calls, so they are claimed here first and left
+  // out of the ad-hoc pass below rather than shown twice.
+  const entries = (instant || []).slice();
+  const matched = entries.map(entry => entry.callId);
   (events || []).forEach(event => {
     const callId = event.callId || matchStartedCallId(event.url, startedIds);
     const live = !!callId && startedIds.indexOf(callId) >= 0;
@@ -169,6 +181,10 @@ export function buildEntries({events, startedIds, adhocCalls, now}) {
       entries.push(Object.assign({}, event, {
         callId: callId,
         state: state,
+        // What agenda stored already IS the shareable link: the conference URL
+        // it saved carries the call's invitation id, so forwarding it to
+        // somebody outside works without creating anything.
+        shareUrl: event.url,
       }));
     }
   });
@@ -183,6 +199,7 @@ export function buildEntries({events, startedIds, adhocCalls, now}) {
     end: null,
     allDay: false,
     url: null,
+    shareUrl: '',
     providerType: call.providerType || '',
     callId: call.id,
     state: LIVE,
@@ -219,9 +236,14 @@ function eventState(event, live, nowTime) {
  * @returns {number} the comparison result
  */
 function compareEntries(first, second) {
-  const rank = {[LIVE]: 0, [NOW]: 1, [UPCOMING]: 2};
+  const rank = {[LIVE]: 0, [READY]: 1, [NOW]: 2, [UPCOMING]: 3};
   if (rank[first.state] !== rank[second.state]) {
     return rank[first.state] - rank[second.state];
   }
-  return (first.start && first.start.getTime() || 0) - (second.start && second.start.getTime() || 0);
+  const firstTime = first.start && first.start.getTime() || 0;
+  const secondTime = second.start && second.start.getTime() || 0;
+  // Rooms you opened read backwards from the rest: the one you just made is
+  // the one you are about to send, whereas the next meeting is the next thing
+  // that happens to you.
+  return first.state === READY && secondTime - firstTime || firstTime - secondTime;
 }
