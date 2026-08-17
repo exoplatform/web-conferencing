@@ -1741,7 +1741,17 @@
             process.reject("Provider required in callInfo");
           }
         } else {
-          processAddCall(id, callInfo, true);
+          // Whether a call is born started is the caller's to say. This branch
+          // hard-coded true, which is right for the call button -- you click it
+          // and you are walking in -- and wrong for anything that opens a room
+          // for somebody else to arrive in. Such a call was marked started with
+          // nobody inside and stayed so until a server restart: it counted in
+          // the ongoing-visio badge, it made rename refuse because renaming a
+          // running call is guarded, and removing it left the row behind. The
+          // branch above already creates without starting, so both behaviours
+          // existed; only this one could not be asked for. Defaulting to true
+          // leaves every existing caller exactly as it was.
+          processAddCall(id, callInfo, callInfo.start !== false);
         }
 			} else {
 				log.trace("Adding call requires CometD");

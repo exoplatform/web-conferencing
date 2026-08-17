@@ -17,7 +17,8 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-import {normalizeEvent, startedCallIds, buildEntries} from './js/VisioMerge.js';
+import {normalizeEvent, startedCallIds, buildEntries, LIVE} from './js/VisioMerge.js';
+import {loadRooms, addRoom, patchRoom, removeRoom, instantEntries} from './js/VisioInstant.js';
 
 /** How far back the schedule is read: enough to catch a meeting already running. */
 const PAST_WINDOW_MS = 4 * 60 * 60 * 1000;
@@ -126,6 +127,12 @@ export function getScheduledVisios(now) {
     method: 'GET',
     credentials: 'include',
   }).then(resp => {
+    if (resp.status === 404) {
+      // Web conferencing has no dependency on agenda: a deployment can run
+      // without it. A missing add-on is not a failure — there is simply no
+      // schedule to read, and the rooms opened from here still work.
+      return {events: []};
+    }
     if (!resp.ok) {
       throw new Error(`Agenda events request failed with status ${resp.status}`);
     }
@@ -237,7 +244,8 @@ export function getCallUrl(core, providerType, callId) {
 }
 
 /**
- * Everything the drawer shows, assembled from the two sources.
+ * Everything the drawer shows, assembled from the two sources plus the rooms
+ * this user opened on the fly.
  *
  * @param {Date} now - the reference instant
  * @returns {Promise} resolved with the sorted entries
@@ -250,16 +258,497 @@ export function getVisios(now) {
     const events = loaded[0];
     const core = loaded[1].core;
     const startedIds = startedCallIds(loaded[1].states);
-    return Promise.all(events.map(event => findCallId(core, event.url, event.providerType)
-      .then(callId => Object.assign(event, {callId: callId}))))
-      .then(resolved => describeAdhocCalls(core, resolved, startedIds)
+    return Promise.all([
+      Promise.all(events.map(event => findCallId(core, event.url, event.providerType)
+        .then(callId => Object.assign(event, {callId: callId})))),
+      refreshInstantRooms(core, reference),
+    ]).then(both => {
+      const resolved = both[0];
+      const rooms = both[1];
+      return describeAdhocCalls(core, resolved, startedIds)
         .then(adhocCalls => buildEntries({
           events: resolved,
           startedIds: startedIds,
           adhocCalls: adhocCalls,
+          instant: instantEntries(rooms, startedIds),
           now: reference,
-        })));
+        }))
+        .then(entries => withPeople(core, entries));
+    });
   });
+}
+
+/**
+ * The user name every remembered room is filed under.
+ *
+ * @returns {string} the current eXo user name
+ */
+function currentUserName() {
+  return eXo && eXo.env && eXo.env.portal && eXo.env.portal.userName || '';
+}
+
+/**
+ * The rooms this user opened, with their share link checked against the server.
+ * <p>
+ * A room's invitation is deleted server side when the room empties and
+ * recreated the next time the call is read, so the link stored at creation can
+ * go stale. Reading each room here keeps what the drawer offers to copy in step
+ * with what the server would accept, and — as a side effect the platform
+ * intends — has the server recreate a missing invitation before anybody clicks
+ * a link that would be refused.
+ *
+ * @param {object} core - the web conferencing module, may be null
+ * @param {Date} now - the reference instant
+ * @returns {Promise} resolved with the remembered rooms
+ */
+export function refreshInstantRooms(core, now) {
+  const userName = currentUserName();
+  const rooms = loadRooms(userName, now);
+  if (!rooms.length || !core) {
+    return Promise.resolve(rooms);
+  }
+  return Promise.all(rooms.map(room => getCall(core, room.callId).then(call => {
+    if (!call) {
+      // A call that cannot be read is indistinguishable here from one that
+      // timed out — the core reports both as nothing — so the room is kept as
+      // it was rather than forgotten on a slow connection.
+      return room;
+    }
+    const shareUrl = call.inviteId && appendInvite(room.url, call.inviteId) || room.shareUrl;
+    const patch = {title: call.title || room.title, shareUrl: shareUrl};
+    patchRoom(userName, room.callId, patch, now);
+    // A room is created in the started state — the platform has no way to
+    // register one that is merely open — so "started" would call every fresh
+    // room live before anyone walked in. Who is actually inside is right there
+    // in the call that was just read, and it is the honest answer.
+    const inside = whoIsIn(call);
+    return Object.assign({}, room, patch, {joined: inside.length > 0, people: inside});
+  })));
+}
+
+/**
+ * Fills in who is inside, for entries that are live and do not know yet.
+ * <p>
+ * A room opened from here already carries its people: the call was read to
+ * decide whether anybody had joined. A visio that came from the schedule does
+ * not — its liveness arrives as a bare list of started call ids, so the card
+ * could say a meeting was live while saying nothing about who was in it, which
+ * is the half people actually want.
+ * <p>
+ * One call per live entry, and live entries are few: a user is in nought or one
+ * meeting, occasionally two. Bounded like every other provider round trip, and
+ * a call that does not answer leaves the entry exactly as it was rather than
+ * emptying it.
+ *
+ * @param {object} core - the web conferencing module, may be null
+ * @param {Array} entries - the merged drawer entries
+ * @returns {Promise} resolved with the same entries, the live ones peopled
+ */
+function withPeople(core, entries) {
+  if (!core) {
+    return Promise.resolve(entries);
+  }
+  const pending = (entries || []).filter(entry => entry.state === LIVE && entry.callId && !entry.people);
+  if (!pending.length) {
+    return Promise.resolve(entries);
+  }
+  return Promise.all(pending.map(entry => getCall(core, entry.callId)
+    .then(call => {
+      if (call) {
+        entry.people = whoIsIn(call);
+      }
+    })
+    .catch(() => null))).then(() => entries);
+}
+
+/**
+ * Opens the eXo mail composer on a subject and a body.
+ * <p>
+ * Requiring the mail modules is not enough on its own: the composer's listener
+ * belongs to the mailbox APP, and on a page where the mailbox has never been
+ * opened that app is not mounted, so the event is dispatched into nothing and
+ * the click appears to do nothing at all. The app is therefore mounted first
+ * when it is absent — the same bootstrap Contacts performs before sharing a
+ * card, including its check for every id the app can already be under, since
+ * mounting a second instance makes both answer and the composer opens twice.
+ *
+ * @param {String} subject - the subject to seed
+ * @param {String} body - the body to seed
+ * @returns {Promise} resolved once the composer has been asked to open
+ */
+export function openMailComposer(subject, body) {
+  return new Promise((resolve, reject) => {
+    window.require([
+      'SHARED/eXoVueI18n',
+      'PORTLET/email-connector/EmailConnectorUserSetting',
+      'SHARED/emailConnectorQuickActionExtension',
+    ], exoi18n => bootstrapMailApp(exoi18n).then(() => {
+      document.dispatchEvent(new CustomEvent('open-email-composer', {
+        detail: {to: [], subject: subject, body: body},
+      }));
+      resolve();
+    }).catch(reject), reject);
+  });
+}
+
+/**
+ * Puts the mailbox app on the page, unless it is already there.
+ *
+ * @param {Object} exoi18n - the platform i18n loader
+ * @returns {Promise} resolved once the app is mounted
+ */
+function bootstrapMailApp(exoi18n) {
+  const appId = 'visio-mail-compose';
+  // Every id the app can already be mounted under, the mail page's own portlet
+  // root included. Missing one mounts a second app, and then both hand the
+  // composer the same mail.
+  const mounted = document.querySelector(`#emailConnectorMailBox, #emailConenctor-mailBox-quick-actions, #${appId}`);
+  if (mounted) {
+    return Promise.resolve();
+  }
+  const host = document.querySelector('#vuetify-apps');
+  if (!host) {
+    return Promise.reject(new Error('No application host on this page'));
+  }
+  const parent = document.createElement('div');
+  parent.id = appId;
+  host.appendChild(parent);
+  const lang = eXo.env.portal.language;
+  const urls = [
+    `/email-connector/i18n/locale.portlet.emailConnector.emailConnectorUserSetting?lang=${lang}`,
+    `/email-connector/i18n/locale.portlet.emailConnector.emailConnectorMailBox?lang=${lang}`,
+  ];
+  return new Promise(resolve => exoi18n.loadLanguageAsync(lang, urls)
+    .then(i18n => window.Vue.createApp({
+      template: `<email-connector-mail-box-app id="${appId}" />`,
+      mounted() {
+        resolve();
+      },
+      vuetify: window.Vue.prototype.vuetifyOptions,
+      i18n,
+    }, `#${appId}`, 'Visio Compose')));
+}
+
+/**
+ * Who is in the room at this moment.
+ * <p>
+ * The call the drawer already reads carries every participant with the state
+ * the server has for them, so the people inside cost nothing extra to know —
+ * they were previously reduced to a yes/no and thrown away. A name and a face
+ * are what decide whether somebody joins: "two people are already in there" is
+ * a different invitation from a bare green chip.
+ *
+ * @param {object} call - the call as the server describes it
+ * @returns {Array} the participants who have joined, possibly empty
+ */
+function whoIsIn(call) {
+  return (call.participants || []).filter(participant => participant && participant.state === 'joined');
+}
+
+/**
+ * Opens a meeting room, right now, with nothing asked.
+ * <p>
+ * The room is a group call owned by nothing but itself: it is created with a
+ * chat-room owner because that is the only owner type the platform models as
+ * "a group call whose members are just these people" — a user owner means a one
+ * to one call, and a space-event owner requires a real space. See the report:
+ * this is a constraint of the existing model, not a preference.
+ *
+ * @param {string} title - the room's name
+ * @returns {Promise} resolved with the created room
+ */
+export function createInstantVisio(title) {
+  const now = new Date();
+  return getWebConferencing().then(core => {
+    if (!core || !core.addCall || !core.getUser || !core.getUser()) {
+      throw new Error('Web conferencing is not available');
+    }
+    return resolveProviders(core).then(providers => {
+      if (!providers.length) {
+        throw new Error('No web conferencing provider is available');
+      }
+      return providers.reduce(
+        (previous, provider) => previous.then(room => room || openRoomWith(core, provider, title, now)),
+        Promise.resolve(null))
+        .then(room => {
+          if (!room) {
+            throw new Error('No provider could open a room');
+          }
+          return room;
+        });
+    });
+  });
+}
+
+/**
+ * Opens a room with one provider, or gives up on it.
+ * <p>
+ * Every step is bounded. Not defensiveness for its own sake: a provider that
+ * cannot serve the request may reject, but it may equally hand back a promise
+ * it then abandons — external-visio does exactly that, throwing inside its own
+ * chain when the identity it wanted turns out to be undefined. An unbounded
+ * wait on that is indistinguishable, from the user's side, from a button that
+ * does nothing at all. Bounded, it becomes "that provider could not", and the
+ * next one gets its turn.
+ *
+ * @param {object} core - the web conferencing module
+ * @param {object} provider - the provider to try
+ * @param {string} title - the room's title
+ * @param {Date} now - creation instant
+ * @returns {Promise} resolved with the room, or null when this provider cannot
+ */
+function openRoomWith(core, provider, title, now) {
+  const providerType = provider.getType();
+  const roomName = `visio-${randomId()}`;
+  return withTimeout(promised(() => provider.getCallId(roomContext(core, roomName))).catch(() => null), null)
+    .then(callId => {
+      if (!callId) {
+        return null;
+      }
+      return withTimeout(promised(() => core.addCall(callId, {
+        owner: roomName,
+        ownerType: 'chat_room',
+        provider: providerType,
+        title: title,
+        participants: core.getUser().id,
+        group: true,
+        // Opened, not entered. Nobody is in it until somebody clicks join, and
+        // saying otherwise is what made a fresh room count in the badge and
+        // refuse to be renamed.
+        start: false,
+      })).catch(() => null), null, COMETD_TIMEOUT_MS).then(call => {
+        if (!call) {
+          return null;
+        }
+        return withTimeout(promised(() => provider.getCallUrl(callId)).catch(() => null), null).then(url => {
+          if (!url) {
+            return null;
+          }
+          const room = {
+            callId: callId,
+            title: call.title || title,
+            providerType: providerType,
+            url: url,
+            shareUrl: appendInvite(url, call.inviteId),
+            createdAt: now.getTime(),
+          };
+          addRoom(currentUserName(), room, now);
+          return room;
+        });
+      });
+    });
+}
+
+/**
+ * Renames a room.
+ * <p>
+ * Refused while the room is in use, on purpose: the platform's call update
+ * rebuilds the call from what it is given and clears its state in the process,
+ * so renaming a running room would drop it out of the live list for everyone
+ * watching. Better to say no than to break the very thing the drawer reports.
+ *
+ * @param {object} room - the remembered room
+ * @param {string} title - the new name
+ * @returns {Promise} resolved with the renamed room, rejected when in use
+ */
+export function renameInstantVisio(room, title) {
+  const now = new Date();
+  return getWebConferencing().then(core => {
+    if (!core || !core.updateCall) {
+      throw new Error('Web conferencing is not available');
+    }
+    // The core resolves its own update through the provider, so a page where
+    // no provider ever loaded would leave the rename hanging forever.
+    return Promise.all([resolveProvider(core), getCall(core, room.callId)]).then(loaded => {
+      const call = loaded[1];
+      if (call && call.state === 'started') {
+        const running = new Error('The room is in use');
+        running.running = true;
+        throw running;
+      }
+      return promised(() => core.updateCall(room.callId, {
+        owner: call && call.owner && call.owner.id || null,
+        ownerType: 'chat_room',
+        provider: room.providerType,
+        title: title,
+        participants: core.getUser && core.getUser() && core.getUser().id || null,
+        group: true,
+      })).then(() => {
+        patchRoom(currentUserName(), room.callId, {title: title}, now);
+        return Object.assign({}, room, {title: title});
+      });
+    });
+  });
+}
+
+/**
+ * Destroys a room for everyone.
+ * <p>
+ * Not the same act as forgetting one: this removes the call itself, so the
+ * link stops working for whoever was sent it. Offered only where nobody has
+ * ever joined, and always behind a confirmation.
+ *
+ * @param {string} callId - the call to delete
+ * @param {string} providerType - the provider that owns it
+ * @returns {Promise} resolved once the room is gone from the server and the list
+ */
+export function deleteInstantVisio(callId, providerType) {
+  return getWebConferencing().then(core => {
+    if (!core || !core.deleteCall) {
+      throw new Error('Web conferencing is not available');
+    }
+    return withTimeout(promised(() => core.deleteCall(callId, providerType)).catch(() => null),
+      null, COMETD_TIMEOUT_MS).then(() => {
+      // Whatever the server made of it, the shortcut goes: a room that cannot
+      // be deleted is not one to keep offering a delete button for.
+      removeRoom(currentUserName(), callId, new Date());
+    });
+  });
+}
+
+
+/**
+ * The link that lets anyone in, account or not.
+ *
+ * @param {string} url - the call URL
+ * @param {string} inviteId - the call's invitation id, may be missing
+ * @returns {string} the shareable URL
+ */
+function appendInvite(url, inviteId) {
+  if (!url) {
+    return '';
+  }
+  return inviteId && `${url}?inviteId=${encodeURIComponent(inviteId)}` || url;
+}
+
+/**
+ * The context a provider builds a fresh group call id from.
+ * <p>
+ * Shaped like the contexts the core itself passes: a group that is neither a
+ * space nor a space event, so the provider names the room after it and returns
+ * an id nothing else can collide with.
+ *
+ * @param {object} core - the web conferencing module
+ * @param {string} roomName - the generated room name
+ * @returns {object} the provider context
+ */
+function roomContext(core, roomName) {
+  return {
+    currentUser: core.getUser(),
+    roomName: roomName,
+    roomTitle: roomName,
+    isGroup: true,
+    isSpace: false,
+    isSpaceEvent: false,
+    isRoom: true,
+    isUser: false,
+    details: () => Promise.resolve({id: roomName, title: roomName, members: {}}),
+  };
+}
+
+/**
+ * A provider able to name a room and give it a URL.
+ * <p>
+ * A provider only exists in this page once its own module has run, and nothing
+ * runs it on a page that has no call button — so the configured types are read
+ * from the server and their modules required by the platform's naming
+ * convention. When none answers, the caller says so instead of half creating
+ * something.
+ *
+ * @param {object} core - the web conferencing module
+ * @returns {Promise} resolved with a usable provider, or null
+ */
+export function resolveProvider(core) {
+  return resolveProviders(core).then(providers => providers[0] || null);
+}
+
+/**
+ * Every provider this deployment has, in the order worth trying.
+ * <p>
+ * Taking the first configured provider was wrong, and wrong in a way that hung
+ * the drawer rather than failing it. A deployment can have several: this one
+ * reports <code>externalVisio</code> before <code>jitsi</code>, and
+ * external-visio exists to point at meetings held somewhere else — asked to
+ * name a room it fetches a social identity it was never given, receives a 404,
+ * and throws that rejection inside its own promise chain. The deferred it
+ * handed back is then never settled either way, so the caller waits for ever.
+ * <p>
+ * So the resolution returns candidates rather than a winner, and the caller
+ * tries them in turn under a timeout. Order is the server's, with one
+ * exception: a provider that cannot be asked to invent a room is no use for an
+ * on-the-fly one, and the only honest way to find that out is to ask it and
+ * bound the wait.
+ *
+ * @param {object} core - the web conferencing module
+ * @returns {Promise} resolved with an array of usable providers, possibly empty
+ */
+export function resolveProviders(core) {
+  return getProviderTypes().then(types => types.reduce(
+    (previous, type) => previous.then(found => loadProvider(core, type)
+      .then(provider => provider && found.concat([provider]) || found)),
+    Promise.resolve([])));
+}
+
+/**
+ * The provider types this deployment has active.
+ *
+ * @returns {Promise} resolved with the type names, empty when unreadable
+ */
+function getProviderTypes() {
+  return fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/webconferencing/providers/configuration`, {
+    credentials: 'include',
+  }).then(resp => resp.ok && resp.json() || [])
+    .then(configs => (configs || []).filter(config => config && config.type && config.active !== false)
+      .map(config => config.type))
+    .catch(() => []);
+}
+
+/**
+ * One provider, its module loaded if need be.
+ *
+ * @param {object} core - the web conferencing module
+ * @param {string} type - the provider type
+ * @returns {Promise} resolved with the provider, or null
+ */
+function loadProvider(core, type) {
+  const registered = core.findProvider && core.findProvider(type);
+  if (isUsableProvider(registered)) {
+    return Promise.resolve(registered);
+  }
+  return new Promise(resolve => {
+    // The provider modules are named after their type by the platform's own
+    // convention (webConferencing_jitsi for the jitsi provider). A deployment
+    // whose provider does not follow it simply does not answer here.
+    window.require([`SHARED/webConferencing_${type}`], () => resolve(), () => resolve());
+  }).then(() => withTimeout(promised(() => core.getProvider(type)).catch(() => null), null))
+    .then(provider => isUsableProvider(provider) && provider
+      || isUsableProvider(core.findProvider && core.findProvider(type)) && core.findProvider(type)
+      || null);
+}
+
+/**
+ * Whether a provider can open a room: name it, and say where it is.
+ *
+ * @param {object} provider - a provider, may be null
+ * @returns {boolean} true when the provider can do both
+ */
+function isUsableProvider(provider) {
+  return !!provider && !!provider.getCallId && !!provider.getCallUrl && !!provider.getType && !!provider.getType();
+}
+
+/**
+ * An identifier nothing else will produce.
+ *
+ * @returns {string} a random hexadecimal string
+ */
+function randomId() {
+  const crypto = window.crypto || window.msCrypto;
+  if (crypto && crypto.getRandomValues) {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.prototype.map.call(bytes, byte => `0${byte.toString(16)}`.slice(-2)).join('');
+  }
+  return `${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`;
 }
 
 /**
