@@ -188,5 +188,37 @@
       <module>extensionRegistry</module>
     </depends>
   </module>
-  
+
+  <!-- The Visio quick-action drawer: current and upcoming visios, one click
+       from the applications launcher. The module NAME must contain
+       "QuickActionExtension": the launcher discovers quick actions with
+       includeExtensions('QuickActionExtension'), which filters the loaded
+       module names - being in QuickActionsGrp alone would never run it.
+       webConferencing is deliberately NOT a dependency here: it drags jquery
+       and cometd, and this module is on every page. The drawer requires it
+       lazily, on the first open. -->
+  <module>
+    <name>visioQuickActionExtension</name>
+    <load-group>QuickActionsGrp</load-group>
+    <script>
+      <minify>false</minify>
+      <path>/js/visioDrawer.bundle.js</path>
+    </script>
+    <depends>
+      <module>vue</module>
+    </depends>
+    <depends>
+      <module>vuetify</module>
+    </depends>
+    <depends>
+      <module>eXoVueI18n</module>
+    </depends>
+    <depends>
+      <module>commonVueComponents</module>
+    </depends>
+    <depends>
+      <module>extensionRegistry</module>
+    </depends>
+  </module>
+
 </gatein-resources>

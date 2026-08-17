@@ -111,6 +111,12 @@
         <includes>
           <include>**/*.properties</include>
           <include>**/*.xml</include>
+          <!-- applications.json: the Application Center reads every
+               applications.json it finds on the classpath, so it has to be in
+               the jar. This whitelist had no json entry, which drops the file
+               silently — and a DRAWER application the launcher never sees is
+               indistinguishable from a rendering bug. -->
+          <include>**/*.json</include>
           <include>**/*.drl</include>
           <include>**/*.doc</include>
           <include>**/*.xls</include>
