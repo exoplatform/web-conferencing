@@ -362,6 +362,74 @@ function withPeople(core, entries) {
 }
 
 /**
+ * Opens the eXo mail composer on a subject and a body.
+ * <p>
+ * Requiring the mail modules is not enough on its own: the composer's listener
+ * belongs to the mailbox APP, and on a page where the mailbox has never been
+ * opened that app is not mounted, so the event is dispatched into nothing and
+ * the click appears to do nothing at all. The app is therefore mounted first
+ * when it is absent — the same bootstrap Contacts performs before sharing a
+ * card, including its check for every id the app can already be under, since
+ * mounting a second instance makes both answer and the composer opens twice.
+ *
+ * @param {String} subject - the subject to seed
+ * @param {String} body - the body to seed
+ * @returns {Promise} resolved once the composer has been asked to open
+ */
+export function openMailComposer(subject, body) {
+  return new Promise((resolve, reject) => {
+    window.require([
+      'SHARED/eXoVueI18n',
+      'PORTLET/email-connector/EmailConnectorUserSetting',
+      'SHARED/emailConnectorQuickActionExtension',
+    ], exoi18n => bootstrapMailApp(exoi18n).then(() => {
+      document.dispatchEvent(new CustomEvent('open-email-composer', {
+        detail: {to: [], subject: subject, body: body},
+      }));
+      resolve();
+    }).catch(reject), reject);
+  });
+}
+
+/**
+ * Puts the mailbox app on the page, unless it is already there.
+ *
+ * @param {Object} exoi18n - the platform i18n loader
+ * @returns {Promise} resolved once the app is mounted
+ */
+function bootstrapMailApp(exoi18n) {
+  const appId = 'visio-mail-compose';
+  // Every id the app can already be mounted under, the mail page's own portlet
+  // root included. Missing one mounts a second app, and then both hand the
+  // composer the same mail.
+  const mounted = document.querySelector(`#emailConnectorMailBox, #emailConenctor-mailBox-quick-actions, #${appId}`);
+  if (mounted) {
+    return Promise.resolve();
+  }
+  const host = document.querySelector('#vuetify-apps');
+  if (!host) {
+    return Promise.reject(new Error('No application host on this page'));
+  }
+  const parent = document.createElement('div');
+  parent.id = appId;
+  host.appendChild(parent);
+  const lang = eXo.env.portal.language;
+  const urls = [
+    `/email-connector/i18n/locale.portlet.emailConnector.emailConnectorUserSetting?lang=${lang}`,
+    `/email-connector/i18n/locale.portlet.emailConnector.emailConnectorMailBox?lang=${lang}`,
+  ];
+  return new Promise(resolve => exoi18n.loadLanguageAsync(lang, urls)
+    .then(i18n => window.Vue.createApp({
+      template: `<email-connector-mail-box-app id="${appId}" />`,
+      mounted() {
+        resolve();
+      },
+      vuetify: window.Vue.prototype.vuetifyOptions,
+      i18n,
+    }, `#${appId}`, 'Visio Compose')));
+}
+
+/**
  * Who is in the room at this moment.
  * <p>
  * The call the drawer already reads carries every participant with the state

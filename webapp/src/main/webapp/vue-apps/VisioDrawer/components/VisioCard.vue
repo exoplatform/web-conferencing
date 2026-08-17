@@ -162,7 +162,7 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
                   {{ copied && $t('visio.instant.copied') || $t('visio.drawer.copyLink') }}
                 </v-list-item-title>
               </v-list-item>
-              <v-list-item v-if="mailAvailable && entry.shareUrl" @click="sendByMail">
+              <v-list-item v-if="entry.shareUrl" @click="sendByMail">
                 <v-list-item-icon class="me-2 my-2">
                   <v-icon size="16">fas fa-envelope</v-icon>
                 </v-list-item-icon>
@@ -192,6 +192,9 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
       </div>
       <div v-if="joinError" class="text-caption error--text mt-1">
         {{ $t('visio.drawer.join.unavailable') }}
+      </div>
+      <div v-if="mailError" class="text-caption error--text mt-1">
+        {{ $t('visio.drawer.sendByMail.unavailable') }}
       </div>
       <!-- A confirm, because the whole point of this feature is that the link
            travels before anyone arrives: "nobody joined yet" is not the same as
@@ -239,6 +242,7 @@ export default {
     joining: false,
     joinError: false,
     copied: false,
+    mailError: false,
     confirmDelete: false,
     deleteError: false,
   }),
@@ -351,20 +355,8 @@ export default {
      *
      * @returns {Boolean} true when the chat can be handed a link
      */
-    /**
-     * Whether the mail add-on is deployed.
-     *
-     * Its quick action registers a module by name, which is how the platform
-     * itself discovers extensions — present means the composer can be required.
-     *
-     * @returns {Boolean} true when the mail composer can be opened
-     */
-    mailAvailable() {
-      const modules = window.requireJsModules || {};
-      return Object.keys(modules).some(name => name.indexOf('emailConnectorQuickActionExtension') !== -1);
-    },
     chatAvailable() {
-      return !!(window.Vue && window.Vue.prototype && window.Vue.prototype.$chatConstants);
+      return !!(window.Vue && window.Vue.prototype && window.Vue.prototype.$matrixService);
     },
     /**
      * Whether to say that nobody is inside.
@@ -576,19 +568,11 @@ export default {
      * @returns {void}
      */
     sendByMail() {
-      const subject = this.$t('visio.drawer.sendByMail.subject', {0: this.title});
-      const body = this.$t('visio.drawer.sendByMail.body', {0: this.entry.shareUrl});
-      copyText(this.entry.shareUrl).then(() => {
-        this.copied = true;
-        window.setTimeout(() => this.copied = false, 3000);
-      }).catch(() => this.copied = false);
-      window.require([
-        'SHARED/eXoVueI18n',
-        'PORTLET/email-connector/EmailConnectorUserSetting',
-        'SHARED/emailConnectorQuickActionExtension',
-      ], () => document.dispatchEvent(new CustomEvent('open-email-composer', {
-        detail: {to: [], subject: subject, body: body},
-      })));
+      this.mailError = false;
+      this.$visioService.openMailComposer(
+        this.$t('visio.drawer.sendByMail.subject', {0: this.title}),
+        this.$t('visio.drawer.sendByMail.body', {0: this.entry.shareUrl}))
+        .catch(() => this.mailError = true);
     },
     destroy() {
       this.$visioService.deleteInstantVisio(this.entry.callId, this.entry.providerType)
