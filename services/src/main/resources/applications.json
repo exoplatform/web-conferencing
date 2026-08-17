@@ -1,0 +1,25 @@
+{
+    "descriptors": [
+        {
+            "name": "visio",
+            "overrideMode": "merge",
+            "override": false,
+            "enabled": true,
+            "application": {
+                "title": "Visio",
+                "icon": "fa-video",
+                "type": "DRAWER",
+                "url": "visio",
+                "mandatory": false,
+                "active": false,
+                "mobile": true,
+                "default": true,
+                "pwa": true,
+                "order": 45,
+                "permissions": [
+                    "*:/platform/users"
+                ]
+            }
+        }
+    ]
+}
