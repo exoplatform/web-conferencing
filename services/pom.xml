@@ -85,6 +85,12 @@
       <groupId>io.meeds.pwa</groupId>
       <artifactId>pwa-service</artifactId>
     </dependency>
+    <!-- App Center badge SPI (used to publish the ongoing-visios counter) -->
+    <dependency>
+      <groupId>io.meeds.app-center</groupId>
+      <artifactId>app-center-services</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <build>
     <resources>
