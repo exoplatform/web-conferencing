@@ -18,7 +18,7 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 -->
 <template>
   <div class="mb-4">
-    <div class="text-sub-title text-uppercase mb-2">{{ label }}</div>
+    <div class="text-sub-title mb-2">{{ label }}</div>
     <visio-card
       v-for="entry in entries"
       :key="entry.key"

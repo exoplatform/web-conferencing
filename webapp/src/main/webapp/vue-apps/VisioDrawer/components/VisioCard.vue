@@ -29,6 +29,7 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
     <v-card
       class="mb-3 pa-3"
       :class="hover && 'light-grey-background-color' || ''"
+      :style="accentStyle"
       outlined
       flat>
       <div class="d-flex align-center justify-space-between">
@@ -46,14 +47,27 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
         </v-chip>
         <span class="text-caption text-sub-title">{{ timeLabel }}</span>
       </div>
-      <div class="text-body font-weight-bold mt-2 text-truncate">{{ title }}</div>
-      <div v-if="showProgress" class="mt-2">
-        <v-progress-linear
-          :value="percent"
-          :color="color"
-          height="4"
-          rounded />
-        <div class="text-caption text-sub-title mt-1">{{ progressLabel }}</div>
+      <!-- The full title on hover: meeting titles are routinely longer than the
+           drawer is wide, and the truncated half is often the half that says
+           which meeting it actually is. -->
+      <v-tooltip bottom>
+        <template #activator="{on, attrs}">
+          <div
+            v-bind="attrs"
+            class="text-body font-weight-bold mt-2 text-truncate"
+            v-on="on">{{ title }}</div>
+        </template>
+        <span>{{ title }}</span>
+      </v-tooltip>
+      <!-- How long it has been running, not how far through it is. A meeting's
+           end time is a plan rather than a fact: they overrun, and a progress
+           bar is wrong exactly when someone most wants to know. The accent
+           stripe already carries the "this is live" signal a bar would repeat. -->
+      <div
+        v-if="showProgress"
+        class="text-caption text-sub-title mt-2">
+        <v-icon size="12" class="me-1">fa-circle-play</v-icon>
+        {{ progressLabel }}
       </div>
       <div
         v-else-if="countdown"
@@ -67,14 +81,19 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
           :href="eventLink"
           class="text-caption">{{ $t('visio.drawer.openEvent') }}</a>
         <span v-else></span>
+        <!-- Filled only where joining is the thing to do now. An upcoming
+             meeting's room is joinable too, but almost nobody wants to, and
+             giving every card the same weight makes the live one no easier to
+             find than the rest. -->
         <v-btn
           small
-          depressed
-          color="primary"
+          :depressed="prominent"
+          :text="!prominent"
+          :color="prominent && 'primary' || ''"
           :loading="joining"
           @click="join">
           <v-icon size="14" class="me-1">fa-video</v-icon>
-          {{ $t('visio.drawer.join') }}
+          {{ joinLabel }}
         </v-btn>
       </div>
       <div v-if="joinError" class="text-caption error--text mt-1">
@@ -86,7 +105,7 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 
 <script>
 import {LIVE, NOW} from '../js/VisioMerge.js';
-import {formatTime, formatDay, isSameDay, elapsedPercent, splitDuration} from '../js/VisioFormat.js';
+import {formatTime, formatDay, isSameDay, splitDuration} from '../js/VisioFormat.js';
 
 export default {
   props: {
@@ -132,6 +151,30 @@ export default {
           || this.entry.state === NOW && 'warning'
           || null;
     },
+    /**
+     * The accent stripe down the left edge of a live card.
+     *
+     * The drawer exists to answer one question — is something happening right
+     * now — and a small chip makes that a question you have to read. A stripe
+     * makes it answerable in peripheral vision, which is the difference
+     * between a list and a status.
+     *
+     * Live only, deliberately: giving the same weight to a call that is merely
+     * scheduled for now would put the drawer back where it started. The colour
+     * comes from the Vuetify theme rather than a literal, so it follows the
+     * deployment's palette, and it is an inline style because this webapp's
+     * webpack carries no CSS loader for component style blocks.
+     *
+     * @returns {Object} a style binding, empty for every state but live
+     */
+    accentStyle() {
+      if (this.entry.state !== LIVE) {
+        return {};
+      }
+      const theme = this.$vuetify && this.$vuetify.theme;
+      const success = theme && theme.currentTheme && theme.currentTheme.success;
+      return {borderLeft: `4px solid ${success || '#2eb58c'}`};
+    },
     icon() {
       return this.entry.state === LIVE && 'fa-video'
           || this.entry.state === NOW && 'fa-user-clock'
@@ -139,6 +182,30 @@ export default {
     },
     stateLabel() {
       return this.$t(`visio.drawer.state.${this.entry.state}`);
+    },
+    /**
+     * Whether joining is the thing to do right now, which decides how loud the
+     * button is: filled for a call in progress or one scheduled for this
+     * moment, quiet for anything merely upcoming.
+     *
+     * @returns {Boolean} true when the join button should be prominent
+     */
+    prominent() {
+      return this.entry.state === LIVE || this.entry.state === NOW;
+    },
+    /**
+     * Label of the join button.
+     *
+     * A visio scheduled for now that nobody has joined is the one case where
+     * the wording can do some work: somebody has to go first, and saying so
+     * turns an awkward fact into an invitation.
+     *
+     * @returns {String} the translated label
+     */
+    joinLabel() {
+      return this.entry.state === NOW
+          && this.$t('visio.drawer.join.first')
+          || this.$t('visio.drawer.join');
     },
     timeLabel() {
       const start = formatTime(this.entry.start);
@@ -150,13 +217,25 @@ export default {
           || this.$t('visio.drawer.dayTimeRange', {0: formatDay(this.entry.start), 1: range});
     },
     showProgress() {
-      return this.entry.state === LIVE && !!this.entry.start && !!this.entry.end;
+      return this.entry.state === LIVE && !!this.entry.start;
     },
-    percent() {
-      return elapsedPercent(this.entry.start, this.entry.end, this.now);
-    },
+    /**
+     * How long the meeting has been running.
+     *
+     * Elapsed time rather than a percentage of the scheduled length: the end
+     * time is what someone planned, not what will happen, so a proportion is
+     * least trustworthy in the case people care about most — the meeting that
+     * has run past its slot.
+     *
+     * @returns {String} the translated "started N ago" label
+     */
     progressLabel() {
-      return this.$t('visio.drawer.progress', {0: formatTime(this.entry.start), 1: this.percent});
+      const elapsed = splitDuration(this.now.getTime() - this.entry.start.getTime());
+      const duration = elapsed.days && this.$t('visio.drawer.duration.dayHour', {0: elapsed.days, 1: elapsed.hours})
+          || elapsed.hours && this.$t('visio.drawer.duration.hourMinute', {0: elapsed.hours, 1: elapsed.minutes})
+          || elapsed.minutes && this.$t('visio.drawer.duration.minute', {0: elapsed.minutes})
+          || this.$t('visio.drawer.duration.soon');
+      return this.$t('visio.drawer.startedAgo', {0: duration});
     },
     countdownLabel() {
       const delay = splitDuration(this.entry.start.getTime() - this.now.getTime());
