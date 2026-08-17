@@ -47,17 +47,30 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
         </v-chip>
         <span class="text-caption text-sub-title">{{ timeLabel }}</span>
       </div>
-      <!-- The full title on hover: meeting titles are routinely longer than the
-           drawer is wide, and the truncated half is often the half that says
-           which meeting it actually is. -->
+      <!-- The title goes to the event the visio belongs to, and nowhere else.
+           It reads as clickable — bold, and carrying a tooltip — so it had
+           better do something; but it must not be the way into the room.
+           Entering marks the call started, which is why the join button is
+           withheld on a meeting still days away, and a title that joined would
+           hand back the mis-click that guard exists to prevent. Opening the
+           event is safe whenever it is possible, and is the thing a title is
+           actually about. Instant rooms have no event, so theirs stays plain
+           text rather than pretending. -->
       <v-tooltip bottom>
         <template #activator="{on, attrs}">
+          <a
+            v-if="eventLink"
+            v-bind="attrs"
+            :href="eventLink"
+            class="text-body font-weight-bold mt-2 text-truncate d-block text-color"
+            v-on="on">{{ title }}</a>
           <div
+            v-else
             v-bind="attrs"
             class="text-body font-weight-bold mt-2 text-truncate"
             v-on="on">{{ title }}</div>
         </template>
-        <span>{{ title }}</span>
+        <span>{{ eventLink && $t('visio.drawer.openEventTitle', {0: title}) || title }}</span>
       </v-tooltip>
       <!-- How long it has been running, not how far through it is. A meeting's
            end time is a plan rather than a fact: they overrun, and a progress
@@ -108,10 +121,6 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
           <v-icon size="12" class="me-1">fa-user-slash</v-icon>
           {{ $t('visio.drawer.nobodyIn') }}
         </div>
-        <a
-          v-else-if="eventLink"
-          :href="eventLink"
-          class="text-caption">{{ $t('visio.drawer.openEvent') }}</a>
         <span v-else></span>
         <div class="d-flex align-center">
           <!-- Filled only where joining is the thing to do now. An upcoming
@@ -281,12 +290,27 @@ export default {
      * @returns {Object} a style binding, empty for every state but live
      */
     accentStyle() {
-      if (this.entry.state !== LIVE) {
-        return {};
-      }
       const theme = this.$vuetify && this.$vuetify.theme;
-      const success = theme && theme.currentTheme && theme.currentTheme.success;
-      return {borderLeft: `4px solid ${success || '#2eb58c'}`};
+      const success = theme && theme.currentTheme && theme.currentTheme.success || '#2eb58c';
+      if (this.entry.state === LIVE) {
+        // Live is the loudest: the whole outline greens, and the left edge
+        // thickens into a stripe you can find without reading the card.
+        return {borderColor: success, borderLeft: `4px solid ${success}`};
+      }
+      if (this.entry.state === READY) {
+        // A room standing open is the same family, one step quieter: the
+        // outline greens, the stripe does not. Somebody being in it stays a
+        // distinction the eye can make.
+        return {borderColor: success};
+      }
+      if (this.entry.state === NOW) {
+        // Scheduled for this minute with nobody in it: the outline carries the
+        // same amber the chip does, so the card reads at a glance instead of
+        // saying one thing in colour and another in words.
+        const warning = theme && theme.currentTheme && theme.currentTheme.warning || '#ffb441';
+        return {borderColor: warning};
+      }
+      return {};
     },
     icon() {
       return this.entry.state === LIVE && 'fa-video'

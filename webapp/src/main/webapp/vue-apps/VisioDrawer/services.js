@@ -408,6 +408,10 @@ function openRoomWith(core, provider, title, now) {
         title: title,
         participants: core.getUser().id,
         group: true,
+        // Opened, not entered. Nobody is in it until somebody clicks join, and
+        // saying otherwise is what made a fresh room count in the badge and
+        // refuse to be renamed.
+        start: false,
       })).catch(() => null), null, COMETD_TIMEOUT_MS).then(call => {
         if (!call) {
           return null;
