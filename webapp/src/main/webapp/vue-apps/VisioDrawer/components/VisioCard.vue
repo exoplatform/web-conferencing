@@ -20,60 +20,68 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   <!-- One visio, with exactly one primary action. The state chip says what is
        actually true of the room: live means somebody is in it, not that the
        calendar says it should have started. -->
-  <v-card
-    class="mb-3 pa-3"
-    outlined
-    flat>
-    <div class="d-flex align-center justify-space-between">
-      <v-chip
-        small
-        :color="color"
-        outlined>
-        <v-icon
-          size="12"
-          class="me-1"
-          :color="color">
-          {{ icon }}
-        </v-icon>
-        {{ stateLabel }}
-      </v-chip>
-      <span class="text-caption text-sub-title">{{ timeLabel }}</span>
-    </div>
-    <div class="text-body font-weight-bold mt-2 text-truncate">{{ title }}</div>
-    <div v-if="showProgress" class="mt-2">
-      <v-progress-linear
-        :value="percent"
-        :color="color"
-        height="4"
-        rounded />
-      <div class="text-caption text-sub-title mt-1">{{ progressLabel }}</div>
-    </div>
-    <div
-      v-else-if="countdown"
-      class="text-caption text-sub-title mt-2">
-      <v-icon size="12" class="me-1">fa-clock</v-icon>
-      {{ countdownLabel }}
-    </div>
-    <div class="d-flex align-center justify-space-between mt-3">
-      <a
-        v-if="eventLink"
-        :href="eventLink"
-        class="text-caption">{{ $t('visio.drawer.openEvent') }}</a>
-      <span v-else></span>
-      <v-btn
-        small
-        depressed
-        color="primary"
-        :loading="joining"
-        @click="join">
-        <v-icon size="14" class="me-1">fa-video</v-icon>
-        {{ $t('visio.drawer.join') }}
-      </v-btn>
-    </div>
-    <div v-if="joinError" class="text-caption error--text mt-1">
-      {{ $t('visio.drawer.join.unavailable') }}
-    </div>
-  </v-card>
+  <!-- The hover tint is a scanning aid, not a promise: the card itself is not
+       a click target, its actions are. So it tints rather than lifts —
+       elevation would advertise a whole-card click that does not exist. The
+       class is the platform's own, the same one the mail drawer's rows use, so
+       it follows the deployment's theme instead of hard-coding a grey. -->
+  <v-hover v-slot="{hover}">
+    <v-card
+      class="mb-3 pa-3"
+      :class="hover && 'light-grey-background-color' || ''"
+      outlined
+      flat>
+      <div class="d-flex align-center justify-space-between">
+        <v-chip
+          small
+          :color="color"
+          outlined>
+          <v-icon
+            size="12"
+            class="me-1"
+            :color="color">
+            {{ icon }}
+          </v-icon>
+          {{ stateLabel }}
+        </v-chip>
+        <span class="text-caption text-sub-title">{{ timeLabel }}</span>
+      </div>
+      <div class="text-body font-weight-bold mt-2 text-truncate">{{ title }}</div>
+      <div v-if="showProgress" class="mt-2">
+        <v-progress-linear
+          :value="percent"
+          :color="color"
+          height="4"
+          rounded />
+        <div class="text-caption text-sub-title mt-1">{{ progressLabel }}</div>
+      </div>
+      <div
+        v-else-if="countdown"
+        class="text-caption text-sub-title mt-2">
+        <v-icon size="12" class="me-1">fa-clock</v-icon>
+        {{ countdownLabel }}
+      </div>
+      <div class="d-flex align-center justify-space-between mt-3">
+        <a
+          v-if="eventLink"
+          :href="eventLink"
+          class="text-caption">{{ $t('visio.drawer.openEvent') }}</a>
+        <span v-else></span>
+        <v-btn
+          small
+          depressed
+          color="primary"
+          :loading="joining"
+          @click="join">
+          <v-icon size="14" class="me-1">fa-video</v-icon>
+          {{ $t('visio.drawer.join') }}
+        </v-btn>
+      </div>
+      <div v-if="joinError" class="text-caption error--text mt-1">
+        {{ $t('visio.drawer.join.unavailable') }}
+      </div>
+    </v-card>
+  </v-hover>
 </template>
 
 <script>
@@ -103,10 +111,26 @@ export default {
     title() {
       return this.entry.title || this.$t('visio.drawer.untitled');
     },
+    /**
+     * Colour of the state chip, its icon and the live progress bar.
+     *
+     * LIVE and NOW carry a colour because they are the two states worth
+     * interrupting someone for. UPCOMING deliberately carries none and falls
+     * back to the chip's default, which takes the theme's own text colour.
+     *
+     * It used to be "primary", which was wrong for two reasons. The visible
+     * one: primary is brand-configurable, so on a theme whose primary is pale
+     * an outlined chip drew near-white text on the white drawer and the label
+     * disappeared. The quieter one: upcoming is the baseline state, the one
+     * most rows are in, and colouring it competes for attention with the two
+     * states that have actually earned it.
+     *
+     * @returns {String} a Vuetify colour name, or null to keep the default
+     */
     color() {
       return this.entry.state === LIVE && 'success'
           || this.entry.state === NOW && 'warning'
-          || 'primary';
+          || null;
     },
     icon() {
       return this.entry.state === LIVE && 'fa-video'
