@@ -2704,6 +2704,21 @@ public class WebConferencingService implements Startable {
                   .filter(p -> !GuestInfo.TYPE_NAME.equals(p.getType()))
                   .map(p -> p.getId())
                   .toArray(String[]::new);
+          if (members.length == 0) {
+            // A room created without starting it has no participant row yet:
+            // txCreateCall() only syncs members and participants of a group call
+            // created already started, and addCall() builds the owner with empty
+            // members otherwise. Reading its members back from those same rows
+            // therefore returns nobody, and the one who opened the room is
+            // refused entry to it. Falling back to the origins is what the space
+            // event branch below already does, and the note it carries — that
+            // origins would be useful for all types of calls — is exactly this
+            // case.
+            members = originsStorage.findCallOrigins(callId, OWNER_TYPE_USER)
+                    .stream()
+                    .map(o -> o.getId())
+                    .toArray(String[]::new);
+          }
           owner = roomInfo(ownerId, roomTitle, members, callId);
         } else {
           LOG.warn("Saved call doesn't have room settings: '" + settings + "'");
