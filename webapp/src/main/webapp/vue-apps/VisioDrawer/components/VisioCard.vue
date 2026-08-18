@@ -47,19 +47,25 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
         </v-chip>
         <span class="text-caption text-sub-title">{{ timeLabel }}</span>
       </div>
-      <!-- The title goes to the event the visio belongs to, and nowhere else.
-           It reads as clickable — bold, and carrying a tooltip — so it had
-           better do something; but it must not be the way into the room.
-           Entering marks the call started, which is why the join button is
-           withheld on a meeting still days away, and a title that joined would
-           hand back the mis-click that guard exists to prevent. Opening the
-           event is safe whenever it is possible, and is the thing a title is
-           actually about. Instant rooms have no event, so theirs stays plain
-           text rather than pretending. -->
+      <!-- The title does the one thing that makes sense for the state it is
+           in. Where joining is on offer it joins, matching the button beside
+           it. Where it is not — a meeting still days away — it opens the event
+           instead, which is safe: entering a room marks its call started, and a
+           title that joined a meeting next week would hand back exactly the
+           mis-click the join guard exists to prevent. With neither, it is plain
+           text and looks it; a heading that cannot be clicked must not invite
+           the click. -->
       <v-tooltip bottom>
         <template #activator="{on, attrs}">
           <a
-            v-if="eventLink"
+            v-if="canJoin"
+            v-bind="attrs"
+            class="text-body font-weight-bold mt-2 text-truncate d-block text-color"
+            href="#"
+            v-on="on"
+            @click.prevent="join">{{ title }}</a>
+          <a
+            v-else-if="eventLink"
             v-bind="attrs"
             :href="eventLink"
             class="text-body font-weight-bold mt-2 text-truncate d-block text-color"
@@ -70,20 +76,20 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
             class="text-body font-weight-bold mt-2 text-truncate"
             v-on="on">{{ title }}</div>
         </template>
-        <span>{{ eventLink && $t('visio.drawer.openEventTitle', {0: title}) || title }}</span>
+        <span>{{ titleHint }}</span>
       </v-tooltip>
       <!-- How long it has been running, not how far through it is. A meeting's
            end time is a plan rather than a fact: they overrun, and a progress
            bar is wrong exactly when someone most wants to know. The accent
            stripe already carries the "this is live" signal a bar would repeat. -->
       <div
-        v-if="showProgress"
+        v-if="showProgress && hasFooterContent"
         class="text-caption text-sub-title mt-2">
         <v-icon size="12" class="me-1">fa-circle-play</v-icon>
         {{ progressLabel }}
       </div>
       <div
-        v-else-if="countdown"
+        v-else-if="countdown && hasFooterContent"
         class="text-caption text-sub-title mt-2">
         <v-icon size="12" class="me-1">fa-clock</v-icon>
         {{ countdownLabel }}
@@ -100,7 +106,17 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
              resolve — it would ask the server for one and come back with
              nothing. They are counted instead, which is also the more useful
              fact about them. -->
-        <div v-if="people.length" class="d-flex align-center">
+        <!-- With nobody inside and no join to offer, the meta line moves in here
+             rather than standing on a row of its own: otherwise the overflow
+             button is marooned on an empty line and the card grows a band of
+             white space for nothing. -->
+        <div
+          v-if="!hasFooterContent"
+          class="text-caption text-sub-title">
+          <v-icon size="12" class="me-1">{{ showProgress && 'fa-circle-play' || 'fa-clock' }}</v-icon>
+          {{ showProgress && progressLabel || countdownLabel }}
+        </div>
+        <div v-else-if="people.length" class="d-flex align-center">
           <exo-user-avatars-list
             v-if="members.length"
             :users="members"
@@ -154,6 +170,14 @@ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
               </v-btn>
             </template>
             <v-list class="pa-0" dense>
+              <v-list-item v-if="eventLink" :href="eventLink">
+                <v-list-item-icon class="me-2 my-2">
+                  <v-icon size="16">fas fa-calendar-day</v-icon>
+                </v-list-item-icon>
+                <v-list-item-title>
+                  {{ $t('visio.drawer.openEvent') }}
+                </v-list-item-title>
+              </v-list-item>
               <v-list-item v-if="entry.shareUrl" @click="copyLink">
                 <v-list-item-icon class="me-2 my-2">
                   <v-icon size="16">{{ copied && 'fas fa-check' || 'fas fa-link' }}</v-icon>
@@ -338,7 +362,7 @@ export default {
      * @returns {Boolean} true when the menu should be offered
      */
     hasMenu() {
-      return !!this.entry.shareUrl || this.deletable;
+      return !!this.entry.shareUrl || this.deletable || !!this.eventLink;
     },
     /**
      * The people actually in the room right now.
@@ -420,6 +444,27 @@ export default {
     deletable() {
       return !!this.entry.instant && this.entry.state === READY && !this.people.length;
     },
+    /**
+     * What the tooltip says the title will do, so the promise is legible before
+     * the click rather than after it.
+     *
+     * @returns {String} the hint for this card's title
+     */
+    titleHint() {
+      return this.canJoin && this.$t('visio.drawer.joinTitle', {0: this.title})
+          || this.eventLink && this.$t('visio.drawer.openEventTitle', {0: this.title})
+          || this.title;
+    },
+    /**
+     * Whether the footer row already has something on its left: people inside,
+     * or the line saying nobody is. When it does not, the meta line moves down
+     * into it rather than leaving the overflow button alone on a row.
+     *
+     * @returns {Boolean} true when the footer has its own left-hand content
+     */
+    hasFooterContent() {
+      return this.people.length > 0 || this.showsEmptyRoom;
+    },
     prominent() {
       return this.entry.state === LIVE || this.entry.state === NOW;
     },
@@ -456,8 +501,20 @@ export default {
      *
      * @returns {String} the translated label
      */
+    /**
+     * Whether the viewer is one of the people already in the room.
+     *
+     * @returns {Boolean} true when the current user is joined
+     */
+    alreadyIn() {
+      const me = eXo && eXo.env && eXo.env.portal && eXo.env.portal.userName;
+      return !!me && this.people.some(person => person.id === me);
+    },
     joinLabel() {
-      return this.entry.state === NOW
+      // Already inside: the room is open in another tab, so the button brings
+      // it back rather than pretending this is an arrival.
+      return this.alreadyIn && this.$t('visio.drawer.backToRoom')
+          || this.entry.state === NOW
           && this.$t('visio.drawer.join.first')
           || this.$t('visio.drawer.join');
     },
