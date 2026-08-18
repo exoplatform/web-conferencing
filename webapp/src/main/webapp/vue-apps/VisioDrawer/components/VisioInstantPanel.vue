@@ -120,11 +120,21 @@ export default {
     },
     /**
      * Opens the room in a new tab.
+     * <p>
+     * The plain room address, never the share link: the two differ by an
+     * {@code inviteId}, and that parameter is what makes the platform admit
+     * somebody as a guest. Following one's own invitation would register the
+     * person who opened the room as a guest of it — no participant row of type
+     * user, so the room counts for nobody and no badge is raised for the one
+     * person certainly in it. The share link stays what it is for: other people.
      *
      * @returns {void}
      */
     join() {
-      window.open(this.room.shareUrl || this.room.url, '_blank', 'noopener');
+      const own = this.room.url || this.room.shareUrl || '';
+      const invite = own.indexOf('inviteId=');
+      const cut = invite > 0 && own.lastIndexOf('?', invite) || -1;
+      window.open(cut > 0 && own.substring(0, cut) || own, '_blank', 'noopener');
     },
     /**
      * Selects the whole link, so it can be copied by hand wherever the

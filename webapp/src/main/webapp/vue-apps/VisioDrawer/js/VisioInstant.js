@@ -145,6 +145,24 @@ export function removeRoom(userName, callId, now) {
  * @param {Array} startedIds - the ids of the calls that are started
  * @returns {Array} the entries to merge into the drawer list
  */
+/**
+ * The same address with any invitation dropped.
+ *
+ * @param  {string} url - a room address, with or without an invitation
+ * @returns {string} the address nobody is admitted as a guest through
+ */
+function withoutInvite(url) {
+  if (!url) {
+    return '';
+  }
+  const invite = url.indexOf('inviteId=');
+  if (invite < 0) {
+    return url;
+  }
+  const cut = url.lastIndexOf('?', invite);
+  return cut > 0 && url.substring(0, cut) || url;
+}
+
 export function instantEntries(rooms, startedIds) {
   const started = startedIds || [];
   return (rooms || []).map(room => ({
@@ -155,7 +173,17 @@ export function instantEntries(rooms, startedIds) {
     start: new Date(room.createdAt),
     end: null,
     allDay: false,
-    url: room.shareUrl || room.url || '',
+    // Two addresses that must not be confused. `url` is where the button takes
+    // the owner of the room, `shareUrl` is what they hand to somebody else, and
+    // they differ by the `inviteId` that tells the platform to admit whoever
+    // follows it as a guest — an eXo user following one is added as a guest of
+    // the call just the same. Opening it yourself means no participant row of
+    // type user: the room counts in nobody's badge and shows nobody in it,
+    // while you sit in it. Stripped rather than merely preferred, because a
+    // room remembered before this was understood has the invitation in both
+    // fields, and the poisoned participant row it creates is keyed by
+    // (user, call) — so it is written once and never corrects itself.
+    url: withoutInvite(room.url || room.shareUrl || ''),
     shareUrl: room.shareUrl || room.url || '',
     providerType: room.providerType || '',
     callId: room.callId,

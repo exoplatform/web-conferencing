@@ -501,20 +501,8 @@ export default {
      *
      * @returns {String} the translated label
      */
-    /**
-     * Whether the viewer is one of the people already in the room.
-     *
-     * @returns {Boolean} true when the current user is joined
-     */
-    alreadyIn() {
-      const me = eXo && eXo.env && eXo.env.portal && eXo.env.portal.userName;
-      return !!me && this.people.some(person => person.id === me);
-    },
     joinLabel() {
-      // Already inside: the room is open in another tab, so the button brings
-      // it back rather than pretending this is an arrival.
-      return this.alreadyIn && this.$t('visio.drawer.backToRoom')
-          || this.entry.state === NOW
+      return this.entry.state === NOW
           && this.$t('visio.drawer.join.first')
           || this.$t('visio.drawer.join');
     },
