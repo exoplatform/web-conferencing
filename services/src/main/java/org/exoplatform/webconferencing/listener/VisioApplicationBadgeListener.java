@@ -20,6 +20,9 @@ package org.exoplatform.webconferencing.listener;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
+import org.apache.commons.lang3.StringUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -33,7 +36,9 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.CallState;
+import org.exoplatform.webconferencing.GuestInfo;
 import org.exoplatform.webconferencing.UserInfo;
+import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.plugin.VisioApplicationBadgePlugin;
 
@@ -60,11 +65,19 @@ import jakarta.annotation.PostConstruct;
  * with {@code start=true}) is persisted in state {@code started} and broadcasts
  * <strong>only</strong> {@code callCreated}, never {@code callStarted}. Without
  * it the most common way a visio begins would raise no badge at all.</li>
+ * <li>{@code callJoined} is the subtle one. Joining a call that is merely
+ * ready auto-starts it, and that path calls the internal
+ * {@code startCall(call, partId, clientId, false)} which broadcasts no
+ * {@code callStarted} at all — the room goes live announcing only
+ * {@code callJoined}. This is how every instant room begins, so without it the
+ * badge waits for the cache to expire.</li>
  * </ul>
- * {@code callJoined} and {@code callLeft} are deliberately <em>not</em>
- * listened to: with the plugin's "every started call" semantics the count does
- * not move when somebody joins or leaves, so subscribing would evict and push
- * to every participant of every call on every join, for no change.
+ * {@code callJoined} is nonetheless filtered down to that one transition: with
+ * the plugin's "every started call" semantics the count does not move when a
+ * second or third person joins, and subscribing unconditionally would evict and
+ * push to every participant of every call on every join, for no change.
+ * {@code callLeft} is not listened to at all — the leave that empties a room
+ * broadcasts {@code callStopped}, which is already covered.
  * <p>
  * Two paths change a call's liveness without broadcasting anything, and both
  * are left to the badge cache's own expiry rather than papered over here:
@@ -80,9 +93,13 @@ public class VisioApplicationBadgeListener extends Listener<CallInfo, Map<String
   /** Logger of this listener. */
   private static final Log          LOG         = ExoLogger.getLogger(VisioApplicationBadgeListener.class);
 
+  /** Key under which every call broadcast carries the user it is about. */
+  private static final String       EVENT_DATA_USER_ID = "user_id";
+
   /** The complete set of broadcasts that move a call in or out of the live set. */
   private static final List<String> EVENT_NAMES = List.of(WebConferencingService.EVENT_CALL_CREATED,
                                                           WebConferencingService.EVENT_CALL_STARTED,
+                                                          WebConferencingService.EVENT_CALL_JOINDED,
                                                           WebConferencingService.EVENT_CALL_STOPPED);
 
   /**
@@ -121,12 +138,42 @@ public class VisioApplicationBadgeListener extends Listener<CallInfo, Map<String
     if (call == null || !changesLiveness(event.getEventName(), call)) {
       return;
     }
-    call.getParticipants()
-        .stream()
-        .filter(participant -> UserInfo.TYPE_NAME.equals(participant.getType()))
-        .map(UserInfo::getId)
-        .distinct()
-        .forEach(username -> applicationBadgeService.updateBadge(VisioApplicationBadgePlugin.BADGE_NAME, username));
+    Stream.concat(call.getParticipants()
+                      .stream()
+                      .filter(participant -> UserInfo.TYPE_NAME.equals(participant.getType()))
+                      .map(UserInfo::getId),
+                  joiningUser(event, call).stream())
+          .distinct()
+          .forEach(username -> applicationBadgeService.updateBadge(VisioApplicationBadgePlugin.BADGE_NAME, username));
+  }
+
+  /**
+   * The user the event is about, when their own count may have moved.
+   * <p>
+   * The participant list is not always enough. A group call created without
+   * being started carries no participant row until its members are synced, so
+   * the broadcast that brings it to life can name somebody the list does not
+   * hold yet — and refreshing the badge of everyone in an empty list refreshes
+   * nobody. The broadcast names the user it is about, and that user is
+   * precisely the one whose participation just changed.
+   * <p>
+   * Guests are left out: they have no application to badge. A guest already
+   * sitting in the participant list is recognised by type; one absent from it
+   * cannot be told apart from a member and is included, which costs an eviction
+   * of a key nobody reads.
+   *
+   * @param  event the call lifecycle event
+   * @param  call  the call carried by the event
+   * @return       the user to refresh, empty when the event names none
+   */
+  private Optional<String> joiningUser(Event<CallInfo, Map<String, String>> event, CallInfo call) {
+    return Optional.ofNullable(event.getData())
+                   .map(data -> data.get(EVENT_DATA_USER_ID))
+                   .filter(StringUtils::isNotBlank)
+                   .filter(userId -> call.getParticipants()
+                                         .stream()
+                                         .noneMatch(participant -> GuestInfo.TYPE_NAME.equals(participant.getType())
+                                             && userId.equals(participant.getId())));
   }
 
   /**
@@ -146,7 +193,25 @@ public class VisioApplicationBadgeListener extends Listener<CallInfo, Map<String
     if (WebConferencingService.EVENT_CALL_CREATED.equals(eventName)) {
       return CallState.STARTED.equals(call.getState());
     }
+    if (WebConferencingService.EVENT_CALL_JOINDED.equals(eventName)) {
+      return CallState.STARTED.equals(call.getState()) && countJoined(call) <= 1;
+    }
     return true;
+  }
+
+  /**
+   * Counts the participants currently in the room, guests included.
+   * <p>
+   * A join is only worth a badge refresh when it is the one that brought the
+   * room to life, and that is exactly the join after which a single participant
+   * stands in state {@code joined}. Every later arrival leaves the count of
+   * ongoing visios untouched for everybody.
+   *
+   * @param  call the call carried by the event
+   * @return      the number of participants in state {@code joined}
+   */
+  private long countJoined(CallInfo call) {
+    return call.getParticipants().stream().filter(participant -> UserState.JOINED.equals(participant.getState())).count();
   }
 
 }
