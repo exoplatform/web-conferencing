@@ -15,7 +15,7 @@
  * along with this program. If not, see <gnu.org/licenses>.
  */
 
-import {normalizeEvent, startedCallIds, buildEntries} from './js/VisioMerge.js';
+import {normalizeEvent, startedCallIds, buildEntries, matchStartedCallId} from './js/VisioMerge.js';
 
 /** How far back the schedule is read: enough to catch a meeting already running. */
 const PAST_WINDOW_MS = 4 * 60 * 60 * 1000;
@@ -248,8 +248,7 @@ export function getVisios(now) {
     const events = loaded[0];
     const core = loaded[1].core;
     const startedIds = startedCallIds(loaded[1].states);
-    return Promise.all(events.map(event => findCallId(core, event.url, event.providerType)
-      .then(callId => Object.assign(event, {callId: callId}))))
+    return resolveCallIds(core, events, startedIds)
       .then(resolved => describeAdhocCalls(core, resolved, startedIds)
         .then(adhocCalls => buildEntries({
           events: resolved,
@@ -258,6 +257,40 @@ export function getVisios(now) {
           now: reference,
         })));
   });
+}
+
+/**
+ * Attributes each scheduled event to the started call it is, when it is one.
+ * <p>
+ * The provider's findCallId() is authoritative, but a provider only answers on a
+ * page where its script happens to be loaded and otherwise never settles, so
+ * every such call is bounded by PROVIDER_TIMEOUT_MS — and asking for every event
+ * up front makes the whole drawer wait that bound on any page without the
+ * provider, which is most of them. Matching the URL's last path segment against
+ * the started ids is the same answer computed locally, so the provider is asked
+ * only for what is genuinely left over.
+ * <p>
+ * A resolved id can only ever change what the drawer shows when it is one of the
+ * started ids: liveness is `startedIds.indexOf(callId) >= 0`, and a scheduled
+ * entry joins through the URL agenda stored rather than through its call id. So
+ * when every started call is already attributed — including the ordinary case
+ * where none is running at all — there is nothing a provider could add.
+ *
+ * @param {object} core - the web conferencing module, may be null
+ * @param {Array} events - the normalized scheduled entries
+ * @param {Array} startedIds - the ids of the started calls
+ * @returns {Promise} resolved with the events, each carrying its call id
+ */
+function resolveCallIds(core, events, startedIds) {
+  const matches = events.map(event => matchStartedCallId(event.url, startedIds));
+  const leftover = startedIds.filter(id => matches.indexOf(id) < 0);
+  return Promise.all(events.map((event, index) => {
+    if (matches[index] || !leftover.length) {
+      return Object.assign(event, {callId: matches[index]});
+    }
+    return findCallId(core, event.url, event.providerType)
+      .then(callId => Object.assign(event, {callId: callId}));
+  }));
 }
 
 /**
