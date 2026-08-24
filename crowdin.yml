@@ -46,6 +46,36 @@ files: [
     "escape_quotes" : 0,
   },
   {
+    "source" : "/webapp/src/main/resources/locale/portlet/visio/Visio_en.properties",
+
+    "translation" : "%original_path%/%file_name%!_%locale_with_underscore%.%file_extension%",
+    "translation_replace" : {YML_CROWDIN_LANGUAGES_ARG},
+    "dest" : "add__ons/web__conferencing/Visio.properties",
+    "update_option" : "update_as_unapproved",
+    "escape_special_characters": 0,
+    "escape_quotes" : 0,
+  },
+  {
+    "source" : "/webapp/src/main/resources/locale/portlet/QuickActions_en.properties",
+
+    "translation" : "%original_path%/%file_name%!_%locale_with_underscore%.%file_extension%",
+    "translation_replace" : {YML_CROWDIN_LANGUAGES_ARG},
+    "dest" : "add__ons/web__conferencing/QuickActions.properties",
+    "update_option" : "update_as_unapproved",
+    "escape_special_characters": 0,
+    "escape_quotes" : 0,
+  },
+  {
+    "source" : "/webapp/src/main/resources/locale/addon/appcenter_en.properties",
+
+    "translation" : "%original_path%/%file_name%!_%locale_with_underscore%.%file_extension%",
+    "translation_replace" : {YML_CROWDIN_LANGUAGES_ARG},
+    "dest" : "add__ons/web__conferencing/appcenter.properties",
+    "update_option" : "update_as_unapproved",
+    "escape_special_characters": 0,
+    "escape_quotes" : 0,
+  },
+  {
     "source" : "/webapp/src/main/resources/locale/commons/Commons_en.properties",
 
     "translation" : "%original_path%/%file_name%!_%locale_with_underscore%.%file_extension%",
