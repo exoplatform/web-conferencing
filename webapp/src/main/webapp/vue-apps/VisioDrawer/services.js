@@ -454,6 +454,21 @@ function whoIsIn(call) {
  * @param {string} title - the room's name
  * @returns {Promise} resolved with the created room
  */
+/**
+ * Tries the providers in turn, keeping the first room one of them opens.
+ *
+ * @param {object} core - the web conferencing module
+ * @param {Array} providers - the usable providers, in the order to try them
+ * @param {string} title - the room title
+ * @param {Date} now - the reference instant
+ * @returns {Promise} resolved with the first room opened, or null if none was
+ */
+function openFirstRoom(core, providers, title, now) {
+  return providers.reduce(
+    (previous, provider) => previous.then(room => room || openRoomWith(core, provider, title, now)),
+    Promise.resolve(null));
+}
+
 export function createInstantVisio(title) {
   const now = new Date();
   return getWebConferencing().then(core => {
@@ -464,15 +479,12 @@ export function createInstantVisio(title) {
       if (!providers.length) {
         throw new Error('No web conferencing provider is available');
       }
-      return providers.reduce(
-        (previous, provider) => previous.then(room => room || openRoomWith(core, provider, title, now)),
-        Promise.resolve(null))
-        .then(room => {
-          if (!room) {
-            throw new Error('No provider could open a room');
-          }
-          return room;
-        });
+      return openFirstRoom(core, providers, title, now).then(room => {
+        if (!room) {
+          throw new Error('No provider could open a room');
+        }
+        return room;
+      });
     });
   });
 }
@@ -713,10 +725,21 @@ export function resolveProvider(core) {
  * @param {object} core - the web conferencing module
  * @returns {Promise} resolved with an array of usable providers, possibly empty
  */
+/**
+ * Adds the provider of one type to what is already found, when it is usable.
+ *
+ * @param {object} core - the web conferencing module
+ * @param {Array} found - the providers resolved so far
+ * @param {string} type - the provider type to load
+ * @returns {Promise} resolved with the providers, the new one appended if usable
+ */
+function collectProvider(core, found, type) {
+  return loadProvider(core, type).then(provider => provider && found.concat([provider]) || found);
+}
+
 export function resolveProviders(core) {
   return getProviderTypes().then(types => types.reduce(
-    (previous, type) => previous.then(found => loadProvider(core, type)
-      .then(provider => provider && found.concat([provider]) || found)),
+    (previous, type) => previous.then(found => collectProvider(core, found, type)),
     Promise.resolve([])));
 }
 
