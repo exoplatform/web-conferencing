@@ -774,12 +774,15 @@ function isUsableProvider(provider) {
  */
 function randomId() {
   const crypto = window.crypto || window.msCrypto;
-  if (crypto && crypto.getRandomValues) {
-    const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    return Array.prototype.map.call(bytes, byte => `0${byte.toString(16)}`.slice(-2)).join('');
+  if (!crypto || !crypto.getRandomValues) {
+    // The room name is the only thing guarding a room shared by link with people
+    // who have no eXo account, so it is a credential. Math.random() is not a
+    // credential generator; refusing is the right answer, not falling back.
+    throw new Error('Cannot open an instant visio: this browser exposes no secure random source');
   }
-  return `${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`;
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.prototype.map.call(bytes, byte => `0${byte.toString(16)}`.slice(-2)).join('');
 }
 
 /**
