@@ -54,6 +54,7 @@ export default {
         this.ticker = window.setInterval(() => this.now = new Date(), TICK_MS);
       }
       document.addEventListener('visibilitychange', this.onVisibilityChange);
+      window.addEventListener('focus', this.onWindowFocus);
       if (!this.subscription) {
         this.$visioService.getWebConferencing()
           .then(core => {
@@ -74,6 +75,7 @@ export default {
         this.ticker = null;
       }
       document.removeEventListener('visibilitychange', this.onVisibilityChange);
+      window.removeEventListener('focus', this.onWindowFocus);
       if (this.subscription) {
         this.subscription.off();
         this.subscription = null;
@@ -109,6 +111,25 @@ export default {
     onVisibilityChange() {
       if (!document.hidden && this.drawer) {
         this.refresh();
+      }
+    },
+    /**
+     * Refreshes when this window is focused again.
+     * <p>
+     * A call opens in a window of its own, and joining a room that is merely
+     * ready is what brings it to life — through a path that deliberately
+     * notifies nobody, so no push ever announces it. Coming back to the portal
+     * beside an open call window does not hide this tab either, so
+     * {@code visibilitychange} stays silent and the drawer would go on showing
+     * a room as ready while the viewer sits in it. Focus is the one moment the
+     * list is looked at again, so it is the moment to make it true.
+     *
+     * @returns {void}
+     */
+    onWindowFocus() {
+      if (this.drawer) {
+        // Same coalescing as a push: focus and a call update often land together.
+        this.onCallUpdate();
       }
     },
   },
