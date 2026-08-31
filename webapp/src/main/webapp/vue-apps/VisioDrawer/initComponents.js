@@ -18,14 +18,18 @@ import VisioDrawerApp from './components/VisioDrawerApp.vue';
 import VisioDrawer from './components/VisioDrawer.vue';
 import VisioSection from './components/VisioSection.vue';
 import VisioCard from './components/VisioCard.vue';
+import VisioCopyLink from './components/VisioCopyLink.vue';
 import VisioEmptyState from './components/VisioEmptyState.vue';
+import VisioInstantPanel from './components/VisioInstantPanel.vue';
 
 const components = {
   'visio-drawer-app': VisioDrawerApp,
   'visio-drawer': VisioDrawer,
   'visio-section': VisioSection,
   'visio-card': VisioCard,
+  'visio-copy-link': VisioCopyLink,
   'visio-empty-state': VisioEmptyState,
+  'visio-instant-panel': VisioInstantPanel,
 };
 
 for (const key in components) {
