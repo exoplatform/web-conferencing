@@ -31,7 +31,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
       outlined
       flat>
       <div class="d-flex align-center justify-space-between">
+        <!-- Subtitle typography, so the chip labels the card rather than
+             competing with its title. Only where the state carries no colour,
+             though: .text-subtitle sets its colour !important, so putting it on
+             a green or amber chip would grey out the one thing the chip is
+             there to say. -->
         <v-chip
+          :class="!color && 'text-subtitle' || ''"
           small
           :color="color"
           outlined>
@@ -149,7 +155,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
             :color="prominent && 'primary' || ''"
             :loading="joining"
             @click="join">
-            <v-icon size="14" class="me-1">fa-video</v-icon>
+            <!-- Grey on the quiet button, where the icon sits beside the word
+                 that does the work. The filled one keeps inheriting the
+                 button's own colour: greying an icon on a primary background
+                 would only make it harder to read. -->
+            <v-icon size="14" :class="['me-1', !prominent && 'icon-default-color' || '']">fa-video</v-icon>
             {{ joinLabel }}
           </v-btn>
           <!-- Secondary actions live behind the overflow, named rather than
