@@ -57,7 +57,7 @@
         small
         text
         @click="join">
-        <v-icon size="14" class="me-1">fa-video</v-icon>
+        <v-icon size="14" class="me-1 icon-default-color">fa-video</v-icon>
         {{ $t('visio.instant.join') }}
       </v-btn>
     </div>
