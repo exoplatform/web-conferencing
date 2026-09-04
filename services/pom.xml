@@ -136,6 +136,7 @@
           <include>**/*.gif</include>
           <include>**/*.jpg</include>
           <include>**/*.png</include>
+          <include>**/*.idx</include>
         </includes>
       </resource>
     </resources>
