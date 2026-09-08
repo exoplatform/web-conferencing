@@ -41,6 +41,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -669,6 +670,10 @@ public class WebConferencingService implements Startable {
    */
   protected SpaceEventInfo spaceEventInfo(String spaceIdentityId, String callId, String[] participants, String[] spaces) throws IdentityStateException {
     Identity spaceIdentity = socialIdentityManager.getIdentity(spaceIdentityId);
+    if (spaceIdentity == null) {
+      return null;
+    }
+
     SpaceEventInfo spaceEvent = new SpaceEventInfo(spaceIdentity);
     
     // Merge the host space, given spaces and participants.
@@ -861,6 +866,9 @@ public class WebConferencingService implements Startable {
                   owner = group = spaceInfo(ownerId, id);
                 } else {
                   throw new CallArgumentException("Unexpected call owner type: " + ownerType + " for " + ownerId);
+                }
+                if (owner == null) {
+                  throw new CallArgumentException("Cannot find call's owner event space with identity id '%s'".formatted(ownerId));
                 }
 
                 // Group call starts with all parties LEAVED status
@@ -3802,7 +3810,10 @@ public class WebConferencingService implements Startable {
       List<CallInfo> calls = new ArrayList<>();
       for (CallEntity c : savedCalls) {
         try {
-          calls.add(readCallEntity(c, false));
+          CallInfo callEntity = readCallEntity(c, false);
+          if (callEntity != null) {
+            calls.add(callEntity);
+          }
         } catch (CallInfoException | IdentityStateException e) {
           // In this context we can skip erroneous calls abd let user to know only about valid ones
           // IdentityStateException if error reading call participant
