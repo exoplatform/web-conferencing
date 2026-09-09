@@ -32,7 +32,6 @@ import org.exoplatform.social.notification.LinkProviderUtils;
 import org.exoplatform.webconferencing.notification.plugin.CallRecordingPlugin;
 import org.exoplatform.webconferencing.notification.utils.NotificationConstants;
 
-import java.io.Writer;
 
 @TemplateConfigs(templates = {
     @TemplateConfig(pluginId = CallRecordingPlugin.ID, template = "war:/notification/templates/mail/CallRecordingPlugin.gtmpl") })
@@ -74,11 +73,6 @@ public class MailTemplateProvider extends TemplateProvider {
       notificationContext.setException(templateContext.getException());
       MessageInfo messageInfo = new MessageInfo();
       return messageInfo.subject(subject).body(body).end();
-    }
-
-    @Override
-    protected boolean makeDigest(NotificationContext notificationContext, Writer writer) {
-      return false;
     }
   }
 
