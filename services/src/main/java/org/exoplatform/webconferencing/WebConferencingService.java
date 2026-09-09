@@ -644,7 +644,7 @@ public class WebConferencingService implements Startable {
         if (user != null) {
           space.addMember(user);
         } else {
-          LOG.warn("Skipped not found space member " + sm + " of " + spacePrettyName);
+          LOG.debug("Skipped not found space member " + sm + " of " + spacePrettyName);
           // for space we have members from inside, thus if it is not found, we ignore him assuming space
           // should be consistent
         }
@@ -689,11 +689,11 @@ public class WebConferencingService implements Startable {
           if (user != null) {
             spaceEvent.addMember(user);
           } else {
-            LOG.warn("Skipped not found space member as participant " + sm + " for space event in " + spacePrettyName);
+            LOG.debug("Skipped not found space member as participant " + sm + " for space event in " + spacePrettyName);
           }
         }
       } else {
-        LOG.warn("Skipped not found space " + s + " for event in " + spacePrettyName);
+        LOG.debug("Skipped not found space " + s + " for event in " + spacePrettyName);
       }
     }
     // 3) explicit parties go last to remain in the members with isDirect flag
@@ -702,7 +702,7 @@ public class WebConferencingService implements Startable {
       if (user != null) {
         spaceEvent.addMember(user);
       } else {
-        LOG.warn("Skipped not found participant " + p + " for space event in " + spacePrettyName);
+        LOG.debug("Skipped not found participant " + p + " for space event in " + spacePrettyName);
       }
     }
     spaceEvent.setCallId(callId);
