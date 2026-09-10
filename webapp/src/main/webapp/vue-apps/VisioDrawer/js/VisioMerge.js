@@ -150,6 +150,56 @@ export function matchStartedCallId(url, ids) {
 }
 
 /**
+ * The occurrence each started call is being held in, keyed by call id.
+ * <p>
+ * A recurrent series shares ONE conference URL across every occurrence, so the
+ * call id resolved from that URL is the same for all of them and a running call
+ * would otherwise light up the whole series as LIVE — next month's occurrence
+ * announced as happening now. The call is held in exactly one of them: the
+ * nearest in time, which is the occurrence in progress when there is one, the
+ * one that just ended when the meeting overruns, and the next one when people
+ * join early.
+ *
+ * @param {Array} events - the normalized scheduled entries
+ * @param {Array} startedIds - the ids of the started calls
+ * @param {number} nowTime - the reference instant, in milliseconds
+ * @returns {object} call id -> the key of the entry holding it
+ */
+export function liveCallOwners(events, startedIds, nowTime) {
+  const owners = {};
+  const distances = {};
+  (events || []).forEach(event => {
+    const callId = event.callId || matchStartedCallId(event.url, startedIds);
+    if (!callId || (startedIds || []).indexOf(callId) < 0) {
+      return;
+    }
+    const distance = distanceToNow(event, nowTime);
+    if (!(callId in owners) || distance < distances[callId]) {
+      owners[callId] = event.key;
+      distances[callId] = distance;
+    }
+  });
+  return owners;
+}
+
+/**
+ * How far one occurrence is from now: nothing while it is being held, the wait
+ * before it starts, or the time since it ended.
+ *
+ * @param {object} event - a normalized event entry
+ * @param {number} nowTime - the reference instant, in milliseconds
+ * @returns {number} the distance in milliseconds
+ */
+function distanceToNow(event, nowTime) {
+  const start = event.start.getTime();
+  const end = event.end.getTime();
+  if (start <= nowTime && end > nowTime) {
+    return 0;
+  }
+  return start > nowTime ? start - nowTime : nowTime - end;
+}
+
+/**
  * The tri-state model, built from what each side actually knows.
  * <p>
  * Ended entries are dropped rather than falling through to "upcoming" (the
@@ -168,12 +218,16 @@ export function buildEntries({events, startedIds, adhocCalls, instant, now}) {
   // out of the ad-hoc pass below rather than shown twice.
   const entries = (instant || []).slice();
   const matched = entries.map(entry => entry.callId);
+  const owners = liveCallOwners(events, startedIds, nowTime);
   (events || []).forEach(event => {
     const callId = event.callId || matchStartedCallId(event.url, startedIds);
-    const live = !!callId && startedIds.indexOf(callId) >= 0;
-    if (live) {
+    const started = !!callId && startedIds.indexOf(callId) >= 0;
+    if (started) {
+      // Claimed by the series as a whole: whichever occurrence holds the call,
+      // it is a scheduled one and must not be listed again as an ad-hoc call.
       matched.push(callId);
     }
+    const live = started && owners[callId] === event.key;
     const state = eventState(event, live, nowTime);
     if (state) {
       entries.push(Object.assign({}, event, {
