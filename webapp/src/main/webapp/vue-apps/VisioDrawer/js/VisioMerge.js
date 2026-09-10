@@ -167,14 +167,16 @@ export function matchStartedCallId(url, ids) {
  * call id resolved from that URL is the same for all of them and a running call
  * would otherwise light up the whole series as LIVE — next month's occurrence
  * announced as happening now. The call is held in exactly one of them: the
- * nearest in time, which is the occurrence in progress when there is one, the
- * one that just ended when the meeting overruns, and the next one when people
- * join early.
+ * nearest in time among those that may hold it at all, which is the occurrence
+ * in progress when there is one, the one that just ended when the meeting
+ * overruns, and the next one when people join early — within JOIN_AHEAD_MS,
+ * never a later date of the series (see canHoldCall below).
  *
  * @param {Array} events - the normalized scheduled entries
  * @param {Array} startedIds - the ids of the started calls
  * @param {number} nowTime - the reference instant, in milliseconds
- * @returns {object} call id -> the key of the entry holding it
+ * @returns {object} call id -> the key of the entry holding it; a started call
+ *          that no occurrence can hold is absent, and shows nowhere
  */
 export function liveCallOwners(events, startedIds, nowTime) {
   // Plain maps: a call id is server data, and `in` on an object literal answers
