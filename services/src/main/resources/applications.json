@@ -18,7 +18,9 @@
                 "order": 45,
                 "permissions": [
                     "*:/platform/users"
-                ]
+                ],
+                "allowStick": true,
+                "allowDetach": true
             }
         }
     ]
