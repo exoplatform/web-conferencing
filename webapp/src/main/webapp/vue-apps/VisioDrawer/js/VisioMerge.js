@@ -48,6 +48,17 @@ export const READY = 'ready';
 const STATE_STARTED = 'started';
 
 /**
+ * How close an upcoming meeting must be before joining it is offered. Arriving
+ * a quarter of an hour early is intent; a button on next week's meeting is a
+ * mis-click waiting to announce a meeting that is not happening.
+ * <p>
+ * The same window decides which occurrence of a series a running call is held
+ * in, so the two answers cannot disagree: what the drawer calls live is what it
+ * lets you join.
+ */
+export const JOIN_AHEAD_MS = 15 * 60 * 1000;
+
+/**
  * Turns the raw REST payload of one agenda event into the flat shape the
  * drawer works with, or null when the event carries no visio at all.
  *
@@ -150,6 +161,105 @@ export function matchStartedCallId(url, ids) {
 }
 
 /**
+ * The occurrence each started call is being held in, keyed by call id.
+ * <p>
+ * A recurrent series shares ONE conference URL across every occurrence, so the
+ * call id resolved from that URL is the same for all of them and a running call
+ * would otherwise light up the whole series as LIVE — next month's occurrence
+ * announced as happening now. The call is held in exactly one of them: the
+ * nearest in time among those that may hold it at all, which is the occurrence
+ * in progress when there is one, the one that just ended when the meeting
+ * overruns, and the next one when people join early — within JOIN_AHEAD_MS,
+ * never a later date of the series (see canHoldCall below).
+ *
+ * @param {Array} events - the normalized scheduled entries
+ * @param {Array} startedIds - the ids of the started calls
+ * @param {number} nowTime - the reference instant, in milliseconds
+ * @returns {object} call id -> the key of the entry holding it; a started call
+ *          that no occurrence can hold is absent, and shows nowhere
+ */
+export function liveCallOwners(events, startedIds, nowTime) {
+  // Plain maps: a call id is server data, and `in` on an object literal answers
+  // true for every name Object.prototype happens to carry.
+  const owners = Object.create(null);
+  const distances = Object.create(null);
+  (events || []).forEach(event => {
+    const callId = callIdOf(event, startedIds);
+    if (!isStarted(callId, startedIds) || !canHoldCall(event, nowTime)) {
+      return;
+    }
+    const distance = distanceToNow(event, nowTime);
+    if (!(callId in owners) || distance < distances[callId]) {
+      owners[callId] = event.key;
+      distances[callId] = distance;
+    }
+  });
+  return owners;
+}
+
+/**
+ * The call id one scheduled entry resolves to, running or not.
+ * <p>
+ * Written once and read by both passes below: an ownership map keyed on a
+ * differently resolved id would stop matching the entries it is compared
+ * against, and a whole series would quietly lose its live state with nothing
+ * to show for it.
+ *
+ * @param {object} event - a normalized event entry
+ * @param {Array} startedIds - the ids of the started calls
+ * @returns {string} the call id, or null
+ */
+function callIdOf(event, startedIds) {
+  return event.callId || matchStartedCallId(event.url, startedIds);
+}
+
+/**
+ * Whether that call is one of the running ones.
+ *
+ * @param {string} callId - the resolved call id, may be null
+ * @param {Array} startedIds - the ids of the started calls
+ * @returns {boolean} true when the call is started
+ */
+function isStarted(callId, startedIds) {
+  return !!callId && (startedIds || []).indexOf(callId) >= 0;
+}
+
+/**
+ * Whether an occurrence can be the one a running call is being held in: it has
+ * begun, or is close enough that people are joining early. A later date the
+ * same series happens to have is not a candidate, however lonely the call is —
+ * claiming it would announce next week's meeting as happening now, which is the
+ * whole point of the attribution.
+ * <p>
+ * The past side needs no bound of its own: the drawer reads only PAST_WINDOW_MS
+ * back, so an occurrence old enough to be a stale claim is never fetched.
+ *
+ * @param {object} event - a normalized event entry
+ * @param {number} nowTime - the reference instant, in milliseconds
+ * @returns {boolean} true when the occurrence may hold the call
+ */
+function canHoldCall(event, nowTime) {
+  return event.start.getTime() - nowTime <= JOIN_AHEAD_MS;
+}
+
+/**
+ * How far one occurrence is from now: nothing while it is being held, the wait
+ * before it starts, or the time since it ended.
+ *
+ * @param {object} event - a normalized event entry
+ * @param {number} nowTime - the reference instant, in milliseconds
+ * @returns {number} the distance in milliseconds
+ */
+function distanceToNow(event, nowTime) {
+  const start = event.start.getTime();
+  const end = event.end.getTime();
+  if (start <= nowTime && end > nowTime) {
+    return 0;
+  }
+  return start > nowTime ? start - nowTime : nowTime - end;
+}
+
+/**
  * The tri-state model, built from what each side actually knows.
  * <p>
  * Ended entries are dropped rather than falling through to "upcoming" (the
@@ -168,12 +278,16 @@ export function buildEntries({events, startedIds, adhocCalls, instant, now}) {
   // out of the ad-hoc pass below rather than shown twice.
   const entries = (instant || []).slice();
   const matched = entries.map(entry => entry.callId);
+  const owners = liveCallOwners(events, startedIds, nowTime);
   (events || []).forEach(event => {
-    const callId = event.callId || matchStartedCallId(event.url, startedIds);
-    const live = !!callId && startedIds.indexOf(callId) >= 0;
-    if (live) {
+    const callId = callIdOf(event, startedIds);
+    const started = isStarted(callId, startedIds);
+    if (started) {
+      // Claimed by the series as a whole: whichever occurrence holds the call,
+      // it is a scheduled one and must not be listed again as an ad-hoc call.
       matched.push(callId);
     }
+    const live = started && owners[callId] === event.key;
     const state = eventState(event, live, nowTime);
     if (state) {
       entries.push(Object.assign({}, event, {
