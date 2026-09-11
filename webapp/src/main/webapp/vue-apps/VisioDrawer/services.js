@@ -15,7 +15,7 @@
  * along with this program. If not, see <gnu.org/licenses>.
  */
 
-import {normalizeEvent, startedCallIds, buildEntries, matchStartedCallId, LIVE} from './js/VisioMerge.js';
+import {normalizeEvent, startedCallIds, buildEntries, matchStartedCallId, canParticipate, LIVE} from './js/VisioMerge.js';
 import {loadRooms, addRoom, patchRoom, removeRoom, instantEntries} from './js/VisioInstant.js';
 
 /** How far back the schedule is read: enough to catch a meeting already running. */
@@ -26,6 +26,9 @@ const FUTURE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** The agenda REST bounds the window by count as well as by date. */
 const EVENTS_LIMIT = 100;
+
+/** The one attendee response that makes a meeting the user's to join. */
+const ACCEPTED_RESPONSE = 'ACCEPTED';
 
 /**
  * How long a provider-delegated answer is waited for. The core resolves
@@ -97,10 +100,13 @@ export function toAgendaDate(date, timeZoneId) {
 }
 
 /**
- * Reads the user's scheduled visios from agenda.
+ * Reads the user's scheduled visios from agenda: the meetings they said yes to.
  * <p>
  * Conferences are only serialized when they are asked for by name, hence the
- * mandatory `expand=conferences`.
+ * mandatory `expand=conferences`. The user's own response is asked for as well:
+ * agenda then leaves out of the page every event whose response is not among
+ * the requested `responseTypes` — the one place that knows a recurrent meeting
+ * was accepted for some occurrences and declined for others.
  *
  * @param {Date} now - the reference instant
  * @returns {Promise} resolved with the normalized entries carrying a conference
@@ -114,13 +120,18 @@ export function getScheduledVisios(now) {
   params.append('end', toAgendaDate(new Date(reference.getTime() + FUTURE_WINDOW_MS), timeZoneId));
   params.append('timeZoneId', timeZoneId);
   params.append('limit', EVENTS_LIMIT);
-  params.append('expand', 'conferences');
+  params.append('expand', 'conferences,response');
   if (userIdentityId) {
     // Sent only when known: the parameter is a long on the server side, and an
     // empty one is a conversion error rather than "no filter".
     params.append('attendeeIdentityId', userIdentityId);
   }
-  ['ACCEPTED', 'TENTATIVE', 'NEEDS_ACTION'].forEach(type => params.append('responseTypes', type));
+  // Only a meeting the user accepted is theirs to join from here. A tentative
+  // answer and no answer at all are left out, and so is an invitation that
+  // reaches them only through one of their spaces: agenda keeps the space's
+  // own attendee row at NEEDS_ACTION, so it fails this filter too. A meeting
+  // they were never invited to never makes it past the attendee join.
+  params.append('responseTypes', ACCEPTED_RESPONSE);
   return fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/v1/agenda/events?${params.toString()}`, {
     method: 'GET',
     credentials: 'include',
@@ -824,12 +835,14 @@ function describeAdhocCalls(core, events, startedIds) {
   if (!unmatched.length || !core) {
     return Promise.resolve([]);
   }
+  const userName = currentUserName();
   return Promise.all(unmatched.map(id => getCall(core, id).then(call => call && {
     id: id,
     title: call.title,
     providerType: call.providerType,
     startDate: call.startDate,
-  } || null))).then(calls => calls.filter(call => !!call));
+    owner: call.owner,
+  } || null))).then(calls => calls.filter(call => canParticipate(call, userName)));
 }
 
 /**

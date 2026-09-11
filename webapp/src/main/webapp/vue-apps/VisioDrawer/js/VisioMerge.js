@@ -160,6 +160,59 @@ export function matchStartedCallId(url, ids) {
   return ids.find(id => id && path.endsWith(`/${id}`)) || null;
 }
 
+/** The owner types a call record carries, as the server names them. */
+export const OWNER_USER = 'user';
+
+export const OWNER_SPACE = 'space';
+
+export const OWNER_SPACE_EVENT = 'space_event';
+
+export const OWNER_CHAT_ROOM = 'chat_room';
+
+/**
+ * Whether an ongoing call that matched no accepted meeting may be listed for
+ * this user.
+ * <p>
+ * The user's call states name every call they hold a participant row in, and
+ * that row outlives what made them a participant: the invitation to a meeting
+ * they have since declined, the membership of a space they have since left. So
+ * the record itself is asked, by owner:
+ * - a meeting call (space event) is never listed on its own — the accepted
+ *   meeting it belongs to is the only way in, and it was not among them;
+ * - a space call is listed when the user is among the owner's members, which
+ *   the server rebuilds from the space's own membership every time the call is
+ *   read (WebConferencingService.spaceInfo): leaving the space drops the call;
+ * - a chat-room call is listed on the same test, but its members are rebuilt
+ *   from the call's participant rows, not from the room as it is now
+ *   (WebConferencingService.readCallEntity): somebody who left the room is
+ *   still among them, so this gate keeps their room calls. What it does cover
+ *   is the case the drawer must get right — the 1:1 and the still-member room;
+ * - a one-to-one call is theirs by construction: being a participant is the
+ *   membership.
+ * Anything else — no owner, an owner type this code does not know — is not
+ * listed: an unknown right to join is shown as none.
+ *
+ * @param {object} call - the call as the server describes it, with its owner
+ * @param {string} userName - the current user's name
+ * @returns {boolean} true when the call may be listed
+ */
+export function canParticipate(call, userName) {
+  const owner = call && call.owner;
+  if (!owner || !userName) {
+    return false;
+  }
+  switch (owner.type) {
+  case OWNER_USER:
+    return true;
+  case OWNER_SPACE:
+  case OWNER_CHAT_ROOM:
+    return !!owner.members && Object.prototype.hasOwnProperty.call(owner.members, userName);
+  case OWNER_SPACE_EVENT:
+  default:
+    return false;
+  }
+}
+
 /**
  * The occurrence each started call is being held in, keyed by call id.
  * <p>
