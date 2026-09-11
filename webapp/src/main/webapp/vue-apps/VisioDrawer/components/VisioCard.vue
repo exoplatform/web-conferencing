@@ -244,16 +244,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import {LIVE, NOW, READY, UPCOMING} from '../js/VisioMerge.js';
+import {JOIN_AHEAD_MS, LIVE, NOW, READY, UPCOMING} from '../js/VisioMerge.js';
 import {formatTime, formatDay, isSameDay, splitDuration} from '../js/VisioFormat.js';
 import {copyText} from '../js/VisioClipboard.js';
-
-/**
- * How close an upcoming meeting must be before joining it is offered. Arriving
- * a quarter of an hour early is intent; a button on next week's meeting is a
- * mis-click waiting to announce a meeting that is not happening.
- */
-const JOIN_AHEAD_MS = 15 * 60 * 1000;
 
 export default {
   props: {
