@@ -137,8 +137,11 @@ public class VisioApplicationBadgePlugin implements ApplicationBadgePlugin {
    * to the queried user and returns no call they are not part of. It returns
    * every state though — participant rows survive a call being stopped — hence
    * the explicit {@link CallState#STARTED} predicate. It also spans every kind
-   * of call: one-to-one, space, chat room and agenda-event visios alike, which
-   * is exactly the set the drawer lists.
+   * of call: one-to-one, space, chat room and agenda-event visios alike. The
+   * drawer narrows that set at read time — an agenda-event visio only when the
+   * user accepted the meeting, a space or room visio only while they are still
+   * a member — from what agenda and the call owner say, which this count, with
+   * no dependency on agenda, cannot; it may therefore run ahead of the list.
    *
    * @param  username the user the count is computed for
    * @return          the number of ongoing visios, {@code 0} when there is none
