@@ -20,9 +20,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
        change the answer — opening, a call starting or ending, coming back to
        the tab — because a list of meetings that is not current is worse than no
        list at all. -->
-  <exo-drawer
+  <pinneable-drawer
     id="visioDrawer"
     ref="visioDrawer"
+    app-name="visio"
     v-model="drawer"
     right
     :loading="loading"
@@ -84,7 +85,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
         </template>
       </div>
     </template>
-  </exo-drawer>
+  </pinneable-drawer>
 </template>
 
 <script>
