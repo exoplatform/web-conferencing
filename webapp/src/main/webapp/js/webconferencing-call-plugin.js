@@ -116,10 +116,12 @@
         require([
           "SHARED/webConferencing",
           "SHARED/webConferencingCallButton",
-        ], function(webConferencing, callButtons) {
-            webConferencing.createMatrixChatContext(chat).then(context => {
-              return callButtons.create(context, target, typeClass);
-            });
+          "SHARED/webConferencingPortlet",
+        ], function(webConferencing, callButtons, webConferencingPortlet) {
+            webConferencingPortlet.start()
+              .then(() => webConferencing.createMatrixChatContext(chat))
+              .then(context => callButtons.create(context, target, typeClass))
+              .catch(error => webConferencing.getLog("webconferencing").warn("Chat call button not initialized", error));
         });
       },
       enabled: true,
