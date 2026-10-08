@@ -1069,7 +1069,7 @@
 			return context;
 		};
 
-    var spaceEventContext = function(spaceId, participants, spaces, startDate, endDate, recurrence) {
+    var spaceEventContext = function(spaceId, participants, spaces, startDate, endDate, recurrence, allDay) {
       var context = {
         currentUser : currentUser,
         spaceId : spaceId,
@@ -1090,7 +1090,8 @@
         },
         startDate : startDate,
         endDate : endDate,
-        recurrence: recurrence
+        recurrence: recurrence,
+        allDay: !!allDay
       };
       return context;
     };
@@ -1696,7 +1697,7 @@
               } else if (callInfo.ownerType === "space") {
                 context = spaceContext(callInfo.owner);
               } else if (callInfo.ownerType === "space_event") {
-                context = spaceEventContext(callInfo.owner, callInfo.participants, callInfo.spaces, callInfo.startDate, callInfo.endDate, callInfo.recurrence);
+                context = spaceEventContext(callInfo.owner, callInfo.participants, callInfo.spaces, callInfo.startDate, callInfo.endDate, callInfo.recurrence, callInfo.allDay);
               } else if (callInfo.ownerType === "chat_room") {
                 if (callInfo.chatContact && typeof chatContact === "object" && callInfo.chatUser && typeof chatUser === "object") {
                   context = chatContextForRoom(callInfo.chatContact, callInfo.chatUser);
@@ -2042,10 +2043,10 @@
       return localContext.promise();
     };
 
-    this.createSpaceEventContext = async function(spaceId, participants, spaces, startDate, endDate, recurrence) {
+    this.createSpaceEventContext = async function(spaceId, participants, spaces, startDate, endDate, recurrence, allDay) {
       const localContext = $.Deferred();
       contextInitializer.then(() => {
-        localContext.resolve(spaceEventContext(spaceId, participants, spaces,startDate, endDate, recurrence));
+        localContext.resolve(spaceEventContext(spaceId, participants, spaces,startDate, endDate, recurrence, allDay));
       });
       return localContext.promise();
     }
