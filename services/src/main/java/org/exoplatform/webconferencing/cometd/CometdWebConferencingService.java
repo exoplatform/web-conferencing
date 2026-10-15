@@ -109,6 +109,7 @@ import org.exoplatform.webconferencing.InvitedIdentity;
 import org.exoplatform.webconferencing.ParticipantNotFoundException;
 import org.exoplatform.webconferencing.UserCallListener;
 import org.exoplatform.webconferencing.UserState;
+import org.exoplatform.webconferencing.WebConferencingException;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.client.ErrorInfo;
 import org.exoplatform.webconferencing.cometd.CometdWebConferencingService.CallService.CallChannelContext.CallClient;
@@ -1872,23 +1873,8 @@ public class CometdWebConferencingService implements Startable {
                               String state = asString(arguments.get("state"));
                               if (isValidArg(state)) {
                                 try {
-                                  boolean stateRecognized = true;
-                                  CallInfo call;
-                                  if (CallState.STARTED.equals(state)) {
-                                    call = webConferencing.startCall(id, exoClientId);
-                                  } else if (CallState.STOPPED.equals(state)) {
-                                    call = webConferencing.stopCall(id, false);
-                                  } else if (UserState.JOINED.equals(state)) {
-                                    call = webConferencing.joinCall(id, currentUserId, exoClientId);
-                                  } else if (UserState.LEAVED.equals(state)) {
-                                    call = webConferencing.leaveCall(id, currentUserId, exoClientId);
-                                  } else if (UserState.DECLINED.equals(state)) {
-                                    call = webConferencing.declineCall(id, currentUserId, exoClientId);
-                                  } else {
-                                    call = null;
-                                    stateRecognized = false;
-                                  }
-                                  if (stateRecognized) {
+                                  if (isUpdatableState(state)) {
+                                    CallInfo call = updateCallState(id, state, currentUserId, exoClientId);
                                     if (call != null) {
                                       caller.result(asJSON(call));
                                     } else {
@@ -2220,6 +2206,44 @@ public class CometdWebConferencingService implements Startable {
 
     // Thread executors
     this.callHandlers = createThreadExecutor(CALL_THREAD_PREFIX, CALL_MAX_FACTOR, CALL_QUEUE_FACTOR);
+  }
+
+  /**
+   * Tells if a client can set this state on a call through the update command.
+   *
+   * @param state the state sent by the client
+   * @return <code>true</code> if the state is a call or a participant state the update command applies
+   */
+  protected static boolean isUpdatableState(String state) {
+    return CallState.STARTED.equals(state) || CallState.STOPPED.equals(state) || UserState.JOINED.equals(state)
+        || UserState.LEAVED.equals(state) || UserState.DECLINED.equals(state);
+  }
+
+  /**
+   * Applies a state sent by a client to a call: a participant state always applies to the user of the
+   * Cometd session, never to a user named by the client.
+   *
+   * @param id the call id
+   * @param state the state, one of {@link #isUpdatableState(String)}
+   * @param currentUserId the user of the Cometd session
+   * @param clientId the client id
+   * @return the call info, <code>null</code> if the call was not found
+   * @throws WebConferencingException if the call cannot be updated
+   */
+  protected CallInfo updateCallState(String id, String state, String currentUserId, String clientId) throws WebConferencingException {
+    if (CallState.STARTED.equals(state)) {
+      return webConferencing.startCall(id, clientId);
+    } else if (CallState.STOPPED.equals(state)) {
+      return webConferencing.stopCall(id, false);
+    } else if (UserState.JOINED.equals(state)) {
+      return webConferencing.joinCall(id, currentUserId, clientId);
+    } else if (UserState.LEAVED.equals(state)) {
+      return webConferencing.leaveCall(id, currentUserId, clientId);
+    } else if (UserState.DECLINED.equals(state)) {
+      return webConferencing.declineCall(id, currentUserId, clientId);
+    } else {
+      throw new IllegalArgumentException("State not recognized: " + state);
+    }
   }
 
   /**
