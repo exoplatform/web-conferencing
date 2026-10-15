@@ -106,6 +106,7 @@ import org.exoplatform.webconferencing.CallState;
 import org.exoplatform.webconferencing.IdentityData;
 import org.exoplatform.webconferencing.IdentityStateException;
 import org.exoplatform.webconferencing.InvitedIdentity;
+import org.exoplatform.webconferencing.ParticipantNotFoundException;
 import org.exoplatform.webconferencing.UserCallListener;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;
@@ -1881,6 +1882,8 @@ public class CometdWebConferencingService implements Startable {
                                     call = webConferencing.joinCall(id, currentUserId, exoClientId);
                                   } else if (UserState.LEAVED.equals(state)) {
                                     call = webConferencing.leaveCall(id, currentUserId, exoClientId);
+                                  } else if (UserState.DECLINED.equals(state)) {
+                                    call = webConferencing.declineCall(id, currentUserId, exoClientId);
                                   } else {
                                     call = null;
                                     stateRecognized = false;
@@ -1895,7 +1898,7 @@ public class CometdWebConferencingService implements Startable {
                                     caller.failure(ErrorInfo.clientError("Wrong parameters: state not recognized")
                                                             .asJSON());
                                   }
-                                } catch (CallNotFoundException e) { // aka BAD_REQUEST
+                                } catch (CallNotFoundException | ParticipantNotFoundException e) { // aka BAD_REQUEST
                                   caller.failure(ErrorInfo.clientError(e.getMessage()).asJSON());
                                 } catch (Throwable e) {
                                   LOG.error("Error updating call state '" + id + "' by '" + currentUserId + "'", e);
