@@ -20,6 +20,8 @@ package org.exoplatform.webconferencing.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Date;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 
@@ -28,15 +30,18 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.exoplatform.webconferencing.CallState;
 import org.exoplatform.webconferencing.UserState;
+import org.exoplatform.webconferencing.domain.CallEntity;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
 
 /**
- * The conditional participant state update runs through Hibernate on HSQLDB: it
- * changes a participant only while the participant still has the expected
- * state, and only that participant of that call. Index usage and the other
- * engines' behaviour are not covered by this test.
+ * The missed call mark runs through Hibernate on HSQLDB: it marks a participant
+ * only while the participant is still invited and the call still started from
+ * a start not later than the given date, and only that participant of that
+ * call. Index usage, the other engines' behaviour and the rounding of a start
+ * date stored in whole seconds are not covered by this test.
  */
 class ParticipantDAOTest {
 
@@ -50,6 +55,10 @@ class ParticipantDAOTest {
 
   private static final String  PAUL          = "paul";
 
+  private static final Date    STARTED_AT    = new Date(1_700_000_000_000L);
+
+  private static final Date    LATEST_START  = new Date(STARTED_AT.getTime() + 1000);
+
   private EntityManagerFactory entityManagerFactory;
 
   private EntityManager        entityManager;
@@ -57,6 +66,7 @@ class ParticipantDAOTest {
   @BeforeEach
   void setUp() {
     entityManagerFactory = new Configuration().addAnnotatedClass(ParticipantEntity.class)
+                                              .addAnnotatedClass(CallEntity.class)
                                               .setProperty("hibernate.connection.url", "jdbc:hsqldb:mem:wbc-participants")
                                               .setProperty("hibernate.connection.username", "sa")
                                               .setProperty("hibernate.connection.password", "")
@@ -64,6 +74,8 @@ class ParticipantDAOTest {
                                               .buildSessionFactory();
     entityManager = entityManagerFactory.createEntityManager();
     entityManager.getTransaction().begin();
+    entityManager.persist(call(CALL_ID, CallState.STARTED, STARTED_AT));
+    entityManager.persist(call(OTHER_CALL_ID, CallState.STARTED, STARTED_AT));
     entityManager.persist(participant(CALL_ID, JOHN, UserState.INVITED));
     entityManager.persist(participant(CALL_ID, MARY, UserState.JOINED));
     entityManager.persist(participant(CALL_ID, PAUL, UserState.INVITED));
@@ -79,8 +91,8 @@ class ParticipantDAOTest {
   }
 
   @Test
-  void updatesTheParticipantStillInTheExpectedStateOnly() {
-    assertEquals(1, update(CALL_ID, JOHN, UserState.INVITED, UserState.MISSED));
+  void marksTheStillInvitedParticipantOfTheCallOnly() {
+    assertEquals(1, markMissed(CALL_ID, JOHN, LATEST_START));
 
     assertEquals(UserState.MISSED, stateOf(CALL_ID, JOHN));
     assertEquals(UserState.JOINED, stateOf(CALL_ID, MARY));
@@ -89,23 +101,46 @@ class ParticipantDAOTest {
   }
 
   @Test
-  void updatesNothingOnceTheStateChanged() {
-    assertEquals(1, update(CALL_ID, JOHN, UserState.INVITED, UserState.MISSED));
+  void marksAParticipantOnceOnly() {
+    assertEquals(1, markMissed(CALL_ID, JOHN, LATEST_START));
 
-    assertEquals(0, update(CALL_ID, JOHN, UserState.INVITED, UserState.MISSED));
+    assertEquals(0, markMissed(CALL_ID, JOHN, LATEST_START));
     assertEquals(UserState.MISSED, stateOf(CALL_ID, JOHN));
   }
 
   @Test
-  void leavesAParticipantInAnotherStateUnchanged() {
-    assertEquals(0, update(CALL_ID, MARY, UserState.INVITED, UserState.MISSED));
+  void leavesAParticipantNoLongerInvitedUnchanged() {
+    assertEquals(0, markMissed(CALL_ID, MARY, LATEST_START));
 
     assertEquals(UserState.JOINED, stateOf(CALL_ID, MARY));
   }
 
-  private int update(String callId, String partId, String expectedState, String newState) {
+  @Test
+  void marksAParticipantOfACallStartedUpToTheLatestStart() {
+    assertEquals(1, markMissed(CALL_ID, JOHN, STARTED_AT));
+  }
+
+  @Test
+  void marksNobodyOfACallStartedAgainLater() {
+    assertEquals(0, markMissed(CALL_ID, JOHN, new Date(STARTED_AT.getTime() - 1)));
+
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, JOHN));
+  }
+
+  @Test
+  void marksNobodyOfACallNoLongerStarted() {
     entityManager.getTransaction().begin();
-    int updated = ParticipantDAO.updateParticipantState(entityManager, callId, partId, expectedState, newState);
+    entityManager.find(CallEntity.class, CALL_ID).setState(CallState.STOPPED);
+    entityManager.getTransaction().commit();
+    entityManager.clear();
+
+    assertEquals(0, markMissed(CALL_ID, JOHN, LATEST_START));
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, JOHN));
+  }
+
+  private int markMissed(String callId, String partId, Date latestStart) {
+    entityManager.getTransaction().begin();
+    int updated = ParticipantDAO.markParticipantMissed(entityManager, callId, partId, latestStart);
     entityManager.getTransaction().commit();
     entityManager.clear();
     return updated;
@@ -113,6 +148,17 @@ class ParticipantDAOTest {
 
   private String stateOf(String callId, String partId) {
     return entityManager.find(ParticipantEntity.class, new ParticipantId(partId, callId)).getState();
+  }
+
+  private CallEntity call(String callId, String state, Date lastDate) {
+    CallEntity entity = new CallEntity();
+    entity.setId(callId);
+    entity.setProviderType("pexip");
+    entity.setOwnerType("space");
+    entity.setOwnerId(callId);
+    entity.setState(state);
+    entity.setLastDate(lastDate);
+    return entity;
   }
 
   private ParticipantEntity participant(String callId, String partId, String state) {

@@ -237,6 +237,15 @@ public class WebConferencingService implements Startable {
   /** The default duration, in seconds, of an incoming call alert. */
   protected static final long   DEFAULT_INCOMING_CALL_TIMEOUT = 60;
 
+  /** The longest incoming call alert, in seconds: the longest delay a browser timer accepts. */
+  protected static final long   MAX_INCOMING_CALL_TIMEOUT    = Integer.MAX_VALUE / 1000;
+
+  /**
+   * How much later than in memory the start date of a call may read from the storage, in milliseconds: a
+   * storage keeping whole seconds rounds the fraction up or down.
+   */
+  protected static final long   LAST_DATE_PRECISION          = 1000;
+
   protected static final String VIDEO_CONFERENCE_IS_ENABLED  = "videoConferenceEnabled";
 
   /**
@@ -588,7 +597,7 @@ public class WebConferencingService implements Startable {
     if (param != null && StringUtils.isNotBlank(param.getValue())) {
       try {
         long timeout = Long.parseLong(param.getValue().trim());
-        if (timeout > 0) {
+        if (timeout > 0 && timeout <= MAX_INCOMING_CALL_TIMEOUT) {
           return timeout;
         }
       } catch (NumberFormatException e) {
@@ -1921,9 +1930,14 @@ public class WebConferencingService implements Startable {
   /**
    * Marks as missed the participants still invited to a call whose incoming call alert timed out, and
    * broadcasts {@link #EVENT_CALL_MISSED} for each of them. Nothing is done when the call is over, or was
-   * started again after the given start date, that later start having its own check. A participant is marked
-   * only while still invited: among concurrent checks, or with a join or a decline committed meanwhile, the
-   * event is broadcast at most once per participant.
+   * started again after the given start date, that later start having its own check. Each participant is
+   * marked only while still invited and the call still started from that start, both checked by the storage
+   * when the participant is marked: among concurrent checks, with a join or a decline committed meanwhile, or
+   * the call stopped or started again meanwhile, the event is broadcast at most once per participant, and
+   * never for a start later than the checked one by more than {@link #LAST_DATE_PRECISION}, the precision of
+   * a start date stored in whole seconds: a call started again within that second has its invitees marked by
+   * this check, up to a second before its own alert times out. The event of a participant is broadcast after
+   * the mark is committed: a join, a decline or a stop committed in between does not withhold it.
    *
    * @param callId the call id
    * @param callerId the user who started the call
@@ -1932,14 +1946,15 @@ public class WebConferencingService implements Startable {
    * @throws StorageException if a participant cannot be updated
    */
   protected void notifyMissedCall(String callId, String callerId, Date startedAt) throws InvalidCallException, StorageException {
+    Date latestStart = new Date(startedAt.getTime() + LAST_DATE_PRECISION);
     CallInfo call = getCall(callId);
     if (call == null || !CallState.STARTED.equals(call.getState()) || call.getLastDate() == null
-        || call.getLastDate().after(startedAt)) {
+        || call.getLastDate().after(latestStart)) {
       return;
     }
     for (UserInfo part : call.getParticipants()) {
       if (UserInfo.TYPE_NAME.equals(part.getType()) && UserState.INVITED.equals(part.getState())
-          && markParticipantMissed(callId, part.getId())) {
+          && markParticipantMissed(callId, part.getId(), latestStart)) {
         part.setState(UserState.MISSED);
         broadcastCallMissed(call, part.getId(), callerId);
         LOG.info(metricMessage(part.getId(), call, OPERATION_CALL_MISSED, STATUS_OK, 0L, null, null));
@@ -1947,9 +1962,9 @@ public class WebConferencingService implements Startable {
     }
   }
 
-  private boolean markParticipantMissed(String callId, String partId) throws StorageException {
+  private boolean markParticipantMissed(String callId, String partId, Date latestStart) throws StorageException {
     try {
-      return participantsStorage.updateParticipantState(callId, partId, UserState.INVITED, UserState.MISSED) > 0;
+      return participantsStorage.markParticipantMissed(callId, partId, latestStart) > 0;
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       throw new StorageException("Error marking participant " + partId + " of call " + callId + " as missed", e);
     }

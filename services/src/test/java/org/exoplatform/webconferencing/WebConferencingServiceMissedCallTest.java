@@ -19,6 +19,7 @@
 package org.exoplatform.webconferencing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -37,6 +38,8 @@ import static org.mockito.Mockito.when;
 import java.util.Date;
 import java.util.Map;
 
+import jakarta.persistence.PersistenceException;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +50,7 @@ import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.web.security.codec.CodecInitializer;
 import org.exoplatform.webconferencing.dao.ParticipantDAO;
+import org.exoplatform.webconferencing.dao.StorageException;
 
 /**
  * A participant alerted of a started call who neither joins nor declines it
@@ -155,7 +159,7 @@ class WebConferencingServiceMissedCallTest {
                                 participant(CALLER, UserState.JOINED),
                                 participant(CALLEE, UserState.INVITED),
                                 participant(OTHER, UserState.JOINED));
-    when(participantsStorage.updateParticipantState(CALL_ID, CALLEE, UserState.INVITED, UserState.MISSED)).thenReturn(1);
+    when(participantsStorage.markParticipantMissed(CALL_ID, CALLEE, latestStart(startedAt))).thenReturn(1);
 
     service.notifyMissedCall(CALL_ID, CALLER, startedAt);
 
@@ -168,14 +172,14 @@ class WebConferencingServiceMissedCallTest {
                                              CALLER,
                                              "status",
                                              WebConferencingService.STATUS_OK));
-    verify(participantsStorage, never()).updateParticipantState(eq(CALL_ID), eq(OTHER), anyString(), anyString());
+    verify(participantsStorage, never()).markParticipantMissed(eq(CALL_ID), eq(OTHER), any(Date.class));
   }
 
   @Test
   void aParticipantUpdatedMeanwhileIsNotNotified() throws Exception {
     Date startedAt = new Date();
     CallInfo call = startedCall(startedAt, participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.INVITED));
-    when(participantsStorage.updateParticipantState(CALL_ID, CALLEE, UserState.INVITED, UserState.MISSED)).thenReturn(0);
+    when(participantsStorage.markParticipantMissed(CALL_ID, CALLEE, latestStart(startedAt))).thenReturn(0);
 
     service.notifyMissedCall(CALL_ID, CALLER, startedAt);
 
@@ -193,7 +197,7 @@ class WebConferencingServiceMissedCallTest {
 
     service.notifyMissedCall(CALL_ID, CALLER, startedAt);
 
-    verify(participantsStorage, never()).updateParticipantState(anyString(), anyString(), anyString(), anyString());
+    verify(participantsStorage, never()).markParticipantMissed(anyString(), anyString(), any(Date.class));
     verifyNoMissedCallBroadcast();
   }
 
@@ -205,7 +209,32 @@ class WebConferencingServiceMissedCallTest {
 
     service.notifyMissedCall(CALL_ID, CALLER, startedAt);
 
-    verify(participantsStorage, never()).updateParticipantState(anyString(), anyString(), anyString(), anyString());
+    verify(participantsStorage, never()).markParticipantMissed(anyString(), anyString(), any(Date.class));
+    verifyNoMissedCallBroadcast();
+  }
+
+  @Test
+  void aStartDateReadRoundedUpFromTheStorageIsTheSameStart() throws Exception {
+    Date startedAt = new Date(1_700_000_000_600L);
+    CallInfo call = startedCall(new Date(1_700_000_001_000L),
+                                participant(CALLER, UserState.JOINED),
+                                participant(CALLEE, UserState.INVITED));
+    when(participantsStorage.markParticipantMissed(CALL_ID, CALLEE, latestStart(startedAt))).thenReturn(1);
+
+    service.notifyMissedCall(CALL_ID, CALLER, startedAt);
+
+    assertEquals(UserState.MISSED, stateOf(call, CALLEE));
+  }
+
+  @Test
+  void aParticipantWhoseMarkFailsIsNotNotified() throws Exception {
+    Date startedAt = new Date();
+    CallInfo call = startedCall(startedAt, participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.INVITED));
+    when(participantsStorage.markParticipantMissed(CALL_ID, CALLEE, latestStart(startedAt))).thenThrow(new PersistenceException("down"));
+
+    assertThrows(StorageException.class, () -> service.notifyMissedCall(CALL_ID, CALLER, startedAt));
+
+    assertEquals(UserState.INVITED, stateOf(call, CALLEE));
     verifyNoMissedCallBroadcast();
   }
 
@@ -225,7 +254,7 @@ class WebConferencingServiceMissedCallTest {
 
     service.notifyMissedCall(CALL_ID, CALLER, startedAt);
 
-    verify(participantsStorage, never()).updateParticipantState(anyString(), anyString(), anyString(), anyString());
+    verify(participantsStorage, never()).markParticipantMissed(anyString(), anyString(), any(Date.class));
     verifyNoMissedCallBroadcast();
   }
 
@@ -249,6 +278,10 @@ class WebConferencingServiceMissedCallTest {
     assertEquals(120, timeoutOf("120"));
     assertEquals(WebConferencingService.DEFAULT_INCOMING_CALL_TIMEOUT, timeoutOf("not-a-number"));
     assertEquals(WebConferencingService.DEFAULT_INCOMING_CALL_TIMEOUT, timeoutOf("0"));
+    assertEquals(WebConferencingService.MAX_INCOMING_CALL_TIMEOUT,
+                 timeoutOf(String.valueOf(WebConferencingService.MAX_INCOMING_CALL_TIMEOUT)));
+    assertEquals(WebConferencingService.DEFAULT_INCOMING_CALL_TIMEOUT,
+                 timeoutOf(String.valueOf(WebConferencingService.MAX_INCOMING_CALL_TIMEOUT + 1)));
   }
 
   @Test
@@ -256,6 +289,10 @@ class WebConferencingServiceMissedCallTest {
     service.stop();
 
     assertTrue(service.missedCallTimer.isShutdown());
+  }
+
+  private Date latestStart(Date startedAt) {
+    return new Date(startedAt.getTime() + WebConferencingService.LAST_DATE_PRECISION);
   }
 
   private long timeoutOf(String value) {
