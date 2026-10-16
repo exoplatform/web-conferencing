@@ -18,6 +18,7 @@ package org.exoplatform.webconferencing.notification.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -34,11 +35,13 @@ import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.social.core.service.LinkProvider;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
+import org.exoplatform.social.notification.LinkProviderUtils;
 import org.exoplatform.webconferencing.WebConferencingService;
 
 /**
  * A missed 1:1 call leads to the caller's profile, a missed space call to the
- * space, any other call to the home page.
+ * space, any other call to the home page; an email links them on the server's
+ * domain.
  */
 class MissedCallNotificationUtilsTest {
 
@@ -86,8 +89,27 @@ class MissedCallNotificationUtilsTest {
     when(spaceService.getSpaceByPrettyName("marketing")).thenReturn(space);
     links.when(() -> LinkProvider.getSpaceLink("12")).thenThrow(new ObjectNotFoundException("removed"));
 
-    assertEquals("/", MissedCallNotificationUtils.getCallLink(notification(WebConferencingService.OWNER_TYPE_SPACE)));
-    assertEquals("/", MissedCallNotificationUtils.getCallLink(notification(WebConferencingService.OWNER_TYPE_CHATROOM)));
+    assertNull(MissedCallNotificationUtils.getCallLink(notification(WebConferencingService.OWNER_TYPE_SPACE)));
+    assertNull(MissedCallNotificationUtils.getCallLink(notification(WebConferencingService.OWNER_TYPE_CHATROOM)));
+  }
+
+  @Test
+  void anEmailLinksThePageOnTheServerDomain() {
+    links.when(() -> LinkProvider.getUserProfileUri("root")).thenReturn("/portal/dw/profile/root");
+    services.when(CommonsUtils::getCurrentDomain).thenReturn("https://host");
+
+    assertEquals("https://host/portal/dw/profile/root",
+                 MissedCallNotificationUtils.getAbsoluteCallLink(notification(WebConferencingService.OWNER_TYPE_USER)));
+  }
+
+  @Test
+  void anEmailLinksThePortalHomePageByDefault() {
+    try (MockedStatic<LinkProviderUtils> baseUrls = mockStatic(LinkProviderUtils.class)) {
+      baseUrls.when(LinkProviderUtils::getBaseUrl).thenReturn("https://host/portal");
+
+      assertEquals("https://host/portal",
+                   MissedCallNotificationUtils.getAbsoluteCallLink(notification(WebConferencingService.OWNER_TYPE_CHATROOM)));
+    }
   }
 
   @Test

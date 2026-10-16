@@ -22,6 +22,7 @@ import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.social.core.service.LinkProvider;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
+import org.exoplatform.social.notification.LinkProviderUtils;
 import org.exoplatform.webconferencing.WebConferencingService;
 
 /**
@@ -44,10 +45,10 @@ public final class MissedCallNotificationUtils {
 
   /**
    * Gets the page a missed call leads to, relative to the server: the caller's
-   * profile for a 1:1 call, the space of a space call, the home page otherwise.
+   * profile for a 1:1 call, the space of a space call.
    *
    * @param notification the missed call notification
-   * @return the path of the page
+   * @return the path of the page, or <code>null</code> for the home page
    */
   public static String getCallLink(NotificationInfo notification) {
     String callType = notification.getValueOwnerParameter(NotificationConstants.CALL_TYPE.getKey());
@@ -64,6 +65,17 @@ public final class MissedCallNotificationUtils {
         }
       }
     }
-    return "/";
+    return null;
+  }
+
+  /**
+   * Gets the absolute URL of the page a missed call leads to, for an email.
+   *
+   * @param notification the missed call notification
+   * @return the URL of the page, the portal home page by default
+   */
+  public static String getAbsoluteCallLink(NotificationInfo notification) {
+    String link = getCallLink(notification);
+    return link == null ? LinkProviderUtils.getBaseUrl() : CommonsUtils.getCurrentDomain() + link;
   }
 }

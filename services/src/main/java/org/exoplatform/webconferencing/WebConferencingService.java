@@ -237,6 +237,13 @@ public class WebConferencingService implements Startable {
   /** The default duration, in seconds, of an incoming call alert. */
   protected static final long   DEFAULT_INCOMING_CALL_TIMEOUT = 60;
 
+  /**
+   * How long after the incoming call alert times out the missed call is checked, in seconds: a client starts
+   * its alert once the call state reached it and the call was read, so it may still be answered a little after
+   * the timeout counted from the call start.
+   */
+  protected static final long   MISSED_CALL_CHECK_MARGIN     = 10;
+
   /** The longest incoming call alert, in seconds: the longest delay a browser timer accepts. */
   protected static final long   MAX_INCOMING_CALL_TIMEOUT    = Integer.MAX_VALUE / 1000;
 
@@ -1896,16 +1903,27 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Schedules the missed call check of a call that just started, for when its incoming call alert times out.
-   * The check runs on this server only: a restart stops every started call anyway (see
-   * {@link #initializeStartedCallsState()}).
+   * Schedules the missed call check of a call that just started, for when its incoming call alert timed out
+   * on every client (see {@link #getMissedCallCheckDelay()}). The check runs on this server only: a restart
+   * stops every started call anyway (see {@link #initializeStartedCallsState()}). A participant who answered
+   * the alert but whose join reaches the server after the check still gets the missed call notification.
    *
    * @param callId the call id
    * @param callerId the user who started the call
    * @param startedAt the start date of the call
    */
   protected void scheduleMissedCall(String callId, String callerId, Date startedAt) {
-    missedCallTimer.schedule(() -> checkMissedCall(callId, callerId, startedAt), incomingCallTimeout, TimeUnit.SECONDS);
+    missedCallTimer.schedule(() -> checkMissedCall(callId, callerId, startedAt), getMissedCallCheckDelay(), TimeUnit.MILLISECONDS);
+  }
+
+  /**
+   * Gets how long after a call starts its missed call check runs: the incoming call timeout, plus
+   * {@link #MISSED_CALL_CHECK_MARGIN} for the clients that started their alert later.
+   *
+   * @return the delay in milliseconds
+   */
+  protected long getMissedCallCheckDelay() {
+    return TimeUnit.SECONDS.toMillis(incomingCallTimeout + MISSED_CALL_CHECK_MARGIN);
   }
 
   /**

@@ -54,16 +54,14 @@ public class MissedCallTemplateBuilder extends AbstractTemplateBuilder {
     String callerId = notification.getValueOwnerParameter(NotificationConstants.CALLER_ID.getKey());
     Identity caller = CommonsUtils.getService(IdentityManager.class).getOrCreateUserIdentity(callerId);
     String callerName = caller == null ? callerId : caller.getProfile().getFullName();
-    String callerAvatar = caller == null ? "" : caller.getProfile().getAvatarUrl();
     String callOwner = notification.getValueOwnerParameter(NotificationConstants.CALL_OWNER.getKey());
 
     templateContext.put("USER", encoder.encode(notification.getTo()));
     templateContext.put("CALLER_NAME", encoder.encode(callerName));
-    templateContext.put("CALLER_AVATAR", encoder.encode(LinkProviderUtils.getBaseUrl() + callerAvatar));
+    templateContext.put("CALLER_AVATAR", encoder.encode(LinkProviderUtils.getUserAvatarUrl(caller == null ? null : caller.getProfile())));
     templateContext.put("IS_GROUP", String.valueOf(MissedCallNotificationUtils.isGroupCall(notification)));
     templateContext.put("CALL_OWNER", encoder.encode(callOwner == null ? "" : callOwner));
-    templateContext.put("CALL_LINK", encoder.encode(LinkProviderUtils.getBaseUrl()
-        + MissedCallNotificationUtils.getCallLink(notification)));
+    templateContext.put("CALL_LINK", encoder.encode(MissedCallNotificationUtils.getAbsoluteCallLink(notification)));
     templateContext.put("NOTIFICATION_ID", notification.getId());
     templateContext.put("COMPANY_LINK", LinkProviderUtils.getBaseUrl());
 

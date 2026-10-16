@@ -36,6 +36,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 
 import jakarta.persistence.PersistenceException;
@@ -104,6 +107,57 @@ class WebConferencingServiceMissedCallTest {
   }
 
   @Test
+  void aCreatedAndStartedUserCallInvitesThePeerAndSchedulesTheCheck() throws Exception {
+    UserInfo caller = participant(CALLER, UserState.LEAVED);
+    UserInfo callee = participant(CALLEE, UserState.LEAVED);
+    stubCallCreation();
+    doReturn(new UserInfo(CALLER, "Root", "Root")).when(service)
+                                                  .createOwner(CALLER, WebConferencingService.OWNER_TYPE_USER, "Call", true, false, false, false);
+    doReturn(new LinkedHashSet<>(List.of(caller, callee))).when(service).createParticipants("pexip", List.of(CALLER, CALLEE));
+    doNothing().when(service).notifyUserCallStateChanged(any(CallInfo.class), anyString(), anyString());
+
+    CallInfo call = createStartedCall(WebConferencingService.OWNER_TYPE_USER, CALLER);
+
+    assertEquals(UserState.INVITED, callee.getState());
+    assertEquals(UserState.LEAVED, caller.getState());
+    verify(service).scheduleMissedCall(CALL_ID, CALLER, call.getLastDate());
+  }
+
+  @Test
+  void aCreatedAndStartedSpaceCallInvitesTheMembersButTheCaller() throws Exception {
+    UserInfo caller = participant(CALLER, null);
+    UserInfo callee = participant(CALLEE, null);
+    WebConferencingService.SpaceInfo space = groupOwner(WebConferencingService.SpaceInfo.class,
+                                                        WebConferencingService.OWNER_TYPE_SPACE,
+                                                        caller,
+                                                        callee);
+    stubCallCreation();
+    doReturn(space).when(service).spaceInfo("space1", CALL_ID);
+
+    CallInfo call = createStartedCall(WebConferencingService.OWNER_TYPE_SPACE, "space1");
+
+    assertEquals(UserState.INVITED, callee.getState());
+    assertEquals(UserState.LEAVED, caller.getState());
+    verify(service).scheduleMissedCall(CALL_ID, CALLER, call.getLastDate());
+  }
+
+  @Test
+  void aCreatedAndStartedPlannedEventCallInvitesNobody() throws Exception {
+    UserInfo callee = participant(CALLEE, null);
+    WebConferencingService.SpaceEventInfo event = groupOwner(WebConferencingService.SpaceEventInfo.class,
+                                                             WebConferencingService.OWNER_TYPE_SPACEEVENT,
+                                                             participant(CALLER, null),
+                                                             callee);
+    stubCallCreation();
+    doReturn(event).when(service).spaceEventInfo(eq("space1"), eq(CALL_ID), any(String[].class), any(String[].class));
+
+    createStartedCall(WebConferencingService.OWNER_TYPE_SPACEEVENT, "space1");
+
+    assertEquals(UserState.LEAVED, callee.getState());
+    verify(service, never()).scheduleMissedCall(anyString(), anyString(), any(Date.class));
+  }
+
+  @Test
   void aCallStartedWithoutAlertingInvitesNobody() throws Exception {
     CallInfo call = call(space(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.LEAVED));
     stubStorage();
@@ -141,9 +195,8 @@ class WebConferencingServiceMissedCallTest {
 
   @Test
   void theCheckRunsOnceTheIncomingCallAlertTimedOut() {
-    service.stop();
-    service = newService("1");
     Date startedAt = new Date();
+    doReturn(1000L).when(service).getMissedCallCheckDelay();
     doNothing().when(service).checkMissedCall(anyString(), anyString(), any(Date.class));
 
     service.scheduleMissedCall(CALL_ID, CALLER, startedAt);
@@ -285,6 +338,12 @@ class WebConferencingServiceMissedCallTest {
   }
 
   @Test
+  void theCheckRunsAMarginAfterTheIncomingCallTimeout() {
+    assertEquals((WebConferencingService.DEFAULT_INCOMING_CALL_TIMEOUT + WebConferencingService.MISSED_CALL_CHECK_MARGIN) * 1000,
+                 service.getMissedCallCheckDelay());
+  }
+
+  @Test
   void stoppingTheServiceStopsTheMissedCallTimer() {
     service.stop();
 
@@ -334,6 +393,33 @@ class WebConferencingServiceMissedCallTest {
                                           initParams,
                                           null,
                                           mock(CodecInitializer.class)));
+  }
+
+  private void stubCallCreation() throws Exception {
+    doReturn(CALLER).when(service).currentUserId();
+    doReturn(null).when(service).findGroupCallId(anyString());
+    doNothing().when(service).invalidateCall(anyString(), anyBoolean());
+    doReturn(new LinkedHashSet<>()).when(service).createOrigins(anyString(), any(), any());
+    doNothing().when(service).createCall(any(CallInfo.class));
+    doNothing().when(service).scheduleMissedCall(anyString(), anyString(), any(Date.class));
+  }
+
+  private CallInfo createStartedCall(String ownerType, String ownerId) throws Exception {
+    return service.createCall(CALL_ID, ownerId, ownerType, "Call", "pexip", List.of(CALLER, CALLEE), List.of(), true, null, null);
+  }
+
+  private <T extends GroupInfo> T groupOwner(Class<T> type, String ownerType, UserInfo... members) {
+    T group = mock(type);
+    Map<String, UserInfo> byId = new LinkedHashMap<>();
+    for (UserInfo member : members) {
+      byId.put(member.getId(), member);
+    }
+    when(group.getMembers()).thenReturn(byId);
+    when(group.getType()).thenReturn(ownerType);
+    when(group.isGroup()).thenReturn(true);
+    when(group.getId()).thenReturn("space1");
+    when(group.getTitle()).thenReturn("Space 1");
+    return group;
   }
 
   private void stubStorage() throws Exception {

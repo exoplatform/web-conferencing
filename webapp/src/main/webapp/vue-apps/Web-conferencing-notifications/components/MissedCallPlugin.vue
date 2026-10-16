@@ -124,12 +124,14 @@ export default {
       // The call may have ended since the notification was shown
       return this.readCallState().then(state => {
         this.callState = state;
-        if (state !== STARTED) {
+        if (state === ENDED) {
           this.closeWindow(callWindow);
           this.alert(this.$t('Notification.webconferencing.missedcall.ended'), 'warning');
-          return;
+        } else if (state === STARTED) {
+          return this.getProvider().then(provider => provider.joinCall(this.callId));
+        } else {
+          return Promise.reject(new Error(`Unknown state of the call ${this.callId}`));
         }
-        return this.getProvider().then(provider => provider.joinCall(this.callId));
       });
     },
     callAgain() {
@@ -143,8 +145,10 @@ export default {
           return null;
         }
         return this.withTimeout(new Promise(resolve => {
-          // A 1:1 call that ended is removed: an unknown call has ended too
-          core.getCall(this.callId).then(call => resolve(call && call.state || ENDED), () => resolve(ENDED));
+          // A 1:1 call that ended is removed: a call not found has ended too, any other error leaves its state unknown
+          core.getCall(this.callId).then(
+            call => resolve(call && call.state || null),
+            error => resolve(error && error.code === 'NOT_FOUND_ERROR' && ENDED || null));
         }), null, CALL_STATE_TIMEOUT_MS);
       });
     },
@@ -165,8 +169,17 @@ export default {
       return element.innerHTML;
     },
     closeWindow(callWindow) {
-      if (callWindow && !callWindow.closed) {
+      // Only the blank window of this click is closed, never a call window the user is already in
+      if (callWindow && !callWindow.closed && this.isBlankWindow(callWindow)) {
         callWindow.close();
+      }
+    },
+    isBlankWindow(callWindow) {
+      try {
+        return callWindow.location.href === 'about:blank';
+      } catch (e) {
+        // A window on another origin, the call page of the provider, is not blank
+        return false;
       }
     },
     alert(message, type) {
