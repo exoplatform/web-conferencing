@@ -21,6 +21,7 @@ package org.exoplatform.webconferencing.dao;
 import java.util.Collections;
 import java.util.List;
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceException;
 import jakarta.persistence.Query;
@@ -94,6 +95,35 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
             .setParameter("callId", callId);
 
     return query.executeUpdate();
+  }
+
+  /**
+   * Updates the state of a call participant only while it still has the expected state, so that among
+   * concurrent writers (several cluster nodes, or a join committed meanwhile) only one changes it.
+   *
+   * @param callId the call id
+   * @param partId the participant id
+   * @param expectedState the state the participant must still have
+   * @param newState the state to set
+   * @return the number of updated participants, 1 or 0
+   */
+  @ExoTransactional
+  public int updateParticipantState(String callId, String partId, String expectedState, String newState) {
+    return updateParticipantState(getEntityManager(), callId, partId, expectedState, newState);
+  }
+
+  static int updateParticipantState(EntityManager entityManager,
+                                    String callId,
+                                    String partId,
+                                    String expectedState,
+                                    String newState) {
+    return entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :newState"
+        + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :expectedState")
+                        .setParameter("newState", newState)
+                        .setParameter("callId", callId)
+                        .setParameter("partId", partId)
+                        .setParameter("expectedState", expectedState)
+                        .executeUpdate();
   }
 
   /**

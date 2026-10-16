@@ -1,0 +1,351 @@
+/*
+ * Copyright (C) 2026 eXo Platform SAS.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+package org.exoplatform.webconferencing;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Date;
+import java.util.Map;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.container.xml.PropertiesParam;
+import org.exoplatform.container.xml.ValueParam;
+import org.exoplatform.services.listener.ListenerService;
+import org.exoplatform.web.security.codec.CodecInitializer;
+import org.exoplatform.webconferencing.dao.ParticipantDAO;
+
+/**
+ * A participant alerted of a started call who neither joins nor declines it
+ * before the incoming call alert times out missed the call: the call start
+ * marks the alerted participants invited and schedules the check, and the check
+ * marks each still invited participant missed, broadcasting the missed call
+ * once per participant.
+ */
+class WebConferencingServiceMissedCallTest {
+
+  private static final String    CALL_ID   = "pexip-call-1";
+
+  private static final String    CALLER    = "root";
+
+  private static final String    CALLEE    = "john";
+
+  private static final String    OTHER     = "mary";
+
+  private static final String    CLIENT_ID = "client-1";
+
+  private WebConferencingService service;
+
+  private ListenerService        listenerService;
+
+  private ParticipantDAO         participantsStorage;
+
+  @BeforeEach
+  void setUp() {
+    service = newService(null);
+  }
+
+  @AfterEach
+  void tearDown() {
+    service.stop();
+  }
+
+  @Test
+  void anAlertedCallStartInvitesTheOtherParticipantsAndSchedulesTheCheck() throws Exception {
+    CallInfo call = call(space(),
+                         participant(CALLER, UserState.LEAVED),
+                         participant(CALLEE, UserState.LEAVED),
+                         participant(OTHER, UserState.DECLINED));
+    stubStorage();
+
+    service.startCall(call, CALLER, CLIENT_ID, true);
+
+    assertEquals(UserState.JOINED, stateOf(call, CALLER));
+    assertEquals(UserState.INVITED, stateOf(call, CALLEE));
+    assertEquals(UserState.INVITED, stateOf(call, OTHER));
+    verify(service).scheduleMissedCall(CALL_ID, CALLER, call.getLastDate());
+  }
+
+  @Test
+  void aCallStartedWithoutAlertingInvitesNobody() throws Exception {
+    CallInfo call = call(space(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.LEAVED));
+    stubStorage();
+
+    service.startCall(call, CALLER, CLIENT_ID, false);
+
+    assertEquals(UserState.LEAVED, stateOf(call, CALLEE));
+    verify(service, never()).scheduleMissedCall(anyString(), anyString(), any(Date.class));
+  }
+
+  @Test
+  void aPlannedEventCallStartInvitesNobody() throws Exception {
+    CallInfo call = call(group(WebConferencingService.OWNER_TYPE_SPACEEVENT),
+                         participant(CALLER, UserState.LEAVED),
+                         participant(CALLEE, UserState.LEAVED));
+    stubStorage();
+
+    service.startCall(call, CALLER, CLIENT_ID, true);
+
+    assertEquals(UserState.LEAVED, stateOf(call, CALLEE));
+    verify(service, never()).scheduleMissedCall(anyString(), anyString(), any(Date.class));
+  }
+
+  @Test
+  void aGuestIsNeverInvited() throws Exception {
+    UserInfo guest = new GuestInfo("guest-1", "Guest", "One");
+    guest.setState(UserState.LEAVED);
+    CallInfo call = call(space(), participant(CALLER, UserState.LEAVED), guest);
+    stubStorage();
+
+    service.startCall(call, CALLER, CLIENT_ID, true);
+
+    assertEquals(UserState.LEAVED, guest.getState());
+  }
+
+  @Test
+  void theCheckRunsOnceTheIncomingCallAlertTimedOut() {
+    service.stop();
+    service = newService("1");
+    Date startedAt = new Date();
+    doNothing().when(service).checkMissedCall(anyString(), anyString(), any(Date.class));
+
+    service.scheduleMissedCall(CALL_ID, CALLER, startedAt);
+
+    verify(service, never()).checkMissedCall(anyString(), anyString(), any(Date.class));
+    verify(service, timeout(3000)).checkMissedCall(CALL_ID, CALLER, startedAt);
+  }
+
+  @Test
+  void aStillInvitedParticipantMissedTheCall() throws Exception {
+    Date startedAt = new Date();
+    CallInfo call = startedCall(startedAt,
+                                participant(CALLER, UserState.JOINED),
+                                participant(CALLEE, UserState.INVITED),
+                                participant(OTHER, UserState.JOINED));
+    when(participantsStorage.updateParticipantState(CALL_ID, CALLEE, UserState.INVITED, UserState.MISSED)).thenReturn(1);
+
+    service.notifyMissedCall(CALL_ID, CALLER, startedAt);
+
+    assertEquals(UserState.MISSED, stateOf(call, CALLEE));
+    verify(listenerService).broadcast(WebConferencingService.EVENT_CALL_MISSED,
+                                      call,
+                                      Map.of(WebConferencingService.EVENT_DATA_USER_ID,
+                                             CALLEE,
+                                             WebConferencingService.EVENT_DATA_CALLER_ID,
+                                             CALLER,
+                                             "status",
+                                             WebConferencingService.STATUS_OK));
+    verify(participantsStorage, never()).updateParticipantState(eq(CALL_ID), eq(OTHER), anyString(), anyString());
+  }
+
+  @Test
+  void aParticipantUpdatedMeanwhileIsNotNotified() throws Exception {
+    Date startedAt = new Date();
+    CallInfo call = startedCall(startedAt, participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.INVITED));
+    when(participantsStorage.updateParticipantState(CALL_ID, CALLEE, UserState.INVITED, UserState.MISSED)).thenReturn(0);
+
+    service.notifyMissedCall(CALL_ID, CALLER, startedAt);
+
+    assertEquals(UserState.INVITED, stateOf(call, CALLEE));
+    verifyNoMissedCallBroadcast();
+  }
+
+  @Test
+  void aParticipantWhoAnsweredOrDeclinedIsNotNotified() throws Exception {
+    Date startedAt = new Date();
+    startedCall(startedAt,
+                participant(CALLER, UserState.LEAVED),
+                participant(CALLEE, UserState.DECLINED),
+                participant(OTHER, UserState.LEAVED));
+
+    service.notifyMissedCall(CALL_ID, CALLER, startedAt);
+
+    verify(participantsStorage, never()).updateParticipantState(anyString(), anyString(), anyString(), anyString());
+    verifyNoMissedCallBroadcast();
+  }
+
+  @Test
+  void nobodyIsNotifiedOfACallStoppedMeanwhile() throws Exception {
+    Date startedAt = new Date();
+    CallInfo call = startedCall(startedAt, participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.INVITED));
+    call.setState(CallState.STOPPED);
+
+    service.notifyMissedCall(CALL_ID, CALLER, startedAt);
+
+    verify(participantsStorage, never()).updateParticipantState(anyString(), anyString(), anyString(), anyString());
+    verifyNoMissedCallBroadcast();
+  }
+
+  @Test
+  void nobodyIsNotifiedOfACallRemovedMeanwhile() throws Exception {
+    doReturn(null).when(service).getCall(CALL_ID);
+
+    service.notifyMissedCall(CALL_ID, CALLER, new Date());
+
+    verifyNoMissedCallBroadcast();
+  }
+
+  @Test
+  void theCheckOfAnEarlierStartOfACallStartedAgainDoesNothing() throws Exception {
+    Date startedAt = new Date(System.currentTimeMillis() - 30000);
+    startedCall(new Date(), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.INVITED));
+
+    service.notifyMissedCall(CALL_ID, CALLER, startedAt);
+
+    verify(participantsStorage, never()).updateParticipantState(anyString(), anyString(), anyString(), anyString());
+    verifyNoMissedCallBroadcast();
+  }
+
+  @Test
+  void aGroupCallStopsWhenItsLastJoinedParticipantLeavesAndTheOthersWereInvitedOrMissedIt() throws Exception {
+    CallInfo call = startedCall(new Date(),
+                                participant(CALLER, UserState.JOINED),
+                                participant(CALLEE, UserState.INVITED),
+                                participant(OTHER, UserState.MISSED));
+    doNothing().when(service).updateParticipant(anyString(), any(UserInfo.class));
+    doNothing().when(service).stopCall(any(CallInfo.class), anyString(), anyBoolean());
+
+    service.leaveCall(CALL_ID, CALLER, CLIENT_ID);
+
+    verify(service).stopCall(call, CALLER, false);
+  }
+
+  @Test
+  void theIncomingCallTimeoutIsConfigurable() {
+    assertEquals(WebConferencingService.DEFAULT_INCOMING_CALL_TIMEOUT, service.getIncomingCallTimeout());
+    assertEquals(120, timeoutOf("120"));
+    assertEquals(WebConferencingService.DEFAULT_INCOMING_CALL_TIMEOUT, timeoutOf("not-a-number"));
+    assertEquals(WebConferencingService.DEFAULT_INCOMING_CALL_TIMEOUT, timeoutOf("0"));
+  }
+
+  @Test
+  void stoppingTheServiceStopsTheMissedCallTimer() {
+    service.stop();
+
+    assertTrue(service.missedCallTimer.isShutdown());
+  }
+
+  private long timeoutOf(String value) {
+    WebConferencingService other = newService(value);
+    try {
+      return other.getIncomingCallTimeout();
+    } finally {
+      other.stop();
+    }
+  }
+
+  private WebConferencingService newService(String timeout) {
+    InitParams initParams = mock(InitParams.class);
+    PropertiesParam jwtParams = new PropertiesParam();
+    jwtParams.setProperty(WebConferencingService.SECRET_KEY, "secret");
+    when(initParams.getPropertiesParam(WebConferencingService.JWT_CONFIGURATION_PROPERTIES)).thenReturn(jwtParams);
+    if (timeout != null) {
+      ValueParam timeoutParam = new ValueParam();
+      timeoutParam.setValue(timeout);
+      when(initParams.getValueParam(WebConferencingService.INCOMING_CALL_TIMEOUT)).thenReturn(timeoutParam);
+    }
+    listenerService = mock(ListenerService.class);
+    participantsStorage = mock(ParticipantDAO.class);
+    return spy(new WebConferencingService(null,
+                                          null,
+                                          listenerService,
+                                          null,
+                                          null,
+                                          participantsStorage,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          initParams,
+                                          null,
+                                          mock(CodecInitializer.class)));
+  }
+
+  private void stubStorage() throws Exception {
+    doNothing().when(service).syncMembersAndParticipants(any(CallInfo.class));
+    doNothing().when(service).updateCallAndParticipants(any(CallInfo.class));
+    doNothing().when(service).scheduleMissedCall(anyString(), anyString(), any(Date.class));
+  }
+
+  @SuppressWarnings("unchecked")
+  private void verifyNoMissedCallBroadcast() throws Exception {
+    verify(listenerService, never()).broadcast(eq(WebConferencingService.EVENT_CALL_MISSED), any(CallInfo.class), anyMap());
+  }
+
+  private CallInfo startedCall(Date lastDate, UserInfo... participants) throws Exception {
+    CallInfo call = call(space(), participants);
+    call.setState(CallState.STARTED);
+    call.setLastDate(lastDate);
+    doReturn(call).when(service).getCall(CALL_ID);
+    return call;
+  }
+
+  private CallInfo call(IdentityInfo owner, UserInfo... participants) {
+    CallInfo call = new CallInfo(CALL_ID, "Call", owner, "pexip");
+    for (UserInfo participant : participants) {
+      call.addParticipant(participant);
+    }
+    return call;
+  }
+
+  private UserInfo participant(String id, String state) {
+    UserInfo participant = new UserInfo(id, id, id);
+    participant.setState(state);
+    return participant;
+  }
+
+  private GroupInfo space() {
+    return group(WebConferencingService.OWNER_TYPE_SPACE);
+  }
+
+  private GroupInfo group(String type) {
+    return new GroupInfo("space1", "Space 1") {
+      @Override
+      public String getType() {
+        return type;
+      }
+    };
+  }
+
+  private String stateOf(CallInfo call, String id) {
+    return call.getParticipants().stream().filter(part -> part.getId().equals(id)).findFirst().orElseThrow().getState();
+  }
+}
