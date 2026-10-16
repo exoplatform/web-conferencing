@@ -157,6 +157,7 @@ public class Utils {
                                 spaceRoomName,
                                 webConferencing.getProviderConfigurations());
     }
+    context.setIncomingCallTimeout(webConferencing.getIncomingCallTimeout());
     if (locale != null) {
       context.addMessages(getResourceMessages("locale.webconferencing.WebConferencingClient", locale));
     }

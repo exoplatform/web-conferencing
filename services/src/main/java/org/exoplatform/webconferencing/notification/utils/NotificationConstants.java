@@ -36,6 +36,14 @@ public class NotificationConstants {
 
     public static final ArgumentLiteral<String> CALL_OWNER  = new ArgumentLiteral<>(String.class, "CALL_OWNER");
 
+    public static final ArgumentLiteral<String> CALL_ID     = new ArgumentLiteral<>(String.class, "CALL_ID");
+
+    public static final ArgumentLiteral<String> PROVIDER_TYPE = new ArgumentLiteral<>(String.class, "PROVIDER_TYPE");
+
+    public static final ArgumentLiteral<String> CALLER_ID   = new ArgumentLiteral<>(String.class, "CALLER_ID");
+
+    public static final ArgumentLiteral<String> OWNER_ID    = new ArgumentLiteral<>(String.class, "OWNER_ID");
+
     private NotificationConstants() {
         throw new IllegalStateException("Utility class");
     }

@@ -19,8 +19,10 @@
 package org.exoplatform.webconferencing.dao;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceException;
 import jakarta.persistence.Query;
@@ -28,6 +30,8 @@ import jakarta.persistence.TypedQuery;
 
 import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.persistence.impl.GenericDAOJPAImpl;
+import org.exoplatform.webconferencing.CallState;
+import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
 
@@ -94,6 +98,36 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
             .setParameter("callId", callId);
 
     return query.executeUpdate();
+  }
+
+  /**
+   * Marks a call participant as having missed the call, only while the participant is still invited and the
+   * call still started, from a start not later than the given date: among concurrent writers (several cluster
+   * nodes, a join or a decline committed meanwhile, the call stopped or started again), the participant is
+   * marked at most once, and never for a start of the call later than the given date.
+   *
+   * @param callId the call id
+   * @param partId the participant id
+   * @param latestStart the latest start date of the call the participant may have missed
+   * @return the number of updated participants, 1 or 0
+   */
+  @ExoTransactional
+  public int markParticipantMissed(String callId, String partId, Date latestStart) {
+    return markParticipantMissed(getEntityManager(), callId, partId, latestStart);
+  }
+
+  static int markParticipantMissed(EntityManager entityManager, String callId, String partId, Date latestStart) {
+    return entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :missed"
+        + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :invited"
+        + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.state = :started"
+        + " AND c.lastDate <= :latestStart)")
+                        .setParameter("missed", UserState.MISSED)
+                        .setParameter("callId", callId)
+                        .setParameter("partId", partId)
+                        .setParameter("invited", UserState.INVITED)
+                        .setParameter("started", CallState.STARTED)
+                        .setParameter("latestStart", latestStart)
+                        .executeUpdate();
   }
 
   /**

@@ -20,6 +20,7 @@ extensionRegistry.registerExtension('WebNotification', 'notification-group-exten
   name: 'webConferencing',
   plugins: [
     'CallRecordingPlugin',
+    'MissedCallPlugin',
   ],
   icon: 'fa-solid fa-video',
 });
@@ -28,4 +29,10 @@ extensionRegistry.registerExtension('WebNotification', 'notification-content-ext
   type: 'CallRecordingPlugin',
   rank: 10,
   vueComponent: Vue.options.components['call-recording-notification'],
+});
+
+extensionRegistry.registerExtension('WebNotification', 'notification-content-extension', {
+  type: 'MissedCallPlugin',
+  rank: 10,
+  vueComponent: Vue.options.components['missed-call-notification'],
 });

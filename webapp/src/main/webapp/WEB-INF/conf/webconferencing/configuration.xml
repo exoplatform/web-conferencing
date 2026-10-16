@@ -27,6 +27,11 @@
   <component>
     <type>org.exoplatform.webconferencing.WebConferencingService</type>
     <init-params>
+      <value-param>
+        <name>incoming-call-timeout</name>
+        <description>How long, in seconds, a started call alerts its participants before they missed it</description>
+        <value>${webconferencing.incomingCall.timeout:60}</value>
+      </value-param>
       <properties-param>
         <name>jwt-configuration</name>
         <property name="secret-key" value="${webconferencing.jwt.secret:mQzPudDBpSAqUwM0FY2r86gNAd6be5tN1xqwdFDOb4Us1DT4Tm}" />
