@@ -32,6 +32,9 @@ public class UserState {
   /** The Constant LEAVED. */
   public static final String LEAVED = "leaved";
 
+  /** The Constant DECLINED: the user declined the incoming call, which goes on for its other participants. */
+  public static final String DECLINED = "declined";
+
   /** The user id. */
   protected final String     userId;
 

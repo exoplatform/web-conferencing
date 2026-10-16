@@ -160,6 +160,9 @@ public class WebConferencingService implements Startable {
   /** The operation call leaved. */
   public static final String          OPERATION_CALL_LEAVED        = "call-leaved";
 
+  /** The operation call declined. */
+  public static final String          OPERATION_CALL_DECLINED      = "call-declined";
+
   /** The operation call stopped. */
   public static final String          OPERATION_CALL_STOPPED       = "call-stopped";
 
@@ -1661,7 +1664,7 @@ public class WebConferencingService implements Startable {
                 leavedNum++;
               } else {
                 // if null - user hasn't joined
-                if (part.getState() == null || UserState.LEAVED.equals(part.getState())) {
+                if (isGone(part)) {
                   leavedNum++;
                 }
               }
@@ -1694,8 +1697,7 @@ public class WebConferencingService implements Startable {
               if (leavedNum == call.getParticipants().size() || call.getParticipants().size() == 0
                   || call.getParticipants()
                          .stream()
-                         .allMatch(p -> p.getType().equals(GuestInfo.TYPE_NAME) || p.getState() == null
-                             || UserState.LEAVED.equals(p.getState()))
+                         .allMatch(p -> p.getType().equals(GuestInfo.TYPE_NAME) || isGone(p))
                   /*|| call.getParticipants().stream().allMatch(p -> p.getType() == GuestInfo.TYPE_NAME)*/) {
                 // Stop when all group members leave the call
                 // TODO it would be better UX when we let guest to run the call even without exo users,
@@ -1745,6 +1747,62 @@ public class WebConferencingService implements Startable {
       LOG.warn("Call " + callId + " not found to leave it " + partId);
     }
     return call;
+  }
+
+  /**
+   * Marks a user participant of a started call as having declined it. The call goes on for its other
+   * participants, a P2P one included: its state is unchanged and it is never stopped here. Only the user
+   * listeners of the decliner are notified, as having left the call, so that the incoming call alert closes
+   * on every client of that user. A participant read as joined is left untouched: the decline comes from an
+   * alert still shown after a join from another client. The read and the write take no lock, as in
+   * {@link #joinCall(String, String, String)} and {@link #leaveCall(String, String, String)}: a join of the
+   * same user committed between them is overwritten. The decliner can still join the call later.
+   *
+   * @param callId the call id
+   * @param partId the participant id, the user declining the call
+   * @param clientId the client id
+   * @return the call info
+   * @throws CallNotFoundException if call not found
+   * @throws ParticipantNotFoundException if the user is not a participant of the call
+   * @throws InvalidCallException if call in erroneous state and cannot be used, details are in caused
+   *           exception
+   */
+  public CallInfo declineCall(String callId, String partId, String clientId) throws CallNotFoundException,
+                                                                             ParticipantNotFoundException,
+                                                                             InvalidCallException {
+    final long opStart = System.currentTimeMillis();
+    CallInfo call = getCall(callId);
+    if (call == null) {
+      throw new CallNotFoundException("Call not found: " + callId);
+    }
+    UserInfo declined = call.getParticipants()
+                            .stream()
+                            .filter(part -> UserInfo.TYPE_NAME.equals(part.getType()) && part.getId().equals(partId))
+                            .findFirst()
+                            .orElseThrow(() -> new ParticipantNotFoundException("Cannot decline the call with not allowed participant: "
+                                + partId + ", call: " + callId));
+    if (CallState.STARTED.equals(call.getState()) && !UserState.JOINED.equals(declined.getState())) {
+      declined.setState(UserState.DECLINED);
+      declined.setClientId(null);
+      try {
+        updateParticipant(callId, declined);
+      } catch (StorageException e) {
+        throw new InvalidCallException("Error declining call: " + callId, e);
+      }
+      fireUserCallLeaved(callId, call.getProviderType(), call.getOwner().getId(), call.getOwner().getType(), partId, partId);
+      LOG.info(metricMessage(partId, call, OPERATION_CALL_DECLINED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
+    }
+    return call;
+  }
+
+  /**
+   * Tells if a call participant is not in the call: never joined, left or declined it.
+   *
+   * @param part the participant
+   * @return <code>true</code> if the participant is not in the call
+   */
+  protected boolean isGone(UserInfo part) {
+    return part.getState() == null || UserState.LEAVED.equals(part.getState()) || UserState.DECLINED.equals(part.getState());
   }
 
   /**
