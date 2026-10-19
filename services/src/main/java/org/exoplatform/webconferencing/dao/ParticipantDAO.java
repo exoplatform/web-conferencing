@@ -157,6 +157,33 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
                         .executeUpdate();
   }
 
+  /**
+   * Marks a participant who declined a call as notified of the decline, only while still declined and the call
+   * from a start not later than the given date, whatever its state: a call started again has its participants
+   * alerted again.
+   *
+   * @param callId the call id
+   * @param partId the participant id
+   * @param latestStart the latest start date of the call the participant may be marked for
+   * @return the number of updated participants, 1 or 0
+   */
+  @ExoTransactional
+  public int markParticipantDeclinedNotified(String callId, String partId, Date latestStart) {
+    return markParticipantDeclinedNotified(getEntityManager(), callId, partId, latestStart);
+  }
+
+  static int markParticipantDeclinedNotified(EntityManager entityManager, String callId, String partId, Date latestStart) {
+    return entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :notified"
+        + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :declined"
+        + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.lastDate <= :latestStart)")
+                        .setParameter("notified", UserState.DECLINED_NOTIFIED)
+                        .setParameter("callId", callId)
+                        .setParameter("partId", partId)
+                        .setParameter("declined", UserState.DECLINED)
+                        .setParameter("latestStart", latestStart)
+                        .executeUpdate();
+  }
+
 
   /**
    * Clear the storage.

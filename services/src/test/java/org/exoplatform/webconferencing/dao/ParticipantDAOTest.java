@@ -184,6 +184,78 @@ class ParticipantDAOTest {
     assertEquals(UserState.INVITED, stateOf(CALL_ID, JOHN));
   }
 
+  @Test
+  void marksTheDeclinedParticipantOfTheCallOnlyAsNotified() {
+    setState(CALL_ID, JOHN, UserState.DECLINED);
+    setState(OTHER_CALL_ID, JOHN, UserState.DECLINED);
+
+    assertEquals(1, markDeclinedNotified(CALL_ID, JOHN, LATEST_START));
+
+    assertEquals(UserState.DECLINED_NOTIFIED, stateOf(CALL_ID, JOHN));
+    assertEquals(UserState.JOINED, stateOf(CALL_ID, MARY));
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, PAUL));
+    assertEquals(UserState.DECLINED, stateOf(OTHER_CALL_ID, JOHN));
+  }
+
+  @Test
+  void marksADeclineAsNotifiedOnceOnly() {
+    setState(CALL_ID, JOHN, UserState.DECLINED);
+    assertEquals(1, markDeclinedNotified(CALL_ID, JOHN, LATEST_START));
+
+    assertEquals(0, markDeclinedNotified(CALL_ID, JOHN, LATEST_START));
+    assertEquals(UserState.DECLINED_NOTIFIED, stateOf(CALL_ID, JOHN));
+  }
+
+  @Test
+  void leavesAParticipantWhoDidNotDeclineUnchanged() {
+    assertEquals(0, markDeclinedNotified(CALL_ID, PAUL, LATEST_START));
+    assertEquals(0, markDeclinedNotified(CALL_ID, MARY, LATEST_START));
+
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, PAUL));
+    assertEquals(UserState.JOINED, stateOf(CALL_ID, MARY));
+  }
+
+  @Test
+  void marksADeclineOfACallStartedUpToTheLatestStart() {
+    setState(CALL_ID, JOHN, UserState.DECLINED);
+
+    assertEquals(1, markDeclinedNotified(CALL_ID, JOHN, STARTED_AT));
+  }
+
+  @Test
+  void marksNoDeclineOfACallStartedAgainLater() {
+    setState(CALL_ID, JOHN, UserState.DECLINED);
+
+    assertEquals(0, markDeclinedNotified(CALL_ID, JOHN, new Date(STARTED_AT.getTime() - 1)));
+
+    assertEquals(UserState.DECLINED, stateOf(CALL_ID, JOHN));
+  }
+
+  @Test
+  void marksTheDeclineOfAStoppedCallAsNotified() {
+    setState(CALL_ID, JOHN, UserState.DECLINED);
+    stop(CALL_ID);
+
+    assertEquals(1, markDeclinedNotified(CALL_ID, JOHN, LATEST_START));
+
+    assertEquals(UserState.DECLINED_NOTIFIED, stateOf(CALL_ID, JOHN));
+  }
+
+  private void setState(String callId, String partId, String state) {
+    entityManager.getTransaction().begin();
+    entityManager.find(ParticipantEntity.class, new ParticipantId(partId, callId)).setState(state);
+    entityManager.getTransaction().commit();
+    entityManager.clear();
+  }
+
+  private int markDeclinedNotified(String callId, String partId, Date latestStart) {
+    entityManager.getTransaction().begin();
+    int updated = ParticipantDAO.markParticipantDeclinedNotified(entityManager, callId, partId, latestStart);
+    entityManager.getTransaction().commit();
+    entityManager.clear();
+    return updated;
+  }
+
   private void stop(String callId) {
     entityManager.getTransaction().begin();
     entityManager.find(CallEntity.class, callId).setState(CallState.STOPPED);

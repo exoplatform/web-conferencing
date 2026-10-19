@@ -207,6 +207,21 @@ public class WebConferencingService implements Startable {
    */
   public static final String    EVENT_CALL_MISSED            = "exo.webconferencing.callMissed";
 
+  /**
+   * Broadcast once per participant who declines a call that alerted its participants. The source is the call,
+   * the data holds the user who started the call in {@link #EVENT_DATA_USER_ID}, the one the decline is reported
+   * to, and the participant who declined in {@link #EVENT_DATA_DECLINER_ID}.
+   */
+  public static final String    EVENT_CALL_DECLINED          = "exo.webconferencing.callDeclined";
+
+  /**
+   * Broadcast once per call start whose incoming call alert closed with at least one decline: when the alert
+   * timed out, or when the call stopped before. The source is the call, the data holds the user who started the
+   * call in {@link #EVENT_DATA_USER_ID} and the participants who declined it in
+   * {@link #EVENT_DATA_DECLINER_IDS}.
+   */
+  public static final String    EVENT_CALL_DECLINES_CLOSED   = "exo.webconferencing.callDeclinesClosed";
+
   /** The key of the user concerned by a call event, in the event data. */
   public static final String    EVENT_DATA_USER_ID           = "user_id";
 
@@ -218,6 +233,15 @@ public class WebConferencingService implements Startable {
    * participant missed it: <code>"true"</code>, absent otherwise.
    */
   public static final String    EVENT_DATA_CALL_ENDED        = "call_ended";
+
+  /** The key of the participant who declined the call, in the data of {@link #EVENT_CALL_DECLINED}. */
+  public static final String    EVENT_DATA_DECLINER_ID       = "decliner_id";
+
+  /**
+   * The key of the participants who declined the call, comma separated, in the data of
+   * {@link #EVENT_CALL_DECLINES_CLOSED}.
+   */
+  public static final String    EVENT_DATA_DECLINER_IDS      = "decliner_ids";
 
   public static final String    ROOM_DEFAULT_AVATAR_URL      = "/webconferencing/skin/images/room-default.jpg";
 
@@ -1412,6 +1436,9 @@ public class WebConferencingService implements Startable {
       // participants: they are marked before, while the call is still started, one update each in this request
       invitedIds = markRemovedCallMissed(call, invitedIds);
     }
+    // The incoming call alert closes with the call: its declines are reported to the caller once marked, before
+    // a removal loses them
+    List<String> declinerIds = markStoppedDeclinesClosed(call);
     boolean stopped = false;
     try {
       // Stop the call in DB
@@ -1440,6 +1467,10 @@ public class WebConferencingService implements Startable {
       // The participants of a removed call are already marked: they missed it even when the removal failed
       if ((stopped || remove) && !invitedIds.isEmpty() && call.getCallerId() != null) {
         scheduleStoppedMissedCall(call, invitedIds, remove);
+      }
+      // The marked declines are reported whatever the stop's outcome: no later check finds them declined
+      if (!declinerIds.isEmpty()) {
+        scheduleStoppedDeclinesClosed(call, declinerIds);
       }
     }
   }
@@ -1880,7 +1911,10 @@ public class WebConferencingService implements Startable {
    * on every client of that user. A participant read as joined is left untouched: the decline comes from an
    * alert still shown after a join from another client. The read and the write take no lock, as in
    * {@link #joinCall(String, String, String)} and {@link #leaveCall(String, String, String)}: a join of the
-   * same user committed between them is overwritten. The decliner can still join the call later.
+   * same user committed between them is overwritten. The decliner can still join the call later. The first
+   * decline of a participant, on a call that alerted its participants (see {@link CallInfo#getCallerId()}), is
+   * broadcast as {@link #EVENT_CALL_DECLINED}, once committed; a decline from another client of a participant
+   * who already declined changes nothing but the alert of that client.
    *
    * @param callId the call id
    * @param partId the participant id, the user declining the call
@@ -1906,17 +1940,47 @@ public class WebConferencingService implements Startable {
                             .orElseThrow(() -> new ParticipantNotFoundException("Cannot decline the call with not allowed participant: "
                                 + partId + ", call: " + callId));
     if (CallState.STARTED.equals(call.getState()) && !UserState.JOINED.equals(declined.getState())) {
-      declined.setState(UserState.DECLINED);
-      declined.setClientId(null);
-      try {
-        updateParticipant(callId, declined);
-      } catch (StorageException e) {
-        throw new InvalidCallException("Error declining call: " + callId, e);
+      // A participant who already declined, from another client, keeps the state the caller was notified of
+      boolean declinedBefore = isDeclined(declined);
+      if (!declinedBefore) {
+        declined.setState(UserState.DECLINED);
+        declined.setClientId(null);
+        try {
+          updateParticipant(callId, declined);
+        } catch (StorageException e) {
+          throw new InvalidCallException("Error declining call: " + callId, e);
+        }
       }
       fireUserCallLeaved(callId, call.getProviderType(), call.getOwner().getId(), call.getOwner().getType(), partId, partId);
       LOG.info(metricMessage(partId, call, OPERATION_CALL_DECLINED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
+      if (!declinedBefore && call.getCallerId() != null && !call.getCallerId().equals(partId)) {
+        broadcastCallDeclined(call, partId);
+      }
     }
     return call;
+  }
+
+  /**
+   * Tells if a call participant declined the call, whether the caller was already sent the email grouping the
+   * declines or not.
+   *
+   * @param part the participant
+   * @return <code>true</code> if the participant declined the call
+   */
+  protected boolean isDeclined(UserInfo part) {
+    return UserState.DECLINED.equals(part.getState()) || UserState.DECLINED_NOTIFIED.equals(part.getState());
+  }
+
+  private void broadcastCallDeclined(CallInfo call, String partId) {
+    Map<String, String> info = new HashMap<>();
+    info.put(EVENT_DATA_USER_ID, call.getCallerId());
+    info.put(EVENT_DATA_DECLINER_ID, partId);
+    info.put("status", STATUS_OK);
+    try {
+      listenerService.broadcast(EVENT_CALL_DECLINED, call, info);
+    } catch (Exception e) {
+      LOG.warn("Error broadcasting the decline of call {} by {}", call.getId(), partId, e);
+    }
   }
 
   /**
@@ -1926,7 +1990,7 @@ public class WebConferencingService implements Startable {
    * @return <code>true</code> if the participant is not in the call
    */
   protected boolean isGone(UserInfo part) {
-    return part.getState() == null || UserState.LEAVED.equals(part.getState()) || UserState.DECLINED.equals(part.getState())
+    return part.getState() == null || UserState.LEAVED.equals(part.getState()) || isDeclined(part)
         || UserState.INVITED.equals(part.getState()) || UserState.MISSED.equals(part.getState());
   }
 
@@ -2065,11 +2129,117 @@ public class WebConferencingService implements Startable {
   protected void checkMissedCall(String callId, String callerId, Date startedAt) {
     RequestLifeCycle.begin(PortalContainer.getInstance());
     try {
-      notifyMissedCall(callId, callerId, startedAt);
-    } catch (Exception e) {
-      LOG.warn("Error notifying the participants who missed call {}", callId, e);
+      try {
+        notifyMissedCall(callId, callerId, startedAt);
+      } catch (Exception e) {
+        LOG.warn("Error notifying the participants who missed call {}", callId, e);
+      }
+      try {
+        notifyDeclinesClosed(callId, callerId, startedAt);
+      } catch (Exception e) {
+        LOG.warn("Error notifying the caller of the declines of call {}", callId, e);
+      }
     } finally {
       RequestLifeCycle.end();
+    }
+  }
+
+  /**
+   * Reports to the caller, once the incoming call alert of a call start timed out, the participants who declined
+   * it: they are marked as notified, and {@link #EVENT_CALL_DECLINES_CLOSED} is broadcast with them, when there
+   * is at least one. Nothing is done for a call removed meanwhile, or started again after the given start date,
+   * the declines of that later start being its own. A call stopped meanwhile had its declines reported when it
+   * stopped (see {@link #stopCall(CallInfo, String, boolean)}): none is left to report. Each participant is
+   * marked only while still declined and the call still from that start, checked by the storage: with the
+   * report of a stop, a participant is reported once.
+   *
+   * @param callId the call id
+   * @param callerId the user who started the call
+   * @param startedAt the start date of the call the check was scheduled for
+   * @throws InvalidCallException if the call cannot be read
+   */
+  protected void notifyDeclinesClosed(String callId, String callerId, Date startedAt) throws InvalidCallException {
+    Date latestStart = new Date(startedAt.getTime() + LAST_DATE_PRECISION);
+    CallInfo call = getCall(callId);
+    if (call == null || call.getLastDate() == null || call.getLastDate().after(latestStart)) {
+      return;
+    }
+    List<String> declinerIds = markDeclinesClosed(call, declinerIdsOf(call), latestStart);
+    if (!declinerIds.isEmpty()) {
+      broadcastCallDeclinesClosed(call, callerId, declinerIds);
+    }
+  }
+
+  /**
+   * Reports to the caller, out of the request that stopped the call, the participants who declined it before
+   * it stopped (see {@link #notifyDeclinesClosed(String, String, Date)}).
+   *
+   * @param call the stopped call, as it was when it stopped
+   * @param declinerIds the participants marked as notified of their decline when the call stopped
+   */
+  protected void scheduleStoppedDeclinesClosed(CallInfo call, List<String> declinerIds) {
+    missedCallTimer.execute(() -> broadcastCallDeclinesClosed(call, call.getCallerId(), declinerIds));
+  }
+
+  /**
+   * Marks as notified, before a call that alerted its participants stops, the participants who declined it.
+   *
+   * @param call the call to stop
+   * @return the participants marked by this stop, to report to the caller
+   */
+  protected List<String> markStoppedDeclinesClosed(CallInfo call) {
+    if (call.getCallerId() == null || call.getLastDate() == null) {
+      return List.of();
+    }
+    return markDeclinesClosed(call, declinerIdsOf(call), new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION));
+  }
+
+  /**
+   * Gets the user participants of a call who declined it and whose caller was not notified yet.
+   *
+   * @param call the call
+   * @return the ids of those participants
+   */
+  protected List<String> declinerIdsOf(CallInfo call) {
+    return call.getParticipants()
+               .stream()
+               .filter(part -> UserInfo.TYPE_NAME.equals(part.getType()) && UserState.DECLINED.equals(part.getState()))
+               .map(UserInfo::getId)
+               .toList();
+  }
+
+  /**
+   * Marks as notified of their decline the given participants of a call, each only while still declined and the
+   * call still from a start not later than the given date.
+   *
+   * @param call the call
+   * @param declinerIds the participants who declined the call
+   * @param latestStart the latest start date of the call the participants may be marked for
+   * @return the participants marked by this call, to report to the caller
+   */
+  protected List<String> markDeclinesClosed(CallInfo call, List<String> declinerIds, Date latestStart) {
+    List<String> markedIds = new ArrayList<>();
+    for (String partId : declinerIds) {
+      try {
+        if (participantsStorage.markParticipantDeclinedNotified(call.getId(), partId, latestStart) > 0) {
+          markedIds.add(partId);
+        }
+      } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+        LOG.warn("Cannot mark the decline of participant {} of call {} as notified, it is not reported", partId, call.getId(), e);
+      }
+    }
+    return markedIds;
+  }
+
+  private void broadcastCallDeclinesClosed(CallInfo call, String callerId, List<String> declinerIds) {
+    Map<String, String> info = new HashMap<>();
+    info.put(EVENT_DATA_USER_ID, callerId);
+    info.put(EVENT_DATA_DECLINER_IDS, String.join(",", declinerIds));
+    info.put("status", STATUS_OK);
+    try {
+      listenerService.broadcast(EVENT_CALL_DECLINES_CLOSED, call, info);
+    } catch (Exception e) {
+      LOG.warn("Error reporting the declines of call {} to its caller", call.getId(), e);
     }
   }
 

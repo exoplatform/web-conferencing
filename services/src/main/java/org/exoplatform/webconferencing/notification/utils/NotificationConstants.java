@@ -46,6 +46,15 @@ public class NotificationConstants {
 
     public static final ArgumentLiteral<String> OWNER_ID    = new ArgumentLiteral<>(String.class, "OWNER_ID");
 
+    /** The participants who declined a call, comma separated, latest first. */
+    public static final ArgumentLiteral<String> DECLINER_IDS = new ArgumentLiteral<>(String.class, "DECLINER_IDS");
+
+    /** The call start a decline belongs to: the call id and its start date, the declines of a start being grouped. */
+    public static final ArgumentLiteral<String> DECLINE_KEY  = new ArgumentLiteral<>(String.class, "DECLINE_KEY");
+
+    /** Tells, <code>"true"</code>, that the declines of a call start are reported once its incoming call alert closed. */
+    public static final ArgumentLiteral<String> DECLINES_CLOSED = new ArgumentLiteral<>(String.class, "DECLINES_CLOSED");
+
     private NotificationConstants() {
         throw new IllegalStateException("Utility class");
     }

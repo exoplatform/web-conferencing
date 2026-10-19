@@ -33,6 +33,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
@@ -51,7 +52,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
+import org.mockito.MockedStatic;
 
+import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.container.xml.ValueParam;
@@ -573,6 +577,224 @@ class WebConferencingServiceMissedCallTest {
     }
   }
 
+  @Test
+  void theTimerChecksTheMissedCallsThenReportsTheDeclines() throws Exception {
+    Date startedAt = new Date();
+    doNothing().when(service).notifyMissedCall(CALL_ID, CALLER, startedAt);
+    doNothing().when(service).notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
+
+    try (MockedStatic<PortalContainer> containers = mockStatic(PortalContainer.class);
+         MockedStatic<RequestLifeCycle> requests = mockStatic(RequestLifeCycle.class)) {
+      service.checkMissedCall(CALL_ID, CALLER, startedAt);
+
+      InOrder order = inOrder(service);
+      order.verify(service).notifyMissedCall(CALL_ID, CALLER, startedAt);
+      order.verify(service).notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
+      requests.verify(RequestLifeCycle::end);
+    }
+  }
+
+  @Test
+  void theTimerReportsTheDeclinesEvenWhenTheMissedCallCheckFails() throws Exception {
+    Date startedAt = new Date();
+    doThrow(new InvalidCallException("down")).when(service).notifyMissedCall(CALL_ID, CALLER, startedAt);
+    doNothing().when(service).notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
+
+    try (MockedStatic<PortalContainer> containers = mockStatic(PortalContainer.class);
+         MockedStatic<RequestLifeCycle> requests = mockStatic(RequestLifeCycle.class)) {
+      service.checkMissedCall(CALL_ID, CALLER, startedAt);
+
+      verify(service).notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
+    }
+  }
+
+  @Test
+  void theTimerReportsTheDeclinesOfItsStartToTheCaller() throws Exception {
+    Date startedAt = new Date();
+    CallInfo call = startedCall(startedAt,
+                                participant(CALLER, UserState.JOINED),
+                                participant(CALLEE, UserState.DECLINED),
+                                participant(OTHER, UserState.DECLINED),
+                                participant("paul", UserState.INVITED));
+    when(participantsStorage.markParticipantDeclinedNotified(eq(CALL_ID), anyString(), eq(latestStart(startedAt)))).thenReturn(1);
+
+    service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
+
+    verify(listenerService).broadcast(WebConferencingService.EVENT_CALL_DECLINES_CLOSED,
+                                      call,
+                                      Map.of(WebConferencingService.EVENT_DATA_USER_ID,
+                                             CALLER,
+                                             WebConferencingService.EVENT_DATA_DECLINER_IDS,
+                                             CALLEE + "," + OTHER,
+                                             "status",
+                                             WebConferencingService.STATUS_OK));
+    verify(participantsStorage, never()).markParticipantDeclinedNotified(eq(CALL_ID), eq("paul"), any(Date.class));
+  }
+
+  @Test
+  void theTimerReportsOnlyTheDeclinesItMarked() throws Exception {
+    Date startedAt = new Date();
+    CallInfo call = startedCall(startedAt,
+                                participant(CALLER, UserState.JOINED),
+                                participant(CALLEE, UserState.DECLINED),
+                                participant(OTHER, UserState.DECLINED));
+    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(startedAt))).thenReturn(0);
+    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, OTHER, latestStart(startedAt))).thenReturn(1);
+
+    service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
+
+    verify(listenerService).broadcast(eq(WebConferencingService.EVENT_CALL_DECLINES_CLOSED),
+                                      eq(call),
+                                      argThat((Map<String, String> data) -> OTHER.equals(data.get(WebConferencingService.EVENT_DATA_DECLINER_IDS))));
+  }
+
+  @Test
+  void theTimerReportsNothingWhenNobodyDeclined() throws Exception {
+    Date startedAt = new Date();
+    startedCall(startedAt, participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.MISSED));
+
+    service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
+
+    verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
+    verifyNoDeclinesClosedBroadcast();
+  }
+
+  @Test
+  void theTimerReportsNothingWhenEveryDeclineWasMarkedMeanwhile() throws Exception {
+    Date startedAt = new Date();
+    startedCall(startedAt, participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.DECLINED));
+    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(startedAt))).thenReturn(0);
+
+    service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
+
+    verifyNoDeclinesClosedBroadcast();
+  }
+
+  @Test
+  void theTimerOfAnEarlierStartOfACallStartedAgainReportsNothing() throws Exception {
+    Date startedAt = new Date();
+    startedCall(new Date(startedAt.getTime() + 5000), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.DECLINED));
+
+    service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
+
+    verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
+    verifyNoDeclinesClosedBroadcast();
+  }
+
+  @Test
+  void theTimerReportsNothingForACallRemovedMeanwhile() throws Exception {
+    doReturn(null).when(service).getCall(CALL_ID);
+
+    service.notifyDeclinesClosed(CALL_ID, CALLER, new Date());
+
+    verifyNoDeclinesClosedBroadcast();
+  }
+
+  @Test
+  void theTimerReportsTheDeclinesAStoppedCallLeftUnreported() throws Exception {
+    Date startedAt = new Date();
+    CallInfo call = startedCall(startedAt, participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.DECLINED));
+    call.setState(CallState.STOPPED);
+    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(startedAt))).thenReturn(1);
+
+    service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
+
+    verify(listenerService).broadcast(eq(WebConferencingService.EVENT_CALL_DECLINES_CLOSED), eq(call), anyMap());
+  }
+
+  @Test
+  void aStoppedCallMarksItsDeclinesBeforeTheStopAndReportsThem() throws Exception {
+    CallInfo call = removedUserCall();
+    participant(call, CALLEE).setState(UserState.DECLINED);
+    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
+    stubStop();
+
+    service.stopCall(call, CALLER, true);
+
+    InOrder order = inOrder(participantsStorage, service);
+    order.verify(participantsStorage).markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()));
+    order.verify(service).txStopCall(call, true);
+    verify(service).scheduleStoppedDeclinesClosed(call, List.of(CALLEE));
+  }
+
+  @Test
+  void theMarkedDeclinesOfACallAreReportedEvenWhenItsStopFails() throws Exception {
+    CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.DECLINED));
+    call.setCallerId(CALLER);
+    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
+    stubStop();
+    doThrow(new PersistenceException("down")).when(service).txStopCall(call, false);
+
+    assertThrows(StorageException.class, () -> service.stopCall(call, CALLER, false));
+
+    verify(service).scheduleStoppedDeclinesClosed(call, List.of(CALLEE));
+  }
+
+  @Test
+  void aStoppedCallWhoseDeclinesWereAlreadyReportedReportsNothing() throws Exception {
+    CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.DECLINED_NOTIFIED));
+    call.setCallerId(CALLER);
+    stubStop();
+
+    service.stopCall(call, CALLER, false);
+
+    verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
+    verify(service, never()).scheduleStoppedDeclinesClosed(any(CallInfo.class), any());
+  }
+
+  @Test
+  void aStoppedCallThatAlertedNobodyReportsNoDecline() throws Exception {
+    CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.DECLINED));
+    stubStop();
+
+    service.stopCall(call, CALLER, false);
+
+    verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
+    verify(service, never()).scheduleStoppedDeclinesClosed(any(CallInfo.class), any());
+  }
+
+  @Test
+  void theDeclinesOfAStoppedCallAreReportedOnTheMissedCallTimer() throws Exception {
+    CallInfo call = removedUserCall();
+
+    service.scheduleStoppedDeclinesClosed(call, List.of(CALLEE));
+
+    verify(listenerService, timeout(3000)).broadcast(WebConferencingService.EVENT_CALL_DECLINES_CLOSED,
+                                                     call,
+                                                     Map.of(WebConferencingService.EVENT_DATA_USER_ID,
+                                                            CALLER,
+                                                            WebConferencingService.EVENT_DATA_DECLINER_IDS,
+                                                            CALLEE,
+                                                            "status",
+                                                            WebConferencingService.STATUS_OK));
+  }
+
+  @Test
+  void aMarkThatFailsLeavesTheOtherDeclinesReported() throws Exception {
+    Date startedAt = new Date();
+    CallInfo call = startedCall(startedAt,
+                                participant(CALLER, UserState.JOINED),
+                                participant(CALLEE, UserState.DECLINED),
+                                participant(OTHER, UserState.DECLINED));
+    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(startedAt))).thenThrow(new PersistenceException("down"));
+    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, OTHER, latestStart(startedAt))).thenReturn(1);
+
+    service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
+
+    verify(listenerService).broadcast(eq(WebConferencingService.EVENT_CALL_DECLINES_CLOSED),
+                                      eq(call),
+                                      argThat((Map<String, String> data) -> OTHER.equals(data.get(WebConferencingService.EVENT_DATA_DECLINER_IDS))));
+  }
+
+  @SuppressWarnings("unchecked")
+  private void verifyNoDeclinesClosedBroadcast() throws Exception {
+    verify(listenerService, never()).broadcast(eq(WebConferencingService.EVENT_CALL_DECLINES_CLOSED), any(CallInfo.class), anyMap());
+  }
+
+  private UserInfo participant(CallInfo call, String id) {
+    return call.getParticipants().stream().filter(part -> part.getId().equals(id)).findFirst().orElseThrow();
+  }
+
   private WebConferencingService newService(String timeout) {
     InitParams initParams = mock(InitParams.class);
     PropertiesParam jwtParams = new PropertiesParam();
@@ -645,6 +867,7 @@ class WebConferencingServiceMissedCallTest {
     doNothing().when(service).fireUserCallStateChanged(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
     doNothing().when(service).notifyUserCallStateChanged(any(CallInfo.class), anyString(), anyString());
     doNothing().when(service).scheduleStoppedMissedCall(any(CallInfo.class), any(), anyBoolean());
+    doNothing().when(service).scheduleStoppedDeclinesClosed(any(CallInfo.class), any());
   }
 
   private void stubStorage() throws Exception {
