@@ -1911,10 +1911,11 @@ public class WebConferencingService implements Startable {
    * on every client of that user. A participant read as joined is left untouched: the decline comes from an
    * alert still shown after a join from another client. The read and the write take no lock, as in
    * {@link #joinCall(String, String, String)} and {@link #leaveCall(String, String, String)}: a join of the
-   * same user committed between them is overwritten. The decliner can still join the call later. The first
-   * decline of a participant, on a call that alerted its participants (see {@link CallInfo#getCallerId()}), is
-   * broadcast as {@link #EVENT_CALL_DECLINED}, once committed; a decline from another client of a participant
-   * who already declined changes nothing but the alert of that client.
+   * same user committed between them is overwritten. The decliner can still join the call later. On a call that
+   * alerted its participants (see {@link CallInfo#getCallerId()}), a participant declines while still invited,
+   * and the decline is broadcast as {@link #EVENT_CALL_DECLINED} once committed; the decline of a participant
+   * who already declined, missed the call or left it, from an alert still shown on another client, changes
+   * nothing but that alert. On another call, a participant who did not decline yet is marked declined.
    *
    * @param callId the call id
    * @param partId the participant id, the user declining the call
@@ -1940,9 +1941,11 @@ public class WebConferencingService implements Startable {
                             .orElseThrow(() -> new ParticipantNotFoundException("Cannot decline the call with not allowed participant: "
                                 + partId + ", call: " + callId));
     if (CallState.STARTED.equals(call.getState()) && !UserState.JOINED.equals(declined.getState())) {
-      // A participant who already declined, from another client, keeps the state the caller was notified of
-      boolean declinedBefore = isDeclined(declined);
-      if (!declinedBefore) {
+      // On a call that alerted its participants, only a participant still alerted declines it: one who already
+      // declined, missed the call or left it keeps the state the caller was notified of
+      boolean alerted = call.getCallerId() != null && !call.getCallerId().equals(partId);
+      boolean reported = alerted && UserState.INVITED.equals(declined.getState());
+      if (alerted ? reported : !isDeclined(declined)) {
         declined.setState(UserState.DECLINED);
         declined.setClientId(null);
         try {
@@ -1953,7 +1956,7 @@ public class WebConferencingService implements Startable {
       }
       fireUserCallLeaved(callId, call.getProviderType(), call.getOwner().getId(), call.getOwner().getType(), partId, partId);
       LOG.info(metricMessage(partId, call, OPERATION_CALL_DECLINED, STATUS_OK, System.currentTimeMillis() - opStart, null, null));
-      if (!declinedBefore && call.getCallerId() != null && !call.getCallerId().equals(partId)) {
+      if (reported) {
         broadcastCallDeclined(call, partId);
       }
     }

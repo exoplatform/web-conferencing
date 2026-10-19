@@ -23,13 +23,9 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
-import org.exoplatform.commons.exception.ObjectNotFoundException;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.social.core.service.LinkProvider;
-import org.exoplatform.social.core.space.model.Space;
-import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.social.notification.LinkProviderUtils;
-import org.exoplatform.webconferencing.WebConferencingService;
 
 /**
  * What the web notification, the email and the push of a declined call need from its notification.
@@ -86,28 +82,14 @@ public final class DeclinedCallNotificationUtils {
 
   /**
    * Gets the page a declined call leads to, relative to the server: the profile of the participant who declined
-   * it, when only one did, the space of a space call otherwise.
+   * it, when only one did.
    *
    * @param notification the declined call notification
    * @return the path of the page, or <code>null</code> for the home page
    */
   public static String getDeclineLink(NotificationInfo notification) {
     List<String> declinerIds = getDeclinerIds(notification);
-    if (declinerIds.size() == 1) {
-      return LinkProvider.getUserProfileUri(declinerIds.get(0));
-    }
-    if (WebConferencingService.OWNER_TYPE_SPACE.equals(notification.getValueOwnerParameter(NotificationConstants.CALL_TYPE.getKey()))) {
-      Space space = CommonsUtils.getService(SpaceService.class)
-                                .getSpaceByPrettyName(notification.getValueOwnerParameter(NotificationConstants.OWNER_ID.getKey()));
-      if (space != null) {
-        try {
-          return LinkProvider.getSpaceLink(space.getId());
-        } catch (ObjectNotFoundException e) {
-          // the space was removed meanwhile, the home page is used instead
-        }
-      }
-    }
-    return null;
+    return declinerIds.size() == 1 ? LinkProvider.getUserProfileUri(declinerIds.get(0)) : null;
   }
 
   /**

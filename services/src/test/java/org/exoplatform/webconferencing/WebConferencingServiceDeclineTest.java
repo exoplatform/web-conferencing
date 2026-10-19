@@ -335,6 +335,33 @@ class WebConferencingServiceDeclineTest {
   }
 
   @Test
+  void aDeclineOfAParticipantWhoMissedTheCallChangesNothingButTheAlert() throws Exception {
+    CallInfo call = startedCall(space(), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.MISSED));
+    call.setCallerId(CALLER);
+    doNothing().when(service).updateParticipant(anyString(), any(UserInfo.class));
+
+    service.declineCall(CALL_ID, CALLEE, CLIENT_ID);
+
+    assertEquals(UserState.MISSED, stateOf(call, CALLEE));
+    verify(service, never()).updateParticipant(anyString(), any(UserInfo.class));
+    verifyNoDeclineBroadcast();
+    assertEquals(List.of(CALLEE + " <- " + CALLEE), leavedEvents);
+  }
+
+  @Test
+  void aDeclineOfAParticipantWhoLeftTheCallChangesNothingButTheAlert() throws Exception {
+    CallInfo call = startedCall(space(), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.LEAVED));
+    call.setCallerId(CALLER);
+    doNothing().when(service).updateParticipant(anyString(), any(UserInfo.class));
+
+    service.declineCall(CALL_ID, CALLEE, CLIENT_ID);
+
+    assertEquals(UserState.LEAVED, stateOf(call, CALLEE));
+    verify(service, never()).updateParticipant(anyString(), any(UserInfo.class));
+    verifyNoDeclineBroadcast();
+  }
+
+  @Test
   void aParticipantWhoDeclinedIsNotInTheCall() {
     assertTrue(service.isGone(participant(CALLEE, UserState.DECLINED)));
     assertTrue(service.isGone(participant(CALLEE, UserState.DECLINED_NOTIFIED)));

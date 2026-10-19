@@ -20,9 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
 
 import java.util.Date;
 import java.util.List;
@@ -35,13 +33,12 @@ import org.mockito.MockedStatic;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.social.core.service.LinkProvider;
-import org.exoplatform.social.core.space.model.Space;
-import org.exoplatform.social.core.space.spi.SpaceService;
+import org.exoplatform.social.notification.LinkProviderUtils;
 import org.exoplatform.webconferencing.WebConferencingService;
 
 /**
  * A declined call leads to the profile of the participant who declined it when
- * only one did, to its space otherwise; its declines are grouped per call start.
+ * only one did, to the home page otherwise; its declines are grouped per call start.
  */
 class DeclinedCallNotificationUtilsTest {
 
@@ -49,14 +46,10 @@ class DeclinedCallNotificationUtilsTest {
 
   private MockedStatic<CommonsUtils> services;
 
-  private SpaceService               spaceService;
-
   @BeforeEach
   void setUp() {
     links = mockStatic(LinkProvider.class);
     services = mockStatic(CommonsUtils.class);
-    spaceService = mock(SpaceService.class);
-    services.when(() -> CommonsUtils.getService(SpaceService.class)).thenReturn(spaceService);
   }
 
   @AfterEach
@@ -93,19 +86,19 @@ class DeclinedCallNotificationUtilsTest {
   }
 
   @Test
-  void severalDeclinesOfASpaceCallLeadToTheSpace() {
-    Space space = new Space();
-    space.setId("12");
-    when(spaceService.getSpaceByPrettyName("marketing")).thenReturn(space);
-    links.when(() -> LinkProvider.getSpaceLink("12")).thenReturn("/portal/s/12");
-
-    assertEquals("/portal/s/12",
-                 DeclinedCallNotificationUtils.getDeclineLink(notification(WebConferencingService.OWNER_TYPE_SPACE, "mary,john")));
+  void severalDeclinesLeadToTheHomePage() {
+    assertNull(DeclinedCallNotificationUtils.getDeclineLink(notification(WebConferencingService.OWNER_TYPE_SPACE, "mary,john")));
+    assertNull(DeclinedCallNotificationUtils.getDeclineLink(notification(WebConferencingService.OWNER_TYPE_USER, "")));
   }
 
   @Test
-  void severalDeclinesOfAnotherCallLeadToTheHomePage() {
-    assertNull(DeclinedCallNotificationUtils.getDeclineLink(notification(WebConferencingService.OWNER_TYPE_CHATROOM, "mary,john")));
+  void anEmailOfSeveralDeclinesLinksTheHomePage() {
+    try (MockedStatic<LinkProviderUtils> baseUrls = mockStatic(LinkProviderUtils.class)) {
+      baseUrls.when(LinkProviderUtils::getBaseUrl).thenReturn("https://host/portal");
+
+      assertEquals("https://host/portal",
+                   DeclinedCallNotificationUtils.getAbsoluteDeclineLink(notification(WebConferencingService.OWNER_TYPE_SPACE, "mary,john")));
+    }
   }
 
   @Test
