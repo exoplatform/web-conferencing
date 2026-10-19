@@ -2221,16 +2221,7 @@ public class WebConferencingService implements Startable {
     if (call.getCallerId() == null || call.getLastDate() == null) {
       return List.of();
     }
-    List<String> declinerIds;
-    try {
-      // Read from the database: the participants this request loaded before the stop may be outdated
-      declinerIds = participantsStorage.findDeclinedParticipantIds(call.getId());
-    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
-      // The call stopped: its declines are not reported, the stop goes on
-      LOG.warn("Cannot read the declines of stopped call {}, they are not reported", call.getId(), e);
-      return List.of();
-    }
-    return markDeclinesClosed(call, declinerIds, new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION));
+    return markDeclinesClosed(call, findStoppedCallDeclinerIds(call), new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION));
   }
 
   /**
@@ -2244,9 +2235,24 @@ public class WebConferencingService implements Startable {
     if (call.getCallerId() == null || call.getLastDate() == null) {
       return List.of();
     }
-    return markDeclinesClosed(call,
-                              participantsStorage.findDeclinedParticipantIds(call.getId()),
-                              new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION));
+    return markDeclinesClosed(call, findStoppedCallDeclinerIds(call), new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION));
+  }
+
+  /**
+   * Reads from the database the participants who declined a call being stopped or removed: the participants
+   * this request loaded before may be outdated. A read that fails is logged and reports no decline, so that the
+   * stop or the removal goes on.
+   *
+   * @param call the call being stopped or removed
+   * @return the ids of the participants who declined the call and whose caller was not notified yet
+   */
+  protected List<String> findStoppedCallDeclinerIds(CallInfo call) {
+    try {
+      return participantsStorage.findDeclinedParticipantIds(call.getId());
+    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+      LOG.warn("Cannot read the declines of stopped call {}, they are not reported", call.getId(), e);
+      return List.of();
+    }
   }
 
   /**

@@ -817,6 +817,20 @@ class WebConferencingServiceMissedCallTest {
   }
 
   @Test
+  void aRemovedCallWhoseDeclinesCannotBeReadIsRemovedAndNotifiesWhoMissedIt() throws Exception {
+    CallInfo call = removedUserCall();
+    when(participantsStorage.markParticipantMissed(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
+    when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenThrow(new PersistenceException("down"));
+    stubStop();
+
+    service.stopCall(call, CALLER, true);
+
+    verify(service).txStopCall(call, true);
+    verify(service).scheduleStoppedMissedCall(call, List.of(CALLEE), true);
+    verify(service, never()).scheduleStoppedDeclinesClosed(any(CallInfo.class), any());
+  }
+
+  @Test
   void aStoppedCallWithoutDeclineReportsNothing() throws Exception {
     CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.MISSED));
     call.setCallerId(CALLER);
