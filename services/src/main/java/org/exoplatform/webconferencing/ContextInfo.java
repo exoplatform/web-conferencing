@@ -54,6 +54,9 @@ public class ContextInfo {
   /** The locale resources. */
   private final Map<String, String>                  messages = new HashMap<String, String>();
 
+  /** How long, in seconds, a started call alerts its participants. */
+  private long                                       incomingCallTimeout;
+
   /**
    * Instantiates a new context info.
    *
@@ -134,6 +137,24 @@ public class ContextInfo {
    */
   public String getRoomTitle() {
     return roomTitle;
+  }
+
+  /**
+   * Gets how long, in seconds, a started call alerts its participants.
+   *
+   * @return the incoming call timeout in seconds
+   */
+  public long getIncomingCallTimeout() {
+    return incomingCallTimeout;
+  }
+
+  /**
+   * Sets how long, in seconds, a started call alerts its participants.
+   *
+   * @param incomingCallTimeout the incoming call timeout in seconds
+   */
+  public void setIncomingCallTimeout(long incomingCallTimeout) {
+    this.incomingCallTimeout = incomingCallTimeout;
   }
 
   /**

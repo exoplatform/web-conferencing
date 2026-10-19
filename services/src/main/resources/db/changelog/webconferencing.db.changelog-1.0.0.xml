@@ -167,4 +167,13 @@
     />
   </changeSet>
 
+  <!-- Alter WBC_CALLS table: add the user who started the call and alerted its participants -->
+  <changeSet author="web-conferencing" id="1.0.0-exip-7.3.0.41-01">
+    <addColumn tableName="WBC_CALLS">
+      <column name="CALLER_ID" type="NVARCHAR(200)">
+        <constraints nullable="true" />
+      </column>
+    </addColumn>
+  </changeSet>
+
 </databaseChangeLog>
