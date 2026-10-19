@@ -138,6 +138,9 @@ public class CallInfo {
   /** The invite id. */
   protected String              inviteId;
 
+  /** The user who started the call and alerted its participants. */
+  protected String              callerId;
+
   /**
    * Instantiates a new call info.
    *
@@ -302,6 +305,24 @@ public class CallInfo {
    */
   public void setLastDate(Date lastDate) {
     this.lastDate = lastDate;
+  }
+
+  /**
+   * Gets the user who started the call and alerted its participants.
+   *
+   * @return the caller id, or <code>null</code> when the last start alerted nobody
+   */
+  public String getCallerId() {
+    return callerId;
+  }
+
+  /**
+   * Sets the user who started the call and alerted its participants.
+   *
+   * @param callerId the caller id
+   */
+  public void setCallerId(String callerId) {
+    this.callerId = callerId;
   }
 
   /**

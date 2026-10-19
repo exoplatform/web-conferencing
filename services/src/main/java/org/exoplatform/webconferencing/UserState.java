@@ -35,6 +35,12 @@ public class UserState {
   /** The Constant DECLINED: the user declined the incoming call, which goes on for its other participants. */
   public static final String DECLINED = "declined";
 
+  /** The Constant INVITED: the user is alerted of the started call and has neither joined nor declined it yet. */
+  public static final String INVITED  = "invited";
+
+  /** The Constant MISSED: the user was invited and did not answer before the incoming call alert timed out. */
+  public static final String MISSED   = "missed";
+
   /** The user id. */
   protected final String     userId;
 
