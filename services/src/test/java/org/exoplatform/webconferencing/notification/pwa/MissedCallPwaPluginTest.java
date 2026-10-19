@@ -117,7 +117,7 @@ class MissedCallPwaPluginTest {
 
       assertEquals("Root Root has started a group call in Weekly sync", message.getTitle());
       assertEquals("The call has ended", message.getBody());
-      assertEquals("/", message.getUrl());
+      assertEquals("/portal", message.getUrl());
     }
   }
 
