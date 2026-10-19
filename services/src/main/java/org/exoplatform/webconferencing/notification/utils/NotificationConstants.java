@@ -46,7 +46,7 @@ public class NotificationConstants {
 
     public static final ArgumentLiteral<String> OWNER_ID    = new ArgumentLiteral<>(String.class, "OWNER_ID");
 
-    /** The participants who declined a call, comma separated, latest first. */
+    /** The participants who declined a call, comma separated: in a web notification, the latest first. */
     public static final ArgumentLiteral<String> DECLINER_IDS = new ArgumentLiteral<>(String.class, "DECLINER_IDS");
 
     /** The call start a decline belongs to: the call id and its start date, the declines of a start being grouped. */

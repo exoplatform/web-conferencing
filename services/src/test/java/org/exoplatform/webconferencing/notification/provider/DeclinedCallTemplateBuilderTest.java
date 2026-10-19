@@ -20,9 +20,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -126,8 +128,39 @@ class DeclinedCallTemplateBuilderTest {
   }
 
   @Test
-  void closedDeclinesBuildTheEmailNamingTheLatestDeclinerAndCountingThem() {
+  void aSingleClosedDeclineBuildsTheEmailNamingTheParticipantWithTheirAvatar() {
+    NotificationInfo notification = notification("mary", true);
+
+    TemplateContext templateContext = buildEmail(notification);
+
+    verify(templateContext).put("DECLINER_NAME", "Mary Williams");
+    verify(templateContext).put("DECLINER_AVATAR", HTMLEntityEncoder.getInstance().encode("/avatar/mary"));
+    verify(templateContext).put("DECLINERS_COUNT", "1");
+    verify(templateContext).put("CALL_LINK", HTMLEntityEncoder.getInstance().encode("https://exo.test/space"));
+    verify(templateContext).put("USER", "root");
+  }
+
+  @Test
+  void severalClosedDeclinesBuildTheEmailCountingThemWithTheGroupAvatarAndNamingNobody() {
     NotificationInfo notification = notification("mary,john", true);
+    notification.with(NotificationConstants.AVATAR_URL.getKey(), "/space/avatar");
+
+    TemplateContext templateContext = buildEmail(notification);
+
+    verify(templateContext).put("DECLINER_NAME", "");
+    verify(templateContext).put("DECLINER_AVATAR", HTMLEntityEncoder.getInstance().encode("https://exo.test/space/avatar"));
+    verify(templateContext).put("DECLINERS_COUNT", "2");
+    verify(templateContext, never()).put(eq("DECLINER_NAME"), eq("Mary Williams"));
+  }
+
+  @Test
+  void severalClosedDeclinesOfACallWithoutGroupAvatarShowTheDefaultAvatar() {
+    TemplateContext templateContext = buildEmail(notification("mary,john", true));
+
+    verify(templateContext).put("DECLINER_AVATAR", HTMLEntityEncoder.getInstance().encode("/avatar/default"));
+  }
+
+  private TemplateContext buildEmail(NotificationInfo notification) {
     when(ctx.getNotificationInfo()).thenReturn(notification);
     TemplateContext templateContext = mock(TemplateContext.class);
     IdentityManager identityManager = mock(IdentityManager.class);
@@ -147,7 +180,9 @@ class DeclinedCallTemplateBuilderTest {
       templateUtils.when(() -> TemplateUtils.processSubject(templateContext)).thenReturn("Your call was declined");
       templateUtils.when(() -> TemplateUtils.processGroovy(templateContext)).thenReturn("body");
       commonsUtils.when(() -> CommonsUtils.getService(IdentityManager.class)).thenReturn(identityManager);
+      commonsUtils.when(CommonsUtils::getCurrentDomain).thenReturn("https://exo.test");
       links.when(() -> LinkProviderUtils.getUserAvatarUrl(profile)).thenReturn("/avatar/mary");
+      links.when(() -> LinkProviderUtils.getUserAvatarUrl(null)).thenReturn("/avatar/default");
       links.when(LinkProviderUtils::getBaseUrl).thenReturn("https://exo.test");
       utils.when(() -> DeclinedCallNotificationUtils.getAbsoluteDeclineLink(notification)).thenReturn("https://exo.test/space");
 
@@ -155,11 +190,8 @@ class DeclinedCallTemplateBuilderTest {
 
       assertEquals("Your call was declined", message.getSubject());
       assertEquals("body", message.getBody());
-      verify(templateContext).put("DECLINER_NAME", "Mary Williams");
-      verify(templateContext).put("DECLINERS_COUNT", "2");
-      verify(templateContext).put("CALL_LINK", HTMLEntityEncoder.getInstance().encode("https://exo.test/space"));
-      verify(templateContext).put("USER", "root");
     }
+    return templateContext;
   }
 
   private NotificationInfo notification(String declinerIds, boolean closed) {

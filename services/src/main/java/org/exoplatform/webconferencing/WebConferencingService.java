@@ -1437,8 +1437,8 @@ public class WebConferencingService implements Startable {
       invitedIds = markRemovedCallMissed(call, invitedIds);
     }
     // The incoming call alert closes with the call: a removed call loses its participants, its declines are
-    // marked before; those of a stopped call are marked once it stopped, when no decline can be marked any more
-    List<String> declinerIds = remove ? markStoppedDeclinesClosed(call) : List.of();
+    // marked before; those of a stopped call are marked once it stopped (see markDeclinesClosedOnStop)
+    List<String> declinerIds = remove ? markDeclinesClosedOnStop(call) : List.of();
     boolean stopped = false;
     try {
       // Stop the call in DB
@@ -1462,7 +1462,7 @@ public class WebConferencingService implements Startable {
       }
       stopped = true;
       if (!remove) {
-        declinerIds = markStopCallDeclinesClosed(call);
+        declinerIds = markDeclinesClosedOnStop(call);
       }
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       throw new StorageException("Error stopping call " + call.getId(), e);
@@ -2208,30 +2208,18 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Marks as notified the participants who declined a call that alerted its participants, read from the storage
-   * once the call stopped, in the request that stopped it, when no decline can be marked any more (see
-   * {@link #declineCall(String, String, String)}): each only while still declined and the call still from that
-   * start. A decline marked against the call still started but committed after this read, its transaction
-   * overlapping the stop, is in no report: the storage does not order the two, the stop writing the call alone.
+   * Marks as notified the participants who declined a call that alerted its participants, when it is stopped or
+   * removed: read from the database, each marked only while still declined and the call still from that start. A
+   * stopped call is marked once it stopped, in the request that stopped it, when no decline can be marked any more
+   * (see {@link #declineCall(String, String, String)}), but for a decline marked against the call still started
+   * and committed after this read, its transaction overlapping the stop: the storage does not order the two, the
+   * stop writing the call alone. A removed call loses its participants and is marked before its removal: a decline
+   * marked after this read, before the removal, is in no report.
    *
-   * @param call the stopped call, as it was when it stopped
-   * @return the participants marked by this stop, to report to the caller
+   * @param call the call stopped or to remove
+   * @return the participants marked, to report to the caller
    */
-  protected List<String> markStopCallDeclinesClosed(CallInfo call) {
-    if (call.getCallerId() == null || call.getLastDate() == null) {
-      return List.of();
-    }
-    return markDeclinesClosed(call, findStoppedCallDeclinerIds(call), new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION));
-  }
-
-  /**
-   * Marks as notified, before a call that alerted its participants is removed, the participants who declined it,
-   * read from the database: a decline marked after this read, before the removal, is in no report.
-   *
-   * @param call the call to remove
-   * @return the participants marked by this removal, to report to the caller
-   */
-  protected List<String> markStoppedDeclinesClosed(CallInfo call) {
+  protected List<String> markDeclinesClosedOnStop(CallInfo call) {
     if (call.getCallerId() == null || call.getLastDate() == null) {
       return List.of();
     }

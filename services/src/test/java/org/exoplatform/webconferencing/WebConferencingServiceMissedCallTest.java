@@ -798,7 +798,7 @@ class WebConferencingServiceMissedCallTest {
     when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE));
     when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
 
-    assertEquals(List.of(CALLEE), service.markStopCallDeclinesClosed(call));
+    assertEquals(List.of(CALLEE), service.markDeclinesClosedOnStop(call));
 
     verify(participantsStorage, never()).markParticipantDeclinedNotified(eq(CALL_ID), eq(OTHER), any(Date.class));
   }
@@ -836,7 +836,7 @@ class WebConferencingServiceMissedCallTest {
     call.setCallerId(CALLER);
     when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of());
 
-    assertEquals(List.of(), service.markStopCallDeclinesClosed(call));
+    assertEquals(List.of(), service.markDeclinesClosedOnStop(call));
 
     verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
   }

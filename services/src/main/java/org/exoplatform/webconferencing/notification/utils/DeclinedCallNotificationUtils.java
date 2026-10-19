@@ -61,7 +61,7 @@ public final class DeclinedCallNotificationUtils {
   }
 
   /**
-   * Gets the participants who declined the call, latest first.
+   * Gets the participants who declined the call, in the web notification the latest first.
    *
    * @param notification the declined call notification
    * @return the user ids

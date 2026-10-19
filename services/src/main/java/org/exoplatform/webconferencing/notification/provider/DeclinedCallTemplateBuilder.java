@@ -31,10 +31,12 @@ import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.manager.IdentityManager;
 import org.exoplatform.social.notification.LinkProviderUtils;
 import org.exoplatform.webconferencing.notification.utils.DeclinedCallNotificationUtils;
+import org.exoplatform.webconferencing.notification.utils.NotificationConstants;
 
 /**
  * Builds the email of a declined call, sent once its incoming call alert closed:
- * who declined it when only one participant did, how many did otherwise. A
+ * who declined it when only one participant did, with their avatar; how many
+ * did otherwise, naming nobody, with the avatar of the call's group. A
  * notification of a single decline builds no email.
  */
 public class DeclinedCallTemplateBuilder extends AbstractTemplateBuilder {
@@ -56,12 +58,19 @@ public class DeclinedCallTemplateBuilder extends AbstractTemplateBuilder {
     TemplateContext templateContext = TemplateContext.newChannelInstance(channelKey,
                                                                          notification.getKey().getId(),
                                                                          getLanguage(notification));
-    Identity decliner = CommonsUtils.getService(IdentityManager.class).getOrCreateUserIdentity(declinerIds.get(0));
-    String declinerName = decliner == null ? declinerIds.get(0) : decliner.getProfile().getFullName();
+    String declinerName = "";
+    String avatarUrl;
+    if (declinerIds.size() == 1) {
+      Identity decliner = CommonsUtils.getService(IdentityManager.class).getOrCreateUserIdentity(declinerIds.get(0));
+      declinerName = decliner == null ? declinerIds.get(0) : decliner.getProfile().getFullName();
+      avatarUrl = LinkProviderUtils.getUserAvatarUrl(decliner == null ? null : decliner.getProfile());
+    } else {
+      // Several declines name nobody: the email shows the call's group, as the web notification does
+      avatarUrl = getGroupAvatarUrl(notification);
+    }
     templateContext.put("USER", encoder.encode(notification.getTo()));
     templateContext.put("DECLINER_NAME", encoder.encode(declinerName));
-    templateContext.put("DECLINER_AVATAR",
-                        encoder.encode(LinkProviderUtils.getUserAvatarUrl(decliner == null ? null : decliner.getProfile())));
+    templateContext.put("DECLINER_AVATAR", encoder.encode(avatarUrl));
     templateContext.put("DECLINERS_COUNT", String.valueOf(declinerIds.size()));
     templateContext.put("CALL_LINK", encoder.encode(DeclinedCallNotificationUtils.getAbsoluteDeclineLink(notification)));
     templateContext.put("NOTIFICATION_ID", notification.getId());
@@ -70,5 +79,13 @@ public class DeclinedCallTemplateBuilder extends AbstractTemplateBuilder {
     String body = TemplateUtils.processGroovy(templateContext);
     ctx.setException(templateContext.getException());
     return new MessageInfo().subject(subject).body(body).end();
+  }
+
+  private String getGroupAvatarUrl(NotificationInfo notification) {
+    String avatarUrl = notification.getValueOwnerParameter(NotificationConstants.AVATAR_URL.getKey());
+    if (avatarUrl == null || avatarUrl.isBlank()) {
+      return LinkProviderUtils.getUserAvatarUrl(null);
+    }
+    return avatarUrl.startsWith("/") ? CommonsUtils.getCurrentDomain() + avatarUrl : avatarUrl;
   }
 }
