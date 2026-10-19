@@ -7,12 +7,20 @@
     <component>
         <type>org.exoplatform.webconferencing.notification.pwa.CallRecordingPwaPlugin</type>
     </component>
+    <component>
+        <type>org.exoplatform.webconferencing.notification.pwa.MissedCallPwaPlugin</type>
+    </component>
     <external-component-plugins>
         <target-component>org.exoplatform.services.listener.ListenerService</target-component>
         <component-plugin>
             <name>exo.webconferencing.callRecorded</name>
             <set-method>addListener</set-method>
             <type>org.exoplatform.webconferencing.listeners.CallRecordingNotificationListener</type>
+        </component-plugin>
+        <component-plugin>
+            <name>exo.webconferencing.callMissed</name>
+            <set-method>addListener</set-method>
+            <type>org.exoplatform.webconferencing.listeners.CallMissedNotificationListener</type>
         </component-plugin>
     </external-component-plugins>
 </configuration>

@@ -767,6 +767,7 @@
 		// Providers
 		var providers = []; // loaded providers
 		var providersConfig; // will be assigned in init()
+		var incomingCallTimeout = 60000; // in milliseconds, will be assigned in init()
 		var providersInitializer = {}; // map managed by getProvider() and initProvider()
 
 		this.errorText = errorText;
@@ -1130,6 +1131,9 @@
 					currentUser = user;
 					currentUser.clientId = clientId;
 					providersConfig = context.providersConfig;
+					if (context.incomingCallTimeout > 0) {
+						incomingCallTimeout = context.incomingCallTimeout * 1000;
+					}
 					prepareUser(currentUser);
 					if (context.spaceId) {
 						currentSpaceId = context.spaceId;
@@ -1218,6 +1222,14 @@
 		 * It is not a room of the context (call button etc.) - use contextual roomTitle or roomName instead.
 		 * Note that this value will be initialized on Chat app page, but may not set in mini chat or any other Platform page.
 		 */
+		/**
+		 * How long, in milliseconds, a started call alerts its participants: past it, the server notifies the
+		 * participants who neither joined nor declined the call that they missed it.
+		 */
+		this.getIncomingCallTimeout = function() {
+			return incomingCallTimeout;
+		};
+
 		this.getCurrentRoomTitle = function() {
 			return currentRoomTitle;
 		};
