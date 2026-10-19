@@ -23,12 +23,14 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
+import org.exoplatform.commons.api.notification.NotificationMessageUtils;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
 import org.exoplatform.commons.api.notification.plugin.BaseNotificationPlugin;
 import org.exoplatform.commons.api.notification.service.WebNotificationService;
+import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.notification.channel.WebChannel;
 import org.exoplatform.commons.utils.CommonsUtils;
@@ -47,8 +49,10 @@ import io.meeds.pwa.service.PwaNotificationService;
  * the notification this plugin returns for a decline is marked read, so that the web channel stores nothing, and
  * the mail channel sends it only once the declines are closed (see
  * {@link org.exoplatform.webconferencing.notification.provider.DeclinedCallTemplateBuilder}). Declines processed
- * at the same time on this server are grouped one after the other; on two servers of a cluster, the first declines
- * of a call start processed at the same time can each create a web notification.
+ * at the same time on this server are grouped one after the other: the platform's notification threads, which run
+ * this plugin, wait for each other only for the lookup and the save of a declined call notification. On two
+ * servers of a cluster, the first declines of a call start processed at the same time can each create a web
+ * notification.
  */
 public class DeclinedCallPlugin extends BaseNotificationPlugin {
 
@@ -142,6 +146,9 @@ public class DeclinedCallPlugin extends BaseNotificationPlugin {
         previous.setUpdate(true);
         previous.setRead(false);
         previous.setOnPopOver(true);
+        // The storage reads both states from these parameters first, as they were when the notification was read
+        previous.with(NotificationMessageUtils.READ_PORPERTY.getKey(), Boolean.FALSE.toString());
+        previous.with(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey(), Boolean.TRUE.toString());
         previous.setResetOnBadge(false);
         previous.setLastModifiedDate(Calendar.getInstance());
         getWebNotificationService().update(previous, true);
@@ -165,12 +172,16 @@ public class DeclinedCallPlugin extends BaseNotificationPlugin {
   }
 
   /**
-   * Tells if the caller receives this notification on the web, as the web channel checks it.
+   * Tells if the caller receives this notification on the web, as the web channel checks it: the web channel
+   * enabled for this notification on the platform, and by the caller.
    *
    * @param callerId the user who started the call
    * @return <code>true</code> when the web notification is to be stored
    */
   protected boolean isWebActive(String callerId) {
+    if (!getPluginSettingService().isActive(WebChannel.ID, ID)) {
+      return false;
+    }
     UserSetting setting = getUserSettingService().get(callerId);
     return setting != null && setting.isEnabled() && setting.isChannelGloballyActive(WebChannel.ID)
         && setting.isActive(WebChannel.ID, ID);
@@ -190,6 +201,10 @@ public class DeclinedCallPlugin extends BaseNotificationPlugin {
 
   protected WebNotificationService getWebNotificationService() {
     return CommonsUtils.getService(WebNotificationService.class);
+  }
+
+  protected PluginSettingService getPluginSettingService() {
+    return CommonsUtils.getService(PluginSettingService.class);
   }
 
   protected UserSettingService getUserSettingService() {

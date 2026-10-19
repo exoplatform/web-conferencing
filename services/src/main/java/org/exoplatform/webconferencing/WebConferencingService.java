@@ -2147,11 +2147,12 @@ public class WebConferencingService implements Startable {
   /**
    * Reports to the caller, once the incoming call alert of a call start timed out, the participants who declined
    * it: they are marked as notified, and {@link #EVENT_CALL_DECLINES_CLOSED} is broadcast with them, when there
-   * is at least one. Nothing is done for a call removed meanwhile, or started again after the given start date,
-   * the declines of that later start being its own. A call stopped meanwhile had its declines reported when it
-   * stopped (see {@link #stopCall(CallInfo, String, boolean)}): none is left to report. Each participant is
-   * marked only while still declined and the call still from that start, checked by the storage: with the
-   * report of a stop, a participant is reported once.
+   * is at least one. Nothing is done for a call no longer started, or started again after the given start date,
+   * the declines of that later start being its own: a call stopped meanwhile reported its declines when it
+   * stopped (see {@link #stopCall(CallInfo, String, boolean)}), so that the caller gets one email; a decline
+   * committed while the call stopped, after the stop read it, is in none. Each participant is marked only while
+   * still declined and the call still from that start, checked by the storage: with the report of a stop running
+   * at the same time, a participant is reported once.
    *
    * @param callId the call id
    * @param callerId the user who started the call
@@ -2161,7 +2162,8 @@ public class WebConferencingService implements Startable {
   protected void notifyDeclinesClosed(String callId, String callerId, Date startedAt) throws InvalidCallException {
     Date latestStart = new Date(startedAt.getTime() + LAST_DATE_PRECISION);
     CallInfo call = getCall(callId);
-    if (call == null || call.getLastDate() == null || call.getLastDate().after(latestStart)) {
+    if (call == null || !CallState.STARTED.equals(call.getState()) || call.getLastDate() == null
+        || call.getLastDate().after(latestStart)) {
       return;
     }
     List<String> declinerIds = markDeclinesClosed(call, declinerIdsOf(call), latestStart);

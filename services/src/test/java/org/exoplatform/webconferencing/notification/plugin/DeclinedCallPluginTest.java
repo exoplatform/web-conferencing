@@ -41,12 +41,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
+import org.exoplatform.commons.api.notification.NotificationMessageUtils;
 import org.exoplatform.commons.api.notification.model.ArgumentLiteral;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
 import org.exoplatform.commons.api.notification.service.WebNotificationService;
+import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.notification.channel.WebChannel;
 import org.exoplatform.container.xml.InitParams;
@@ -76,6 +78,8 @@ class DeclinedCallPluginTest {
 
   private UserSetting            userSetting;
 
+  private PluginSettingService   pluginSettingService;
+
   @BeforeEach
   void setUp() {
     plugin = spy(new DeclinedCallPlugin(mock(InitParams.class)));
@@ -94,6 +98,9 @@ class DeclinedCallPluginTest {
     doReturn(webNotificationService).when(plugin).getWebNotificationService();
     doReturn(pwaNotificationService).when(plugin).getPwaNotificationService();
     doReturn(userSettingService).when(plugin).getUserSettingService();
+    pluginSettingService = mock(PluginSettingService.class);
+    when(pluginSettingService.isActive(WebChannel.ID, DeclinedCallPlugin.ID)).thenReturn(true);
+    doReturn(pluginSettingService).when(plugin).getPluginSettingService();
   }
 
   @Test
@@ -131,6 +138,8 @@ class DeclinedCallPluginTest {
     assertTrue(previous.isUpdate());
     assertFalse(previous.isRead());
     assertTrue(previous.isOnPopOver());
+    assertEquals("false", previous.getValueOwnerParameter(NotificationMessageUtils.READ_PORPERTY.getKey()));
+    assertEquals("true", previous.getValueOwnerParameter(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey()));
     verify(pwaNotificationService).create(42L);
     verify(webNotificationService, never()).save(any());
     assertWebChannelSkipped(notification);
@@ -172,6 +181,17 @@ class DeclinedCallPluginTest {
 
     verify(webNotificationService, never()).save(any());
     verify(webNotificationService, never()).update(any(), anyBoolean());
+    assertWebChannelSkipped(notification);
+  }
+
+  @Test
+  void noWebNotificationIsStoredWhenThePlatformDisablesItOnTheWeb() {
+    when(pluginSettingService.isActive(WebChannel.ID, DeclinedCallPlugin.ID)).thenReturn(false);
+    stubDecline("john");
+
+    NotificationInfo notification = plugin.makeNotification(ctx);
+
+    verify(webNotificationService, never()).save(any());
     assertWebChannelSkipped(notification);
   }
 
@@ -228,7 +248,11 @@ class DeclinedCallPluginTest {
                                                 .with(NotificationConstants.DECLINE_KEY.getKey(), DECLINE_KEY)
                                                 .key(PluginKey.key(DeclinedCallPlugin.ID));
     previous.setId("42");
+    // As the storage reads a notification the caller already read and closed: its states are parameters too
     previous.setRead(true);
+    previous.setOnPopOver(false);
+    previous.with(NotificationMessageUtils.READ_PORPERTY.getKey(), "true");
+    previous.with(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey(), "false");
     when(webNotificationService.getNotificationInfos(any(WebNotificationFilter.class), anyInt(), anyInt())).thenReturn(List.of(previous));
     return previous;
   }

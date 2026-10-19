@@ -691,15 +691,15 @@ class WebConferencingServiceMissedCallTest {
   }
 
   @Test
-  void theTimerReportsTheDeclinesAStoppedCallLeftUnreported() throws Exception {
+  void theTimerLeavesTheDeclinesOfACallStoppedMeanwhileToItsStop() throws Exception {
     Date startedAt = new Date();
     CallInfo call = startedCall(startedAt, participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.DECLINED));
     call.setState(CallState.STOPPED);
-    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(startedAt))).thenReturn(1);
 
     service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
 
-    verify(listenerService).broadcast(eq(WebConferencingService.EVENT_CALL_DECLINES_CLOSED), eq(call), anyMap());
+    verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
+    verifyNoDeclinesClosedBroadcast();
   }
 
   @Test
