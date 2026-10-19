@@ -40,6 +40,8 @@ public class MissedCallPwaPlugin implements PwaNotificationPlugin {
 
   private static final String         ENDED_CALL_LABEL_KEY = "pwa.notification.webconferencing.missedcall.ended";
 
+  private static final String         HOME_PAGE_URL        = "/";
+
   private final ResourceBundleService resourceBundleService;
 
   private final IdentityManager       identityManager;
@@ -75,7 +77,9 @@ public class MissedCallPwaPlugin implements PwaNotificationPlugin {
     if (groupCall && MissedCallNotificationUtils.isEndedCall(notification)) {
       message.setBody(resourceBundleService.getSharedString(ENDED_CALL_LABEL_KEY, localeConfig.getLocale()));
     }
-    message.setUrl(MissedCallNotificationUtils.getCallLink(notification));
+    // A call with no page of its own (a chat room call) opens the home page, as the email links to it
+    String link = MissedCallNotificationUtils.getCallLink(notification);
+    message.setUrl(link == null ? HOME_PAGE_URL : link);
     return message;
   }
 }

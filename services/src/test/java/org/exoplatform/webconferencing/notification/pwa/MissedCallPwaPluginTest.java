@@ -108,6 +108,20 @@ class MissedCallPwaPluginTest {
   }
 
   @Test
+  void anEndedChatRoomCallSaysSoAndOpensTheHomePage() {
+    NotificationInfo notification = notification(WebConferencingService.OWNER_TYPE_CHATROOM, "Weekly sync");
+    notification.with(NotificationConstants.CALL_ENDED.getKey(), "true");
+
+    try (MockedStatic<MissedCallNotificationUtils> utils = mockLink(notification, null)) {
+      var message = plugin.process(notification, localeConfig);
+
+      assertEquals("Root Root has started a group call in Weekly sync", message.getTitle());
+      assertEquals("The call has ended", message.getBody());
+      assertEquals("/", message.getUrl());
+    }
+  }
+
+  @Test
   void thePushHandlesTheMissedCallNotification() {
     assertEquals(MissedCallPlugin.ID, plugin.getId());
   }

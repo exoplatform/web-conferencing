@@ -1408,7 +1408,8 @@ public class WebConferencingService implements Startable {
                                   .map(UserInfo::getId)
                                   .toList();
     if (remove && call.getCallerId() != null) {
-      // A removed call loses its participants: they are marked before, while the call is still started
+      // A removed call, 1:1 or group (an instant visio room deleted before anyone joined), loses its
+      // participants: they are marked before, while the call is still started, one update each in this request
       invitedIds = markRemovedCallMissed(call, invitedIds);
     }
     boolean stopped = false;
