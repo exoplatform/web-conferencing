@@ -2189,7 +2189,8 @@ public class WebConferencingService implements Startable {
         || call.getLastDate().after(latestStart)) {
       return;
     }
-    List<String> declinerIds = markDeclinesClosed(call, declinerIdsOf(call), latestStart);
+    // Read from the database: the missed call check of this request loaded the participants before its marks
+    List<String> declinerIds = markDeclinesClosed(call, participantsStorage.findDeclinedParticipantIds(callId), latestStart);
     if (!declinerIds.isEmpty()) {
       broadcastCallDeclinesClosed(call, callerId, declinerIds);
     }
@@ -2233,7 +2234,8 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Marks as notified, before a call that alerted its participants is removed, the participants who declined it.
+   * Marks as notified, before a call that alerted its participants is removed, the participants who declined it,
+   * read from the database: a decline marked after this read, before the removal, is in no report.
    *
    * @param call the call to remove
    * @return the participants marked by this removal, to report to the caller
@@ -2242,21 +2244,9 @@ public class WebConferencingService implements Startable {
     if (call.getCallerId() == null || call.getLastDate() == null) {
       return List.of();
     }
-    return markDeclinesClosed(call, declinerIdsOf(call), new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION));
-  }
-
-  /**
-   * Gets the user participants of a call who declined it and whose caller was not notified yet.
-   *
-   * @param call the call
-   * @return the ids of those participants
-   */
-  protected List<String> declinerIdsOf(CallInfo call) {
-    return call.getParticipants()
-               .stream()
-               .filter(part -> UserInfo.TYPE_NAME.equals(part.getType()) && UserState.DECLINED.equals(part.getState()))
-               .map(UserInfo::getId)
-               .toList();
+    return markDeclinesClosed(call,
+                              participantsStorage.findDeclinedParticipantIds(call.getId()),
+                              new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION));
   }
 
   /**
