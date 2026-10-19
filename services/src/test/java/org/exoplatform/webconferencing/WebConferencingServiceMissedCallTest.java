@@ -64,6 +64,7 @@ import org.exoplatform.web.security.codec.CodecInitializer;
 import org.exoplatform.webconferencing.dao.ParticipantDAO;
 import org.exoplatform.webconferencing.dao.StorageException;
 import org.exoplatform.webconferencing.domain.CallEntity;
+import org.exoplatform.webconferencing.domain.ParticipantEntity;
 
 /**
  * A participant alerted of a started call who neither joins nor declines it
@@ -718,27 +719,43 @@ class WebConferencingServiceMissedCallTest {
   }
 
   @Test
-  void theMarkedDeclinesOfACallAreReportedEvenWhenItsStopFails() throws Exception {
-    CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.DECLINED));
-    call.setCallerId(CALLER);
+  void theMarkedDeclinesOfARemovedCallAreReportedEvenWhenItsRemovalFails() throws Exception {
+    CallInfo call = removedUserCall();
+    participant(call, CALLEE).setState(UserState.DECLINED);
     when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
     stubStop();
-    doThrow(new PersistenceException("down")).when(service).txStopCall(call, false);
+    doThrow(new PersistenceException("down")).when(service).txStopCall(call, true);
 
-    assertThrows(StorageException.class, () -> service.stopCall(call, CALLER, false));
+    assertThrows(StorageException.class, () -> service.stopCall(call, CALLER, true));
 
     verify(service).scheduleStoppedDeclinesClosed(call, List.of(CALLEE));
   }
 
   @Test
-  void aStoppedCallWhoseDeclinesWereAlreadyReportedReportsNothing() throws Exception {
-    CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.DECLINED_NOTIFIED));
+  void aStoppedCallReadsItsDeclinesOnceStopped() throws Exception {
+    CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.DECLINED));
     call.setCallerId(CALLER);
     stubStop();
 
     service.stopCall(call, CALLER, false);
 
     verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
+    InOrder order = inOrder(service);
+    order.verify(service).txStopCall(call, false);
+    order.verify(service).scheduleStoppedDeclinesCheck(call);
+    verify(service, never()).scheduleStoppedDeclinesClosed(any(CallInfo.class), any());
+  }
+
+  @Test
+  void aCallWhoseStopFailsLeavesItsDeclinesToTheTimer() throws Exception {
+    CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.DECLINED));
+    call.setCallerId(CALLER);
+    stubStop();
+    doThrow(new PersistenceException("down")).when(service).txStopCall(call, false);
+
+    assertThrows(StorageException.class, () -> service.stopCall(call, CALLER, false));
+
+    verify(service, never()).scheduleStoppedDeclinesCheck(any(CallInfo.class));
     verify(service, never()).scheduleStoppedDeclinesClosed(any(CallInfo.class), any());
   }
 
@@ -749,8 +766,51 @@ class WebConferencingServiceMissedCallTest {
 
     service.stopCall(call, CALLER, false);
 
-    verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
+    verify(service, never()).scheduleStoppedDeclinesCheck(any(CallInfo.class));
     verify(service, never()).scheduleStoppedDeclinesClosed(any(CallInfo.class), any());
+  }
+
+  @Test
+  void theDeclinesOfAStoppedCallAreReadFromTheStorageAndReported() throws Exception {
+    CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.INVITED));
+    call.setCallerId(CALLER);
+    // The decline was saved after the stop read the call
+    when(participantsStorage.findCallParts(CALL_ID)).thenReturn(List.of(entity(CALLEE, UserState.DECLINED),
+                                                                         entity(OTHER, UserState.DECLINED_NOTIFIED),
+                                                                         entity(CALLER, UserState.LEAVED)));
+    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
+
+    service.notifyStoppedDeclinesClosed(call);
+
+    verify(listenerService).broadcast(WebConferencingService.EVENT_CALL_DECLINES_CLOSED,
+                                      call,
+                                      Map.of(WebConferencingService.EVENT_DATA_USER_ID,
+                                             CALLER,
+                                             WebConferencingService.EVENT_DATA_DECLINER_IDS,
+                                             CALLEE,
+                                             "status",
+                                             WebConferencingService.STATUS_OK));
+    verify(participantsStorage, never()).markParticipantDeclinedNotified(eq(CALL_ID), eq(OTHER), any(Date.class));
+  }
+
+  @Test
+  void aStoppedCallWithoutDeclineReportsNothing() throws Exception {
+    CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.MISSED));
+    call.setCallerId(CALLER);
+    when(participantsStorage.findCallParts(CALL_ID)).thenReturn(List.of(entity(CALLEE, UserState.MISSED)));
+
+    service.notifyStoppedDeclinesClosed(call);
+
+    verifyNoDeclinesClosedBroadcast();
+  }
+
+  private ParticipantEntity entity(String id, String state) {
+    ParticipantEntity entity = new ParticipantEntity();
+    entity.setCallId(CALL_ID);
+    entity.setId(id);
+    entity.setType(UserInfo.TYPE_NAME);
+    entity.setState(state);
+    return entity;
   }
 
   @Test
@@ -868,6 +928,7 @@ class WebConferencingServiceMissedCallTest {
     doNothing().when(service).notifyUserCallStateChanged(any(CallInfo.class), anyString(), anyString());
     doNothing().when(service).scheduleStoppedMissedCall(any(CallInfo.class), any(), anyBoolean());
     doNothing().when(service).scheduleStoppedDeclinesClosed(any(CallInfo.class), any());
+    doNothing().when(service).scheduleStoppedDeclinesCheck(any(CallInfo.class));
   }
 
   private void stubStorage() throws Exception {

@@ -158,6 +158,32 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
   }
 
   /**
+   * Marks a participant still invited to a call as having declined it, only while the call is still started:
+   * a participant who joined, missed the call or was already marked, or a call stopped meanwhile, leaves the
+   * participant unchanged.
+   *
+   * @param callId the call id
+   * @param partId the participant id
+   * @return the number of updated participants, 1 or 0
+   */
+  @ExoTransactional
+  public int markParticipantDeclined(String callId, String partId) {
+    return markParticipantDeclined(getEntityManager(), callId, partId);
+  }
+
+  static int markParticipantDeclined(EntityManager entityManager, String callId, String partId) {
+    return entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :declined, p.clientId = NULL"
+        + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :invited"
+        + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.state = :started)")
+                        .setParameter("declined", UserState.DECLINED)
+                        .setParameter("callId", callId)
+                        .setParameter("partId", partId)
+                        .setParameter("invited", UserState.INVITED)
+                        .setParameter("started", CallState.STARTED)
+                        .executeUpdate();
+  }
+
+  /**
    * Marks a participant who declined a call as notified of the decline, only while still declined and the call
    * from a start not later than the given date, whatever its state: a call started again has its participants
    * alerted again.

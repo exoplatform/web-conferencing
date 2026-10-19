@@ -19,6 +19,7 @@
 package org.exoplatform.webconferencing.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Date;
 
@@ -185,6 +186,38 @@ class ParticipantDAOTest {
   }
 
   @Test
+  void marksTheStillInvitedParticipantOfAStartedCallAsDeclined() {
+    setClientId(CALL_ID, JOHN, "client-1");
+
+    assertEquals(1, markDeclined(CALL_ID, JOHN));
+
+    assertEquals(UserState.DECLINED, stateOf(CALL_ID, JOHN));
+    assertNull(entityManager.find(ParticipantEntity.class, new ParticipantId(JOHN, CALL_ID)).getClientId());
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, PAUL));
+    assertEquals(UserState.INVITED, stateOf(OTHER_CALL_ID, JOHN));
+  }
+
+  @Test
+  void leavesAParticipantNoLongerInvitedUndeclined() {
+    setState(CALL_ID, PAUL, UserState.MISSED);
+
+    assertEquals(0, markDeclined(CALL_ID, MARY));
+    assertEquals(0, markDeclined(CALL_ID, PAUL));
+
+    assertEquals(UserState.JOINED, stateOf(CALL_ID, MARY));
+    assertEquals(UserState.MISSED, stateOf(CALL_ID, PAUL));
+  }
+
+  @Test
+  void marksNoDeclineOfACallNoLongerStarted() {
+    stop(CALL_ID);
+
+    assertEquals(0, markDeclined(CALL_ID, JOHN));
+
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, JOHN));
+  }
+
+  @Test
   void marksTheDeclinedParticipantOfTheCallOnlyAsNotified() {
     setState(CALL_ID, JOHN, UserState.DECLINED);
     setState(OTHER_CALL_ID, JOHN, UserState.DECLINED);
@@ -246,6 +279,21 @@ class ParticipantDAOTest {
     entityManager.find(ParticipantEntity.class, new ParticipantId(partId, callId)).setState(state);
     entityManager.getTransaction().commit();
     entityManager.clear();
+  }
+
+  private void setClientId(String callId, String partId, String clientId) {
+    entityManager.getTransaction().begin();
+    entityManager.find(ParticipantEntity.class, new ParticipantId(partId, callId)).setClientId(clientId);
+    entityManager.getTransaction().commit();
+    entityManager.clear();
+  }
+
+  private int markDeclined(String callId, String partId) {
+    entityManager.getTransaction().begin();
+    int updated = ParticipantDAO.markParticipantDeclined(entityManager, callId, partId);
+    entityManager.getTransaction().commit();
+    entityManager.clear();
+    return updated;
   }
 
   private int markDeclinedNotified(String callId, String partId, Date latestStart) {
