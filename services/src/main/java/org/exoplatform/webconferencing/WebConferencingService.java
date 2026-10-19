@@ -43,6 +43,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,6 +58,7 @@ import jakarta.persistence.PersistenceException;
 
 import org.apache.commons.fileupload2.core.FileUploadException;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -71,6 +76,7 @@ import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
+import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.ecm.utils.permission.PermissionUtil;
 import org.exoplatform.services.cms.documents.DocumentService;
 import org.exoplatform.services.cms.link.LinkManager;
@@ -163,6 +169,9 @@ public class WebConferencingService implements Startable {
   /** The operation call declined. */
   public static final String          OPERATION_CALL_DECLINED      = "call-declined";
 
+  /** The operation call missed. */
+  public static final String          OPERATION_CALL_MISSED        = "call-missed";
+
   /** The operation call stopped. */
   public static final String          OPERATION_CALL_STOPPED       = "call-stopped";
 
@@ -190,6 +199,26 @@ public class WebConferencingService implements Startable {
 
   public static final String    EVENT_CALL_RECORDED          = "exo.webconferencing.callRecorded";
 
+  /**
+   * Broadcast once per participant who did not answer a call before its incoming call alert timed out, or before
+   * the call stopped. The source is the call, the data holds the participant in {@link #EVENT_DATA_USER_ID}, the
+   * user who started the call in {@link #EVENT_DATA_CALLER_ID} and, for a group call that had already ended,
+   * {@link #EVENT_DATA_CALL_ENDED}.
+   */
+  public static final String    EVENT_CALL_MISSED            = "exo.webconferencing.callMissed";
+
+  /** The key of the user concerned by a call event, in the event data. */
+  public static final String    EVENT_DATA_USER_ID           = "user_id";
+
+  /** The key of the user who started the call, in the data of {@link #EVENT_CALL_MISSED}. */
+  public static final String    EVENT_DATA_CALLER_ID         = "caller_id";
+
+  /**
+   * The key telling, in the data of {@link #EVENT_CALL_MISSED}, that a group call had already ended when the
+   * participant missed it: <code>"true"</code>, absent otherwise.
+   */
+  public static final String    EVENT_DATA_CALL_ENDED        = "call_ended";
+
   public static final String    ROOM_DEFAULT_AVATAR_URL      = "/webconferencing/skin/images/room-default.jpg";
 
   /** The Constant CALL_OWNER_SCOPE_NAME. */
@@ -209,6 +238,35 @@ public class WebConferencingService implements Startable {
 
   /** The Constant SECRET_KEY. */
   protected static final String SECRET_KEY                   = "secret-key";
+
+  /** The init param holding how long, in seconds, a started call alerts its participants. */
+  protected static final String INCOMING_CALL_TIMEOUT        = "incoming-call-timeout";
+
+  /** The default duration, in seconds, of an incoming call alert. */
+  protected static final long   DEFAULT_INCOMING_CALL_TIMEOUT = 60;
+
+  /**
+   * How long after the incoming call alert times out the missed call is checked, in seconds: a client starts
+   * its alert once the call state reached it and the call was read, so it may still be answered a little after
+   * the timeout counted from the call start.
+   */
+  protected static final long   MISSED_CALL_CHECK_MARGIN     = 10;
+
+  /**
+   * The threads marking and notifying the participants who missed a call: a large space call does not hold up
+   * the other calls' notifications, and the conditional marks notify each participant once whatever runs
+   * concurrently.
+   */
+  protected static final int    MISSED_CALL_THREADS          = 4;
+
+  /** The longest incoming call alert, in seconds: the longest delay a browser timer accepts. */
+  protected static final long   MAX_INCOMING_CALL_TIMEOUT    = Integer.MAX_VALUE / 1000;
+
+  /**
+   * How much later than in memory the start date of a call may read from the storage, in milliseconds: a
+   * storage keeping whole seconds rounds the fraction up or down.
+   */
+  protected static final long   LAST_DATE_PRECISION          = 1000;
 
   protected static final String VIDEO_CONFERENCE_IS_ENABLED  = "videoConferenceEnabled";
 
@@ -368,6 +426,12 @@ public class WebConferencingService implements Startable {
 
   /** The secret key. */
   protected final String                             secretKey;
+
+  /** How long, in seconds, a started call alerts its participants before they missed it. */
+  protected final long                               incomingCallTimeout;
+
+  /** Runs the missed call check of each started call once its incoming call alert timed out. */
+  protected final ScheduledExecutorService           missedCallTimer;
 
   /** The organization. */
   protected final OrganizationService                organization;
@@ -535,6 +599,13 @@ public class WebConferencingService implements Startable {
     this.authenticator = authenticator;
     PropertiesParam jwtSecretParam = initParams.getPropertiesParam(JWT_CONFIGURATION_PROPERTIES);
     this.secretKey = jwtSecretParam.getProperty(SECRET_KEY);
+    this.incomingCallTimeout = readIncomingCallTimeout(initParams);
+    AtomicInteger missedCallThreads = new AtomicInteger();
+    this.missedCallTimer = Executors.newScheduledThreadPool(MISSED_CALL_THREADS, runnable -> {
+      Thread thread = new Thread(runnable, "webconferencing-missed-call-" + missedCallThreads.incrementAndGet());
+      thread.setDaemon(true);
+      return thread;
+    });
     this.shareService = shareService;
     this.linkManager = linkManager;
     try {
@@ -542,6 +613,22 @@ public class WebConferencingService implements Startable {
     } catch (Exception e) {
       LOG.error("Error initializing codecs", e);
     }
+  }
+
+  private static long readIncomingCallTimeout(InitParams initParams) {
+    ValueParam param = initParams.getValueParam(INCOMING_CALL_TIMEOUT);
+    if (param != null && StringUtils.isNotBlank(param.getValue())) {
+      try {
+        long timeout = Long.parseLong(param.getValue().trim());
+        if (timeout > 0 && timeout <= MAX_INCOMING_CALL_TIMEOUT) {
+          return timeout;
+        }
+      } catch (NumberFormatException e) {
+        // logged below
+      }
+      LOG.warn("Wrong {} value '{}', using {} seconds", INCOMING_CALL_TIMEOUT, param.getValue(), DEFAULT_INCOMING_CALL_TIMEOUT);
+    }
+    return DEFAULT_INCOMING_CALL_TIMEOUT;
   }
 
   protected UserInfo userInfo(String id) throws IdentityStateException {
@@ -873,9 +960,10 @@ public class WebConferencingService implements Startable {
                   throw new CallArgumentException("Cannot find call's owner event space with identity id '%s'".formatted(ownerId));
                 }
 
-                // Group call starts with all parties LEAVED status
+                // Group call starts with all parties LEAVED status, but the alerted ones INVITED
+                boolean alerted = !isSpaceEvent;
                 for (UserInfo m : group.getMembers().values()) {
-                  m.setState(UserState.LEAVED);
+                  m.setState(alerted && !currentUserId.equals(m.getId()) ? UserState.INVITED : UserState.LEAVED);
                 }
               } else {
                 // for just creating call, we use as it was - owner with empty members
@@ -897,10 +985,18 @@ public class WebConferencingService implements Startable {
                 // Mark the call as started in DB 
                 call.setState(CallState.STARTED);
                 call.setLastDate(Calendar.getInstance().getTime());
+                if (isAlertedCall(call)) {
+                  call.setCallerId(currentUserId);
+                }
                 // XXX For starting 1-1 call add its participants from the beginning as it will not have such logic as
                 // group calls have in syncMembersAndParticipants()
                 if (isUser) {
                   call.addParticipants(createParticipants(providerType, partIds));
+                  // The called peer is alerted of the call
+                  call.getParticipants()
+                      .stream()
+                      .filter(part -> UserInfo.TYPE_NAME.equals(part.getType()) && !currentUserId.equals(part.getId()))
+                      .forEach(part -> part.setState(UserState.INVITED));
                 }
               } else {
                 // XXX we need set date for non started call as it's required by the DB schema
@@ -927,6 +1023,9 @@ public class WebConferencingService implements Startable {
                 } else if (isUser) {
                   // It's P2P call
                   notifyUserCallStateChanged(call, currentUserId, CallState.STARTED);
+                }
+                if (isAlertedCall(call)) {
+                  scheduleMissedCall(id, currentUserId, call.getLastDate());
                 }
               }
 
@@ -1039,6 +1138,7 @@ public class WebConferencingService implements Startable {
         // TODO why not reuse existing call object and update only actually passed to this method?
         CallInfo call = new CallInfo(callId, title, owner, providerType);
         call.setLastDate(currentCall.getLastDate());
+        call.setCallerId(currentCall.getCallerId());
         
         // We update origins not actual participants (they will be resolved on demand, e.g. in getCall())
         call.addOrigins(createOrigins(providerType, partIds, spaces));
@@ -1301,6 +1401,18 @@ public class WebConferencingService implements Startable {
    * @throws StorageException if persistence exception happen
    */
   protected void stopCall(CallInfo call, String userId, boolean remove) throws StorageException {
+    List<String> invitedIds = call.getParticipants()
+                                  .stream()
+                                  .filter(part -> UserInfo.TYPE_NAME.equals(part.getType())
+                                      && UserState.INVITED.equals(part.getState()))
+                                  .map(UserInfo::getId)
+                                  .toList();
+    if (remove && call.getCallerId() != null) {
+      // A removed call, 1:1 or group (an instant visio room deleted before anyone joined), loses its
+      // participants: they are marked before, while the call is still started, one update each in this request
+      invitedIds = markRemovedCallMissed(call, invitedIds);
+    }
+    boolean stopped = false;
     try {
       // Stop the call in DB
       txStopCall(call, remove);
@@ -1321,8 +1433,14 @@ public class WebConferencingService implements Startable {
       } else {
         notifyUserCallStateChanged(call, userId, CallState.STOPPED);
       }
+      stopped = true;
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       throw new StorageException("Error stopping call " + call.getId(), e);
+    } finally {
+      // The participants of a removed call are already marked: they missed it even when the removal failed
+      if ((stopped || remove) && !invitedIds.isEmpty() && call.getCallerId() != null) {
+        scheduleStoppedMissedCall(call, invitedIds, remove);
+      }
     }
   }
   
@@ -1384,17 +1502,23 @@ public class WebConferencingService implements Startable {
     // Sync call participants (actual for groups only) - this will happen in a dedicated DB tx
     syncMembersAndParticipants(call);
 
-    // On call start we mark all parts LEAVED and then each of them will join and be marked as JOINED in joinCall()
+    // On call start the other parts are INVITED when alerted of the call, LEAVED otherwise, and each of them
+    // will be marked JOINED in joinCall()
+    boolean alerted = notifyStarted && isAlertedCall(call);
+    call.setCallerId(alerted ? partId : null);
     for (UserInfo part : call.getParticipants()) {
       if (UserInfo.TYPE_NAME.equals(part.getType()) && partId.equals(part.getId())) {
         part.setState(UserState.JOINED);
         part.setClientId(clientId);
       } else {
-        part.setState(UserState.LEAVED);
+        part.setState(alerted && UserInfo.TYPE_NAME.equals(part.getType()) ? UserState.INVITED : UserState.LEAVED);
         part.setClientId(null);
       }
     }
     updateCallAndParticipants(call);
+    if (alerted) {
+      scheduleMissedCall(callId, partId, call.getLastDate());
+    }
 
     // Dec 3, 2020: Optionally notify the call started
     if (notifyStarted) {
@@ -1802,7 +1926,222 @@ public class WebConferencingService implements Startable {
    * @return <code>true</code> if the participant is not in the call
    */
   protected boolean isGone(UserInfo part) {
-    return part.getState() == null || UserState.LEAVED.equals(part.getState()) || UserState.DECLINED.equals(part.getState());
+    return part.getState() == null || UserState.LEAVED.equals(part.getState()) || UserState.DECLINED.equals(part.getState())
+        || UserState.INVITED.equals(part.getState()) || UserState.MISSED.equals(part.getState());
+  }
+
+  /**
+   * Tells if starting a call alerts its participants of an incoming call: any call but the one of a planned
+   * event.
+   *
+   * @param call the call
+   * @return <code>true</code> if the participants are alerted when the call starts
+   */
+  protected boolean isAlertedCall(CallInfo call) {
+    return !OWNER_TYPE_SPACEEVENT.equals(call.getOwner().getType());
+  }
+
+  /**
+   * Schedules the missed call check of a call that just started, for when its incoming call alert timed out
+   * on every client (see {@link #getMissedCallCheckDelay()}). The check runs on this server only: a restart
+   * stops every started call anyway (see {@link #initializeStartedCallsState()}). A participant who answered
+   * the alert but whose join reaches the server after the check still gets the missed call notification.
+   *
+   * @param callId the call id
+   * @param callerId the user who started the call
+   * @param startedAt the start date of the call
+   */
+  protected void scheduleMissedCall(String callId, String callerId, Date startedAt) {
+    missedCallTimer.schedule(() -> checkMissedCall(callId, callerId, startedAt), getMissedCallCheckDelay(), TimeUnit.MILLISECONDS);
+  }
+
+  /**
+   * Marks as missed, before the call is removed with its participants, the participants still invited to it:
+   * among the missed call check of the same start, a join or a decline, a participant is marked once.
+   *
+   * @param call the call to remove
+   * @param invitedIds the participants invited to the call
+   * @return the participants marked missed by this call, to notify once the call is removed, or when its
+   *         removal fails: the missed call check of the same start no longer finds them invited
+   */
+  protected List<String> markRemovedCallMissed(CallInfo call, List<String> invitedIds) {
+    Date latestStart = new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION);
+    List<String> markedIds = new ArrayList<>();
+    for (String partId : invitedIds) {
+      try {
+        if (markParticipantMissed(call.getId(), partId, latestStart)) {
+          markedIds.add(partId);
+        }
+      } catch (StorageException e) {
+        LOG.warn("Cannot mark participant {} of removed call {} as missed, the participant is not notified", partId, call.getId(), e);
+      }
+    }
+    return markedIds;
+  }
+
+  /**
+   * Notifies, out of the request that stopped the call, the participants a call stopped before they answered
+   * its incoming call alert, whatever stopped it: the caller hanging up, every other participant leaving, a
+   * client stopping or deleting the call, or its call channel ending. A call stopped when the
+   * server starts (see {@link #initializeStartedCallsState()}) or deleted as outdated does not get here.
+   *
+   * @param call the stopped call, as it was when it stopped
+   * @param invitedIds the participants still invited when the call stopped
+   * @param removed <code>true</code> when the call was removed with its participants
+   */
+  protected void scheduleStoppedMissedCall(CallInfo call, List<String> invitedIds, boolean removed) {
+    missedCallTimer.execute(() -> checkStoppedMissedCall(call, invitedIds, removed));
+  }
+
+  /**
+   * Runs {@link #notifyStoppedMissedCall(CallInfo, List, boolean)} from the missed call timer, within a request
+   * of the portal container.
+   *
+   * @param call the stopped call, as it was when it stopped
+   * @param invitedIds the participants still invited when the call stopped
+   * @param removed <code>true</code> when the call was removed with its participants
+   */
+  protected void checkStoppedMissedCall(CallInfo call, List<String> invitedIds, boolean removed) {
+    RequestLifeCycle.begin(PortalContainer.getInstance());
+    try {
+      notifyStoppedMissedCall(call, invitedIds, removed);
+    } catch (Exception e) {
+      LOG.warn("Error notifying the participants who missed stopped call {}", call.getId(), e);
+    } finally {
+      RequestLifeCycle.end();
+    }
+  }
+
+  /**
+   * Marks as missed the participants still invited to a call when it stopped, and broadcasts
+   * {@link #EVENT_CALL_MISSED} for each of them, as the user who started the call (see
+   * {@link CallInfo#getCallerId()}), with {@link #EVENT_DATA_CALL_ENDED} for a group call. A participant of a
+   * group call is marked only while still invited and the call still stopped, from a start not later than the
+   * stopped one by more than {@link #LAST_DATE_PRECISION}, checked by the storage when the participant is
+   * marked: with the missed call check of the same start, a join or a later start, the event is broadcast at
+   * most once per participant. The participants of a removed call were marked before it was removed (see
+   * {@link #markRemovedCallMissed(CallInfo, List)}): they are notified without a mark. The event of a
+   * participant is broadcast after the mark is committed: a call started again in between does not withhold
+   * it. A participant who cannot be marked is logged and not notified.
+   *
+   * @param call the stopped call, as it was when it stopped
+   * @param invitedIds the participants still invited when the call stopped
+   * @param removed <code>true</code> when the call was removed with its participants
+   */
+  protected void notifyStoppedMissedCall(CallInfo call, List<String> invitedIds, boolean removed) {
+    String callId = call.getId();
+    Date latestStart = new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION);
+    boolean ended = call.getOwner().isGroup();
+    for (String partId : invitedIds) {
+      try {
+        if (removed || markParticipantMissedAtStop(callId, partId, latestStart)) {
+          broadcastCallMissed(call, partId, call.getCallerId(), ended);
+          LOG.info(metricMessage(partId, call, OPERATION_CALL_MISSED, STATUS_OK, 0L, null, null));
+        }
+      } catch (StorageException e) {
+        LOG.warn("Cannot mark participant {} of stopped call {} as missed, the participant is not notified", partId, callId, e);
+      }
+    }
+  }
+
+  /**
+   * Gets how long after a call starts its missed call check runs: the incoming call timeout, plus
+   * {@link #MISSED_CALL_CHECK_MARGIN} for the clients that started their alert later.
+   *
+   * @return the delay in milliseconds
+   */
+  protected long getMissedCallCheckDelay() {
+    return TimeUnit.SECONDS.toMillis(incomingCallTimeout + MISSED_CALL_CHECK_MARGIN);
+  }
+
+  /**
+   * Runs {@link #notifyMissedCall(String, String, Date)} from the missed call timer, within a request of the
+   * portal container.
+   *
+   * @param callId the call id
+   * @param callerId the user who started the call
+   * @param startedAt the start date of the call
+   */
+  protected void checkMissedCall(String callId, String callerId, Date startedAt) {
+    RequestLifeCycle.begin(PortalContainer.getInstance());
+    try {
+      notifyMissedCall(callId, callerId, startedAt);
+    } catch (Exception e) {
+      LOG.warn("Error notifying the participants who missed call {}", callId, e);
+    } finally {
+      RequestLifeCycle.end();
+    }
+  }
+
+  /**
+   * Marks as missed the participants still invited to a call whose incoming call alert timed out, and
+   * broadcasts {@link #EVENT_CALL_MISSED} for each of them. Nothing is done when the call is over, or was
+   * started again after the given start date, that later start having its own check. Each participant is
+   * marked only while still invited and the call still started from that start, both checked by the storage
+   * when the participant is marked: among concurrent checks, with a join or a decline committed meanwhile, or
+   * the call stopped or started again meanwhile, the event is broadcast at most once per participant, and
+   * never for a start later than the checked one by more than {@link #LAST_DATE_PRECISION}, the precision of
+   * a start date stored in whole seconds: a call started again within that second has its invitees marked by
+   * this check, up to a second before its own alert times out. The event of a participant is broadcast after
+   * the mark is committed: a join, a decline or a stop committed in between does not withhold it. A participant
+   * who cannot be marked is logged and not notified, and the check goes on with the other participants.
+   *
+   * @param callId the call id
+   * @param callerId the user who started the call
+   * @param startedAt the start date of the call the check was scheduled for
+   * @throws InvalidCallException if the call cannot be read
+   */
+  protected void notifyMissedCall(String callId, String callerId, Date startedAt) throws InvalidCallException {
+    Date latestStart = new Date(startedAt.getTime() + LAST_DATE_PRECISION);
+    CallInfo call = getCall(callId);
+    if (call == null || !CallState.STARTED.equals(call.getState()) || call.getLastDate() == null
+        || call.getLastDate().after(latestStart)) {
+      return;
+    }
+    for (UserInfo part : call.getParticipants()) {
+      if (UserInfo.TYPE_NAME.equals(part.getType()) && UserState.INVITED.equals(part.getState())) {
+        try {
+          if (markParticipantMissed(callId, part.getId(), latestStart)) {
+            part.setState(UserState.MISSED);
+            broadcastCallMissed(call, part.getId(), callerId, false);
+            LOG.info(metricMessage(part.getId(), call, OPERATION_CALL_MISSED, STATUS_OK, 0L, null, null));
+          }
+        } catch (StorageException e) {
+          LOG.warn("Cannot mark participant {} of call {} as missed, the participant is not notified", part.getId(), callId, e);
+        }
+      }
+    }
+  }
+
+  private boolean markParticipantMissed(String callId, String partId, Date latestStart) throws StorageException {
+    try {
+      return participantsStorage.markParticipantMissed(callId, partId, latestStart) > 0;
+    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+      throw new StorageException("Error marking participant " + partId + " of call " + callId + " as missed", e);
+    }
+  }
+
+  private boolean markParticipantMissedAtStop(String callId, String partId, Date latestStart) throws StorageException {
+    try {
+      return participantsStorage.markParticipantMissedAtStop(callId, partId, latestStart) > 0;
+    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+      throw new StorageException("Error marking participant " + partId + " of stopped call " + callId + " as missed", e);
+    }
+  }
+
+  private void broadcastCallMissed(CallInfo call, String partId, String callerId, boolean ended) {
+    try {
+      Map<String, String> info = new HashMap<>();
+      info.put(EVENT_DATA_USER_ID, partId);
+      info.put(EVENT_DATA_CALLER_ID, callerId);
+      if (ended) {
+        info.put(EVENT_DATA_CALL_ENDED, Boolean.TRUE.toString());
+      }
+      info.put("status", STATUS_OK);
+      listenerService.broadcast(EVENT_CALL_MISSED, call, info);
+    } catch (Exception e) {
+      LOG.error("Error while broadcasting event '{}' for user '{}'", EVENT_CALL_MISSED, partId, e);
+    }
   }
 
   /**
@@ -2598,7 +2937,17 @@ public class WebConferencingService implements Startable {
    */
   @Override
   public void stop() {
-    // nothing
+    missedCallTimer.shutdownNow();
+  }
+
+  /**
+   * Gets how long, in seconds, a started call alerts its participants. Past it, a participant who neither
+   * joined nor declined the call missed it.
+   *
+   * @return the incoming call timeout in seconds
+   */
+  public long getIncomingCallTimeout() {
+    return incomingCallTimeout;
   }
 
   /**
@@ -2827,6 +3176,7 @@ public class WebConferencingService implements Startable {
     call.setLastDate(savedCall.getLastDate());
     call.setStartDate(savedCall.getStartDate());
     call.setEndDate(savedCall.getEndDate());
+    call.setCallerId(savedCall.getCallerId());
     try {
       String inviteId = getInviteId(callId);
       if (inviteId != null) {
@@ -2969,6 +3319,7 @@ public class WebConferencingService implements Startable {
       entity.setLastDate(call.getLastDate());
       entity.setStartDate(call.getStartDate());
       entity.setEndDate(call.getEndDate());
+      entity.setCallerId(call.getCallerId());
 
       if (OWNER_TYPE_CHATROOM.equals(owner.getType())) {
         entity.setIsGroup(true);

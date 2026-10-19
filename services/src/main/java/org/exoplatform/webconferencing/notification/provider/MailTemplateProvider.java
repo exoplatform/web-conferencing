@@ -30,16 +30,19 @@ import org.exoplatform.commons.utils.HTMLEntityEncoder;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.social.notification.LinkProviderUtils;
 import org.exoplatform.webconferencing.notification.plugin.CallRecordingPlugin;
+import org.exoplatform.webconferencing.notification.plugin.MissedCallPlugin;
 import org.exoplatform.webconferencing.notification.utils.NotificationConstants;
 
 
 @TemplateConfigs(templates = {
-    @TemplateConfig(pluginId = CallRecordingPlugin.ID, template = "war:/notification/templates/mail/CallRecordingPlugin.gtmpl") })
+    @TemplateConfig(pluginId = CallRecordingPlugin.ID, template = "war:/notification/templates/mail/CallRecordingPlugin.gtmpl"),
+    @TemplateConfig(pluginId = MissedCallPlugin.ID, template = "war:/notification/templates/mail/MissedCallPlugin.gtmpl") })
 public class MailTemplateProvider extends TemplateProvider {
 
   public MailTemplateProvider(InitParams initParams) {
     super(initParams);
     this.templateBuilders.put(PluginKey.key(CallRecordingPlugin.ID), new TemplateBuilder());
+    this.templateBuilders.put(PluginKey.key(MissedCallPlugin.ID), new MissedCallTemplateBuilder(getChannelKey()));
   }
 
   private class TemplateBuilder extends AbstractTemplateBuilder {
