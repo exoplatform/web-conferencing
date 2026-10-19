@@ -1437,7 +1437,7 @@ public class WebConferencingService implements Startable {
       invitedIds = markRemovedCallMissed(call, invitedIds);
     }
     // The incoming call alert closes with the call: a removed call loses its participants, its declines are
-    // marked before; those of a stopped call are read once it stopped, when no decline can be marked any more
+    // marked before; those of a stopped call are marked once it stopped, when no decline can be marked any more
     List<String> declinerIds = remove ? markStoppedDeclinesClosed(call) : List.of();
     boolean stopped = false;
     try {
@@ -1461,6 +1461,9 @@ public class WebConferencingService implements Startable {
         notifyUserCallStateChanged(call, userId, CallState.STOPPED);
       }
       stopped = true;
+      if (!remove) {
+        declinerIds = markStopCallDeclinesClosed(call);
+      }
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       throw new StorageException("Error stopping call " + call.getId(), e);
     } finally {
@@ -1468,12 +1471,10 @@ public class WebConferencingService implements Startable {
       if ((stopped || remove) && !invitedIds.isEmpty() && call.getCallerId() != null) {
         scheduleStoppedMissedCall(call, invitedIds, remove);
       }
-      // The marked declines of a removed call are reported whatever the removal's outcome: no later check finds
-      // them declined. A call whose stop failed is still started: the timer of its start reports its declines
+      // The marked declines are reported whatever the stop's outcome: no later check finds them declined. A call
+      // whose stop failed is still started: the timer of its start reports its declines
       if (!declinerIds.isEmpty()) {
         scheduleStoppedDeclinesClosed(call, declinerIds);
-      } else if (stopped && !remove && call.getCallerId() != null) {
-        scheduleStoppedDeclinesCheck(call);
       }
     }
   }
@@ -1912,9 +1913,9 @@ public class WebConferencingService implements Startable {
    * participants, a P2P one included: its state is unchanged and it is never stopped here. Only the user
    * listeners of the decliner are notified, as having left the call, so that the incoming call alert closes
    * on every client of that user. A participant read as joined is left untouched: the decline comes from an
-   * alert still shown after a join from another client. The read and the write take no lock, as in
-   * {@link #joinCall(String, String, String)} and {@link #leaveCall(String, String, String)}: a join of the
-   * same user committed between them is overwritten. The decliner can still join the call later. On a call that
+   * alert still shown after a join from another client. On a call that alerted nobody, the read and the write take
+   * no lock, as in {@link #joinCall(String, String, String)} and {@link #leaveCall(String, String, String)}: a
+   * join of the same user committed between them is overwritten. The decliner can still join the call later. On a call that
    * alerted its participants (see {@link CallInfo#getCallerId()}), a participant declines while still invited
    * and the call still started, both checked by the storage when the participant is marked, and the decline is
    * broadcast as {@link #EVENT_CALL_DECLINED} once committed: a decline racing the missed call check, a join or
@@ -2170,9 +2171,9 @@ public class WebConferencingService implements Startable {
    * Reports to the caller, once the incoming call alert of a call start timed out, the participants who declined
    * it: they are marked as notified, and {@link #EVENT_CALL_DECLINES_CLOSED} is broadcast with them, when there
    * is at least one. Nothing is done for a call no longer started, or started again after the given start date,
-   * the declines of that later start being its own: a call stopped meanwhile reported its declines once it
+   * the declines of that later start being its own: a call stopped meanwhile marked its declines once it
    * stopped (see {@link #stopCall(CallInfo, String, boolean)}), so that the caller gets one email; a removed call
-   * reported those marked before its removal, a decline marked meanwhile is in none. Each participant is marked
+   * marked those read before its removal, a decline marked meanwhile is in none. Each participant is marked
    * only while still declined and the call still from that start, checked by the storage: with the report of a
    * stop running at the same time, a participant is reported once.
    *
@@ -2196,7 +2197,7 @@ public class WebConferencingService implements Startable {
 
   /**
    * Reports to the caller, out of the request that stopped the call, the participants who declined it before
-   * it stopped (see {@link #notifyDeclinesClosed(String, String, Date)}).
+   * it stopped and were marked by the stop (see {@link #notifyDeclinesClosed(String, String, Date)}).
    *
    * @param call the stopped call, as it was when it stopped
    * @param declinerIds the participants marked as notified of their decline when the call stopped
@@ -2206,47 +2207,33 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Reports to the caller, out of the request that stopped the call, the participants who declined it, read from
-   * the storage once the call stopped (see {@link #notifyStoppedDeclinesClosed(CallInfo)}).
+   * Marks as notified the participants who declined a call that alerted its participants, read from the storage
+   * once the call stopped, in the request that stopped it, when no decline can be marked any more (see
+   * {@link #declineCall(String, String, String)}): each only while still declined and the call still from that
+   * start. A decline marked against the call still started but committed after this read, its transaction
+   * overlapping the stop, is in no report: the storage does not order the two, the stop writing the call alone.
    *
    * @param call the stopped call, as it was when it stopped
+   * @return the participants marked by this stop, to report to the caller
    */
-  protected void scheduleStoppedDeclinesCheck(CallInfo call) {
-    missedCallTimer.execute(() -> {
-      RequestLifeCycle.begin(PortalContainer.getInstance());
-      try {
-        notifyStoppedDeclinesClosed(call);
-      } catch (Exception e) {
-        LOG.warn("Error notifying the caller of the declines of stopped call {}", call.getId(), e);
-      } finally {
-        RequestLifeCycle.end();
-      }
-    });
-  }
-
-  /**
-   * Reports to the caller the participants who declined a call, read from the storage once the call stopped, when
-   * no decline can be marked any more (see {@link #declineCall(String, String, String)}): they are marked as
-   * notified, each only while still declined and the call still from that start, and
-   * {@link #EVENT_CALL_DECLINES_CLOSED} is broadcast with them, when there is at least one. A decline marked
-   * against the call still started but committed after this read, its transaction overlapping the stop, is in no
-   * report: the storage does not order the two, the stop writing the call alone.
-   *
-   * @param call the stopped call, as it was when it stopped
-   */
-  protected void notifyStoppedDeclinesClosed(CallInfo call) {
-    List<String> declinerIds = participantsStorage.findCallParts(call.getId())
-                                                  .stream()
-                                                  .filter(part -> UserInfo.TYPE_NAME.equals(part.getType())
-                                                      && UserState.DECLINED.equals(part.getState()))
-                                                  .map(ParticipantEntity::getId)
-                                                  .toList();
-    List<String> markedIds = markDeclinesClosed(call,
-                                                declinerIds,
-                                                new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION));
-    if (!markedIds.isEmpty()) {
-      broadcastCallDeclinesClosed(call, call.getCallerId(), markedIds);
+  protected List<String> markStopCallDeclinesClosed(CallInfo call) {
+    if (call.getCallerId() == null || call.getLastDate() == null) {
+      return List.of();
     }
+    List<String> declinerIds;
+    try {
+      declinerIds = participantsStorage.findCallParts(call.getId())
+                                       .stream()
+                                       .filter(part -> UserInfo.TYPE_NAME.equals(part.getType())
+                                           && UserState.DECLINED.equals(part.getState()))
+                                       .map(ParticipantEntity::getId)
+                                       .toList();
+    } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+      // The call stopped: its declines are not reported, the stop goes on
+      LOG.warn("Cannot read the declines of stopped call {}, they are not reported", call.getId(), e);
+      return List.of();
+    }
+    return markDeclinesClosed(call, declinerIds, new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION));
   }
 
   /**
