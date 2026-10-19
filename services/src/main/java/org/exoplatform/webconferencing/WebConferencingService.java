@@ -2222,12 +2222,8 @@ public class WebConferencingService implements Startable {
     }
     List<String> declinerIds;
     try {
-      declinerIds = participantsStorage.findCallParts(call.getId())
-                                       .stream()
-                                       .filter(part -> UserInfo.TYPE_NAME.equals(part.getType())
-                                           && UserState.DECLINED.equals(part.getState()))
-                                       .map(ParticipantEntity::getId)
-                                       .toList();
+      // Read from the database: the participants this request loaded before the stop may be outdated
+      declinerIds = participantsStorage.findDeclinedParticipantIds(call.getId());
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       // The call stopped: its declines are not reported, the stop goes on
       LOG.warn("Cannot read the declines of stopped call {}, they are not reported", call.getId(), e);

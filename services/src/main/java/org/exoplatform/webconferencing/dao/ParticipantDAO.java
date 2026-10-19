@@ -31,6 +31,7 @@ import jakarta.persistence.TypedQuery;
 import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.persistence.impl.GenericDAOJPAImpl;
 import org.exoplatform.webconferencing.CallState;
+import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
@@ -155,6 +156,26 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
                         .setParameter("stopped", CallState.STOPPED)
                         .setParameter("latestStart", latestStart)
                         .executeUpdate();
+  }
+
+  /**
+   * Finds the user participants of a call who declined it and whose caller was not notified yet, as stored: the
+   * ids are read from the database, whatever the participants this storage already loaded.
+   *
+   * @param callId the call id
+   * @return the participant ids
+   */
+  public List<String> findDeclinedParticipantIds(String callId) {
+    return findDeclinedParticipantIds(getEntityManager(), callId);
+  }
+
+  static List<String> findDeclinedParticipantIds(EntityManager entityManager, String callId) {
+    return entityManager.createQuery("SELECT p.id FROM WebConfParticipant p"
+        + " WHERE p.callId = :callId AND p.type = :user AND p.state = :declined", String.class)
+                        .setParameter("callId", callId)
+                        .setParameter("user", UserInfo.TYPE_NAME)
+                        .setParameter("declined", UserState.DECLINED)
+                        .getResultList();
   }
 
   /**

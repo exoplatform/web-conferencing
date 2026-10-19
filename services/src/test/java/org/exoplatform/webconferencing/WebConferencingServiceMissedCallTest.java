@@ -64,7 +64,6 @@ import org.exoplatform.web.security.codec.CodecInitializer;
 import org.exoplatform.webconferencing.dao.ParticipantDAO;
 import org.exoplatform.webconferencing.dao.StorageException;
 import org.exoplatform.webconferencing.domain.CallEntity;
-import org.exoplatform.webconferencing.domain.ParticipantEntity;
 
 /**
  * A participant alerted of a started call who neither joins nor declines it
@@ -736,7 +735,7 @@ class WebConferencingServiceMissedCallTest {
     CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.INVITED));
     call.setCallerId(CALLER);
     // The decline was saved after the stop read the call
-    when(participantsStorage.findCallParts(CALL_ID)).thenReturn(List.of(entity(CALLEE, UserState.DECLINED)));
+    when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE));
     when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
     stubStop();
 
@@ -744,7 +743,7 @@ class WebConferencingServiceMissedCallTest {
 
     InOrder order = inOrder(service, participantsStorage);
     order.verify(service).txStopCall(call, false);
-    order.verify(participantsStorage).findCallParts(CALL_ID);
+    order.verify(participantsStorage).findDeclinedParticipantIds(CALL_ID);
     order.verify(participantsStorage).markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()));
     order.verify(service).scheduleStoppedDeclinesClosed(call, List.of(CALLEE));
   }
@@ -758,7 +757,7 @@ class WebConferencingServiceMissedCallTest {
 
     assertThrows(StorageException.class, () -> service.stopCall(call, CALLER, false));
 
-    verify(participantsStorage, never()).findCallParts(anyString());
+    verify(participantsStorage, never()).findDeclinedParticipantIds(anyString());
     verify(service, never()).scheduleStoppedDeclinesClosed(any(CallInfo.class), any());
   }
 
@@ -769,7 +768,7 @@ class WebConferencingServiceMissedCallTest {
 
     service.stopCall(call, CALLER, false);
 
-    verify(participantsStorage, never()).findCallParts(anyString());
+    verify(participantsStorage, never()).findDeclinedParticipantIds(anyString());
     verify(service, never()).scheduleStoppedDeclinesClosed(any(CallInfo.class), any());
   }
 
@@ -778,9 +777,7 @@ class WebConferencingServiceMissedCallTest {
     CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.INVITED));
     call.setCallerId(CALLER);
     // The decline was saved after the stop read the call
-    when(participantsStorage.findCallParts(CALL_ID)).thenReturn(List.of(entity(CALLEE, UserState.DECLINED),
-                                                                         entity(OTHER, UserState.DECLINED_NOTIFIED),
-                                                                         entity(CALLER, UserState.LEAVED)));
+    when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE));
     when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
 
     assertEquals(List.of(CALLEE), service.markStopCallDeclinesClosed(call));
@@ -792,7 +789,7 @@ class WebConferencingServiceMissedCallTest {
   void aStoppedCallWhoseDeclinesCannotBeReadStaysStopped() throws Exception {
     CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.DECLINED));
     call.setCallerId(CALLER);
-    when(participantsStorage.findCallParts(CALL_ID)).thenThrow(new PersistenceException("down"));
+    when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenThrow(new PersistenceException("down"));
     stubStop();
 
     service.stopCall(call, CALLER, false);
@@ -805,20 +802,11 @@ class WebConferencingServiceMissedCallTest {
   void aStoppedCallWithoutDeclineReportsNothing() throws Exception {
     CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.MISSED));
     call.setCallerId(CALLER);
-    when(participantsStorage.findCallParts(CALL_ID)).thenReturn(List.of(entity(CALLEE, UserState.MISSED)));
+    when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of());
 
     assertEquals(List.of(), service.markStopCallDeclinesClosed(call));
 
     verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
-  }
-
-  private ParticipantEntity entity(String id, String state) {
-    ParticipantEntity entity = new ParticipantEntity();
-    entity.setCallId(CALL_ID);
-    entity.setId(id);
-    entity.setType(UserInfo.TYPE_NAME);
-    entity.setState(state);
-    return entity;
   }
 
   @Test

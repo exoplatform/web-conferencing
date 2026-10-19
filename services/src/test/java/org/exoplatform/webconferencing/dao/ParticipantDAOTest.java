@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Date;
+import java.util.List;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -215,6 +216,27 @@ class ParticipantDAOTest {
     assertEquals(0, markDeclined(CALL_ID, JOHN));
 
     assertEquals(UserState.INVITED, stateOf(CALL_ID, JOHN));
+  }
+
+  @Test
+  void findsTheDeclinedUserParticipantsOfTheCallOnly() {
+    setState(CALL_ID, JOHN, UserState.DECLINED);
+    setState(CALL_ID, PAUL, UserState.DECLINED_NOTIFIED);
+    setState(OTHER_CALL_ID, JOHN, UserState.DECLINED);
+
+    assertEquals(List.of(JOHN), ParticipantDAO.findDeclinedParticipantIds(entityManager, CALL_ID));
+  }
+
+  @Test
+  void findsADeclineSavedAfterTheParticipantWasLoaded() {
+    // The request that stops a call loaded its participants before a decline was saved
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, JOHN));
+    entityManager.getTransaction().begin();
+    ParticipantDAO.markParticipantDeclined(entityManager, CALL_ID, JOHN);
+    entityManager.getTransaction().commit();
+
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, JOHN));
+    assertEquals(List.of(JOHN), ParticipantDAO.findDeclinedParticipantIds(entityManager, CALL_ID));
   }
 
   @Test
