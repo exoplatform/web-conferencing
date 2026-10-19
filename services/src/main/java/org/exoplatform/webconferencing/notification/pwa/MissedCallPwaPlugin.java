@@ -38,6 +38,8 @@ public class MissedCallPwaPlugin implements PwaNotificationPlugin {
 
   private static final String         GROUP_CALL_LABEL_KEY = "pwa.notification.webconferencing.missedcall.group";
 
+  private static final String         ENDED_CALL_LABEL_KEY = "pwa.notification.webconferencing.missedcall.ended";
+
   private final ResourceBundleService resourceBundleService;
 
   private final IdentityManager       identityManager;
@@ -70,6 +72,9 @@ public class MissedCallPwaPlugin implements PwaNotificationPlugin {
     }
     PwaNotificationMessage message = new PwaNotificationMessage();
     message.setTitle(title);
+    if (groupCall && MissedCallNotificationUtils.isEndedCall(notification)) {
+      message.setBody(resourceBundleService.getSharedString(ENDED_CALL_LABEL_KEY, localeConfig.getLocale()));
+    }
     message.setUrl(MissedCallNotificationUtils.getCallLink(notification));
     return message;
   }

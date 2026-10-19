@@ -49,6 +49,10 @@ public class CallMissedNotificationListener extends Listener<CallInfo, Map<? ext
     ctx.append(NotificationConstants.CALL_ID, call.getId());
     ctx.append(NotificationConstants.PROVIDER_TYPE, call.getProviderType());
     ctx.append(NotificationConstants.CALL_TYPE, owner.getType());
+    String ended = event.getData().get(WebConferencingService.EVENT_DATA_CALL_ENDED);
+    if (ended != null) {
+      ctx.append(NotificationConstants.CALL_ENDED, ended);
+    }
     if (owner.isGroup()) {
       ctx.append(NotificationConstants.OWNER_ID, owner.getId());
       ctx.append(NotificationConstants.CALL_OWNER, owner.getTitle());

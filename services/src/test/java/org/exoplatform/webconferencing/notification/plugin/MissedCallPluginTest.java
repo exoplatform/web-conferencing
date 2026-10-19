@@ -76,6 +76,7 @@ class MissedCallPluginTest {
     assertEquals("marketing", notification.getValueOwnerParameter(NotificationConstants.OWNER_ID.getKey()));
     assertEquals("Marketing", notification.getValueOwnerParameter(NotificationConstants.CALL_OWNER.getKey()));
     assertEquals("/avatar", notification.getValueOwnerParameter(NotificationConstants.AVATAR_URL.getKey()));
+    assertEquals("true", notification.getValueOwnerParameter(NotificationConstants.CALL_ENDED.getKey()));
   }
 
   @Test
@@ -109,5 +110,6 @@ class MissedCallPluginTest {
     values.put(NotificationConstants.OWNER_ID.getKey(), "marketing");
     values.put(NotificationConstants.CALL_OWNER.getKey(), "Marketing");
     values.put(NotificationConstants.AVATAR_URL.getKey(), "/avatar");
+    values.put(NotificationConstants.CALL_ENDED.getKey(), "true");
   }
 }

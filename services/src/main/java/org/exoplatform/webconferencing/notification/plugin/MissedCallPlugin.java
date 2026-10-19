@@ -68,6 +68,7 @@ public class MissedCallPlugin extends BaseNotificationPlugin {
                            .with(NotificationConstants.OWNER_ID.getKey(), ctx.value(NotificationConstants.OWNER_ID))
                            .with(NotificationConstants.CALL_OWNER.getKey(), ctx.value(NotificationConstants.CALL_OWNER))
                            .with(NotificationConstants.AVATAR_URL.getKey(), ctx.value(NotificationConstants.AVATAR_URL))
+                           .with(NotificationConstants.CALL_ENDED.getKey(), ctx.value(NotificationConstants.CALL_ENDED))
                            .key(getKey())
                            .end();
   }

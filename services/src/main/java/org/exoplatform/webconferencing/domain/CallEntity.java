@@ -84,6 +84,10 @@ public class CallEntity {
   @Column(name = "END_DATE")
   protected Date    endDate;
 
+  /** The user who started the call and alerted its participants, if any. */
+  @Column(name = "CALLER_ID")
+  protected String  callerId;
+
   /** The is group. */
   @Column(name = "IS_GROUP")
   protected boolean isGroup;
@@ -234,6 +238,24 @@ public class CallEntity {
    */
   public void setEndDate(Date endDate) {
     this.endDate = endDate;
+  }
+
+  /**
+   * Gets the user who started the call and alerted its participants.
+   *
+   * @return the caller id, or <code>null</code> when the last start alerted nobody
+   */
+  public String getCallerId() {
+    return callerId;
+  }
+
+  /**
+   * Sets the user who started the call and alerted its participants.
+   *
+   * @param callerId the caller id
+   */
+  public void setCallerId(String callerId) {
+    this.callerId = callerId;
   }
 
   /**

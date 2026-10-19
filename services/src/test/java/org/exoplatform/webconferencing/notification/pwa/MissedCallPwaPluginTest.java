@@ -17,6 +17,7 @@
 package org.exoplatform.webconferencing.notification.pwa;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -55,6 +56,8 @@ class MissedCallPwaPluginTest {
                                                Locale.ENGLISH)).thenReturn("{0} has tried to call you");
     when(resourceBundleService.getSharedString("pwa.notification.webconferencing.missedcall.group",
                                                Locale.ENGLISH)).thenReturn("{0} has started a group call in {1}");
+    when(resourceBundleService.getSharedString("pwa.notification.webconferencing.missedcall.ended",
+                                               Locale.ENGLISH)).thenReturn("The call has ended");
     IdentityManager identityManager = mock(IdentityManager.class);
     Identity caller = new Identity("1");
     Profile profile = new Profile(caller);
@@ -87,6 +90,20 @@ class MissedCallPwaPluginTest {
 
       assertEquals("Root Root has started a group call in Marketing", message.getTitle());
       assertEquals("/portal/s/1", message.getUrl());
+      assertNull(message.getBody());
+    }
+  }
+
+  @Test
+  void aMissedGroupCallThatEndedSaysSo() {
+    NotificationInfo notification = notification(WebConferencingService.OWNER_TYPE_SPACE, "Marketing");
+    notification.with(NotificationConstants.CALL_ENDED.getKey(), "true");
+
+    try (MockedStatic<MissedCallNotificationUtils> utils = mockLink(notification, "/portal/s/1")) {
+      var message = plugin.process(notification, localeConfig);
+
+      assertEquals("Root Root has started a group call in Marketing", message.getTitle());
+      assertEquals("The call has ended", message.getBody());
     }
   }
 
@@ -100,6 +117,7 @@ class MissedCallPwaPluginTest {
     utils.when(() -> MissedCallNotificationUtils.isGroupCall(notification))
          .thenReturn(!WebConferencingService.OWNER_TYPE_USER.equals(notification.getValueOwnerParameter(NotificationConstants.CALL_TYPE.getKey())));
     utils.when(() -> MissedCallNotificationUtils.getCallLink(notification)).thenReturn(link);
+    utils.when(() -> MissedCallNotificationUtils.isEndedCall(notification)).thenCallRealMethod();
     return utils;
   }
 

@@ -44,6 +44,17 @@ public final class MissedCallNotificationUtils {
   }
 
   /**
+   * Tells if a missed group call had already ended when it was notified: it stopped before the participant
+   * answered its incoming call alert.
+   *
+   * @param notification the missed call notification
+   * @return <code>true</code> for a group call that had ended
+   */
+  public static boolean isEndedCall(NotificationInfo notification) {
+    return Boolean.parseBoolean(notification.getValueOwnerParameter(NotificationConstants.CALL_ENDED.getKey()));
+  }
+
+  /**
    * Gets the page a missed call leads to, relative to the server: the caller's
    * profile for a 1:1 call, the space of a space call.
    *

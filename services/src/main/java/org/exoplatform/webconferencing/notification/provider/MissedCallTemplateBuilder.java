@@ -60,8 +60,10 @@ public class MissedCallTemplateBuilder extends AbstractTemplateBuilder {
     templateContext.put("CALLER_NAME", encoder.encode(callerName));
     templateContext.put("CALLER_AVATAR", encoder.encode(LinkProviderUtils.getUserAvatarUrl(caller == null ? null : caller.getProfile())));
     templateContext.put("IS_GROUP", String.valueOf(MissedCallNotificationUtils.isGroupCall(notification)));
+    templateContext.put("IS_ENDED", String.valueOf(MissedCallNotificationUtils.isEndedCall(notification)));
     templateContext.put("CALL_OWNER", encoder.encode(callOwner == null ? "" : callOwner));
     templateContext.put("CALL_LINK", encoder.encode(MissedCallNotificationUtils.getAbsoluteCallLink(notification)));
+    templateContext.put("HAS_CALL_PAGE", String.valueOf(MissedCallNotificationUtils.getCallLink(notification) != null));
     templateContext.put("NOTIFICATION_ID", notification.getId());
     templateContext.put("COMPANY_LINK", LinkProviderUtils.getBaseUrl());
 

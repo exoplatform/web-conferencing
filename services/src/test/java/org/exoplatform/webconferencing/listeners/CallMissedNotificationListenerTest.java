@@ -113,6 +113,20 @@ class CallMissedNotificationListenerTest {
     verify(ctx).makeCommand(PluginKey.key(MissedCallPlugin.ID));
   }
 
+  @Test
+  void aMissedGroupCallThatEndedIsNotifiedAsEnded() throws Exception {
+    listener.onEvent(new Event<>(WebConferencingService.EVENT_CALL_MISSED,
+                                 new CallInfo("g_marketing", "Marketing", group(), "pexip"),
+                                 Map.of(WebConferencingService.EVENT_DATA_USER_ID,
+                                        "john",
+                                        WebConferencingService.EVENT_DATA_CALLER_ID,
+                                        "root",
+                                        WebConferencingService.EVENT_DATA_CALL_ENDED,
+                                        "true")));
+
+    assertEquals("true", appended.get(NotificationConstants.CALL_ENDED.getKey()));
+  }
+
   private Event<CallInfo, Map<? extends String, ? extends String>> event(CallInfo call) {
     return new Event<>(WebConferencingService.EVENT_CALL_MISSED,
                        call,

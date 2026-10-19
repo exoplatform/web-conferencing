@@ -129,6 +129,34 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
                         .setParameter("latestStart", latestStart)
                         .executeUpdate();
   }
+  /**
+   * Marks a participant still invited to a stopped call as missed, only while the call is still stopped, from a
+   * start not later than the given date: a call started again has its participants alerted again.
+   *
+   * @param callId the call id
+   * @param partId the participant id
+   * @param latestStart the latest start date of the call the participant may be marked for
+   * @return the number of updated participants, 1 or 0
+   */
+  @ExoTransactional
+  public int markParticipantMissedAtStop(String callId, String partId, Date latestStart) {
+    return markParticipantMissedAtStop(getEntityManager(), callId, partId, latestStart);
+  }
+
+  static int markParticipantMissedAtStop(EntityManager entityManager, String callId, String partId, Date latestStart) {
+    return entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :missed"
+        + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :invited"
+        + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.state = :stopped"
+        + " AND c.lastDate <= :latestStart)")
+                        .setParameter("missed", UserState.MISSED)
+                        .setParameter("callId", callId)
+                        .setParameter("partId", partId)
+                        .setParameter("invited", UserState.INVITED)
+                        .setParameter("stopped", CallState.STOPPED)
+                        .setParameter("latestStart", latestStart)
+                        .executeUpdate();
+  }
+
 
   /**
    * Clear the storage.

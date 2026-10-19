@@ -19,7 +19,11 @@
   boolean groupCall = "true".equals(IS_GROUP);
   String message = groupCall ? _ctx.appRes("Notification.message.MissedCallPlugin.group", "<strong>" + CALLER_NAME + "</strong>", "<strong>" + CALL_OWNER + "</strong>")
                              : _ctx.appRes("Notification.message.MissedCallPlugin.user", "<strong>" + CALLER_NAME + "</strong>");
-  String actionLabel = groupCall ? _ctx.appRes("Notification.label.MissedCallPlugin.join") : _ctx.appRes("Notification.label.MissedCallPlugin.callAgain");
+  boolean endedCall = groupCall && "true".equals(IS_ENDED);
+  // An ended call only leads to its space, when it has one
+  boolean showAction = !endedCall || "true".equals(HAS_CALL_PAGE);
+  String actionLabel = endedCall ? _ctx.appRes("Notification.label.MissedCallPlugin.openSpace")
+                                 : groupCall ? _ctx.appRes("Notification.label.MissedCallPlugin.join") : _ctx.appRes("Notification.label.MissedCallPlugin.callAgain");
 %>
 <table border="0" cellpadding="0" cellspacing="0" width="600" bgcolor="#ffffff" align="center" style="background-color: #ffffff; font-size: 13px;color:#333333;line-height: 18px;font-family: HelveticaNeue, Helvetica, Arial, sans-serif;">
     <%
@@ -45,9 +49,14 @@
                                             </td>
                                             <td align="left" valign="top" style="padding: 0;">
                                                 <p style="margin: 0 0 10px; color: #333333; font-size: 13px; line-height: 18px;"><%=message%></p>
+                                                <% if (endedCall) { %>
+                                                <p style="margin: 0 0 10px; color: #333333; font-size: 13px; line-height: 18px;"><%=_ctx.appRes("Notification.message.MissedCallPlugin.ended")%></p>
+                                                <% } %>
+                                                <% if (showAction) { %>
                                                 <p style="margin: 0">
                                                     <a target="_blank" href="$CALL_LINK" style="display: inline-block; font-size: 11px; color: #333333; background-color: #f1f1f1; border: 1px solid #bbbbbb; border-radius: 4px; padding: 5px 8px; text-decoration: none;"><%=actionLabel%></a>
                                                 </p>
+                                                <% } %>
                                             </td>
                                         </tr>
                                         </tbody>

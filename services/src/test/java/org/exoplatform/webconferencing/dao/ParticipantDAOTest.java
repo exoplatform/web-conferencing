@@ -138,6 +138,67 @@ class ParticipantDAOTest {
     assertEquals(UserState.INVITED, stateOf(CALL_ID, JOHN));
   }
 
+  @Test
+  void marksTheStillInvitedParticipantOfAStoppedCall() {
+    stop(CALL_ID);
+
+    assertEquals(1, markMissedAtStop(CALL_ID, JOHN, LATEST_START));
+
+    assertEquals(UserState.MISSED, stateOf(CALL_ID, JOHN));
+    assertEquals(UserState.JOINED, stateOf(CALL_ID, MARY));
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, PAUL));
+    assertEquals(UserState.INVITED, stateOf(OTHER_CALL_ID, JOHN));
+  }
+
+  @Test
+  void marksAParticipantOfAStoppedCallOnceOnly() {
+    stop(CALL_ID);
+    assertEquals(1, markMissedAtStop(CALL_ID, JOHN, LATEST_START));
+
+    assertEquals(0, markMissedAtStop(CALL_ID, JOHN, LATEST_START));
+    assertEquals(UserState.MISSED, stateOf(CALL_ID, JOHN));
+  }
+
+  @Test
+  void leavesAParticipantOfAStoppedCallNoLongerInvitedUnchanged() {
+    stop(CALL_ID);
+
+    assertEquals(0, markMissedAtStop(CALL_ID, MARY, LATEST_START));
+
+    assertEquals(UserState.JOINED, stateOf(CALL_ID, MARY));
+  }
+
+  @Test
+  void marksNobodyOfAStoppedCallStartedAgainLater() {
+    stop(CALL_ID);
+
+    assertEquals(0, markMissedAtStop(CALL_ID, JOHN, new Date(STARTED_AT.getTime() - 1)));
+
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, JOHN));
+  }
+
+  @Test
+  void marksNobodyOfAStoppedCallStartedAgainWithinTheSameSecond() {
+    assertEquals(0, markMissedAtStop(CALL_ID, JOHN, LATEST_START));
+
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, JOHN));
+  }
+
+  private void stop(String callId) {
+    entityManager.getTransaction().begin();
+    entityManager.find(CallEntity.class, callId).setState(CallState.STOPPED);
+    entityManager.getTransaction().commit();
+    entityManager.clear();
+  }
+
+  private int markMissedAtStop(String callId, String partId, Date latestStart) {
+    entityManager.getTransaction().begin();
+    int updated = ParticipantDAO.markParticipantMissedAtStop(entityManager, callId, partId, latestStart);
+    entityManager.getTransaction().commit();
+    entityManager.clear();
+    return updated;
+  }
+
   private int markMissed(String callId, String partId, Date latestStart) {
     entityManager.getTransaction().begin();
     int updated = ParticipantDAO.markParticipantMissed(entityManager, callId, partId, latestStart);

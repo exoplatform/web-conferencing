@@ -119,6 +119,15 @@ class MissedCallNotificationUtilsTest {
     assertTrue(MissedCallNotificationUtils.isGroupCall(notification(WebConferencingService.OWNER_TYPE_CHATROOM)));
   }
 
+  @Test
+  void onlyACallNotifiedAsEndedHasEnded() {
+    NotificationInfo notification = notification(WebConferencingService.OWNER_TYPE_SPACE);
+    assertFalse(MissedCallNotificationUtils.isEndedCall(notification));
+
+    notification.with(NotificationConstants.CALL_ENDED.getKey(), "true");
+    assertTrue(MissedCallNotificationUtils.isEndedCall(notification));
+  }
+
   private NotificationInfo notification(String callType) {
     return NotificationInfo.instance()
                            .with(NotificationConstants.CALLER_ID.getKey(), "root")

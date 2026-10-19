@@ -42,6 +42,8 @@ public class NotificationConstants {
 
     public static final ArgumentLiteral<String> CALLER_ID   = new ArgumentLiteral<>(String.class, "CALLER_ID");
 
+    public static final ArgumentLiteral<String> CALL_ENDED  = new ArgumentLiteral<>(String.class, "CALL_ENDED");
+
     public static final ArgumentLiteral<String> OWNER_ID    = new ArgumentLiteral<>(String.class, "OWNER_ID");
 
     private NotificationConstants() {
