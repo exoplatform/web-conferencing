@@ -1955,15 +1955,15 @@ public class WebConferencingService implements Startable {
    * never for a start later than the checked one by more than {@link #LAST_DATE_PRECISION}, the precision of
    * a start date stored in whole seconds: a call started again within that second has its invitees marked by
    * this check, up to a second before its own alert times out. The event of a participant is broadcast after
-   * the mark is committed: a join, a decline or a stop committed in between does not withhold it.
+   * the mark is committed: a join, a decline or a stop committed in between does not withhold it. A participant
+   * who cannot be marked is logged and not notified, and the check goes on with the other participants.
    *
    * @param callId the call id
    * @param callerId the user who started the call
    * @param startedAt the start date of the call the check was scheduled for
    * @throws InvalidCallException if the call cannot be read
-   * @throws StorageException if a participant cannot be updated
    */
-  protected void notifyMissedCall(String callId, String callerId, Date startedAt) throws InvalidCallException, StorageException {
+  protected void notifyMissedCall(String callId, String callerId, Date startedAt) throws InvalidCallException {
     Date latestStart = new Date(startedAt.getTime() + LAST_DATE_PRECISION);
     CallInfo call = getCall(callId);
     if (call == null || !CallState.STARTED.equals(call.getState()) || call.getLastDate() == null
@@ -1971,11 +1971,16 @@ public class WebConferencingService implements Startable {
       return;
     }
     for (UserInfo part : call.getParticipants()) {
-      if (UserInfo.TYPE_NAME.equals(part.getType()) && UserState.INVITED.equals(part.getState())
-          && markParticipantMissed(callId, part.getId(), latestStart)) {
-        part.setState(UserState.MISSED);
-        broadcastCallMissed(call, part.getId(), callerId);
-        LOG.info(metricMessage(part.getId(), call, OPERATION_CALL_MISSED, STATUS_OK, 0L, null, null));
+      if (UserInfo.TYPE_NAME.equals(part.getType()) && UserState.INVITED.equals(part.getState())) {
+        try {
+          if (markParticipantMissed(callId, part.getId(), latestStart)) {
+            part.setState(UserState.MISSED);
+            broadcastCallMissed(call, part.getId(), callerId);
+            LOG.info(metricMessage(part.getId(), call, OPERATION_CALL_MISSED, STATUS_OK, 0L, null, null));
+          }
+        } catch (StorageException e) {
+          LOG.warn("Cannot mark participant {} of call {} as missed, the participant is not notified", part.getId(), callId, e);
+        }
       }
     }
   }

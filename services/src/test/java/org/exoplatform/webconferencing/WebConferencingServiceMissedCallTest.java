@@ -19,12 +19,12 @@
 package org.exoplatform.webconferencing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -53,7 +53,6 @@ import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.web.security.codec.CodecInitializer;
 import org.exoplatform.webconferencing.dao.ParticipantDAO;
-import org.exoplatform.webconferencing.dao.StorageException;
 
 /**
  * A participant alerted of a started call who neither joins nor declines it
@@ -280,15 +279,25 @@ class WebConferencingServiceMissedCallTest {
   }
 
   @Test
-  void aParticipantWhoseMarkFailsIsNotNotified() throws Exception {
+  void aParticipantWhoseMarkFailsIsNotNotifiedAndTheOthersAre() throws Exception {
     Date startedAt = new Date();
-    CallInfo call = startedCall(startedAt, participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.INVITED));
+    CallInfo call = startedCall(startedAt,
+                                participant(CALLER, UserState.JOINED),
+                                participant(CALLEE, UserState.INVITED),
+                                participant(OTHER, UserState.INVITED));
     when(participantsStorage.markParticipantMissed(CALL_ID, CALLEE, latestStart(startedAt))).thenThrow(new PersistenceException("down"));
+    when(participantsStorage.markParticipantMissed(CALL_ID, OTHER, latestStart(startedAt))).thenReturn(1);
 
-    assertThrows(StorageException.class, () -> service.notifyMissedCall(CALL_ID, CALLER, startedAt));
+    service.notifyMissedCall(CALL_ID, CALLER, startedAt);
 
     assertEquals(UserState.INVITED, stateOf(call, CALLEE));
-    verifyNoMissedCallBroadcast();
+    assertEquals(UserState.MISSED, stateOf(call, OTHER));
+    verify(listenerService, never()).broadcast(eq(WebConferencingService.EVENT_CALL_MISSED),
+                                               eq(call),
+                                               argThat((Map<String, String> info) -> CALLEE.equals(info.get(WebConferencingService.EVENT_DATA_USER_ID))));
+    verify(listenerService).broadcast(eq(WebConferencingService.EVENT_CALL_MISSED),
+                                      eq(call),
+                                      argThat((Map<String, String> info) -> OTHER.equals(info.get(WebConferencingService.EVENT_DATA_USER_ID))));
   }
 
   @Test
