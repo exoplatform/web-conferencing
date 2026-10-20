@@ -18,7 +18,8 @@
  */
 package org.exoplatform.webconferencing;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +31,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -57,6 +59,7 @@ import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.social.core.manager.IdentityManager;
+import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.upload.UploadService;
 import org.exoplatform.wcm.ext.component.document.service.ShareDocumentService;
 import org.exoplatform.web.security.codec.CodecInitializer;
@@ -77,15 +80,22 @@ import jakarta.persistence.TypedQuery;
 
 /**
  * A database failure while saving a call is reported as that call operation's
- * error. The calls run through the real DAOs, the kernel's EntityManager proxy
- * they get from GenericDAOJPAImpl and the woven ExoTransactional aspect: only
- * the persistence engine behind them is mocked (the EntityManager, its
- * transaction and the container that provides them), so a failure reaches the
- * service in the form the platform delivers it. Each failure is raised where a
- * database failure leaves an EntityManager call: the entities have assigned
- * ids, so their writes run at commit, and the call that reaches the database
- * through the proxy is the read that precedes the write, or a persist that
- * flushes.
+ * error, except a failure of the check that no call already has the id of the
+ * call being created, which is logged while the creation goes on. The calls run
+ * through the real DAOs, the kernel's EntityManager proxy they get from
+ * GenericDAOJPAImpl and the woven ExoTransactional aspect, so a failure reaches
+ * the service in the form the platform delivers it. The container, the
+ * EntityManagerService, the EntityManager and its transaction are mocked. The
+ * service is a spy whose userInfo, spaceInfo and getProvider return a user
+ * (none for an external guest), a space or a provider without reading them, and
+ * whose getCall, in the guest and invitation tests, returns a call without
+ * reading it. Each failure but the commit's is raised on an EntityManager call
+ * that reaches the database within a request: the read of the call an
+ * operation starts with, the check that no call has the id of the one being
+ * created, the read of a participant the request has not loaded yet, or a
+ * persist that flushes. The entities have assigned ids, so their writes run at
+ * commit, and a later read of an entity the request has already loaded is
+ * answered by the persistence context.
  */
 @ExtendWith(MockitoExtension.class)
 class WebConferencingServiceStorageErrorTest {
@@ -210,77 +220,115 @@ class WebConferencingServiceStorageErrorTest {
     assertSame(failure, error.getCause());
   }
 
+  /**
+   * Starting, stopping, removing, joining, leaving and updating a call read the
+   * call first: that read reaches the database unless the request has read the
+   * call before.
+   */
   @Test
-  void startCallReportsAFailedReadAsAnInvalidCall() throws Exception {
-    doReturn(newCall()).when(service).getCall(CALL_ID);
-    doReturn(JOHN.getId()).when(service).currentUserId();
+  void startCallReportsAFailedReadOfTheCallAsAnInvalidCall() {
     PersistenceException failure = failOnFind(CallEntity.class);
 
     InvalidCallException error = assertThrows(InvalidCallException.class, () -> service.startCall(CALL_ID, "client"));
+    assertInstanceOf(StorageException.class, error.getCause());
     assertSame(failure, error.getCause().getCause());
   }
 
   @Test
-  void stopCallReportsAFailedReadAsAnInvalidCall() throws Exception {
-    doReturn(newCall()).when(service).getCall(CALL_ID);
-    doReturn(JOHN.getId()).when(service).currentUserId();
+  void stopCallReportsAFailedReadOfTheCallAsAnInvalidCall() {
     PersistenceException failure = failOnFind(CallEntity.class);
 
     InvalidCallException error = assertThrows(InvalidCallException.class, () -> service.stopCall(CALL_ID, false));
+    assertInstanceOf(StorageException.class, error.getCause());
     assertSame(failure, error.getCause().getCause());
   }
 
   @Test
-  void removeCallReportsAFailedReadAsAnInvalidCall() throws Exception {
-    doReturn(newCall()).when(service).getCall(CALL_ID);
-    doReturn(JOHN.getId()).when(service).currentUserId();
+  void removeCallReportsAFailedReadOfTheCallAsAnInvalidCall() {
     PersistenceException failure = failOnFind(CallEntity.class);
 
     InvalidCallException error = assertThrows(InvalidCallException.class, () -> service.stopCall(CALL_ID, true));
+    assertInstanceOf(StorageException.class, error.getCause());
     assertSame(failure, error.getCause().getCause());
   }
 
   @Test
-  void joinCallReportsAFailedReadAsAnInvalidCall() throws Exception {
-    CallInfo call = newCall();
-    call.setState(CallState.STARTED);
-    doReturn(call).when(service).getCall(CALL_ID);
-    PersistenceException failure = failOnFind(ParticipantEntity.class);
+  void joinCallReportsAFailedReadOfTheCallAsAnInvalidCall() {
+    PersistenceException failure = failOnFind(CallEntity.class);
 
     InvalidCallException error = assertThrows(InvalidCallException.class,
                                               () -> service.joinCall(CALL_ID, MARY.getId(), "client"));
+    assertInstanceOf(StorageException.class, error.getCause());
     assertSame(failure, error.getCause().getCause());
   }
 
+  /**
+   * A member who joined the space after its call started has no participant
+   * row: joining the call reads that row for the first time in the request.
+   */
   @Test
-  void leaveCallReportsAFailedReadAsAnInvalidCall() throws Exception {
-    CallInfo call = newCall();
-    call.setState(CallState.STARTED);
-    call.addParticipant(new GuestInfo("guest@acme.com"));
-    doReturn(call).when(service).getCall(CALL_ID);
+  void joinCallOfANewSpaceMemberReportsAFailedReadOfItsParticipantAsAnInvalidCall() throws Exception {
+    CallEntity savedCall = new CallEntity();
+    savedCall.setId("g_weekly");
+    savedCall.setTitle("Weekly sync");
+    savedCall.setProviderType(PROVIDER);
+    savedCall.setOwnerId("weekly");
+    savedCall.setOwnerType(WebConferencingService.OWNER_TYPE_SPACE);
+    savedCall.setIsGroup(true);
+    savedCall.setState(CallState.STARTED);
+    when(entityManager.find(eq(CallEntity.class), eq("g_weekly"))).thenReturn(savedCall);
+    ParticipantEntity joined = new ParticipantEntity();
+    joined.setId(JOHN.getId());
+    joined.setCallId("g_weekly");
+    joined.setType(UserInfo.TYPE_NAME);
+    joined.setState(UserState.JOINED);
+    returnOnQuery("WebConfCall.findCallParts", ParticipantEntity.class, List.of(joined), "g_weekly");
+    returnOnQuery("WebConfInvite.findCallInvites",
+                  InviteEntity.class,
+                  List.of(new InviteEntity("g_weekly", JOHN.getId(), UserInfo.TYPE_NAME, "invitation")),
+                  "g_weekly");
+    doReturn(new UserInfo(JOHN.getId(), JOHN.getFirstName(), JOHN.getLastName())).when(service).userInfo(JOHN.getId());
+    Space socialSpace = new Space();
+    socialSpace.setPrettyName("weekly");
+    socialSpace.setDisplayName("Weekly");
+    WebConferencingService.SpaceInfo space = service.new SpaceInfo(socialSpace);
+    space.addMember(new UserInfo(JOHN.getId(), JOHN.getFirstName(), JOHN.getLastName()));
+    space.addMember(new UserInfo(MARY.getId(), MARY.getFirstName(), MARY.getLastName()));
+    doReturn(space).when(service).spaceInfo("weekly", "g_weekly");
     PersistenceException failure = failOnFind(ParticipantEntity.class);
 
     InvalidCallException error = assertThrows(InvalidCallException.class,
-                                              () -> service.leaveCall(CALL_ID, "guest@acme.com", null));
+                                              () -> service.joinCall("g_weekly", MARY.getId(), "client"));
+    assertInstanceOf(StorageException.class, error.getCause());
     assertSame(failure, error.getCause().getCause());
   }
 
   @Test
-  void updateCallReportsAFailedReadAsAStorageError() throws Exception {
-    doReturn(newCall()).when(service).getCall(CALL_ID);
+  void leaveCallReportsAFailedReadOfTheCallAsAnInvalidCall() {
     PersistenceException failure = failOnFind(CallEntity.class);
 
-    StorageException error = assertThrows(StorageException.class,
-                                          () -> service.updateCall(CALL_ID,
-                                                                   null,
-                                                                   null,
-                                                                   "John and Mary weekly",
-                                                                   null,
-                                                                   null,
-                                                                   null,
-                                                                   null,
-                                                                   null));
-    assertSame(failure, error.getCause());
+    InvalidCallException error = assertThrows(InvalidCallException.class,
+                                              () -> service.leaveCall(CALL_ID, MARY.getId(), "client"));
+    assertInstanceOf(StorageException.class, error.getCause());
+    assertSame(failure, error.getCause().getCause());
+  }
+
+  @Test
+  void updateCallReportsAFailedReadOfTheCallAsAnInvalidCall() {
+    PersistenceException failure = failOnFind(CallEntity.class);
+
+    InvalidCallException error = assertThrows(InvalidCallException.class,
+                                              () -> service.updateCall(CALL_ID,
+                                                                       null,
+                                                                       null,
+                                                                       "John and Mary weekly",
+                                                                       null,
+                                                                       null,
+                                                                       null,
+                                                                       null,
+                                                                       null));
+    assertInstanceOf(StorageException.class, error.getCause());
+    assertSame(failure, error.getCause().getCause());
   }
 
   /**
@@ -300,21 +348,29 @@ class WebConferencingServiceStorageErrorTest {
   }
 
   /**
-   * Reading a call whose owner no longer exists removes the call, and a failed
-   * removal leaves the call unread instead of failing the read.
+   * Creating a call checks that no call already has its id, a read of a call
+   * the request has not loaded: a failure there is logged, and the call is
+   * created.
    */
   @Test
-  void getCallOfAMissingOwnerToleratesAFailedRemoval() throws Exception {
-    CallEntity entity = new CallEntity();
-    entity.setId(CALL_ID);
-    entity.setOwnerId(JOHN.getId());
-    entity.setOwnerType(WebConferencingService.OWNER_TYPE_USER);
-    entity.setProviderType(PROVIDER);
-    when(entityManager.find(CallEntity.class, CALL_ID)).thenReturn(entity)
-                                                       .thenThrow(new PersistenceException("Database unavailable"));
-    doReturn(null).when(service).userInfo(JOHN.getId());
+  void createCallToleratesAFailedCheckOfAnExistingCall() throws Exception {
+    doReturn(JOHN).when(service).userInfo(JOHN.getId());
+    doReturn(MARY).when(service).userInfo(MARY.getId());
+    doReturn(mock(CallProvider.class)).when(service).getProvider(PROVIDER);
+    failOnFind(CallEntity.class);
 
-    assertNull(service.getCall(CALL_ID));
+    CallInfo call = service.createCall(CALL_ID,
+                                       JOHN.getId(),
+                                       WebConferencingService.OWNER_TYPE_USER,
+                                       "John and Mary",
+                                       PROVIDER,
+                                       List.of(JOHN.getId(), MARY.getId()),
+                                       null,
+                                       false,
+                                       null,
+                                       null);
+    assertEquals(CALL_ID, call.getId());
+    verify(entityManager).persist(any(CallEntity.class));
   }
 
   /**
@@ -344,11 +400,15 @@ class WebConferencingServiceStorageErrorTest {
     return failure;
   }
 
-  @SuppressWarnings("unchecked")
   private <T> void returnOnQuery(String name, Class<T> type, List<T> result) {
+    returnOnQuery(name, type, result, CALL_ID);
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> void returnOnQuery(String name, Class<T> type, List<T> result, String callId) {
     TypedQuery<T> query = mock(TypedQuery.class);
     when(entityManager.createNamedQuery(name, type)).thenReturn(query);
-    when(query.setParameter("callId", CALL_ID)).thenReturn(query);
+    when(query.setParameter("callId", callId)).thenReturn(query);
     when(query.getResultList()).thenReturn(result);
   }
 
