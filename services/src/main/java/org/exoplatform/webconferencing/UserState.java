@@ -41,6 +41,12 @@ public class UserState {
   /** The Constant MISSED: the user was invited and did not answer before the incoming call alert timed out. */
   public static final String MISSED   = "missed";
 
+  /**
+   * The Constant DECLINED_NOTIFIED: the user declined the incoming call, and the caller was sent the email that
+   * groups the declines of the call.
+   */
+  public static final String DECLINED_NOTIFIED = "declined_notified";
+
   /** The user id. */
   protected final String     userId;
 

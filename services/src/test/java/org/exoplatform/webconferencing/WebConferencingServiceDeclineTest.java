@@ -19,13 +19,18 @@
 package org.exoplatform.webconferencing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -34,14 +39,19 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import jakarta.persistence.PersistenceException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.web.security.codec.CodecInitializer;
+import org.exoplatform.webconferencing.dao.ParticipantDAO;
 
 /**
  * A declined call goes on for its other participants, a P2P one included, and
@@ -64,18 +74,24 @@ class WebConferencingServiceDeclineTest {
 
   private List<String>           leavedEvents;
 
+  private ListenerService        listenerService;
+
+  private ParticipantDAO         participantsStorage;
+
   @BeforeEach
   void setUp() throws Exception {
     InitParams initParams = mock(InitParams.class);
     PropertiesParam jwtParams = new PropertiesParam();
     jwtParams.setProperty(WebConferencingService.SECRET_KEY, "secret");
     when(initParams.getPropertiesParam(WebConferencingService.JWT_CONFIGURATION_PROPERTIES)).thenReturn(jwtParams);
+    listenerService = mock(ListenerService.class);
+    participantsStorage = mock(ParticipantDAO.class);
     service = spy(new WebConferencingService(null,
                                              null,
-                                             mock(ListenerService.class),
+                                             listenerService,
                                              null,
                                              null,
-                                             null,
+                                             participantsStorage,
                                              null,
                                              null,
                                              null,
@@ -238,6 +254,154 @@ class WebConferencingServiceDeclineTest {
     service.leaveCall(CALL_ID, CALLER, CLIENT_ID);
 
     verify(service).stopCall(call, CALLER, true);
+  }
+
+  @Test
+  void theFirstDeclineOfAnAlertedCallIsReportedToItsCaller() throws Exception {
+    CallInfo call = startedCall(space(),
+                                participant(CALLER, UserState.JOINED),
+                                participant(CALLEE, UserState.INVITED),
+                                participant(OTHER, UserState.INVITED));
+    call.setCallerId(CALLER);
+    when(participantsStorage.markParticipantDeclined(CALL_ID, CALLEE)).thenReturn(1);
+
+    service.declineCall(CALL_ID, CALLEE, CLIENT_ID);
+
+    assertEquals(UserState.DECLINED, stateOf(call, CALLEE));
+    verify(service, never()).updateParticipant(anyString(), any(UserInfo.class));
+    InOrder order = inOrder(participantsStorage, listenerService);
+    order.verify(participantsStorage).markParticipantDeclined(CALL_ID, CALLEE);
+    order.verify(listenerService)
+         .broadcast(WebConferencingService.EVENT_CALL_DECLINED,
+                    call,
+                    Map.of(WebConferencingService.EVENT_DATA_USER_ID,
+                           CALLER,
+                           WebConferencingService.EVENT_DATA_DECLINER_ID,
+                           CALLEE,
+                           "status",
+                           WebConferencingService.STATUS_OK));
+  }
+
+  @Test
+  void aDeclineFromAnotherClientOfAParticipantWhoDeclinedIsNotReportedAgain() throws Exception {
+    CallInfo call = startedCall(space(), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.DECLINED));
+    call.setCallerId(CALLER);
+    doNothing().when(service).updateParticipant(anyString(), any(UserInfo.class));
+
+    service.declineCall(CALL_ID, CALLEE, CLIENT_ID);
+
+    assertEquals(UserState.DECLINED, stateOf(call, CALLEE));
+    verify(service, never()).updateParticipant(anyString(), any(UserInfo.class));
+    verifyNoDeclineBroadcast();
+    assertEquals(List.of(CALLEE + " <- " + CALLEE), leavedEvents);
+  }
+
+  @Test
+  void aDeclineFromAnotherClientKeepsTheDeclineTheCallerWasNotifiedOf() throws Exception {
+    CallInfo call = startedCall(space(), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.DECLINED_NOTIFIED));
+    call.setCallerId(CALLER);
+    doNothing().when(service).updateParticipant(anyString(), any(UserInfo.class));
+
+    service.declineCall(CALL_ID, CALLEE, CLIENT_ID);
+
+    assertEquals(UserState.DECLINED_NOTIFIED, stateOf(call, CALLEE));
+    verify(service, never()).updateParticipant(anyString(), any(UserInfo.class));
+    verifyNoDeclineBroadcast();
+  }
+
+  @Test
+  void aDeclineOfACallThatAlertedNobodyIsNotReported() throws Exception {
+    CallInfo call = startedCall(space(), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.LEAVED));
+    doNothing().when(service).updateParticipant(anyString(), any(UserInfo.class));
+
+    service.declineCall(CALL_ID, CALLEE, CLIENT_ID);
+
+    assertEquals(UserState.DECLINED, stateOf(call, CALLEE));
+    verifyNoDeclineBroadcast();
+  }
+
+  @Test
+  void aDeclineOfAJoinedParticipantIsNotReported() throws Exception {
+    CallInfo call = startedCall(space(), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.JOINED));
+    call.setCallerId(CALLER);
+
+    service.declineCall(CALL_ID, CALLEE, CLIENT_ID);
+
+    verifyNoDeclineBroadcast();
+  }
+
+  @Test
+  void aDeclineWhoseWriteFailsIsNotReported() throws Exception {
+    CallInfo call = startedCall(space(), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.INVITED));
+    call.setCallerId(CALLER);
+    when(participantsStorage.markParticipantDeclined(CALL_ID, CALLEE)).thenThrow(new PersistenceException("down"));
+
+    assertThrows(InvalidCallException.class, () -> service.declineCall(CALL_ID, CALLEE, CLIENT_ID));
+
+    verifyNoDeclineBroadcast();
+  }
+
+  @Test
+  void aDeclineMarkedFirstByAnotherWriterIsNotReported() throws Exception {
+    CallInfo call = startedCall(space(), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.INVITED));
+    call.setCallerId(CALLER);
+    when(participantsStorage.markParticipantDeclined(CALL_ID, CALLEE)).thenReturn(0);
+
+    service.declineCall(CALL_ID, CALLEE, CLIENT_ID);
+
+    assertEquals(UserState.INVITED, stateOf(call, CALLEE));
+    verifyNoDeclineBroadcast();
+    assertEquals(List.of(CALLEE + " <- " + CALLEE), leavedEvents);
+  }
+
+  @Test
+  void aDeclineOfACallThatAlertedNobodyIsWrittenAsBefore() throws Exception {
+    CallInfo call = startedCall(space(), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.LEAVED));
+    doNothing().when(service).updateParticipant(anyString(), any(UserInfo.class));
+
+    service.declineCall(CALL_ID, CALLEE, CLIENT_ID);
+
+    verify(service).updateParticipant(CALL_ID, participantOf(call, CALLEE));
+    verify(participantsStorage, never()).markParticipantDeclined(anyString(), anyString());
+  }
+
+  @Test
+  void aDeclineOfAParticipantWhoMissedTheCallChangesNothingButTheAlert() throws Exception {
+    CallInfo call = startedCall(space(), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.MISSED));
+    call.setCallerId(CALLER);
+    doNothing().when(service).updateParticipant(anyString(), any(UserInfo.class));
+
+    service.declineCall(CALL_ID, CALLEE, CLIENT_ID);
+
+    assertEquals(UserState.MISSED, stateOf(call, CALLEE));
+    verify(service, never()).updateParticipant(anyString(), any(UserInfo.class));
+    verifyNoDeclineBroadcast();
+    assertEquals(List.of(CALLEE + " <- " + CALLEE), leavedEvents);
+  }
+
+  @Test
+  void aDeclineOfAParticipantWhoLeftTheCallChangesNothingButTheAlert() throws Exception {
+    CallInfo call = startedCall(space(), participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.LEAVED));
+    call.setCallerId(CALLER);
+    doNothing().when(service).updateParticipant(anyString(), any(UserInfo.class));
+
+    service.declineCall(CALL_ID, CALLEE, CLIENT_ID);
+
+    assertEquals(UserState.LEAVED, stateOf(call, CALLEE));
+    verify(service, never()).updateParticipant(anyString(), any(UserInfo.class));
+    verifyNoDeclineBroadcast();
+  }
+
+  @Test
+  void aParticipantWhoDeclinedIsNotInTheCall() {
+    assertTrue(service.isGone(participant(CALLEE, UserState.DECLINED)));
+    assertTrue(service.isGone(participant(CALLEE, UserState.DECLINED_NOTIFIED)));
+    assertFalse(service.isGone(participant(CALLEE, UserState.JOINED)));
+  }
+
+  @SuppressWarnings("unchecked")
+  private void verifyNoDeclineBroadcast() throws Exception {
+    verify(listenerService, never()).broadcast(eq(WebConferencingService.EVENT_CALL_DECLINED), any(CallInfo.class), anyMap());
   }
 
   private CallInfo startedCall(IdentityInfo owner, UserInfo... participants) throws Exception {
