@@ -83,6 +83,10 @@ public class WebConferencingListener extends Listener<CallInfo, Map<? extends St
       case WebConferencingService.EVENT_CALL_STARTED:
         operation = "callStarted";
         break;
+      case WebConferencingService.EVENT_CALL_DECLINED:
+        // The user of a decline is the caller, the one the decline is reported to
+        operation = "callDeclined";
+        break;
       case WebConferencingService.EVENT_CALL_STOPPED:
         operation = "callStopped";
         if (callInfo.getLastDate() != null) {
