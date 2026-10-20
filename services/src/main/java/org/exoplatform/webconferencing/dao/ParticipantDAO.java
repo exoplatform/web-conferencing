@@ -31,6 +31,7 @@ import jakarta.persistence.TypedQuery;
 import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.persistence.impl.GenericDAOJPAImpl;
 import org.exoplatform.webconferencing.CallState;
+import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
@@ -153,6 +154,79 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
                         .setParameter("partId", partId)
                         .setParameter("invited", UserState.INVITED)
                         .setParameter("stopped", CallState.STOPPED)
+                        .setParameter("latestStart", latestStart)
+                        .executeUpdate();
+  }
+
+  /**
+   * Finds the user participants of a call who declined it and whose caller was not notified yet, as stored: the
+   * ids are read from the database, whatever the participants this storage already loaded.
+   *
+   * @param callId the call id
+   * @return the participant ids
+   */
+  public List<String> findDeclinedParticipantIds(String callId) {
+    return findDeclinedParticipantIds(getEntityManager(), callId);
+  }
+
+  static List<String> findDeclinedParticipantIds(EntityManager entityManager, String callId) {
+    return entityManager.createQuery("SELECT p.id FROM WebConfParticipant p"
+        + " WHERE p.callId = :callId AND p.type = :user AND p.state = :declined", String.class)
+                        .setParameter("callId", callId)
+                        .setParameter("user", UserInfo.TYPE_NAME)
+                        .setParameter("declined", UserState.DECLINED)
+                        .getResultList();
+  }
+
+  /**
+   * Marks a participant still invited to a call as having declined it, only while the call is still started:
+   * a participant who joined, missed the call or was already marked, or a call stopped meanwhile, leaves the
+   * participant unchanged.
+   *
+   * @param callId the call id
+   * @param partId the participant id
+   * @return the number of updated participants, 1 or 0
+   */
+  @ExoTransactional
+  public int markParticipantDeclined(String callId, String partId) {
+    return markParticipantDeclined(getEntityManager(), callId, partId);
+  }
+
+  static int markParticipantDeclined(EntityManager entityManager, String callId, String partId) {
+    return entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :declined, p.clientId = NULL"
+        + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :invited"
+        + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.state = :started)")
+                        .setParameter("declined", UserState.DECLINED)
+                        .setParameter("callId", callId)
+                        .setParameter("partId", partId)
+                        .setParameter("invited", UserState.INVITED)
+                        .setParameter("started", CallState.STARTED)
+                        .executeUpdate();
+  }
+
+  /**
+   * Marks a participant who declined a call as notified of the decline, only while still declined and the call
+   * from a start not later than the given date, whatever its state: a call started again has its participants
+   * alerted again.
+   *
+   * @param callId the call id
+   * @param partId the participant id
+   * @param latestStart the latest start date of the call the participant may be marked for
+   * @return the number of updated participants, 1 or 0
+   */
+  @ExoTransactional
+  public int markParticipantDeclinedNotified(String callId, String partId, Date latestStart) {
+    return markParticipantDeclinedNotified(getEntityManager(), callId, partId, latestStart);
+  }
+
+  static int markParticipantDeclinedNotified(EntityManager entityManager, String callId, String partId, Date latestStart) {
+    return entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :notified"
+        + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :declined"
+        + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.lastDate <= :latestStart)")
+                        .setParameter("notified", UserState.DECLINED_NOTIFIED)
+                        .setParameter("callId", callId)
+                        .setParameter("partId", partId)
+                        .setParameter("declined", UserState.DECLINED)
                         .setParameter("latestStart", latestStart)
                         .executeUpdate();
   }

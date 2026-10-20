@@ -21,6 +21,7 @@ extensionRegistry.registerExtension('WebNotification', 'notification-group-exten
   plugins: [
     'CallRecordingPlugin',
     'MissedCallPlugin',
+    'DeclinedCallPlugin',
   ],
   icon: 'fa-solid fa-video',
 });
@@ -35,4 +36,10 @@ extensionRegistry.registerExtension('WebNotification', 'notification-content-ext
   type: 'MissedCallPlugin',
   rank: 10,
   vueComponent: Vue.options.components['missed-call-notification'],
+});
+
+extensionRegistry.registerExtension('WebNotification', 'notification-content-extension', {
+  type: 'DeclinedCallPlugin',
+  rank: 10,
+  vueComponent: Vue.options.components['declined-call-notification'],
 });
