@@ -54,7 +54,7 @@ const STATE_STARTED = 'started';
  * <p>
  * The same window decides which occurrence of a series a running call is held
  * in, so the two answers cannot disagree: what the drawer calls live is what it
- * lets you join.
+ * lets you join. A single event is not bound by it once its call is started.
  */
 export const JOIN_AHEAD_MS = 15 * 60 * 1000;
 
@@ -86,6 +86,9 @@ export function normalizeEvent(event) {
     key: `event-${eventId}-${occurrenceId}`,
     eventId: eventId,
     occurrenceId: occurrenceId,
+    // An occurrence of a series comes either computed (an occurrence, no id) or
+    // as an exceptional occurrence with an id of its own and its parent.
+    recurrent: !!(event.occurrence || event.parent || event.parentId || event.recurrence),
     title: event.summary || '',
     start: start,
     end: end,
@@ -284,6 +287,9 @@ function isStarted(callId, startedIds) {
  * claiming it would announce next week's meeting as happening now, which is the
  * whole point of the attribution.
  * <p>
+ * A single event has no other date to be confused with: its started call is its
+ * meeting, live however early people joined it.
+ * <p>
  * The past side needs no bound of its own: the drawer reads only PAST_WINDOW_MS
  * back, so an occurrence old enough to be a stale claim is never fetched.
  *
@@ -292,7 +298,7 @@ function isStarted(callId, startedIds) {
  * @returns {boolean} true when the occurrence may hold the call
  */
 function canHoldCall(event, nowTime) {
-  return event.start.getTime() - nowTime <= JOIN_AHEAD_MS;
+  return !event.recurrent || event.start.getTime() - nowTime <= JOIN_AHEAD_MS;
 }
 
 /**
