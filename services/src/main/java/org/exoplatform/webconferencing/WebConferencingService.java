@@ -98,6 +98,7 @@ import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserStatus;
 import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
+import org.exoplatform.services.security.IdentityConstants;
 import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.services.wcm.core.NodetypeConstant;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
@@ -1382,7 +1383,8 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Removes the call info from active and fires STOPPED event.
+   * Removes the call info from active and fires STOPPED event. The stop is attributed to the current user, or to
+   * the caller of the call when it runs with no user (see {@link #stoppingUserId(CallInfo)}).
    *
    * @param callId the call id
    * @param remove the remove
@@ -1395,7 +1397,7 @@ public class WebConferencingService implements Startable {
     final long opStart = System.currentTimeMillis();
     CallInfo call = getCall(callId);
     if (call != null) {
-      String userId = currentUserId();
+      String userId = stoppingUserId(call);
       try {
         stopCall(call, userId, remove);
         broacastCallEvent(EVENT_CALL_STOPPED, call, userId, null);
@@ -1414,6 +1416,23 @@ public class WebConferencingService implements Startable {
     } else {
       throw new CallNotFoundException("Call not found: " + callId);
     }
+  }
+
+  /**
+   * Returns the user a stop is attributed to, in the call stopped event and its metrics: the current user, or,
+   * when the stop runs with no user or as the anonymous one, as when a provider's server reports that its
+   * meeting ended, the caller of the call.
+   *
+   * @param call the call to stop
+   * @return the user id, <code>null</code> or {@link IdentityConstants#ANONIM} when there is neither a current
+   *         user nor a caller
+   */
+  protected String stoppingUserId(CallInfo call) {
+    String userId = currentUserId();
+    if ((userId == null || IdentityConstants.ANONIM.equals(userId)) && call.getCallerId() != null) {
+      return call.getCallerId();
+    }
+    return userId;
   }
 
   /**
