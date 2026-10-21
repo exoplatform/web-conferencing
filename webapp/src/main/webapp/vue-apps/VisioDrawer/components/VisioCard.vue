@@ -523,7 +523,11 @@ export default {
           || this.$t('visio.drawer.dayTimeRange', {0: formatDay(this.entry.start), 1: range});
     },
     showProgress() {
-      return this.entry.state === LIVE && !!this.entry.start;
+      // A meeting people joined ahead of its slot is live before its start:
+      // there is no elapsed time to show yet. Only a slot is compared with this
+      // browser's clock; a call without one starts at the server's.
+      return this.entry.state === LIVE && !!this.entry.start
+          && (!this.entry.end || this.entry.start.getTime() <= this.now.getTime());
     },
     /**
      * How long the meeting has been running.
