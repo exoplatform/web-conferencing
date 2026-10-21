@@ -35,7 +35,7 @@
             :class="`call-button-container-${index} w-100 d-flex align-center`"
             style="min-height: 36px;"
             ref="callbutton"
-            @click="selectProvider">
+            @click="selectProvider(index)">
           </div>
         </v-list-item>
       </v-list>
@@ -97,7 +97,12 @@ export default {
     passRefs() {
       this.$emit('getRefs', this.$refs);
     },
-    selectProvider() {
+    selectProvider(index) {
+      // The provider's own button stops its click, so this one comes from the rest of its line
+      const callSettings = this.providersbutton[index] && this.providersbutton[index].callSettings;
+      if (callSettings && callSettings.onCallOpen) {
+        callSettings.onCallOpen();
+      }
       this.$emit('selectedProvider');
     }
   }
