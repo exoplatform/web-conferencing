@@ -45,6 +45,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import jakarta.persistence.PersistenceException;
 
@@ -60,6 +61,7 @@ import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.services.listener.ListenerService;
+import org.exoplatform.services.security.IdentityConstants;
 import org.exoplatform.web.security.codec.CodecInitializer;
 import org.exoplatform.webconferencing.dao.ParticipantDAO;
 import org.exoplatform.webconferencing.dao.StorageException;
@@ -349,6 +351,53 @@ class WebConferencingServiceMissedCallTest {
     service.leaveCall(CALL_ID, CALLER, CLIENT_ID);
 
     verify(service).stopCall(call, CALLER, false);
+  }
+
+  /** A provider's server reporting that its meeting ended stops the call with no user: the caller is credited. */
+  @Test
+  void aStopWithNoCurrentUserIsAttributedToTheCaller() throws Exception {
+    CallInfo call = callerStartedCall(CALLER);
+    doReturn(null).when(service).currentUserId();
+
+    service.stopCall(CALL_ID, false);
+
+    verify(service).stopCall(call, CALLER, false);
+    verifyStoppedBroadcastBy(CALLER);
+  }
+
+  /** An unauthenticated request runs as the anonymous user, never credited with the stop of a call. */
+  @Test
+  void aStopAsTheAnonymousUserIsAttributedToTheCaller() throws Exception {
+    CallInfo call = callerStartedCall(CALLER);
+    doReturn(IdentityConstants.ANONIM).when(service).currentUserId();
+
+    service.stopCall(CALL_ID, true);
+
+    verify(service).stopCall(call, CALLER, true);
+    verifyStoppedBroadcastBy(CALLER);
+  }
+
+  @Test
+  void aStopByAUserIsAttributedToThatUserNotToTheCaller() throws Exception {
+    CallInfo call = callerStartedCall(CALLER);
+    doReturn(OTHER).when(service).currentUserId();
+
+    service.stopCall(CALL_ID, false);
+
+    verify(service).stopCall(call, OTHER, false);
+    verifyStoppedBroadcastBy(OTHER);
+  }
+
+  /** A call whose last start alerted nobody, a planned event's, has no caller to credit. */
+  @Test
+  void aStopWithNoCurrentUserNorCallerIsAttributedToNobody() throws Exception {
+    CallInfo call = callerStartedCall(null);
+    doReturn(null).when(service).currentUserId();
+
+    service.stopCall(CALL_ID, false);
+
+    verify(service).stopCall(call, null, false);
+    verifyStoppedBroadcastBy(null);
   }
 
   @Test
@@ -963,6 +1012,19 @@ class WebConferencingServiceMissedCallTest {
     doNothing().when(service).syncMembersAndParticipants(any(CallInfo.class));
     doNothing().when(service).updateCallAndParticipants(any(CallInfo.class));
     doNothing().when(service).scheduleMissedCall(anyString(), anyString(), any(Date.class));
+  }
+
+  private CallInfo callerStartedCall(String callerId) throws Exception {
+    CallInfo call = startedCall(new Date(), participant(CALLER, UserState.LEAVED), participant(CALLEE, UserState.INVITED));
+    call.setCallerId(callerId);
+    doNothing().when(service).stopCall(any(CallInfo.class), any(), anyBoolean());
+    return call;
+  }
+
+  private void verifyStoppedBroadcastBy(String userId) throws Exception {
+    verify(listenerService).broadcast(eq(WebConferencingService.EVENT_CALL_STOPPED),
+                                      any(CallInfo.class),
+                                      argThat((Map<String, String> info) -> Objects.equals(userId, info.get("user_id"))));
   }
 
   @SuppressWarnings("unchecked")
