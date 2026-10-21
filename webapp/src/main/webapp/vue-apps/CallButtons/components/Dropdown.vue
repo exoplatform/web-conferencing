@@ -6,11 +6,13 @@
       :showdropdowncomponent="showDropdownComponent"
       :passrefs="passRefs"
       :start-call="startCall" />
+    <!-- The buttons can be rendered inside a link, such as a user card: no click in them may reach it -->
     <div 
       v-show="isopen" 
       ref="buttonsContainer" 
       :class="positionclass" 
       class="buttons-container"
+      @click.stop.prevent
       @mouseleave="showDropdownComponent">
       <!-- TODO why we need IDs for them?? a class will not work? -->
       <div
@@ -18,7 +20,7 @@
         :key="index"
         :class="`call-button-container-${index} me-2`"
         :ref="`callbutton`"
-        @click="selectProvider"></div>
+        @click="selectProvider(index)"></div>
     </div>
   </div>
 </template>
@@ -70,7 +72,12 @@ export default {
     passRefs() {
       this.$emit('getRefs', this.$refs);
     },
-    selectProvider() {
+    selectProvider(index) {
+      // The provider's own button stops its click, so this one comes from the rest of its line
+      const callSettings = this.providersbutton[index] && this.providersbutton[index].callSettings;
+      if (callSettings && callSettings.onCallOpen) {
+        callSettings.onCallOpen();
+      }
       this.$emit('selectedProvider');
     }
   }
