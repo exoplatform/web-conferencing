@@ -1568,7 +1568,8 @@ public class WebConferencingService implements Startable {
           part.setStarterClientId(clientId);
         } else {
           // Started by a join, from a client in the call
-          part.setClientId(clientId);
+          part.setClientId(null);
+          part.addClientId(clientId);
         }
       } else {
         part.setState(alerted && UserInfo.TYPE_NAME.equals(part.getType()) ? UserState.INVITED : UserState.LEAVED);

@@ -253,7 +253,8 @@ public class UserInfo extends IdentityInfo {
   /**
    * Sets the client the user started the call from as their only client.
    *
-   * @param clientId the client id, or <code>null</code> for none
+   * @param clientId the client id; <code>null</code>, an empty id, or one {@link #addClientId(String)} ignores,
+   *          leaves the user with no client
    */
   public void setStarterClientId(String clientId) {
     this.clientId = isValidClientId(clientId) ? STARTER_CLIENT_PREFIX + clientId : null;
@@ -264,7 +265,7 @@ public class UserInfo extends IdentityInfo {
    * in the call from when it joins it. When the list would exceed {@link #CLIENT_IDS_MAX_LENGTH}, its oldest
    * clients are dropped: a client whose leave never came, after a crash or a network loss, goes first.
    *
-   * @param clientId the client id, ignored when <code>null</code>, already in the list, or holding
+   * @param clientId the client id, ignored when <code>null</code>, empty, already in the list, or holding
    *          {@link #CLIENT_IDS_SEPARATOR} or starting with {@link #STARTER_CLIENT_PREFIX}
    */
   public void addClientId(String clientId) {

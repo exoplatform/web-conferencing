@@ -239,6 +239,20 @@ class WebConferencingServiceMultiClientTest {
   }
 
   @Test
+  void aCallStartedByAJoinFromAClientThatCannotBeListedKeepsNoClient() throws Exception {
+    CallInfo call = startedCall(space(),
+                                participant(CALLER, UserState.LEAVED, null),
+                                participant(CALLEE, UserState.LEAVED, null));
+    doNothing().when(service).syncMembersAndParticipants(any(CallInfo.class));
+    doNothing().when(service).updateCallAndParticipants(any(CallInfo.class));
+
+    service.startCall(call, CALLER, "*forged", false);
+
+    assertEquals(UserState.JOINED, participantOf(call, CALLER).getState());
+    assertNull(participantOf(call, CALLER).getClientId());
+  }
+
+  @Test
   void aCallStartedByAJoinKeepsItsClientAsOneTheUserIsInTheCallFrom() throws Exception {
     CallInfo call = startedCall(space(),
                                 participant(CALLER, UserState.LEAVED, null),
