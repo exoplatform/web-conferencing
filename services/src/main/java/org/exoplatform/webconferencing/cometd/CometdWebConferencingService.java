@@ -1386,12 +1386,7 @@ public class CometdWebConferencingService implements Startable {
               @Override
               void execute(ExoContainer exoContainer) {
                 try {
-                  CallInfo call = webConferencing.getCall(callId);
-                  if (call != null) {
-                    // may be need leave all them and let that logic to stop the
-                    // call?
-                    webConferencing.stopCall(callId, !call.getOwner().isGroup());
-                  }
+                  stopCallOfRemovedChannel(callId);
                 } catch (Exception e) {
                   LOG.error("Error reading call " + callId, e);
                 }
@@ -2217,6 +2212,21 @@ public class CometdWebConferencingService implements Startable {
   protected static boolean isUpdatableState(String state) {
     return CallState.STARTED.equals(state) || CallState.STOPPED.equals(state) || UserState.JOINED.equals(state)
         || UserState.LEAVED.equals(state) || UserState.DECLINED.equals(state);
+  }
+
+  /**
+   * Stops a call whose channel has no subscriber left: its parties are assumed gone. A call read as stopped, as
+   * the leave of its last party leaves it, is not stopped again. The read takes no lock: a leave still running on
+   * another handler thread can stop the call after this read.
+   *
+   * @param callId the call id
+   * @throws WebConferencingException if the call cannot be read or stopped
+   */
+  protected void stopCallOfRemovedChannel(String callId) throws WebConferencingException {
+    CallInfo call = webConferencing.getCall(callId);
+    if (call != null && !CallState.STOPPED.equals(call.getState())) {
+      webConferencing.stopCall(callId, !call.getOwner().isGroup());
+    }
   }
 
   /**

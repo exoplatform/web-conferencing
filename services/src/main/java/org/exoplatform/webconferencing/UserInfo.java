@@ -42,6 +42,15 @@ public class UserInfo extends IdentityInfo {
   /** The Constant TYPE_NAME. */
   public static final String TYPE_NAME = "user".intern();
 
+  /** The longest list of client ids kept, the size of the participant's client id column. */
+  public static final int    CLIENT_IDS_MAX_LENGTH = 255;
+
+  /** The separator of the client ids in the list. */
+  public static final String CLIENT_IDS_SEPARATOR  = ",";
+
+  /** The mark of the client the user started the call from, in the list of clients. */
+  public static final String STARTER_CLIENT_PREFIX = "*";
+
   /** The Constant LOG. */
   protected static final Log LOG       = ExoLogger.getLogger(UserInfo.class);
 
@@ -99,7 +108,7 @@ public class UserInfo extends IdentityInfo {
   /** The state. */
   private String                          state;
 
-  /** The client id. */
+  /** The ids of the user's clients in the call, separated by {@link #CLIENT_IDS_SEPARATOR}. */
   private String                          clientId;
 
   /**
@@ -221,31 +230,118 @@ public class UserInfo extends IdentityInfo {
   }
 
   /**
-   * Gets the client id.
+   * Gets the clients of the user in the call, as stored: one id, or several separated by
+   * {@link #CLIENT_IDS_SEPARATOR}. The client the user started the call from carries
+   * {@link #STARTER_CLIENT_PREFIX}: it is the page that started the call, which the user is not in the call
+   * from until it joins it.
    *
-   * @return the clientId
+   * @return the client ids, or <code>null</code> when the user has no client in the call
    */
   public String getClientId() {
     return clientId;
   }
 
   /**
-   * Sets the client id.
+   * Sets the clients of the user in the call, replacing the stored ones.
    *
-   * @param clientId the clientId to set
+   * @param clientId the client ids, as {@link #getClientId()} returns them, or <code>null</code> for none
    */
   public void setClientId(String clientId) {
     this.clientId = clientId;
   }
-  
+
   /**
-   * Checks for same client id.
+   * Sets the client the user started the call from as their only client.
+   *
+   * @param clientId the client id; <code>null</code>, an empty id, or one {@link #addClientId(String)} ignores,
+   *          leaves the user with no client
+   */
+  public void setStarterClientId(String clientId) {
+    this.clientId = isValidClientId(clientId) ? STARTER_CLIENT_PREFIX + clientId : null;
+  }
+
+  /**
+   * Adds a client the user is in the call from. The client the user started the call from becomes one they are
+   * in the call from when it joins it. When the list would exceed {@link #CLIENT_IDS_MAX_LENGTH}, its oldest
+   * clients are dropped: a client whose leave never came, after a crash or a network loss, goes first.
+   *
+   * @param clientId the client id, ignored when <code>null</code>, empty, already in the list, too long to fit
+   *          the column once marked as the starter, or holding {@link #CLIENT_IDS_SEPARATOR} or starting with
+   *          {@link #STARTER_CLIENT_PREFIX}
+   */
+  public void addClientId(String clientId) {
+    if (!isValidClientId(clientId)) {
+      return;
+    }
+    List<String> clientIds = clientIds();
+    int starter = clientIds.indexOf(STARTER_CLIENT_PREFIX + clientId);
+    if (starter >= 0) {
+      clientIds.set(starter, clientId);
+    } else if (clientIds.contains(clientId)) {
+      return;
+    } else {
+      clientIds.add(clientId);
+      while (clientIds.size() > 1 && String.join(CLIENT_IDS_SEPARATOR, clientIds).length() > CLIENT_IDS_MAX_LENGTH) {
+        clientIds.remove(0);
+      }
+    }
+    this.clientId = String.join(CLIENT_IDS_SEPARATOR, clientIds);
+  }
+
+  /**
+   * Removes a client of the user, the one they started the call from included.
    *
    * @param clientId the client id
-   * @return true, if this user has same client ID (it is set and the same)
+   * @return true, if the client was in the list
+   */
+  public boolean removeClientId(String clientId) {
+    List<String> clientIds = clientIds();
+    boolean removed = clientIds.removeIf(id -> unmarked(id).equals(clientId));
+    if (removed) {
+      this.clientId = clientIds.isEmpty() ? null : String.join(CLIENT_IDS_SEPARATOR, clientIds);
+    }
+    return removed;
+  }
+
+  /**
+   * Tells if the user is in the call from at least one client, the one they started it from not counted.
+   *
+   * @return true, if a client joined the call
+   */
+  public boolean hasJoinedClientIds() {
+    return clientIds().stream().anyMatch(id -> !id.startsWith(STARTER_CLIENT_PREFIX));
+  }
+
+  /**
+   * Checks if the given client is one of the user's clients in the call, the one they started it from included.
+   *
+   * @param clientId the client id
+   * @return true, if the client is in the list
    */
   public boolean hasSameClientId(String clientId) {
-    return this.clientId != null && this.clientId.equals(clientId);
+    return clientId != null && clientIds().stream().anyMatch(id -> unmarked(id).equals(clientId));
+  }
+
+  private List<String> clientIds() {
+    List<String> clientIds = new ArrayList<>();
+    if (clientId != null) {
+      for (String id : clientId.split(CLIENT_IDS_SEPARATOR)) {
+        if (!id.isEmpty()) {
+          clientIds.add(id);
+        }
+      }
+    }
+    return clientIds;
+  }
+
+  private static boolean isValidClientId(String clientId) {
+    return clientId != null && !clientId.isEmpty() && clientId.length() < CLIENT_IDS_MAX_LENGTH
+        && !clientId.contains(CLIENT_IDS_SEPARATOR)
+        && !clientId.startsWith(STARTER_CLIENT_PREFIX);
+  }
+
+  private static String unmarked(String id) {
+    return id.startsWith(STARTER_CLIENT_PREFIX) ? id.substring(STARTER_CLIENT_PREFIX.length()) : id;
   }
 
 }
