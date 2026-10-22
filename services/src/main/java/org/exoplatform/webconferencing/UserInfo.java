@@ -42,6 +42,12 @@ public class UserInfo extends IdentityInfo {
   /** The Constant TYPE_NAME. */
   public static final String TYPE_NAME = "user".intern();
 
+  /** The longest list of client ids kept, the size of the participant's client id column. */
+  public static final int    CLIENT_IDS_MAX_LENGTH = 255;
+
+  /** The separator of the client ids in the list. */
+  public static final String CLIENT_IDS_SEPARATOR  = ",";
+
   /** The Constant LOG. */
   protected static final Log LOG       = ExoLogger.getLogger(UserInfo.class);
 
@@ -99,7 +105,7 @@ public class UserInfo extends IdentityInfo {
   /** The state. */
   private String                          state;
 
-  /** The client id. */
+  /** The ids of the clients the user is in the call from, separated by {@link #CLIENT_IDS_SEPARATOR}. */
   private String                          clientId;
 
   /**
@@ -221,31 +227,87 @@ public class UserInfo extends IdentityInfo {
   }
 
   /**
-   * Gets the client id.
+   * Gets the ids of the clients the user is in the call from, as stored: one id, or several separated by
+   * {@link #CLIENT_IDS_SEPARATOR} when the user is in the call from several devices or browser tabs.
    *
-   * @return the clientId
+   * @return the client ids, or <code>null</code> when the user is in the call from no client
    */
   public String getClientId() {
     return clientId;
   }
 
   /**
-   * Sets the client id.
+   * Sets the ids of the clients the user is in the call from, replacing the stored ones.
    *
-   * @param clientId the clientId to set
+   * @param clientId the client ids, as {@link #getClientId()} returns them, or <code>null</code> for none
    */
   public void setClientId(String clientId) {
     this.clientId = clientId;
   }
-  
+
   /**
-   * Checks for same client id.
+   * Adds a client the user is in the call from. When the list would exceed {@link #CLIENT_IDS_MAX_LENGTH},
+   * its oldest clients are dropped: a client whose leave never came, after a crash or a network loss, goes
+   * first.
+   *
+   * @param clientId the client id, ignored when <code>null</code> or already in the list
+   */
+  public void addClientId(String clientId) {
+    if (clientId == null || hasSameClientId(clientId)) {
+      return;
+    }
+    List<String> clientIds = clientIds();
+    clientIds.add(clientId);
+    while (clientIds.size() > 1 && String.join(CLIENT_IDS_SEPARATOR, clientIds).length() > CLIENT_IDS_MAX_LENGTH) {
+      clientIds.remove(0);
+    }
+    this.clientId = String.join(CLIENT_IDS_SEPARATOR, clientIds);
+  }
+
+  /**
+   * Removes a client the user was in the call from.
    *
    * @param clientId the client id
-   * @return true, if this user has same client ID (it is set and the same)
+   * @return true, if the client was in the list
+   */
+  public boolean removeClientId(String clientId) {
+    List<String> clientIds = clientIds();
+    boolean removed = clientIds.remove(clientId);
+    if (removed) {
+      this.clientId = clientIds.isEmpty() ? null : String.join(CLIENT_IDS_SEPARATOR, clientIds);
+    }
+    return removed;
+  }
+
+  /**
+   * Tells if the user is in the call from at least one client.
+   *
+   * @return true, if the list of clients is not empty
+   */
+  public boolean hasClientIds() {
+    return !clientIds().isEmpty();
+  }
+
+  /**
+   * Checks if the user is in the call from the given client.
+   *
+   * @param clientId the client id
+   * @return true, if the client is one the user is in the call from
    */
   public boolean hasSameClientId(String clientId) {
-    return this.clientId != null && this.clientId.equals(clientId);
+    return clientId != null && clientIds().contains(clientId);
+  }
+
+  private List<String> clientIds() {
+    List<String> clientIds = new ArrayList<>();
+    if (clientId != null) {
+      for (String id : clientId.split(CLIENT_IDS_SEPARATOR)) {
+        if (!id.isEmpty()) {
+          clientIds.add(id);
+        }
+      }
+    }
+    return clientIds;
   }
 
 }

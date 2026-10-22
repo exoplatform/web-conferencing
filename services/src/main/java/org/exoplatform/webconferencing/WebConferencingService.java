@@ -1751,7 +1751,7 @@ public class WebConferencingService implements Startable {
             if ((UserInfo.TYPE_NAME.equals(part.getType()) || GuestInfo.TYPE_NAME.equals(part.getType()))
                 && partId.equals(part.getId())) {
               part.setState(UserState.JOINED);
-              part.setClientId(clientId);
+              part.addClientId(clientId);
               joined = part;
               break;
             }
@@ -1809,7 +1809,10 @@ public class WebConferencingService implements Startable {
 
   /**
    * If call started, then notify all its parties that given participant leaved. If call not found then
-   * <code>null</code> will be returned.
+   * <code>null</code> will be returned. A participant in the call from several clients (devices or browser
+   * tabs) leaves it only with the last of them: the leave of another client only removes that client, and a
+   * leave from a client the participant is not in the call from changes nothing. A leave with no client id
+   * makes the participant leave from all their clients.
    *
    * @param callId the call id
    * @param partId the participant id
@@ -1824,6 +1827,9 @@ public class WebConferencingService implements Startable {
     if (call != null) {
       try {
         if (CallState.STARTED.equals(call.getState()) || CallState.PAUSED.equals(call.getState())) {
+          if (isInCallFromAnotherClient(call, partId, clientId)) {
+            return call;
+          }
           UserInfo leaved = null;
           boolean isGuestLeaved = false;
           int leavedNum = 0;
@@ -2023,6 +2029,43 @@ public class WebConferencingService implements Startable {
     } catch (Exception e) {
       LOG.warn("Error broadcasting the decline of call {} by {}", call.getId(), partId, e);
     }
+  }
+
+  /**
+   * Removes a client the participant leaves the call from, and tells if the participant is still in the call
+   * from another client. A client the participant is not in the call from is not removed, and still tells so
+   * while the participant has other clients. The remaining clients are saved when the leaving one was removed.
+   *
+   * @param call the call
+   * @param partId the participant id
+   * @param clientId the client the participant leaves from, <code>null</code> to leave from all their clients
+   * @return <code>true</code> if the participant is still in the call from another client
+   * @throws ParticipantNotFoundException if the participant cannot be found in storage
+   * @throws StorageException if storage exception happen
+   */
+  protected boolean isInCallFromAnotherClient(CallInfo call, String partId, String clientId) throws ParticipantNotFoundException,
+                                                                                                StorageException {
+    if (clientId == null) {
+      return false;
+    }
+    for (UserInfo part : call.getParticipants()) {
+      if ((UserInfo.TYPE_NAME.equals(part.getType()) || GuestInfo.TYPE_NAME.equals(part.getType())) && partId.equals(part.getId())
+          && part.hasClientIds()) {
+        boolean removed = part.removeClientId(clientId);
+        if (!part.hasClientIds()) {
+          return false;
+        }
+        if (removed) {
+          updateParticipant(call.getId(), part);
+        }
+        LOG.debug("Participant {} left the call {} from client {} and is still in it from another client",
+                  partId,
+                  call.getId(),
+                  clientId);
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
