@@ -256,24 +256,32 @@ public class UserInfo extends IdentityInfo {
    * @param clientId the client id, or <code>null</code> for none
    */
   public void setStarterClientId(String clientId) {
-    this.clientId = clientId == null ? null : STARTER_CLIENT_PREFIX + clientId;
+    this.clientId = isValidClientId(clientId) ? STARTER_CLIENT_PREFIX + clientId : null;
   }
 
   /**
-   * Adds a client the user is in the call from. When the list would exceed {@link #CLIENT_IDS_MAX_LENGTH},
-   * its oldest clients are dropped: a client whose leave never came, after a crash or a network loss, goes
-   * first.
+   * Adds a client the user is in the call from. The client the user started the call from becomes one they are
+   * in the call from when it joins it. When the list would exceed {@link #CLIENT_IDS_MAX_LENGTH}, its oldest
+   * clients are dropped: a client whose leave never came, after a crash or a network loss, goes first.
    *
-   * @param clientId the client id, ignored when <code>null</code> or already in the list
+   * @param clientId the client id, ignored when <code>null</code>, already in the list, or holding
+   *          {@link #CLIENT_IDS_SEPARATOR} or starting with {@link #STARTER_CLIENT_PREFIX}
    */
   public void addClientId(String clientId) {
-    if (clientId == null || hasSameClientId(clientId)) {
+    if (!isValidClientId(clientId)) {
       return;
     }
     List<String> clientIds = clientIds();
-    clientIds.add(clientId);
-    while (clientIds.size() > 1 && String.join(CLIENT_IDS_SEPARATOR, clientIds).length() > CLIENT_IDS_MAX_LENGTH) {
-      clientIds.remove(0);
+    int starter = clientIds.indexOf(STARTER_CLIENT_PREFIX + clientId);
+    if (starter >= 0) {
+      clientIds.set(starter, clientId);
+    } else if (clientIds.contains(clientId)) {
+      return;
+    } else {
+      clientIds.add(clientId);
+      while (clientIds.size() > 1 && String.join(CLIENT_IDS_SEPARATOR, clientIds).length() > CLIENT_IDS_MAX_LENGTH) {
+        clientIds.remove(0);
+      }
     }
     this.clientId = String.join(CLIENT_IDS_SEPARATOR, clientIds);
   }
@@ -322,6 +330,11 @@ public class UserInfo extends IdentityInfo {
       }
     }
     return clientIds;
+  }
+
+  private static boolean isValidClientId(String clientId) {
+    return clientId != null && !clientId.isEmpty() && !clientId.contains(CLIENT_IDS_SEPARATOR)
+        && !clientId.startsWith(STARTER_CLIENT_PREFIX);
   }
 
   private static String unmarked(String id) {

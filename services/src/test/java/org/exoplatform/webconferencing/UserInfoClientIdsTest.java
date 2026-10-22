@@ -71,14 +71,39 @@ class UserInfoClientIdsTest {
 
     assertTrue(user.hasSameClientId("page"));
     assertFalse(user.hasJoinedClientIds());
-    user.addClientId("page");
-    assertEquals("*page", user.getClientId());
     user.addClientId("window");
     assertEquals("*page,window", user.getClientId());
     assertTrue(user.hasJoinedClientIds());
     assertTrue(user.removeClientId("window"));
     assertFalse(user.hasJoinedClientIds());
     assertTrue(user.removeClientId("page"));
+    assertNull(user.getClientId());
+  }
+
+  @Test
+  void theClientACallWasStartedFromJoinsItInPlace() {
+    UserInfo user = new UserInfo("john", "John", "Smith");
+    user.setStarterClientId("page");
+    user.addClientId("window");
+
+    user.addClientId("page");
+
+    assertEquals("page,window", user.getClientId());
+    assertTrue(user.removeClientId("window"));
+    assertTrue(user.hasJoinedClientIds());
+  }
+
+  @Test
+  void aClientIdThatCannotBeListedIsIgnored() {
+    UserInfo user = new UserInfo("john", "John", "Smith");
+    user.addClientId("a");
+
+    user.addClientId("b,c");
+    user.addClientId("*d");
+    user.addClientId("");
+
+    assertEquals("a", user.getClientId());
+    user.setStarterClientId("*e");
     assertNull(user.getClientId());
   }
 

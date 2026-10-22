@@ -29,6 +29,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -213,6 +214,28 @@ class WebConferencingServiceMultiClientTest {
     assertEquals(UserState.LEAVED, participantOf(call, CALLER).getState());
     assertNull(participantOf(call, CALLER).getClientId());
     verify(service).stopCall(call, CALLER, true);
+  }
+
+  /** The page a call was started from leaving, unsubscribed or with an unjoined window, keeps the caller in it. */
+  @Test
+  void theLeaveOfThePageACallWasStartedFromKeepsTheCallerInItFromTheJoinedClient() throws Exception {
+    CallInfo call = startedCall(new UserInfo(CALLER, "Root", "Root"),
+                                participant(CALLER, UserState.LEAVED, null),
+                                participant(CALLEE, UserState.JOINED, PHONE));
+    doNothing().when(service).syncMembersAndParticipants(any(CallInfo.class));
+    doNothing().when(service).updateCallAndParticipants(any(CallInfo.class));
+    doNothing().when(service).scheduleMissedCall(anyString(), anyString(), any());
+
+    service.startCall(call, CALLER, "caller-page", true);
+    participantOf(call, CALLEE).setState(UserState.JOINED);
+    service.joinCall(CALL_ID, CALLER, LAPTOP);
+    service.leaveCall(CALL_ID, CALLER, "caller-page");
+
+    UserInfo caller = participantOf(call, CALLER);
+    assertEquals(UserState.JOINED, caller.getState());
+    assertEquals(LAPTOP, caller.getClientId());
+    verify(service, times(2)).updateParticipant(CALL_ID, caller);
+    verify(service, never()).stopCall(any(CallInfo.class), anyString(), anyBoolean());
   }
 
   @Test
