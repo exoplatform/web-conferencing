@@ -277,7 +277,7 @@ public class WebConferencingService implements Startable {
   protected static final String LEAVE_GRACE_TIME             = "leave-grace-time";
 
   /** The default leave grace time, in seconds. */
-  protected static final long   DEFAULT_LEAVE_GRACE_TIME     = 15;
+  protected static final long   DEFAULT_LEAVE_GRACE_TIME     = 10;
 
   /**
    * How long after the incoming call alert times out the missed call is checked, in seconds: a client starts
