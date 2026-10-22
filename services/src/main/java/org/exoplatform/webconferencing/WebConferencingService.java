@@ -1834,7 +1834,7 @@ public class WebConferencingService implements Startable {
     if (call != null) {
       try {
         if (CallState.STARTED.equals(call.getState()) || CallState.PAUSED.equals(call.getState())) {
-          if (isInCallFromAnotherClient(call, partId, clientId)) {
+          if (isInCallFromAnotherClient(call, partId, clientId) || hasLeftAlready(call, partId, clientId)) {
             return call;
           }
           UserInfo leaved = null;
@@ -2076,6 +2076,22 @@ public class WebConferencingService implements Startable {
       }
     }
     return false;
+  }
+
+  /**
+   * Tells if a leave from a client repeats one already applied: the user left the call and has no client in it,
+   * as when a call window leaves the call and then its subscription to the call ends.
+   *
+   * @param call the call
+   * @param partId the participant id
+   * @param clientId the client the participant leaves from, <code>null</code> to leave from all their clients
+   * @return <code>true</code> if the user already left the call from all their clients
+   */
+  protected boolean hasLeftAlready(CallInfo call, String partId, String clientId) {
+    return clientId != null && call.getParticipants()
+                                   .stream()
+                                   .anyMatch(part -> UserInfo.TYPE_NAME.equals(part.getType()) && partId.equals(part.getId())
+                                       && UserState.LEAVED.equals(part.getState()) && part.getClientId() == null);
   }
 
   /**

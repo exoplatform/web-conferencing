@@ -180,6 +180,36 @@ class WebConferencingServiceMultiClientTest {
     verify(service).stopCall(call, CALLEE, true);
   }
 
+  /** A call window leaves the call, then its subscription to the call ends and leaves it again. */
+  @Test
+  void aRepeatedLeaveFromAClientChangesNothing() throws Exception {
+    CallInfo call = startedCall(space(),
+                                participant(CALLER, UserState.JOINED, "caller-client"),
+                                participant(CALLEE, UserState.JOINED, LAPTOP),
+                                participant(OTHER, UserState.JOINED, "other-client"));
+
+    service.leaveCall(CALL_ID, CALLEE, LAPTOP);
+    leavedEvents.clear();
+    service.leaveCall(CALL_ID, CALLEE, LAPTOP);
+
+    assertEquals(UserState.LEAVED, participantOf(call, CALLEE).getState());
+    verify(service, times(1)).updateParticipant(CALL_ID, participantOf(call, CALLEE));
+    assertTrue(leavedEvents.isEmpty());
+  }
+
+  /** A leave naming no client, as at the end of a provider's meeting, is applied whatever the user's state. */
+  @Test
+  void aLeaveWithNoClientOfAUserWhoLeftIsAppliedAsBefore() throws Exception {
+    startedCall(space(),
+                participant(CALLER, UserState.JOINED, "caller-client"),
+                participant(CALLEE, UserState.LEAVED, null),
+                participant(OTHER, UserState.JOINED, "other-client"));
+
+    service.leaveCall(CALL_ID, CALLEE, null);
+
+    assertEquals(List.of(CALLEE + " <- " + CALLER, CALLEE + " <- " + CALLEE, CALLEE + " <- " + OTHER), leavedEvents);
+  }
+
   @Test
   void aLeaveOfAUserInTheCallFromNoClientLeavesAsBefore() throws Exception {
     CallInfo call = startedCall(space(),

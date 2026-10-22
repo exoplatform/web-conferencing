@@ -2215,8 +2215,9 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * Stops a call whose channel has no subscriber left: its parties are assumed gone. A call already stopped, as
-   * the leave of its last party does, is not stopped again.
+   * Stops a call whose channel has no subscriber left: its parties are assumed gone. A call read as stopped, as
+   * the leave of its last party leaves it, is not stopped again. The read takes no lock: a leave still running on
+   * another handler thread can stop the call after this read.
    *
    * @param callId the call id
    * @throws WebConferencingException if the call cannot be read or stopped
