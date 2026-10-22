@@ -38,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -243,6 +244,9 @@ public class CometdWebConferencingService implements Startable {
 
   /** The call handlers. */
   protected final ExecutorService        callHandlers;
+
+  /** The timer delaying what follows the end of a call window's connection by the leave grace time. */
+  protected final ScheduledExecutorService leaveGraceTimer;
   
   /** Cache of connected users. */
   protected final ExoCache<String, UserCallProxy>  usersCache;
@@ -1044,6 +1048,119 @@ public class CometdWebConferencingService implements Startable {
       boolean hasClients() {
         return clients.size() > 0;
       }
+
+      boolean hasClient(String userId, String clientId) {
+        return clientId != null
+            && clients.values().stream().anyMatch(client -> userId.equals(client.getUserId()) && clientId.equals(client.getClientId()));
+      }
+    }
+
+    /**
+     * Records a client subscribed to a call channel.
+     *
+     * @param channelId the call channel id
+     * @param containerName the eXo container name
+     * @param sessionId the Cometd session id
+     * @param userId the user of the session
+     * @param clientId the client id
+     */
+    void addCallClient(String channelId, String containerName, String sessionId, String userId, String clientId) {
+      callChannelContext.computeIfAbsent(channelId, k -> {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("<<< Created call channel context by " + userId + ", client:" + sessionId + ", channel:" + channelId);
+        }
+        return new CallChannelContext(containerName);
+      }).addUser(sessionId, userId, clientId);
+    }
+
+    /**
+     * Gets the clients subscribed to a call channel.
+     *
+     * @param channelId the call channel id
+     * @return the call channel context, <code>null</code> when nobody subscribed to it
+     */
+    CallChannelContext getCallChannelContext(String channelId) {
+      return callChannelContext.get(channelId);
+    }
+
+    /**
+     * Leaves a call from the client of a session whose subscription to the call channel ended, once the leave
+     * grace time passed. A window whose session expired that subscribed again meanwhile, reconnected with the same
+     * client, stays in the call: with a grace time shorter than its reconnection, the default one included, it
+     * subscribes again too late and its user leaves the call. On a call no longer found, the channel's clients are
+     * forgotten.
+     *
+     * @param channelId the call channel id
+     * @param callId the call id
+     * @param context the clients of the channel when the subscription ended
+     * @param sessionId the Cometd session id
+     * @throws WebConferencingException if the call cannot be read or left
+     */
+    void leaveCallOfEndedSubscription(String channelId,
+                                      String callId,
+                                      CallChannelContext context,
+                                      String sessionId) throws WebConferencingException {
+      CallInfo call = webConferencing.getCall(callId);
+      if (call != null) {
+        CallClient client = context.removeUser(sessionId);
+        if (client == null) {
+          LOG.warn("Client not found for session " + sessionId + " of " + channelId);
+        } else {
+          CallChannelContext current = callChannelContext.get(channelId);
+          if (current != null && current.hasClient(client.getUserId(), client.getClientId())) {
+            LOG.debug("Client {} of {} subscribed to {} again, it stays in the call", client.getClientId(), client.getUserId(), channelId);
+          } else {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(">>> Removed call session for " + client.getUserId() + ", session:" + sessionId + " ("
+                  + context.getContainerName() + "@" + client.getClientId() + "), channel:" + channelId);
+            }
+            webConferencing.leaveCallFromClient(callId, client.getUserId(), client.getClientId());
+          }
+        }
+        // TODO remove mapping of the context if it has not clients, but how safe to make this
+        // when call exists?
+        // Client could be added at next moment, at the same time mapping will be
+        // cleaned when channel will be removed (but this not proven to happen according logs).
+        // If do that, then need do consistent for the mapping: above instead of
+        // callChannelContext.get() use callChannelContext.computeIfPresent() with all this code
+        // inside it (and return null from bi-function if context has not clients).
+      } else {
+        // Remove existing context(!) for not existing call - this can be considered as safe.
+        callChannelContext.remove(channelId, context);
+      }
+    }
+
+    /**
+     * Records the removal of a call channel, the latest one replacing an earlier one whose call stop waits.
+     *
+     * @param channelId the call channel id
+     * @return the removal, to give {@link #stopCallAfterChannelRemoval(String, String, Object, long)}
+     */
+    Object recordChannelRemoval(String channelId) {
+      Object removal = new Object();
+      callChannelRemovals.put(channelId, removal);
+      return removal;
+    }
+
+    /**
+     * Stops the call of a removed channel once the leave grace time passed: only for the latest removal of the
+     * channel, and when no client subscribed to it again since (see
+     * {@link CometdWebConferencingService#stopCallOfRemovedChannel(String, long)}).
+     *
+     * @param channelId the call channel id
+     * @param callId the call id
+     * @param removal the removal, as {@link #recordChannelRemoval(String)} returned it
+     * @param removedAt when the channel was removed, in milliseconds
+     * @throws WebConferencingException if the call cannot be read or stopped
+     */
+    void stopCallAfterChannelRemoval(String channelId, String callId, Object removal, long removedAt) throws WebConferencingException {
+      if (!callChannelRemovals.remove(channelId, removal)) {
+        LOG.debug("Call channel {} removed again since, its latest removal stops its call", channelId);
+      } else if (callChannelContext.containsKey(channelId)) {
+        LOG.debug("Call channel {} subscribed again, its call goes on", channelId);
+      } else {
+        stopCallOfRemovedChannel(callId, removedAt);
+      }
     }
 
     /**
@@ -1211,13 +1328,7 @@ public class CometdWebConferencingService implements Startable {
           }
         } else if (channelId.startsWith(CALL_SUBSCRIPTION_CHANNEL_NAME)) {
           if (exoContainerName != null) {
-            callChannelContext.computeIfAbsent(channelId, k -> {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("<<< Created call channel context by " + currentUserId + ", client:" + sessionId + ", channel:"
-                    + channelId);
-              }
-              return new CallChannelContext(exoContainerName);
-            }).addUser(sessionId, currentUserId, exoClientId);
+            addCallClient(channelId, exoContainerName, sessionId, currentUserId, exoClientId);
             if (LOG.isDebugEnabled()) {
               LOG.debug("<< Added call session for " + currentUserId + ", session:" + sessionId + " (" + exoContainerName + "@"
                   + exoClientId + "), channel:" + channelId);
@@ -1263,36 +1374,15 @@ public class CometdWebConferencingService implements Startable {
           String callId = channelId.substring(CALL_SUBSCRIPTION_CHANNEL_NAME.length() + 1);
           CallChannelContext context = callChannelContext.get(channelId);
           if (context != null) {
-            callHandlers.submit(new ContainerCommand(context.getContainerName()) {
+            // The window leaves once the leave grace time passed: reloaded, it joins again meanwhile
+            afterLeaveGrace(() -> callHandlers.submit(new ContainerCommand(context.getContainerName()) {
               /**
                * {@inheritDoc}
                */
               @Override
               void execute(ExoContainer exoContainer) {
                 try {
-                  CallInfo call = webConferencing.getCall(callId);
-                  if (call != null) {
-                    CallClient client = context.removeUser(sessionId);
-                    if (client != null) {
-                      if (LOG.isDebugEnabled()) {
-                        LOG.debug(">>> Removed call session for " + client.getUserId() + ", session:" + sessionId + " ("
-                            + context.getContainerName() + "@" + client.getClientId() + "), channel:" + channelId);
-                      }
-                      webConferencing.leaveCall(callId, client.getUserId(), client.getClientId());
-                    } else {
-                      LOG.warn("Client not found for session " + sessionId + " of " + channelId);
-                    }
-                    // TODO remove mapping of the context if it has not clients, but how safe to make this
-                    // when call exists?
-                    // Client could be added at next moment, at the same time mapping will be
-                    // cleaned when channel will be removed (but this not proven to happen according logs).
-                    // If do that, then need do consistent for the mapping: above instead of
-                    // callChannelContext.get() use callChannelContext.computeIfPresent() with all this code
-                    // inside it (and return null from bi-function if context has not clients).
-                  } else {
-                    // Remove existing context(!) for not existing call - this can be considered as safe.
-                    callChannelContext.remove(channelId, context);
-                  }
+                  leaveCallOfEndedSubscription(channelId, callId, context, sessionId);
                 } catch (Exception e) {
                   LOG.error("Error reading call " + callId, e);
                 }
@@ -1305,7 +1395,7 @@ public class CometdWebConferencingService implements Startable {
               void onContainerError(String error) {
                 LOG.error("Container error: " + error + " (" + containerName + ") for channel removal " + channelId);
               }
-            });
+            }));
           } else {
             if (LOG.isDebugEnabled()) {
               LOG.debug("<<< Call context not found for " + callId);
@@ -1379,14 +1469,18 @@ public class CometdWebConferencingService implements Startable {
           // but not yet accepted/rejected it, will be notified that the call stopped/removed.
           CallChannelContext context = callChannelContext.remove(channelId);
           if (context != null) {
-            callHandlers.submit(new ContainerCommand(context.getContainerName()) {
+            // The call stops once the leave grace time passed, unless a window, reloaded, subscribed to it again, or
+            // the channel was removed again since: the latest removal waits its own grace time
+            long removedAt = System.currentTimeMillis();
+            Object removal = recordChannelRemoval(channelId);
+            afterLeaveGrace(() -> callHandlers.submit(new ContainerCommand(context.getContainerName()) {
               /**
                * {@inheritDoc}
                */
               @Override
               void execute(ExoContainer exoContainer) {
                 try {
-                  stopCallOfRemovedChannel(callId);
+                  stopCallAfterChannelRemoval(channelId, callId, removal, removedAt);
                 } catch (Exception e) {
                   LOG.error("Error reading call " + callId, e);
                 }
@@ -1399,7 +1493,7 @@ public class CometdWebConferencingService implements Startable {
               void onContainerError(String error) {
                 LOG.error("Container error: " + error + " (" + containerName + ") for channel removal " + channelId);
               }
-            });
+            }));
           } else {
             LOG.warn("Call context not found for " + callId);
           }
@@ -1661,6 +1755,9 @@ public class CometdWebConferencingService implements Startable {
 
     /** Call channel context. */
     private final Map<String, CallChannelContext> callChannelContext   = new ConcurrentHashMap<>();
+
+    /** The latest removal of each call channel whose call stop waits for the leave grace time. */
+    private final Map<String, Object>             callChannelRemovals  = new ConcurrentHashMap<>();
 
     /** The subscription listener. */
     private final ChannelSubscriptionListener     subscriptionListener = new ChannelSubscriptionListener();
@@ -2201,6 +2298,22 @@ public class CometdWebConferencingService implements Startable {
 
     // Thread executors
     this.callHandlers = createThreadExecutor(CALL_THREAD_PREFIX, CALL_MAX_FACTOR, CALL_QUEUE_FACTOR);
+    this.leaveGraceTimer = Executors.newSingleThreadScheduledExecutor(runnable -> {
+      Thread thread = new Thread(runnable, "webconferencing-leave-grace");
+      thread.setDaemon(true);
+      return thread;
+    });
+  }
+
+  /**
+   * Runs a task once the leave grace time passed (see {@link WebConferencingService#getLeaveGraceTime()}): a call
+   * window whose connection ended, reloaded or reconnected, joins the call again meanwhile, which keeps its user
+   * in the call.
+   *
+   * @param task the task
+   */
+  protected void afterLeaveGrace(Runnable task) {
+    leaveGraceTimer.schedule(task, webConferencing.getLeaveGraceTime(), TimeUnit.SECONDS);
   }
 
   /**
@@ -2216,15 +2329,18 @@ public class CometdWebConferencingService implements Startable {
 
   /**
    * Stops a call whose channel has no subscriber left: its parties are assumed gone. A call read as stopped, as
-   * the leave of its last party leaves it, is not stopped again. The read takes no lock: a leave still running on
-   * another handler thread can stop the call after this read.
+   * the leave of its last party leaves it, is not stopped again, nor a call started again since the channel was
+   * removed, its start read within {@link WebConferencingService#LAST_DATE_PRECISION}. The read takes no lock: a
+   * leave still running on another handler thread can stop the call after this read.
    *
    * @param callId the call id
+   * @param removedAt when the channel was removed, in milliseconds
    * @throws WebConferencingException if the call cannot be read or stopped
    */
-  protected void stopCallOfRemovedChannel(String callId) throws WebConferencingException {
+  protected void stopCallOfRemovedChannel(String callId, long removedAt) throws WebConferencingException {
     CallInfo call = webConferencing.getCall(callId);
-    if (call != null && !CallState.STOPPED.equals(call.getState())) {
+    if (call != null && !CallState.STOPPED.equals(call.getState()) && call.getLastDate() != null
+        && call.getLastDate().getTime() + WebConferencingService.LAST_DATE_PRECISION <= removedAt) {
       webConferencing.stopCall(callId, !call.getOwner().isGroup());
     }
   }
@@ -2322,7 +2438,7 @@ public class CometdWebConferencingService implements Startable {
    */
   @Override
   public void stop() {
-    //
+    leaveGraceTimer.shutdownNow();
   }
 
   /**

@@ -32,6 +32,11 @@
         <description>How long, in seconds, a started call alerts its participants before they missed it</description>
         <value>${webconferencing.incomingCall.timeout:60}</value>
       </value-param>
+      <value-param>
+        <name>leave-grace-time</name>
+        <description>How long, in seconds, the leave of a call window whose connection ended waits once Cometd detected that end (about 10 seconds over WebSocket for a window closed or reloaded), so that a reloaded window stays in the call</description>
+        <value>${webconferencing.call.leaveGraceTime:0}</value>
+      </value-param>
       <properties-param>
         <name>jwt-configuration</name>
         <property name="secret-key" value="${webconferencing.jwt.secret:mQzPudDBpSAqUwM0FY2r86gNAd6be5tN1xqwdFDOb4Us1DT4Tm}" />
