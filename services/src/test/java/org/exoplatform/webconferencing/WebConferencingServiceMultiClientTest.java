@@ -192,6 +192,46 @@ class WebConferencingServiceMultiClientTest {
     verify(service).updateParticipant(CALL_ID, participantOf(call, CALLEE));
   }
 
+  /**
+   * The page a call is started from is not in the call: the caller who joined from another client, the call
+   * window or the meeting's device, leaves with it.
+   */
+  @Test
+  void aCallerLeavesWithTheClientTheyJoinedFromNotTheOneTheyStartedFrom() throws Exception {
+    CallInfo call = startedCall(new UserInfo(CALLER, "Root", "Root"),
+                                participant(CALLER, UserState.LEAVED, null),
+                                participant(CALLEE, UserState.JOINED, PHONE));
+    doNothing().when(service).syncMembersAndParticipants(any(CallInfo.class));
+    doNothing().when(service).updateCallAndParticipants(any(CallInfo.class));
+    doNothing().when(service).scheduleMissedCall(anyString(), anyString(), any());
+
+    service.startCall(call, CALLER, "caller-page", true);
+    participantOf(call, CALLEE).setState(UserState.JOINED);
+    service.joinCall(CALL_ID, CALLER, LAPTOP);
+    service.leaveCall(CALL_ID, CALLER, LAPTOP);
+
+    assertEquals(UserState.LEAVED, participantOf(call, CALLER).getState());
+    assertNull(participantOf(call, CALLER).getClientId());
+    verify(service).stopCall(call, CALLER, true);
+  }
+
+  @Test
+  void aCallStartedByAJoinKeepsItsClientAsOneTheUserIsInTheCallFrom() throws Exception {
+    CallInfo call = startedCall(space(),
+                                participant(CALLER, UserState.LEAVED, null),
+                                participant(CALLEE, UserState.LEAVED, null));
+    doNothing().when(service).syncMembersAndParticipants(any(CallInfo.class));
+    doNothing().when(service).updateCallAndParticipants(any(CallInfo.class));
+
+    service.startCall(call, CALLER, LAPTOP, false);
+    service.joinCall(CALL_ID, CALLER, PHONE);
+    service.leaveCall(CALL_ID, CALLER, PHONE);
+
+    assertEquals(UserState.JOINED, participantOf(call, CALLER).getState());
+    assertEquals(LAPTOP, participantOf(call, CALLER).getClientId());
+    verify(service, never()).stopCall(any(CallInfo.class), anyString(), anyBoolean());
+  }
+
   @Test
   void joiningFromAnotherDeviceAddsItsClient() throws Exception {
     CallInfo call = startedCall(space(),

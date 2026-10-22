@@ -55,12 +55,31 @@ class UserInfoClientIdsTest {
 
     assertTrue(user.removeClientId("a"));
     assertEquals("b", user.getClientId());
-    assertTrue(user.hasClientIds());
+    assertTrue(user.hasJoinedClientIds());
     assertFalse(user.removeClientId("c"));
     assertEquals("b", user.getClientId());
     assertTrue(user.removeClientId("b"));
     assertNull(user.getClientId());
-    assertFalse(user.hasClientIds());
+    assertFalse(user.hasJoinedClientIds());
+  }
+
+  @Test
+  void theClientACallWasStartedFromIsKnownButNotJoined() {
+    UserInfo user = new UserInfo("john", "John", "Smith");
+
+    user.setStarterClientId("page");
+
+    assertTrue(user.hasSameClientId("page"));
+    assertFalse(user.hasJoinedClientIds());
+    user.addClientId("page");
+    assertEquals("*page", user.getClientId());
+    user.addClientId("window");
+    assertEquals("*page,window", user.getClientId());
+    assertTrue(user.hasJoinedClientIds());
+    assertTrue(user.removeClientId("window"));
+    assertFalse(user.hasJoinedClientIds());
+    assertTrue(user.removeClientId("page"));
+    assertNull(user.getClientId());
   }
 
   @Test

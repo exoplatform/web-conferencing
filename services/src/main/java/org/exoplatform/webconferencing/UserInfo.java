@@ -48,6 +48,9 @@ public class UserInfo extends IdentityInfo {
   /** The separator of the client ids in the list. */
   public static final String CLIENT_IDS_SEPARATOR  = ",";
 
+  /** The mark of the client the user started the call from, in the list of clients. */
+  public static final String STARTER_CLIENT_PREFIX = "*";
+
   /** The Constant LOG. */
   protected static final Log LOG       = ExoLogger.getLogger(UserInfo.class);
 
@@ -105,7 +108,7 @@ public class UserInfo extends IdentityInfo {
   /** The state. */
   private String                          state;
 
-  /** The ids of the clients the user is in the call from, separated by {@link #CLIENT_IDS_SEPARATOR}. */
+  /** The ids of the user's clients in the call, separated by {@link #CLIENT_IDS_SEPARATOR}. */
   private String                          clientId;
 
   /**
@@ -227,22 +230,33 @@ public class UserInfo extends IdentityInfo {
   }
 
   /**
-   * Gets the ids of the clients the user is in the call from, as stored: one id, or several separated by
-   * {@link #CLIENT_IDS_SEPARATOR} when the user is in the call from several devices or browser tabs.
+   * Gets the clients of the user in the call, as stored: one id, or several separated by
+   * {@link #CLIENT_IDS_SEPARATOR}. The client the user started the call from carries
+   * {@link #STARTER_CLIENT_PREFIX}: it is the page that started the call, which the user is not in the call
+   * from until it joins it.
    *
-   * @return the client ids, or <code>null</code> when the user is in the call from no client
+   * @return the client ids, or <code>null</code> when the user has no client in the call
    */
   public String getClientId() {
     return clientId;
   }
 
   /**
-   * Sets the ids of the clients the user is in the call from, replacing the stored ones.
+   * Sets the clients of the user in the call, replacing the stored ones.
    *
    * @param clientId the client ids, as {@link #getClientId()} returns them, or <code>null</code> for none
    */
   public void setClientId(String clientId) {
     this.clientId = clientId;
+  }
+
+  /**
+   * Sets the client the user started the call from as their only client.
+   *
+   * @param clientId the client id, or <code>null</code> for none
+   */
+  public void setStarterClientId(String clientId) {
+    this.clientId = clientId == null ? null : STARTER_CLIENT_PREFIX + clientId;
   }
 
   /**
@@ -265,14 +279,14 @@ public class UserInfo extends IdentityInfo {
   }
 
   /**
-   * Removes a client the user was in the call from.
+   * Removes a client of the user, the one they started the call from included.
    *
    * @param clientId the client id
    * @return true, if the client was in the list
    */
   public boolean removeClientId(String clientId) {
     List<String> clientIds = clientIds();
-    boolean removed = clientIds.remove(clientId);
+    boolean removed = clientIds.removeIf(id -> unmarked(id).equals(clientId));
     if (removed) {
       this.clientId = clientIds.isEmpty() ? null : String.join(CLIENT_IDS_SEPARATOR, clientIds);
     }
@@ -280,22 +294,22 @@ public class UserInfo extends IdentityInfo {
   }
 
   /**
-   * Tells if the user is in the call from at least one client.
+   * Tells if the user is in the call from at least one client, the one they started it from not counted.
    *
-   * @return true, if the list of clients is not empty
+   * @return true, if a client joined the call
    */
-  public boolean hasClientIds() {
-    return !clientIds().isEmpty();
+  public boolean hasJoinedClientIds() {
+    return clientIds().stream().anyMatch(id -> !id.startsWith(STARTER_CLIENT_PREFIX));
   }
 
   /**
-   * Checks if the user is in the call from the given client.
+   * Checks if the given client is one of the user's clients in the call, the one they started it from included.
    *
    * @param clientId the client id
-   * @return true, if the client is one the user is in the call from
+   * @return true, if the client is in the list
    */
   public boolean hasSameClientId(String clientId) {
-    return clientId != null && clientIds().contains(clientId);
+    return clientId != null && clientIds().stream().anyMatch(id -> unmarked(id).equals(clientId));
   }
 
   private List<String> clientIds() {
@@ -308,6 +322,10 @@ public class UserInfo extends IdentityInfo {
       }
     }
     return clientIds;
+  }
+
+  private static String unmarked(String id) {
+    return id.startsWith(STARTER_CLIENT_PREFIX) ? id.substring(STARTER_CLIENT_PREFIX.length()) : id;
   }
 
 }

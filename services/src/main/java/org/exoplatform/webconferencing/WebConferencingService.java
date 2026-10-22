@@ -1563,7 +1563,13 @@ public class WebConferencingService implements Startable {
     for (UserInfo part : call.getParticipants()) {
       if (UserInfo.TYPE_NAME.equals(part.getType()) && partId.equals(part.getId())) {
         part.setState(UserState.JOINED);
-        part.setClientId(clientId);
+        if (notifyStarted) {
+          // Started from a page, which is not in the call: the user joins it from another client
+          part.setStarterClientId(clientId);
+        } else {
+          // Started by a join, from a client in the call
+          part.setClientId(clientId);
+        }
       } else {
         part.setState(alerted && UserInfo.TYPE_NAME.equals(part.getType()) ? UserState.INVITED : UserState.LEAVED);
         part.setClientId(null);
@@ -2035,6 +2041,9 @@ public class WebConferencingService implements Startable {
    * Removes a client the participant leaves the call from, and tells if the participant is still in the call
    * from another client. A client the participant is not in the call from is not removed, and still tells so
    * while the participant has other clients. The remaining clients are saved when the leaving one was removed.
+   * The client the participant started the call from does not count as one they are in the call from. The
+   * clients are read, changed and saved with no lock, as the state in {@link #leaveCall(String, String, String)}:
+   * two clients of one user leaving at once can each save the other's client, which keeps the user in the call.
    *
    * @param call the call
    * @param partId the participant id
@@ -2050,9 +2059,9 @@ public class WebConferencingService implements Startable {
     }
     for (UserInfo part : call.getParticipants()) {
       if ((UserInfo.TYPE_NAME.equals(part.getType()) || GuestInfo.TYPE_NAME.equals(part.getType())) && partId.equals(part.getId())
-          && part.hasClientIds()) {
+          && part.hasJoinedClientIds()) {
         boolean removed = part.removeClientId(clientId);
-        if (!part.hasClientIds()) {
+        if (!part.hasJoinedClientIds()) {
           return false;
         }
         if (removed) {
