@@ -271,13 +271,13 @@ public class WebConferencingService implements Startable {
   protected static final long   DEFAULT_INCOMING_CALL_TIMEOUT = 60;
 
   /**
-   * The init param holding how long, in seconds, the leave of a call window whose connection ended waits: a
-   * window reloaded, or briefly disconnected, joins again meanwhile and stays in the call.
+   * The init param holding how long, in seconds, the leave of a call window whose connection ended waits, once
+   * Cometd detected that end: a window reloaded joins again meanwhile and stays in the call.
    */
   protected static final String LEAVE_GRACE_TIME             = "leave-grace-time";
 
   /** The default leave grace time, in seconds. */
-  protected static final long   DEFAULT_LEAVE_GRACE_TIME     = 10;
+  protected static final long   DEFAULT_LEAVE_GRACE_TIME     = 0;
 
   /**
    * How long after the incoming call alert times out the missed call is checked, in seconds: a client starts
@@ -3297,8 +3297,10 @@ public class WebConferencingService implements Startable {
 
   /**
    * Gets how long, in seconds, the leave of a call window whose connection to its call ended waits before it
-   * applies: a window reloaded, or briefly disconnected, that joins the call again meanwhile from a new client
-   * keeps its user in the call. <code>0</code> applies the leave at once.
+   * applies, counted from when Cometd detected that end (its session expiry for a window that unloaded without a
+   * word, about 10 seconds over WebSocket): a window reloaded that joins the call again meanwhile from a new
+   * client, or a window reconnected that subscribed to the call again with the same client, keeps its user in the
+   * call. <code>0</code> applies the leave once that end is detected.
    *
    * @return the leave grace time in seconds
    */

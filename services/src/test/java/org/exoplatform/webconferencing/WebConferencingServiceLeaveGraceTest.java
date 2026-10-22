@@ -31,27 +31,28 @@ import org.exoplatform.web.security.codec.CodecInitializer;
 
 /**
  * The leave grace time, how long the leave of a call window whose connection
- * ended waits, is read from the service's init params: 10 seconds when unset
- * or wrong, 0 applying the leave at once.
+ * ended waits, is read from the service's init params: 0 seconds, the leave
+ * applying once the end is detected, when unset or wrong.
  */
 class WebConferencingServiceLeaveGraceTest {
 
   @Test
-  void theLeaveGraceTimeIs10SecondsWhenUnset() {
-    assertEquals(10, service(null).getLeaveGraceTime());
+  void theLeaveGraceTimeIs0SecondsWhenUnset() {
+    assertEquals(0, service(null).getLeaveGraceTime());
   }
 
   @Test
   void theLeaveGraceTimeIsReadFromItsInitParam() {
     assertEquals(30, service("30").getLeaveGraceTime());
-    assertEquals(0, service(" 0 ").getLeaveGraceTime());
+    assertEquals(5, service(" 5 ").getLeaveGraceTime());
+    assertEquals(0, service("0").getLeaveGraceTime());
   }
 
   @Test
-  void aWrongLeaveGraceTimeFallsBackTo10Seconds() {
-    assertEquals(10, service("-1").getLeaveGraceTime());
-    assertEquals(10, service("soon").getLeaveGraceTime());
-    assertEquals(10, service(String.valueOf(WebConferencingService.MAX_INCOMING_CALL_TIMEOUT + 1)).getLeaveGraceTime());
+  void aWrongLeaveGraceTimeFallsBackTo0Seconds() {
+    assertEquals(0, service("-1").getLeaveGraceTime());
+    assertEquals(0, service("soon").getLeaveGraceTime());
+    assertEquals(0, service(String.valueOf(WebConferencingService.MAX_INCOMING_CALL_TIMEOUT + 1)).getLeaveGraceTime());
   }
 
   private WebConferencingService service(String leaveGraceTime) {

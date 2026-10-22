@@ -34,8 +34,8 @@
       </value-param>
       <value-param>
         <name>leave-grace-time</name>
-        <description>How long, in seconds, the leave of a call window whose connection ended waits, so that a reloaded window stays in the call</description>
-        <value>${webconferencing.call.leaveGraceTime:10}</value>
+        <description>How long, in seconds, the leave of a call window whose connection ended waits once Cometd detected that end (about 10 seconds over WebSocket for a window closed or reloaded), so that a reloaded window stays in the call</description>
+        <value>${webconferencing.call.leaveGraceTime:0}</value>
       </value-param>
       <properties-param>
         <name>jwt-configuration</name>

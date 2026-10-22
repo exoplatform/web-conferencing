@@ -61,6 +61,8 @@ class CometdWebConferencingServiceStateTest {
 
   private static final long           REMOVED_AT = 1_800_000_000_000L;
 
+  private static final String         CHANNEL_ID = "/eXo/Application/WebConferencing/call/" + CALL_ID;
+
   private WebConferencingService      webConferencing;
 
   private CometdWebConferencingService cometdService;
@@ -180,6 +182,94 @@ class CometdWebConferencingServiceStateTest {
     cometdService.stopCallOfRemovedChannel(CALL_ID, REMOVED_AT);
 
     verify(webConferencing, never()).stopCall(anyString(), anyBoolean());
+  }
+
+  /** The latest removal of a call channel no client subscribed to again stops its call. */
+  @Test
+  void theCallOfAChannelRemovedAndNotSubscribedAgainIsStopped() throws Exception {
+    when(webConferencing.getCall(CALL_ID)).thenReturn(callOwnedBy(space(), CallState.STARTED));
+    Object removal = cometdService.service.recordChannelRemoval(CHANNEL_ID);
+
+    cometdService.service.stopCallAfterChannelRemoval(CHANNEL_ID, CALL_ID, removal, REMOVED_AT);
+
+    verify(webConferencing).stopCall(CALL_ID, false);
+  }
+
+  /** A call window reloaded subscribed to its call again within the leave grace time: the call goes on. */
+  @Test
+  void theCallOfAChannelSubscribedAgainIsNotStopped() throws Exception {
+    when(webConferencing.getCall(CALL_ID)).thenReturn(callOwnedBy(space(), CallState.STARTED));
+    Object removal = cometdService.service.recordChannelRemoval(CHANNEL_ID);
+    cometdService.service.addCallClient(CHANNEL_ID, "portal", "session-2", USER_ID, "client-2");
+
+    cometdService.service.stopCallAfterChannelRemoval(CHANNEL_ID, CALL_ID, removal, REMOVED_AT);
+
+    verify(webConferencing, never()).stopCall(anyString(), anyBoolean());
+  }
+
+  /** A channel removed twice: only the latest removal, once its own grace time passed, stops the call. */
+  @Test
+  void onlyTheLatestRemovalOfAChannelStopsItsCall() throws Exception {
+    when(webConferencing.getCall(CALL_ID)).thenReturn(callOwnedBy(space(), CallState.STARTED));
+    Object first = cometdService.service.recordChannelRemoval(CHANNEL_ID);
+    Object latest = cometdService.service.recordChannelRemoval(CHANNEL_ID);
+
+    cometdService.service.stopCallAfterChannelRemoval(CHANNEL_ID, CALL_ID, first, REMOVED_AT);
+    verify(webConferencing, never()).stopCall(anyString(), anyBoolean());
+
+    cometdService.service.stopCallAfterChannelRemoval(CHANNEL_ID, CALL_ID, latest, REMOVED_AT);
+    verify(webConferencing).stopCall(CALL_ID, false);
+  }
+
+  /** A call window whose subscription ended leaves the call from its client. */
+  @Test
+  void aClientWhoseSubscriptionEndedLeavesTheCall() throws Exception {
+    when(webConferencing.getCall(CALL_ID)).thenReturn(callOwnedBy(space(), CallState.STARTED));
+    cometdService.service.addCallClient(CHANNEL_ID, "portal", "session-1", USER_ID, CLIENT_ID);
+    var context = cometdService.service.getCallChannelContext(CHANNEL_ID);
+
+    cometdService.service.leaveCallOfEndedSubscription(CHANNEL_ID, CALL_ID, context, "session-1");
+
+    verify(webConferencing).leaveCallFromClient(CALL_ID, USER_ID, CLIENT_ID);
+  }
+
+  /** A call window whose session expired reconnected with the same client and subscribed again: it stays. */
+  @Test
+  void aClientReconnectedToItsCallDoesNotLeaveIt() throws Exception {
+    when(webConferencing.getCall(CALL_ID)).thenReturn(callOwnedBy(space(), CallState.STARTED));
+    cometdService.service.addCallClient(CHANNEL_ID, "portal", "session-1", USER_ID, CLIENT_ID);
+    var context = cometdService.service.getCallChannelContext(CHANNEL_ID);
+    cometdService.service.addCallClient(CHANNEL_ID, "portal", "session-2", USER_ID, CLIENT_ID);
+
+    cometdService.service.leaveCallOfEndedSubscription(CHANNEL_ID, CALL_ID, context, "session-1");
+
+    verify(webConferencing, never()).leaveCallFromClient(anyString(), anyString(), anyString());
+  }
+
+  /** A call window reloaded subscribed again from a new client: its former client leaves the call. */
+  @Test
+  void theFormerClientOfAReloadedWindowLeavesTheCall() throws Exception {
+    when(webConferencing.getCall(CALL_ID)).thenReturn(callOwnedBy(space(), CallState.STARTED));
+    cometdService.service.addCallClient(CHANNEL_ID, "portal", "session-1", USER_ID, CLIENT_ID);
+    var context = cometdService.service.getCallChannelContext(CHANNEL_ID);
+    cometdService.service.addCallClient(CHANNEL_ID, "portal", "session-2", USER_ID, "client-2");
+
+    cometdService.service.leaveCallOfEndedSubscription(CHANNEL_ID, CALL_ID, context, "session-1");
+
+    verify(webConferencing).leaveCallFromClient(CALL_ID, USER_ID, CLIENT_ID);
+  }
+
+  /** Another user's window on the same client id does not keep a user in the call. */
+  @Test
+  void anotherUsersClientDoesNotKeepAUserInTheCall() throws Exception {
+    when(webConferencing.getCall(CALL_ID)).thenReturn(callOwnedBy(space(), CallState.STARTED));
+    cometdService.service.addCallClient(CHANNEL_ID, "portal", "session-1", USER_ID, CLIENT_ID);
+    var context = cometdService.service.getCallChannelContext(CHANNEL_ID);
+    cometdService.service.addCallClient(CHANNEL_ID, "portal", "session-2", "mary", CLIENT_ID);
+
+    cometdService.service.leaveCallOfEndedSubscription(CHANNEL_ID, CALL_ID, context, "session-1");
+
+    verify(webConferencing).leaveCallFromClient(CALL_ID, USER_ID, CLIENT_ID);
   }
 
   private CallInfo callOwnedBy(IdentityInfo owner, String state) {
