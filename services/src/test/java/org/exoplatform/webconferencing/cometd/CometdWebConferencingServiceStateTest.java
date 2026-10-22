@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -57,6 +58,8 @@ class CometdWebConferencingServiceStateTest {
   private static final String         USER_ID   = "john";
 
   private static final String         CLIENT_ID = "client-1";
+
+  private static final long           REMOVED_AT = 1_800_000_000_000L;
 
   private WebConferencingService      webConferencing;
 
@@ -124,7 +127,7 @@ class CometdWebConferencingServiceStateTest {
     CallInfo call = callOwnedBy(space(), CallState.STARTED);
     when(webConferencing.getCall(CALL_ID)).thenReturn(call);
 
-    cometdService.stopCallOfRemovedChannel(CALL_ID);
+    cometdService.stopCallOfRemovedChannel(CALL_ID, REMOVED_AT);
 
     verify(webConferencing).stopCall(CALL_ID, false);
   }
@@ -134,7 +137,7 @@ class CometdWebConferencingServiceStateTest {
     CallInfo call = callOwnedBy(new UserInfo(USER_ID, "John", "Smith"), CallState.STARTED);
     when(webConferencing.getCall(CALL_ID)).thenReturn(call);
 
-    cometdService.stopCallOfRemovedChannel(CALL_ID);
+    cometdService.stopCallOfRemovedChannel(CALL_ID, REMOVED_AT);
 
     verify(webConferencing).stopCall(CALL_ID, true);
   }
@@ -145,21 +148,48 @@ class CometdWebConferencingServiceStateTest {
     CallInfo call = callOwnedBy(space(), CallState.STOPPED);
     when(webConferencing.getCall(CALL_ID)).thenReturn(call);
 
-    cometdService.stopCallOfRemovedChannel(CALL_ID);
+    cometdService.stopCallOfRemovedChannel(CALL_ID, REMOVED_AT);
+
+    verify(webConferencing, never()).stopCall(anyString(), anyBoolean());
+  }
+
+  /** A call started again since its channel went, within the leave grace time, is not stopped by that removal. */
+  @Test
+  void aCallStartedAgainSinceItsChannelWasRemovedIsNotStopped() throws Exception {
+    CallInfo call = callOwnedBy(new UserInfo(USER_ID, "John", "Smith"), CallState.STARTED, REMOVED_AT + 5000);
+    when(webConferencing.getCall(CALL_ID)).thenReturn(call);
+
+    cometdService.stopCallOfRemovedChannel(CALL_ID, REMOVED_AT);
+
+    verify(webConferencing, never()).stopCall(anyString(), anyBoolean());
+  }
+
+  /** A start read from the storage a second off is not told from the removal: the call is not stopped. */
+  @Test
+  void aCallStartedWithinTheDatePrecisionOfItsChannelRemovalIsNotStopped() throws Exception {
+    CallInfo call = callOwnedBy(space(), CallState.STARTED, REMOVED_AT - WebConferencingService.LAST_DATE_PRECISION + 1);
+    when(webConferencing.getCall(CALL_ID)).thenReturn(call);
+
+    cometdService.stopCallOfRemovedChannel(CALL_ID, REMOVED_AT);
 
     verify(webConferencing, never()).stopCall(anyString(), anyBoolean());
   }
 
   @Test
   void aCallGoneIsNotStoppedWhenItsChannelIsRemoved() throws Exception {
-    cometdService.stopCallOfRemovedChannel(CALL_ID);
+    cometdService.stopCallOfRemovedChannel(CALL_ID, REMOVED_AT);
 
     verify(webConferencing, never()).stopCall(anyString(), anyBoolean());
   }
 
   private CallInfo callOwnedBy(IdentityInfo owner, String state) {
+    return callOwnedBy(owner, state, REMOVED_AT - 60000);
+  }
+
+  private CallInfo callOwnedBy(IdentityInfo owner, String state, long startedAt) {
     CallInfo call = new CallInfo(CALL_ID, "Call", owner, "jitsi");
     call.setState(state);
+    call.setLastDate(new Date(startedAt));
     return call;
   }
 

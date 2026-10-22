@@ -1283,7 +1283,7 @@ public class CometdWebConferencingService implements Startable {
                         LOG.debug(">>> Removed call session for " + client.getUserId() + ", session:" + sessionId + " ("
                             + context.getContainerName() + "@" + client.getClientId() + "), channel:" + channelId);
                       }
-                      webConferencing.leaveCall(callId, client.getUserId(), client.getClientId());
+                      webConferencing.leaveCallFromClient(callId, client.getUserId(), client.getClientId());
                     } else {
                       LOG.warn("Client not found for session " + sessionId + " of " + channelId);
                     }
@@ -1384,7 +1384,11 @@ public class CometdWebConferencingService implements Startable {
           // but not yet accepted/rejected it, will be notified that the call stopped/removed.
           CallChannelContext context = callChannelContext.remove(channelId);
           if (context != null) {
-            // The call stops once the leave grace time passed, unless a window, reloaded, subscribed to it again
+            // The call stops once the leave grace time passed, unless a window, reloaded, subscribed to it again, or
+            // the channel was removed again since: the latest removal waits its own grace time
+            long removedAt = System.currentTimeMillis();
+            Object removal = new Object();
+            callChannelRemovals.put(channelId, removal);
             afterLeaveGrace(() -> callHandlers.submit(new ContainerCommand(context.getContainerName()) {
               /**
                * {@inheritDoc}
@@ -1392,10 +1396,12 @@ public class CometdWebConferencingService implements Startable {
               @Override
               void execute(ExoContainer exoContainer) {
                 try {
-                  if (callChannelContext.containsKey(channelId)) {
+                  if (!callChannelRemovals.remove(channelId, removal)) {
+                    LOG.debug("Call channel {} removed again since, its latest removal stops its call", channelId);
+                  } else if (callChannelContext.containsKey(channelId)) {
                     LOG.debug("Call channel {} subscribed again, its call goes on", channelId);
                   } else {
-                    stopCallOfRemovedChannel(callId);
+                    stopCallOfRemovedChannel(callId, removedAt);
                   }
                 } catch (Exception e) {
                   LOG.error("Error reading call " + callId, e);
@@ -1671,6 +1677,9 @@ public class CometdWebConferencingService implements Startable {
 
     /** Call channel context. */
     private final Map<String, CallChannelContext> callChannelContext   = new ConcurrentHashMap<>();
+
+    /** The latest removal of each call channel whose call stop waits for the leave grace time. */
+    private final Map<String, Object>             callChannelRemovals  = new ConcurrentHashMap<>();
 
     /** The subscription listener. */
     private final ChannelSubscriptionListener     subscriptionListener = new ChannelSubscriptionListener();
@@ -2242,15 +2251,18 @@ public class CometdWebConferencingService implements Startable {
 
   /**
    * Stops a call whose channel has no subscriber left: its parties are assumed gone. A call read as stopped, as
-   * the leave of its last party leaves it, is not stopped again. The read takes no lock: a leave still running on
-   * another handler thread can stop the call after this read.
+   * the leave of its last party leaves it, is not stopped again, nor a call started again since the channel was
+   * removed, its start read within {@link WebConferencingService#LAST_DATE_PRECISION}. The read takes no lock: a
+   * leave still running on another handler thread can stop the call after this read.
    *
    * @param callId the call id
+   * @param removedAt when the channel was removed, in milliseconds
    * @throws WebConferencingException if the call cannot be read or stopped
    */
-  protected void stopCallOfRemovedChannel(String callId) throws WebConferencingException {
+  protected void stopCallOfRemovedChannel(String callId, long removedAt) throws WebConferencingException {
     CallInfo call = webConferencing.getCall(callId);
-    if (call != null && !CallState.STOPPED.equals(call.getState())) {
+    if (call != null && !CallState.STOPPED.equals(call.getState()) && call.getLastDate() != null
+        && call.getLastDate().getTime() + WebConferencingService.LAST_DATE_PRECISION <= removedAt) {
       webConferencing.stopCall(callId, !call.getOwner().isGroup());
     }
   }

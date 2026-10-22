@@ -300,7 +300,7 @@ public class WebConferencingService implements Startable {
    * How much later than in memory the start date of a call may read from the storage, in milliseconds: a
    * storage keeping whole seconds rounds the fraction up or down.
    */
-  protected static final long   LAST_DATE_PRECISION          = 1000;
+  public static final long      LAST_DATE_PRECISION          = 1000;
 
   protected static final String VIDEO_CONFERENCE_IS_ENABLED  = "videoConferenceEnabled";
 
@@ -1966,6 +1966,29 @@ public class WebConferencingService implements Startable {
     } else {
       LOG.warn("Call " + callId + " not found to leave it " + partId);
     }
+    return call;
+  }
+
+  /**
+   * Leaves a call from a client whose connection to it ended, only when the participant is in the call from
+   * that client: a leave applied late, once the leave grace time passed (see {@link #getLeaveGraceTime()}),
+   * changes nothing on a call started again since, which the participant is not in from that client.
+   *
+   * @param callId the call id
+   * @param partId the participant id
+   * @param clientId the client whose connection ended
+   * @return the call info or <code>null</code> if call not found
+   * @throws InvalidCallException if call in erroneous state and cannot be used, details are in caused
+   *           exception
+   */
+  public CallInfo leaveCallFromClient(String callId, String partId, String clientId) throws InvalidCallException {
+    CallInfo call = getCall(callId);
+    if (call != null && call.getParticipants()
+                            .stream()
+                            .anyMatch(part -> partId.equals(part.getId()) && part.hasSameClientId(clientId))) {
+      return leaveCall(callId, partId, clientId);
+    }
+    LOG.debug("Participant {} is not in the call {} from client {}, its leave changes nothing", partId, callId, clientId);
     return call;
   }
 
