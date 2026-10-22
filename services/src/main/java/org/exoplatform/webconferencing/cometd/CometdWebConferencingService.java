@@ -38,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -243,6 +244,9 @@ public class CometdWebConferencingService implements Startable {
 
   /** The call handlers. */
   protected final ExecutorService        callHandlers;
+
+  /** The timer delaying what follows the end of a call window's connection by the leave grace time. */
+  protected final ScheduledExecutorService leaveGraceTimer;
   
   /** Cache of connected users. */
   protected final ExoCache<String, UserCallProxy>  usersCache;
@@ -1263,7 +1267,8 @@ public class CometdWebConferencingService implements Startable {
           String callId = channelId.substring(CALL_SUBSCRIPTION_CHANNEL_NAME.length() + 1);
           CallChannelContext context = callChannelContext.get(channelId);
           if (context != null) {
-            callHandlers.submit(new ContainerCommand(context.getContainerName()) {
+            // The window leaves once the leave grace time passed: reloaded, it joins again meanwhile
+            afterLeaveGrace(() -> callHandlers.submit(new ContainerCommand(context.getContainerName()) {
               /**
                * {@inheritDoc}
                */
@@ -1305,7 +1310,7 @@ public class CometdWebConferencingService implements Startable {
               void onContainerError(String error) {
                 LOG.error("Container error: " + error + " (" + containerName + ") for channel removal " + channelId);
               }
-            });
+            }));
           } else {
             if (LOG.isDebugEnabled()) {
               LOG.debug("<<< Call context not found for " + callId);
@@ -1379,14 +1384,19 @@ public class CometdWebConferencingService implements Startable {
           // but not yet accepted/rejected it, will be notified that the call stopped/removed.
           CallChannelContext context = callChannelContext.remove(channelId);
           if (context != null) {
-            callHandlers.submit(new ContainerCommand(context.getContainerName()) {
+            // The call stops once the leave grace time passed, unless a window, reloaded, subscribed to it again
+            afterLeaveGrace(() -> callHandlers.submit(new ContainerCommand(context.getContainerName()) {
               /**
                * {@inheritDoc}
                */
               @Override
               void execute(ExoContainer exoContainer) {
                 try {
-                  stopCallOfRemovedChannel(callId);
+                  if (callChannelContext.containsKey(channelId)) {
+                    LOG.debug("Call channel {} subscribed again, its call goes on", channelId);
+                  } else {
+                    stopCallOfRemovedChannel(callId);
+                  }
                 } catch (Exception e) {
                   LOG.error("Error reading call " + callId, e);
                 }
@@ -1399,7 +1409,7 @@ public class CometdWebConferencingService implements Startable {
               void onContainerError(String error) {
                 LOG.error("Container error: " + error + " (" + containerName + ") for channel removal " + channelId);
               }
-            });
+            }));
           } else {
             LOG.warn("Call context not found for " + callId);
           }
@@ -2201,6 +2211,22 @@ public class CometdWebConferencingService implements Startable {
 
     // Thread executors
     this.callHandlers = createThreadExecutor(CALL_THREAD_PREFIX, CALL_MAX_FACTOR, CALL_QUEUE_FACTOR);
+    this.leaveGraceTimer = Executors.newSingleThreadScheduledExecutor(runnable -> {
+      Thread thread = new Thread(runnable, "webconferencing-leave-grace");
+      thread.setDaemon(true);
+      return thread;
+    });
+  }
+
+  /**
+   * Runs a task once the leave grace time passed (see {@link WebConferencingService#getLeaveGraceTime()}): a call
+   * window whose connection ended, reloaded or briefly disconnected, joins the call again meanwhile from a new
+   * client, which keeps its user in the call.
+   *
+   * @param task the task
+   */
+  protected void afterLeaveGrace(Runnable task) {
+    leaveGraceTimer.schedule(task, webConferencing.getLeaveGraceTime(), TimeUnit.SECONDS);
   }
 
   /**
@@ -2322,7 +2348,7 @@ public class CometdWebConferencingService implements Startable {
    */
   @Override
   public void stop() {
-    //
+    leaveGraceTimer.shutdownNow();
   }
 
   /**

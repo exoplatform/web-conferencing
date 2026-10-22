@@ -271,6 +271,15 @@ public class WebConferencingService implements Startable {
   protected static final long   DEFAULT_INCOMING_CALL_TIMEOUT = 60;
 
   /**
+   * The init param holding how long, in seconds, the leave of a call window whose connection ended waits: a
+   * window reloaded, or briefly disconnected, joins again meanwhile and stays in the call.
+   */
+  protected static final String LEAVE_GRACE_TIME             = "leave-grace-time";
+
+  /** The default leave grace time, in seconds. */
+  protected static final long   DEFAULT_LEAVE_GRACE_TIME     = 15;
+
+  /**
    * How long after the incoming call alert times out the missed call is checked, in seconds: a client starts
    * its alert once the call state reached it and the call was read, so it may still be answered a little after
    * the timeout counted from the call start.
@@ -455,6 +464,9 @@ public class WebConferencingService implements Startable {
   /** How long, in seconds, a started call alerts its participants before they missed it. */
   protected final long                               incomingCallTimeout;
 
+  /** How long, in seconds, the leave of a call window whose connection ended waits. */
+  protected final long                               leaveGraceTime;
+
   /** Runs the missed call check of each started call once its incoming call alert timed out. */
   protected final ScheduledExecutorService           missedCallTimer;
 
@@ -625,6 +637,7 @@ public class WebConferencingService implements Startable {
     PropertiesParam jwtSecretParam = initParams.getPropertiesParam(JWT_CONFIGURATION_PROPERTIES);
     this.secretKey = jwtSecretParam.getProperty(SECRET_KEY);
     this.incomingCallTimeout = readIncomingCallTimeout(initParams);
+    this.leaveGraceTime = readLeaveGraceTime(initParams);
     AtomicInteger missedCallThreads = new AtomicInteger();
     this.missedCallTimer = Executors.newScheduledThreadPool(MISSED_CALL_THREADS, runnable -> {
       Thread thread = new Thread(runnable, "webconferencing-missed-call-" + missedCallThreads.incrementAndGet());
@@ -654,6 +667,22 @@ public class WebConferencingService implements Startable {
       LOG.warn("Wrong {} value '{}', using {} seconds", INCOMING_CALL_TIMEOUT, param.getValue(), DEFAULT_INCOMING_CALL_TIMEOUT);
     }
     return DEFAULT_INCOMING_CALL_TIMEOUT;
+  }
+
+  private static long readLeaveGraceTime(InitParams initParams) {
+    ValueParam param = initParams.getValueParam(LEAVE_GRACE_TIME);
+    if (param != null && StringUtils.isNotBlank(param.getValue())) {
+      try {
+        long graceTime = Long.parseLong(param.getValue().trim());
+        if (graceTime >= 0 && graceTime <= MAX_INCOMING_CALL_TIMEOUT) {
+          return graceTime;
+        }
+      } catch (NumberFormatException e) {
+        // logged below
+      }
+      LOG.warn("Wrong {} value '{}', using {} seconds", LEAVE_GRACE_TIME, param.getValue(), DEFAULT_LEAVE_GRACE_TIME);
+    }
+    return DEFAULT_LEAVE_GRACE_TIME;
   }
 
   protected UserInfo userInfo(String id) throws IdentityStateException {
@@ -3241,6 +3270,17 @@ public class WebConferencingService implements Startable {
    */
   public long getIncomingCallTimeout() {
     return incomingCallTimeout;
+  }
+
+  /**
+   * Gets how long, in seconds, the leave of a call window whose connection to its call ended waits before it
+   * applies: a window reloaded, or briefly disconnected, that joins the call again meanwhile from a new client
+   * keeps its user in the call. <code>0</code> applies the leave at once.
+   *
+   * @return the leave grace time in seconds
+   */
+  public long getLeaveGraceTime() {
+    return leaveGraceTime;
   }
 
   /**

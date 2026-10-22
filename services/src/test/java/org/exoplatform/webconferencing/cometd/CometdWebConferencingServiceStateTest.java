@@ -30,6 +30,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -62,6 +66,33 @@ class CometdWebConferencingServiceStateTest {
   void setUp() {
     webConferencing = mock(WebConferencingService.class);
     cometdService = new CometdWebConferencingService(null, null, webConferencing, null, mock(CacheService.class), null);
+  }
+
+  @AfterEach
+  void tearDown() {
+    cometdService.stop();
+  }
+
+  /** What follows the end of a call window's connection runs once the leave grace time passed. */
+  @Test
+  void aTaskAfterTheLeaveGraceRunsOnceTheGraceTimePassed() throws Exception {
+    when(webConferencing.getLeaveGraceTime()).thenReturn(0L);
+    CountDownLatch ran = new CountDownLatch(1);
+
+    cometdService.afterLeaveGrace(ran::countDown);
+
+    assertTrue(ran.await(5, TimeUnit.SECONDS));
+  }
+
+  /** A call window reloaded joins its call again before the leave of its former connection applies. */
+  @Test
+  void aTaskAfterTheLeaveGraceDoesNotRunBeforeTheGraceTimePassed() throws Exception {
+    when(webConferencing.getLeaveGraceTime()).thenReturn(60L);
+    CountDownLatch ran = new CountDownLatch(1);
+
+    cometdService.afterLeaveGrace(ran::countDown);
+
+    assertFalse(ran.await(300, TimeUnit.MILLISECONDS));
   }
 
   @Test

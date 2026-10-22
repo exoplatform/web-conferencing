@@ -36,8 +36,8 @@ import org.exoplatform.webconferencing.notification.pwa.MissedCallPwaPlugin;
  * The Kernel configuration of the webapp, which declares the service, is read
  * by the Kernel's own parser: a file it refuses is not loaded at startup, and
  * every component it declares, the service first, is then missing. The
- * incoming call timeout it gives the service defaults to 60 seconds. The
- * notification files declaring the missed call notification are read the same.
+ * incoming call timeout it gives the service defaults to 60 seconds, the leave
+ * grace time to 15 seconds. The notification files declaring the missed call notification are read the same.
  */
 class WebConferencingConfigurationTest {
 
@@ -57,6 +57,13 @@ class WebConferencingConfigurationTest {
     assertNotNull(service);
     assertEquals("60",
                  service.getInitParams().getValueParam(WebConferencingService.INCOMING_CALL_TIMEOUT).getValue());
+  }
+
+  @Test
+  void theServiceConfigurationGivesALeaveGraceTimeOf15Seconds() throws Exception {
+    Component service = read(CONFIGURATION).getComponent(WebConferencingService.class.getName());
+
+    assertEquals("15", service.getInitParams().getValueParam(WebConferencingService.LEAVE_GRACE_TIME).getValue());
   }
 
   @Test
