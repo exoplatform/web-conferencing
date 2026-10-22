@@ -125,12 +125,17 @@ class UserInfoClientIdsTest {
   }
 
   @Test
-  void aSingleClientIdIsKeptWhateverItsLength() {
+  void aClientIdIsListedOnlyWhenItFitsTheColumnMarkedAsTheStarter() {
     UserInfo user = new UserInfo("john", "John", "Smith");
-    String longId = "x".repeat(UserInfo.CLIENT_IDS_MAX_LENGTH + 1);
+    String longestId = "x".repeat(UserInfo.CLIENT_IDS_MAX_LENGTH - 1);
 
-    user.addClientId(longId);
-
-    assertEquals(longId, user.getClientId());
+    user.setStarterClientId(longestId);
+    assertEquals(UserInfo.CLIENT_IDS_MAX_LENGTH, user.getClientId().length());
+    user.setStarterClientId(longestId + "x");
+    assertNull(user.getClientId());
+    user.addClientId(longestId + "x");
+    assertNull(user.getClientId());
+    user.addClientId(longestId);
+    assertEquals(longestId, user.getClientId());
   }
 }

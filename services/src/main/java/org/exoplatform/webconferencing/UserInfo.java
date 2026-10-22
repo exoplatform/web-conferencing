@@ -265,8 +265,9 @@ public class UserInfo extends IdentityInfo {
    * in the call from when it joins it. When the list would exceed {@link #CLIENT_IDS_MAX_LENGTH}, its oldest
    * clients are dropped: a client whose leave never came, after a crash or a network loss, goes first.
    *
-   * @param clientId the client id, ignored when <code>null</code>, empty, already in the list, or holding
-   *          {@link #CLIENT_IDS_SEPARATOR} or starting with {@link #STARTER_CLIENT_PREFIX}
+   * @param clientId the client id, ignored when <code>null</code>, empty, already in the list, too long to fit
+   *          the column once marked as the starter, or holding {@link #CLIENT_IDS_SEPARATOR} or starting with
+   *          {@link #STARTER_CLIENT_PREFIX}
    */
   public void addClientId(String clientId) {
     if (!isValidClientId(clientId)) {
@@ -334,7 +335,8 @@ public class UserInfo extends IdentityInfo {
   }
 
   private static boolean isValidClientId(String clientId) {
-    return clientId != null && !clientId.isEmpty() && !clientId.contains(CLIENT_IDS_SEPARATOR)
+    return clientId != null && !clientId.isEmpty() && clientId.length() < CLIENT_IDS_MAX_LENGTH
+        && !clientId.contains(CLIENT_IDS_SEPARATOR)
         && !clientId.startsWith(STARTER_CLIENT_PREFIX);
   }
 
