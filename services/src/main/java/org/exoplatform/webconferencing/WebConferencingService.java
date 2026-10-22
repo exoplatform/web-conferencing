@@ -271,6 +271,15 @@ public class WebConferencingService implements Startable {
   protected static final long   DEFAULT_INCOMING_CALL_TIMEOUT = 60;
 
   /**
+   * The init param holding how long, in seconds, the leave of a call window whose connection ended waits, once
+   * Cometd detected that end: a window reloaded joins again meanwhile and stays in the call.
+   */
+  protected static final String LEAVE_GRACE_TIME             = "leave-grace-time";
+
+  /** The default leave grace time, in seconds. */
+  protected static final long   DEFAULT_LEAVE_GRACE_TIME     = 0;
+
+  /**
    * How long after the incoming call alert times out the missed call is checked, in seconds: a client starts
    * its alert once the call state reached it and the call was read, so it may still be answered a little after
    * the timeout counted from the call start.
@@ -291,7 +300,7 @@ public class WebConferencingService implements Startable {
    * How much later than in memory the start date of a call may read from the storage, in milliseconds: a
    * storage keeping whole seconds rounds the fraction up or down.
    */
-  protected static final long   LAST_DATE_PRECISION          = 1000;
+  public static final long      LAST_DATE_PRECISION          = 1000;
 
   protected static final String VIDEO_CONFERENCE_IS_ENABLED  = "videoConferenceEnabled";
 
@@ -454,6 +463,9 @@ public class WebConferencingService implements Startable {
 
   /** How long, in seconds, a started call alerts its participants before they missed it. */
   protected final long                               incomingCallTimeout;
+
+  /** How long, in seconds, the leave of a call window whose connection ended waits. */
+  protected final long                               leaveGraceTime;
 
   /** Runs the missed call check of each started call once its incoming call alert timed out. */
   protected final ScheduledExecutorService           missedCallTimer;
@@ -625,6 +637,7 @@ public class WebConferencingService implements Startable {
     PropertiesParam jwtSecretParam = initParams.getPropertiesParam(JWT_CONFIGURATION_PROPERTIES);
     this.secretKey = jwtSecretParam.getProperty(SECRET_KEY);
     this.incomingCallTimeout = readIncomingCallTimeout(initParams);
+    this.leaveGraceTime = readLeaveGraceTime(initParams);
     AtomicInteger missedCallThreads = new AtomicInteger();
     this.missedCallTimer = Executors.newScheduledThreadPool(MISSED_CALL_THREADS, runnable -> {
       Thread thread = new Thread(runnable, "webconferencing-missed-call-" + missedCallThreads.incrementAndGet());
@@ -654,6 +667,22 @@ public class WebConferencingService implements Startable {
       LOG.warn("Wrong {} value '{}', using {} seconds", INCOMING_CALL_TIMEOUT, param.getValue(), DEFAULT_INCOMING_CALL_TIMEOUT);
     }
     return DEFAULT_INCOMING_CALL_TIMEOUT;
+  }
+
+  private static long readLeaveGraceTime(InitParams initParams) {
+    ValueParam param = initParams.getValueParam(LEAVE_GRACE_TIME);
+    if (param != null && StringUtils.isNotBlank(param.getValue())) {
+      try {
+        long graceTime = Long.parseLong(param.getValue().trim());
+        if (graceTime >= 0 && graceTime <= MAX_INCOMING_CALL_TIMEOUT) {
+          return graceTime;
+        }
+      } catch (NumberFormatException e) {
+        // logged below
+      }
+      LOG.warn("Wrong {} value '{}', using {} seconds", LEAVE_GRACE_TIME, param.getValue(), DEFAULT_LEAVE_GRACE_TIME);
+    }
+    return DEFAULT_LEAVE_GRACE_TIME;
   }
 
   protected UserInfo userInfo(String id) throws IdentityStateException {
@@ -1937,6 +1966,29 @@ public class WebConferencingService implements Startable {
     } else {
       LOG.warn("Call " + callId + " not found to leave it " + partId);
     }
+    return call;
+  }
+
+  /**
+   * Leaves a call from a client whose connection to it ended, only when the participant is in the call from
+   * that client: a leave applied late, once the leave grace time passed (see {@link #getLeaveGraceTime()}),
+   * changes nothing on a call started again since, which the participant is not in from that client.
+   *
+   * @param callId the call id
+   * @param partId the participant id
+   * @param clientId the client whose connection ended
+   * @return the call info or <code>null</code> if call not found
+   * @throws InvalidCallException if call in erroneous state and cannot be used, details are in caused
+   *           exception
+   */
+  public CallInfo leaveCallFromClient(String callId, String partId, String clientId) throws InvalidCallException {
+    CallInfo call = getCall(callId);
+    if (call != null && call.getParticipants()
+                            .stream()
+                            .anyMatch(part -> partId.equals(part.getId()) && part.hasSameClientId(clientId))) {
+      return leaveCall(callId, partId, clientId);
+    }
+    LOG.debug("Participant {} is not in the call {} from client {}, its leave changes nothing", partId, callId, clientId);
     return call;
   }
 
@@ -3241,6 +3293,19 @@ public class WebConferencingService implements Startable {
    */
   public long getIncomingCallTimeout() {
     return incomingCallTimeout;
+  }
+
+  /**
+   * Gets how long, in seconds, the leave of a call window whose connection to its call ended waits before it
+   * applies, counted from when Cometd detected that end (its session expiry for a window that unloaded without a
+   * word, about 10 seconds over WebSocket): a window reloaded that joins the call again meanwhile from a new
+   * client, or a window reconnected that subscribed to the call again with the same client, keeps its user in the
+   * call. <code>0</code> applies the leave once that end is detected.
+   *
+   * @return the leave grace time in seconds
+   */
+  public long getLeaveGraceTime() {
+    return leaveGraceTime;
   }
 
   /**

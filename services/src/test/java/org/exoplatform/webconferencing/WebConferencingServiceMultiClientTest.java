@@ -210,6 +210,36 @@ class WebConferencingServiceMultiClientTest {
     assertEquals(List.of(CALLEE + " <- " + CALLER, CALLEE + " <- " + CALLEE, CALLEE + " <- " + OTHER), leavedEvents);
   }
 
+  /** The window's connection ended: the leave applies, the window being one the user is in the call from. */
+  @Test
+  void aLeaveFromAClientWhoseConnectionEndedAppliesWhenTheUserIsInTheCallFromIt() throws Exception {
+    CallInfo call = startedCall(new UserInfo(CALLER, "Root", "Root"),
+                                participant(CALLER, UserState.JOINED, "caller-client"),
+                                participant(CALLEE, UserState.JOINED, LAPTOP + "," + PHONE));
+
+    service.leaveCallFromClient(CALL_ID, CALLEE, LAPTOP);
+
+    assertEquals(PHONE, participantOf(call, CALLEE).getClientId());
+    assertEquals(UserState.JOINED, participantOf(call, CALLEE).getState());
+  }
+
+  /**
+   * A window's connection ended, its leave applied once the leave grace time passed: meanwhile the call ended
+   * and was started again, which the user is not in from that window. The leave does not touch it.
+   */
+  @Test
+  void aLeaveFromAClientWhoseConnectionEndedChangesNothingOnACallStartedAgain() throws Exception {
+    CallInfo call = startedCall(new UserInfo(CALLER, "Root", "Root"),
+                                participant(CALLER, UserState.JOINED, "caller-client"),
+                                participant(CALLEE, UserState.INVITED, null));
+
+    service.leaveCallFromClient(CALL_ID, CALLEE, LAPTOP);
+
+    assertEquals(UserState.INVITED, participantOf(call, CALLEE).getState());
+    verify(service, never()).updateParticipant(anyString(), any(UserInfo.class));
+    verify(service, never()).stopCall(any(CallInfo.class), anyString(), anyBoolean());
+  }
+
   @Test
   void aLeaveOfAUserInTheCallFromNoClientLeavesAsBefore() throws Exception {
     CallInfo call = startedCall(space(),
