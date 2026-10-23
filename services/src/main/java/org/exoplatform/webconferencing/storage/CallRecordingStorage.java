@@ -16,7 +16,10 @@
  */
 package org.exoplatform.webconferencing.storage;
 
+import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -24,6 +27,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.jcr.AccessDeniedException;
@@ -129,6 +133,15 @@ public class CallRecordingStorage {
   private static final Pattern             NAME_PATTERN_SAFE_ID  = Pattern.compile("[\\w.@-]+");
 
   private static final DateTimeFormatter   TITLE_DATE_FORMAT     = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+  /** The start Jibri writes in a recording's file name, after the call id. */
+  private static final Pattern             FILE_NAME_START       =
+                                                         Pattern.compile("_(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2})\\.[^.]+$");
+
+  /** How Jibri writes that start: UTC, the recorder's clock. */
+  private static final DateTimeFormatter   FILE_NAME_START_FORMAT =
+                                                         DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")
+                                                                          .withZone(ZoneOffset.UTC);
 
   private static final Comparator<RecordingInfo> NEWEST_FIRST    =
                                                              Comparator.comparing(RecordingInfo::getRecordedDate,
@@ -486,7 +499,33 @@ public class CallRecordingStorage {
         mimeType = content.getProperty(JCR_MIME_TYPE).getString();
       }
     }
-    return new RecordingInfo(((ExtendedNode) file).getIdentifier(), title, recordedDate, size, mimeType);
+    return new RecordingInfo(((ExtendedNode) file).getIdentifier(),
+                             title,
+                             recordedDate,
+                             recordingStart(file.getName()),
+                             size,
+                             mimeType);
+  }
+
+  /**
+   * Reads when a recording started from its file name, which Jibri writes as
+   * {@code <callId>_<yyyy-MM-dd-HH-mm-ss>.<ext>} in UTC. The node keeps that
+   * name when its displayed title changes.
+   *
+   * @param fileName the recording's file name
+   * @return the start, or null when the name does not carry one
+   */
+  static Date recordingStart(String fileName) {
+    Matcher matcher = fileName == null ? null : FILE_NAME_START.matcher(fileName);
+    if (matcher == null || !matcher.find()) {
+      return null;
+    }
+    try {
+      return Date.from(Instant.from(FILE_NAME_START_FORMAT.parse(matcher.group(1))));
+    } catch (DateTimeParseException e) {
+      LOG.debug("The recording file name {} carries no readable start", fileName, e);
+      return null;
+    }
   }
 
   /**
