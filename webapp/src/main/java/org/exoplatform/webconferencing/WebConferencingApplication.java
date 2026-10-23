@@ -27,29 +27,30 @@ import io.meeds.spring.kernel.PortalApplicationContextInitializer;
  * Spring Boot bootstrap of the Web Conferencing webapp.
  * <p>
  * Web Conferencing has historically been a pure eXo Kernel add-on with no
- * Spring context at all. It gets one here for a single reason: contributing an
- * Application Center badge means contributing a Spring bean, and a bean needs a
- * context to live in. Extending {@link PortalApplicationContextInitializer}
+ * Spring context at all. It gets one here for the beans the platform's newer
+ * extension points take: the Application Center badge, the recordings REST
+ * ({@code CallRecordingRest}, under {@code /webconferencing/rest/}) and the
+ * assistant tools ({@code MeetingRecordingMcpTool}). Extending {@link PortalApplicationContextInitializer}
  * registers this WAR's context with the Kernel before the portal container
  * boots, so beans of this add-on and of the platform become mutually injectable
  * — which is how {@code VisioApplicationBadgePlugin} can {@code @Autowired} the
  * Kernel-side {@link WebConferencingService}.
  * <p>
  * The scan is deliberately narrow. Only {@link #MODULE_NAME} is scanned, and
- * every class currently shipped under that package by this add-on, by
- * {@code web-conferencing-jitsi} and by {@code external-visio-connector}
- * carries no Spring annotation whatsoever — so this context registers the badge
- * plugin and its listener, and nothing else. No JPA and no Liquibase
+ * the classes shipped under that package by {@code web-conferencing-jitsi} and
+ * by {@code external-visio-connector} carry no Spring annotation whatsoever —
+ * so this context registers the badge plugin and its listener, the recordings
+ * REST and the assistant tools, and nothing else. No JPA and no Liquibase
  * integration is declared: this add-on keeps managing its own schema through
  * the Kernel, and pulling those in would put a second, competing persistence
  * bootstrap in front of it.
  * <p>
- * {@code AvailableIntegration.WEB_MODULE} is kept even though no Spring MVC
- * endpoint is exposed: it carries the platform's own web security, locale and
- * transaction filter configuration, and every legacy Kernel WAR that took a
- * Spring context before this one ({@code agenda}, {@code email-connector})
- * declares it. Dropping it would leave Spring Boot's default security
- * auto-configuration unadjusted over this WAR's existing url space.
+ * {@code AvailableIntegration.WEB_MODULE} mounts the Spring MVC endpoints
+ * under {@code /rest/} and carries the platform's own web security, locale and
+ * transaction filter configuration, as in every legacy Kernel WAR that took a
+ * Spring context before this one ({@code agenda}, {@code email-connector}).
+ * Dropping it would leave Spring Boot's default security auto-configuration
+ * unadjusted over this WAR's existing url space.
  * <p>
  * {@code LiquibaseAutoConfiguration} is excluded, and the exclusion is what
  * actually enforces the "no second schema bootstrap" intent. Declining to list
