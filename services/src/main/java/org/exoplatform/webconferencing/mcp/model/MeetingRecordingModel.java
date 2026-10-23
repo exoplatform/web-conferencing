@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 public record MeetingRecordingModel(String documentId,
                                     String title,
                                     String recordedDate,
+                                    String startedDate,
                                     long sizeBytes,
                                     String mimeType,
                                     String previewUrl) {

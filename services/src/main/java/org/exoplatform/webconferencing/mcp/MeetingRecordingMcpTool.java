@@ -109,6 +109,7 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
     return new MeetingRecordingModel(recording.getDocumentId(),
                                      recording.getTitle(),
                                      RecordingDateUtils.formatDate(recording.getRecordedDate()),
+                                     RecordingDateUtils.formatDate(recording.getStartedDate()),
                                      recording.getSizeBytes(),
                                      recording.getMimeType(),
                                      recording.getPreviewUrl());
