@@ -288,6 +288,13 @@ public class CallRecordingStorage {
    * private folder otherwise, where the other participants' recordings arrive
    * as links.
    *
+   * <p>
+   * A JCR session logs in as the thread's current conversation state, whatever
+   * the session provider was built with: the viewer is made current for the
+   * read, the way ecms {@code WCMCoreUtils.invokeUserSession} does, and the
+   * previous state restored, so the repository applies the viewer's own
+   * rights whoever calls.
+   *
    * @param viewer the viewer's security identity, whose session reads JCR
    * @param callId the call id
    * @param spaceGroupId the group id of the space owning the call, or
@@ -302,13 +309,18 @@ public class CallRecordingStorage {
                                             String spaceGroupId,
                                             Date from,
                                             Date to) throws RepositoryException {
-    SessionProvider sessionProvider = new SessionProvider(new ConversationState(viewer));
+    ConversationState previousState = ConversationState.getCurrent();
+    ConversationState viewerState = new ConversationState(viewer);
+    viewerState.setAttribute(ConversationState.SUBJECT, viewer.getSubject());
+    SessionProvider sessionProvider = new SessionProvider(viewerState);
+    ConversationState.setCurrent(viewerState);
     try {
       ManageableRepository repository = repositoryService.getCurrentRepository();
       Session session = sessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
       return findRecordings(sessionProvider, session, viewer.getUserId(), callId, spaceGroupId, from, to);
     } finally {
       sessionProvider.close();
+      ConversationState.setCurrent(previousState);
     }
   }
 
