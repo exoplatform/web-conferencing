@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -2200,7 +2201,9 @@ public class WebConferencingService implements Startable {
   public void uploadFile(UploadFileInfo uploadInfo, HttpServletRequest request) throws UploadFileException, RepositoryException {
     final long opStart = System.currentTimeMillis();
     // final long opStart = System.currentTimeMillis();
-    String uploadId = String.valueOf((long) (Math.random() * 100000L));
+    // Unguessable: the unlimited recording limit is registered under this id in
+    // the platform's shared upload-limit map, which any upload can name
+    String uploadId = UUID.randomUUID().toString();
     // The recording upload has its own limit, unlimited by default: the
     // platform's generic one refuses a long meeting's recording
     uploadService.addUploadLimit(uploadId, recordingUploadLimitMB);
