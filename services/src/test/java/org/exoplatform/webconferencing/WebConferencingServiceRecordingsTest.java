@@ -37,6 +37,8 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Calendar;
 import java.util.ArrayList;
 import java.util.Date;
@@ -274,6 +276,21 @@ class WebConferencingServiceRecordingsTest {
     assertEquals(7, WebConferencingService.readNonNegativeInt(params, "c", 12));
     assertEquals(12, WebConferencingService.readNonNegativeInt(params, "missing", 12));
     assertEquals(12, WebConferencingService.readNonNegativeInt(null, "a", 12));
+  }
+
+  /**
+   * The recorder's time zone is read as a zone id, UTC when it is absent or
+   * not a zone.
+   */
+  @Test
+  void theRecordersTimeZoneFallsBackToUtc() {
+    PropertiesParam params = new PropertiesParam();
+    params.setProperty("paris", " Europe/Paris ");
+    params.setProperty("bad", "Mars/Olympus");
+    assertEquals(ZoneId.of("Europe/Paris"), WebConferencingService.readZone(params, "paris"));
+    assertEquals(ZoneOffset.UTC, WebConferencingService.readZone(params, "bad"));
+    assertEquals(ZoneOffset.UTC, WebConferencingService.readZone(params, "missing"));
+    assertEquals(ZoneOffset.UTC, WebConferencingService.readZone(null, "paris"));
   }
 
   /**
