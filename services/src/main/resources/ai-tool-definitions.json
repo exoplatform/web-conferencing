@@ -14,11 +14,11 @@
           },
           "recorded_from": {
             "type": "string",
-            "description": "Optional. Earliest recording date, RFC3339 (2026-10-23T09:00:00Z) or a date (2026-10-23)."
+            "description": "Optional. Earliest recording date: an RFC3339 date-time (2026-10-23T09:00:00Z) or a date yyyy-MM-dd (2026-10-23, the start of that day in UTC). Nothing else is accepted: resolve a relative expression such as 'yesterday' or 'last week' into such a date yourself."
           },
           "recorded_to": {
             "type": "string",
-            "description": "Optional. End of the meeting or occurrence, RFC3339 or a date; recordings saved shortly after it still count."
+            "description": "Optional. End of the meeting or occurrence: an RFC3339 date-time (2026-10-23T10:00:00Z) or a date yyyy-MM-dd (2026-10-23, the end of that day in UTC); recordings saved shortly after it still count. Nothing else is accepted: resolve a relative expression such as 'yesterday' into such a date yourself."
           }
         },
         "required": [
