@@ -47,23 +47,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
           class="text-caption text-sub-title me-2">
           {{ size }}
         </span>
-        <v-chip
-          v-if="chip && chip.kind !== 'ready'"
-          :color="chipColor"
+        <span
+          v-if="chip && (chip.kind !== 'ready' || !excerpt)"
+          :class="chipColor"
           :title="chipReason"
-          class="webconferencing-meeting-transcript-chip me-2"
-          x-small
-          outlined>
+          class="webconferencing-meeting-transcript-state text-caption me-2">
           {{ chipLabel }}
-        </v-chip>
-        <v-chip
-          v-else-if="chip && !excerpt"
-          color="success"
-          class="webconferencing-meeting-transcript-chip me-2"
-          x-small
-          outlined>
-          {{ $t('visio.recordings.transcript.ready') }}
-        </v-chip>
+        </span>
         <a
           v-if="chip && chip.kind === 'failed'"
           class="webconferencing-meeting-transcript-retry text-caption primary--text"
@@ -165,7 +155,7 @@ export default {
       };
     },
     /**
-     * The transcript chip the recording's transcription state calls for.
+     * The transcript state the recording's transcription calls for.
      *
      * @returns {Object} {kind, progress, error}, or null for no chip
      */
@@ -173,7 +163,7 @@ export default {
       return transcriptChip(this.transcript);
     },
     /**
-     * The chip's text.
+     * The text of the transcript's state.
      *
      * @returns {String} the translated label
      */
@@ -187,17 +177,20 @@ export default {
           : this.$t('visio.recordings.transcript.processing');
       case 'failed':
         return this.$t('visio.recordings.transcript.failed');
+      case 'ready':
+        return this.$t('visio.recordings.transcript.ready');
       default:
         return '';
       }
     },
     /**
-     * The chip's colour.
+     * The colour of the transcript's state: red when it failed, the
+     * secondary text colour otherwise.
      *
-     * @returns {String} a Vuetify colour name
+     * @returns {String} a text colour class
      */
     chipColor() {
-      return this.chip && this.chip.kind === 'failed' ? 'error' : 'primary';
+      return this.chip && this.chip.kind === 'failed' ? 'error--text' : 'text-sub-title';
     },
     /**
      * The human-readable reason of a failed transcription: the documents
