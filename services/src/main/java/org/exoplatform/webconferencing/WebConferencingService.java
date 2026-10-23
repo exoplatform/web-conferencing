@@ -25,6 +25,9 @@ import java.net.URLEncoder;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.text.DecimalFormat;
+import java.time.DateTimeException;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -229,6 +232,12 @@ public class WebConferencingService implements Startable {
    * in hours ({@code exo.webconferencing.recording.occurrenceGraceHours}).
    */
   protected static final String RECORDING_OCCURRENCE_GRACE_HOURS   = "occurrence-grace-hours";
+
+  /**
+   * The time zone the recorder writes a recording's start in, in its file
+   * name ({@code exo.webconferencing.recording.recorderTimeZone}).
+   */
+  protected static final String RECORDING_RECORDER_TIME_ZONE       = "recorder-time-zone";
 
   /** The default grace after the end of a range, in hours. */
   protected static final int    DEFAULT_RECORDING_GRACE_HOURS      = 12;
@@ -599,7 +608,10 @@ public class WebConferencingService implements Startable {
     PropertiesParam recordingParam = initParams.getPropertiesParam(RECORDING_CONFIGURATION_PROPERTIES);
     this.recordingUploadLimitMB = readNonNegativeInt(recordingParam, RECORDING_UPLOAD_LIMIT_MB, 0);
     this.recordingGraceHours = readNonNegativeInt(recordingParam, RECORDING_OCCURRENCE_GRACE_HOURS, DEFAULT_RECORDING_GRACE_HOURS);
-    this.recordingStorage = new CallRecordingStorage(repositoryService, nodeCreator, linkManager);
+    this.recordingStorage = new CallRecordingStorage(repositoryService,
+                                                     nodeCreator,
+                                                     linkManager,
+                                                     readZone(recordingParam, RECORDING_RECORDER_TIME_ZONE));
     try {
       this.codec = codecInitializer.getCodec();
     } catch (Exception e) {
@@ -4328,6 +4340,27 @@ public class WebConferencingService implements Startable {
     }
     LOG.warn("Setting {} must be a non-negative integer, {} is ignored and {} is used", name, value, defaultValue);
     return defaultValue;
+  }
+
+  /**
+   * Reads a time zone setting, falling back to UTC when it is absent or not a
+   * time zone.
+   *
+   * @param params the init params holding it, or <code>null</code>
+   * @param name the setting's name
+   * @return the time zone
+   */
+  protected static ZoneId readZone(PropertiesParam params, String name) {
+    String value = params == null ? null : params.getProperty(name);
+    if (StringUtils.isBlank(value)) {
+      return ZoneOffset.UTC;
+    }
+    try {
+      return ZoneId.of(value.trim());
+    } catch (DateTimeException e) {
+      LOG.warn("Setting {} must be a time zone, {} is ignored and UTC is used", name, value);
+      return ZoneOffset.UTC;
+    }
   }
 
   // <<<<<<< Call storage: wrappers to catch JPA exceptions
