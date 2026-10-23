@@ -41,6 +41,7 @@ import java.util.Calendar;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.fileupload2.core.FileUploadException;
 import javax.jcr.Node;
@@ -230,6 +231,32 @@ class WebConferencingServiceRecordingsTest {
     InOrder order = inOrder(recordingStorage, documents);
     order.verify(recordingStorage).stamp(eq(fileNode), eq(CALL_ID), eq(call), any(UploadFileInfo.class), any(Calendar.class));
     order.verify(documents).save();
+  }
+
+  /**
+   * A recording the platform refuses for another reason than its size still
+   * notifies the failure, with the owner the upload token names.
+   *
+   * @throws Exception never
+   */
+  @Test
+  @SuppressWarnings("unchecked")
+  void aFailedUploadNotifiesItsFailure() throws Exception {
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    UploadResource resource = mock(UploadResource.class);
+    when(uploadService.getUploadResource(anyString())).thenReturn(resource);
+    when(resource.getStatus()).thenReturn(UploadResource.FAILED_STATUS);
+    when(resource.getEstimatedSize()).thenReturn(1048576d);
+    CallInfo call = new CallInfo(CALL_ID, "ACME demo", new UserInfo(VIEWER, "John", "Smith"), "jitsi");
+    doReturn(call).when(service).getCall(CALL_ID);
+
+    service.uploadFile(uploadInfo(), request);
+
+    ArgumentCaptor<Map<String, String>> info = ArgumentCaptor.forClass(Map.class);
+    verify(listenerService).broadcast(eq(WebConferencingService.EVENT_CALL_RECORDED), eq(call), info.capture());
+    assertEquals(WebConferencingService.STATUS_NOT_OK, info.getValue().get("status"));
+    assertEquals("space_event", info.getValue().get("type"));
+    assertEquals("42", info.getValue().get("identity"));
   }
 
   /**
