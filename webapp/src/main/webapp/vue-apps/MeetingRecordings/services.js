@@ -19,7 +19,7 @@
 const RECORDINGS_URL = '/webconferencing/rest/recordings/byConference';
 
 /** The transcription state REST of documents. */
-const TRANSCRIPTIONS_URL = '/documents/rest/transcriptions';
+const TRANSCRIPTIONS_URL = '/documents-portlet/rest/transcriptions';
 
 /**
  * Reads the recordings of the call a conference URL names, as the viewer can

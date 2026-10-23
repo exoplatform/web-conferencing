@@ -227,7 +227,7 @@ export function getSpaceName(event) {
  * documents REST says available=false where no transcriber is installed
  * (community): then, as for any failure to read it, nothing is shown.
  *
- * @param {Object} state - the body of GET /documents/rest/transcriptions/{id}, or null
+ * @param {Object} state - the body of GET /documents-portlet/rest/transcriptions/{id}, or null
  * @returns {Object} {kind, progress, error} with kind one of queued, processing, ready, failed; or null
  */
 export function transcriptChip(state) {
@@ -290,7 +290,7 @@ export function formatSize(bytes) {
  * object carrying it in text or the plain text itself, with its white space
  * collapsed for a short excerpt.
  *
- * @param {Object|String} body - the answer of GET /documents/rest/transcriptions/{id}/text
+ * @param {Object|String} body - the answer of GET /documents-portlet/rest/transcriptions/{id}/text
  * @returns {String} the text, or null when there is none
  */
 export function transcriptText(body) {
