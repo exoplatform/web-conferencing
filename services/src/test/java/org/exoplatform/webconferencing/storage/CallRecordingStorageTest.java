@@ -144,6 +144,22 @@ class CallRecordingStorageTest {
    * from below and from above with the right operators, and sorts newest
    * first; a quote in the id is doubled, never left to close the literal.
    */
+  /**
+   * A recording's start is read from the name Jibri gives its file, in UTC,
+   * and is unknown for any other name.
+   */
+  @Test
+  void aRecordingStartIsReadFromItsFileName() {
+    assertEquals(Date.from(Instant.parse("2026-10-23T14:05:00Z")),
+                 CallRecordingStorage.recordingStart("g_15-41126d_2026-10-23-14-05-00.mp4"));
+    assertEquals(Date.from(Instant.parse("2026-10-23T14:05:00Z")),
+                 CallRecordingStorage.recordingStart("call_with_underscores_2026-10-23-14-05-00.webm"));
+    assertNull(CallRecordingStorage.recordingStart("ACME demo.mp4"));
+    assertNull(CallRecordingStorage.recordingStart("g_15_2026-13-45-99-99-99.mp4"));
+    assertNull(CallRecordingStorage.recordingStart("g_15_2026-10-23-14-05-00.mp4.bak.txt"));
+    assertNull(CallRecordingStorage.recordingStart(null));
+  }
+
   @Test
   void theQuerySelectsTheCallWithinTheRange() {
     Date from = Date.from(Instant.parse("2026-10-23T09:00:00Z"));
