@@ -41,6 +41,7 @@ public final class RecordingEntityBuilder {
     return new RecordingEntity(recording.getDocumentId(),
                                recording.getTitle(),
                                RecordingDateUtils.formatDate(recording.getRecordedDate()),
+                               RecordingDateUtils.formatDate(recording.getStartedDate()),
                                recording.getSizeBytes(),
                                recording.getMimeType(),
                                recording.getPreviewUrl());
