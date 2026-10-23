@@ -15,4 +15,19 @@
             <type>org.exoplatform.webconferencing.listeners.CallRecordingNotificationListener</type>
         </component-plugin>
     </external-component-plugins>
+    <external-component-plugins>
+        <target-component>org.exoplatform.services.jcr.RepositoryService</target-component>
+        <component-plugin>
+            <name>add.webconferencing.nodeTypes</name>
+            <set-method>addPlugin</set-method>
+            <type>org.exoplatform.services.jcr.impl.AddNodeTypePlugin</type>
+            <init-params>
+                <values-param>
+                    <name>autoCreatedInNewRepository</name>
+                    <description>Web Conferencing node types: the call a recording belongs to</description>
+                    <value>jar:/conf/webconferencing-nodetypes.xml</value>
+                </values-param>
+            </init-params>
+        </component-plugin>
+    </external-component-plugins>
 </configuration>

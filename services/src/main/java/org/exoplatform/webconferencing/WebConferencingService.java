@@ -54,6 +54,7 @@ import jakarta.persistence.PersistenceException;
 
 import org.apache.commons.fileupload2.core.FileUploadException;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -63,6 +64,7 @@ import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
+import org.exoplatform.commons.exception.ObjectNotFoundException;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.container.ExoContainerContext;
@@ -119,6 +121,9 @@ import org.exoplatform.webconferencing.domain.InviteEntity;
 import org.exoplatform.webconferencing.domain.OriginEntity;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
+import org.exoplatform.webconferencing.model.ConferenceCall;
+import org.exoplatform.webconferencing.model.RecordingInfo;
+import org.exoplatform.webconferencing.storage.CallRecordingStorage;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -208,6 +213,51 @@ public class WebConferencingService implements Startable {
   protected static final String SECRET_KEY                   = "secret-key";
 
   protected static final String VIDEO_CONFERENCE_IS_ENABLED  = "videoConferenceEnabled";
+
+  /** The init params naming the recording settings. */
+  protected static final String RECORDING_CONFIGURATION_PROPERTIES = "recording-configuration";
+
+  /**
+   * The size limit of a recording upload, in MB, 0 for none
+   * ({@code exo.webconferencing.recording.uploadLimitMB}).
+   */
+  protected static final String RECORDING_UPLOAD_LIMIT_MB          = "upload-limit-mb";
+
+  /**
+   * How long after the end of a range a recording still counts as made in it,
+   * in hours ({@code exo.webconferencing.recording.occurrenceGraceHours}).
+   */
+  protected static final String RECORDING_OCCURRENCE_GRACE_HOURS   = "occurrence-grace-hours";
+
+  /** The default grace after the end of a range, in hours. */
+  protected static final int    DEFAULT_RECORDING_GRACE_HOURS      = 12;
+
+  /** The message code of an invalid call id. */
+  public static final String    RECORDINGS_INVALID_CALL_ID         = "webconferencing.recordings.invalidCallId";
+
+  /** The message code of an invalid range of recording dates. */
+  public static final String    RECORDINGS_INVALID_RANGE           = "webconferencing.recordings.invalidRange";
+
+  /** The message code of a missing meeting link. */
+  public static final String    RECORDINGS_INVALID_URL             = "webconferencing.recordings.invalidUrl";
+
+  /** The message code of an unknown call. */
+  public static final String    RECORDINGS_CALL_NOT_FOUND          = "webconferencing.recordings.callNotFound";
+
+  /** The message code of a link no active provider recognises. */
+  public static final String    RECORDINGS_OTHER_PROVIDER          = "webconferencing.recordings.otherProvider";
+
+  /** The message code of a viewer who is not a member of the call's space. */
+  public static final String    RECORDINGS_NOT_SPACE_MEMBER        = "webconferencing.recordings.notSpaceMember";
+
+  /** The message code of a viewer who is not a participant of the call. */
+  public static final String    RECORDINGS_NOT_PARTICIPANT         = "webconferencing.recordings.notParticipant";
+
+  /** The message code of a viewer with no usable identity. */
+  public static final String    RECORDINGS_NO_IDENTITY             = "webconferencing.recordings.noIdentity";
+
+  /** The message code of a repository failure while reading recordings. */
+  public static final String    RECORDINGS_STORAGE_ERROR           = "webconferencing.recordings.storageError";
 
   /**
    * Represent Space in calls.
@@ -425,6 +475,15 @@ public class WebConferencingService implements Startable {
 
   private AbstractCodec                              codec;
 
+  /** The size limit of a recording upload, in MB, 0 for none. */
+  protected final int                                recordingUploadLimitMB;
+
+  /** The grace added to the end of a range of recording dates, in hours. */
+  protected final int                                recordingGraceHours;
+
+  /** Reads and stamps the recordings in JCR. */
+  protected final CallRecordingStorage               recordingStorage;
+
   /**
    * Checks is ID valid (not null, not empty and not longer of {@value #ID_MAX_LENGTH} chars).
    *
@@ -495,8 +554,10 @@ public class WebConferencingService implements Startable {
    * @param identityRegistry the identity registry
    * @param authenticator the authenticator
    * @param shareService the share service
-   * @param initParams the initParams
+   * @param initParams the init params: the JWT secret and the recording
+   *          settings (upload limit, grace after a range's end)
    * @param linkManager the link manager
+   * @param codecInitializer the codec initializer
    */
   public WebConferencingService(OrganizationService organization,
                                 IdentityManager socialIdentityManager,
@@ -534,6 +595,10 @@ public class WebConferencingService implements Startable {
     this.secretKey = jwtSecretParam.getProperty(SECRET_KEY);
     this.shareService = shareService;
     this.linkManager = linkManager;
+    PropertiesParam recordingParam = initParams.getPropertiesParam(RECORDING_CONFIGURATION_PROPERTIES);
+    this.recordingUploadLimitMB = readNonNegativeInt(recordingParam, RECORDING_UPLOAD_LIMIT_MB, 0);
+    this.recordingGraceHours = readNonNegativeInt(recordingParam, RECORDING_OCCURRENCE_GRACE_HOURS, DEFAULT_RECORDING_GRACE_HOURS);
+    this.recordingStorage = new CallRecordingStorage(repositoryService, nodeCreator, linkManager);
     try {
       this.codec = codecInitializer.getCodec();
     } catch (Exception e) {
@@ -2123,7 +2188,9 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Upload recording of the call.
+   * Upload recording of the call. The upload is bounded by
+   * {@code exo.webconferencing.recording.uploadLimitMB} only, unlimited by
+   * default, never by the platform's generic upload limit.
    *
    * @param uploadInfo the upload info
    * @param request the request
@@ -2134,11 +2201,18 @@ public class WebConferencingService implements Startable {
     final long opStart = System.currentTimeMillis();
     // final long opStart = System.currentTimeMillis();
     String uploadId = String.valueOf((long) (Math.random() * 100000L));
+    // The recording upload has its own limit, unlimited by default: the
+    // platform's generic one refuses a long meeting's recording
+    uploadService.addUploadLimit(uploadId, recordingUploadLimitMB);
     try {
       uploadService.createUploadResource(uploadId, request);
     } catch (FileUploadException e) {
+      uploadService.removeUploadLimit(uploadId);
       LOG.error("Cannot create upload resource: " + e.getMessage());
       throw new UploadFileException("Cannot create upload resource", e);
+    } catch (RuntimeException e) {
+      uploadService.removeUploadLimit(uploadId);
+      throw e;
     }
     UploadResource resource = uploadService.getUploadResource(uploadId);
     CallInfo call = null;
@@ -2157,9 +2231,9 @@ public class WebConferencingService implements Startable {
         // If it's 1-1 or chat-room call, we pass participants to share the file.
         // Otherwise we just upload to the space docs
         if (uploadInfo.getType().equals(OWNER_TYPE_CHATROOM) || uploadInfo.getType().equals(USER)) {
-          saveFile(rootNode, resource, uploadingUser, uploadInfo.getParticipants());
+          saveFile(rootNode, resource, uploadingUser, uploadInfo.getParticipants(), call, uploadInfo);
         } else {
-          saveFile(rootNode, resource, uploadingUser, null);
+          saveFile(rootNode, resource, uploadingUser, null, call, uploadInfo);
         }
         broacastCallEvent(EVENT_CALL_RECORDED, call, uploadingUser, resource.getUploadedSize(),resource.getFileName(), uploadInfo, STATUS_OK);
         LOG.info(metricMessage(uploadingUser, call, OPERATION_CALL_RECORDED, STATUS_OK, System.currentTimeMillis() - opStart, null, resource.getUploadedSize()));
@@ -2195,21 +2269,30 @@ public class WebConferencingService implements Startable {
       LOG.error("Failed while saving the uploaded file " + e.getMessage(), e);
     } finally {
       uploadService.removeUploadResource(uploadId);
+      uploadService.removeUploadLimit(uploadId);
     }
   }
 
   /**
-   * Save recording to JCR.
+   * Save recording to JCR, stamped with the call it belongs to and titled
+   * after it.
    *
    * @param parent the parent
    * @param resource the recording
    * @param user the user
    * @param shareToUsers the users to share file with
+   * @param call the call recorded, or <code>null</code> when it could not be
+   *          read
+   * @param uploadInfo the upload info the upload token carries
    * @throws RepositoryException the repository exception
    * @throws UploadFileException the upload file exception
    */
-  private void saveFile(Node parent, UploadResource resource, String user, List<String> shareToUsers) throws RepositoryException,
-                                                                                                      UploadFileException {
+  private void saveFile(Node parent,
+                        UploadResource resource,
+                        String user,
+                        List<String> shareToUsers,
+                        CallInfo call,
+                        UploadFileInfo uploadInfo) throws RepositoryException, UploadFileException {
     if (parent == null) {
       throw new UploadFileException("Cannot save the file because parent node empty for user: " + user);
     }
@@ -2254,7 +2337,9 @@ public class WebConferencingService implements Startable {
         throw new UploadFileException("Cannot set JCR_DATA for file node " + resource.getFileName());
       }
       content.setProperty(JCR_MIME_TYPE, resource.getMimeType());
-      content.setProperty(JCR_LAST_MODIFIED_PROP, new GregorianCalendar());
+      Calendar recordedDate = new GregorianCalendar();
+      content.setProperty(JCR_LAST_MODIFIED_PROP, recordedDate);
+      recordingStorage.stamp(fileNode, uploadInfo.getCallId(), call, uploadInfo, recordedDate);
       folder.save();
       String perm = new StringBuilder(PermissionType.READ).append(",")
                                                           .append(PermissionType.ADD_NODE)
@@ -2358,7 +2443,8 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Share to user records.
+   * Share to user records: a link in the user's private recordings folder,
+   * titled as the recording is.
    *
    * @param user the user
    * @param recordNode the record node
@@ -2396,7 +2482,9 @@ public class WebConferencingService implements Startable {
       if (!link.hasProperty(EXO_TITLE_PROP)) {
         link.addMixin(EXO_RSS_ENABLE_PROP);
       }
-      link.setProperty(EXO_TITLE_PROP, recordNode.getName());
+      link.setProperty(EXO_TITLE_PROP,
+                       recordNode.hasProperty(EXO_TITLE_PROP) ? recordNode.getProperty(EXO_TITLE_PROP).getString()
+                                                              : recordNode.getName());
       userPrivateNode.save();
     } catch (RepositoryException e) {
       if (LOG.isErrorEnabled()) {
@@ -4017,6 +4105,16 @@ public class WebConferencingService implements Startable {
     this.broacastCallEvent(eventName, call, userId, fileSize, null, null, STATUS_OK);
   }
 
+  /**
+   * Gets the link opening a recording in the Documents preview, the one the
+   * recording notification carries.
+   *
+   * @param identity the owner of the recordings folder
+   * @param fileName the recording's file name
+   * @param type the owner type
+   * @return the preview link, or {@code #} when no file name is given
+   * @throws Exception when the recording cannot be read
+   */
   public String getRecordingUrl(String identity, String fileName, String type) throws Exception {
     if(!fileName.isEmpty()) {
 
@@ -4024,24 +4122,211 @@ public class WebConferencingService implements Startable {
       Node recordingsFolder = getRecordingsFolder(rootNode);
       Node fileRecorded = recordingsFolder.getNode(fileName);
 
-      StringBuilder stringBuilder = new StringBuilder();
-      String portalOwner = CommonsUtils.getCurrentPortalOwner();
-      String domain = CommonsUtils.getCurrentDomain();
-      stringBuilder.append(domain)
-                   .append("/")
-                   .append(LinkProvider.getPortalName(null)).append("/");
-
-      stringBuilder.append(portalOwner).append("/documents");
-      stringBuilder.append("?documentPreviewId=");
-
-      stringBuilder.append(((NodeImpl) fileRecorded).getIdentifier());
-      LOG.info("filename {} for user {}, with type {}, generate shortlink={}",fileRecorded.getPath(),identity,type,stringBuilder.toString());
-      return stringBuilder.toString();
+      String previewUrl = buildDocumentPreviewUrl(((NodeImpl) fileRecorded).getIdentifier());
+      LOG.info("filename {} for user {}, with type {}, generate shortlink={}",fileRecorded.getPath(),identity,type,previewUrl);
+      return previewUrl;
 
     } else {
       return  "#";
     }
   }
+
+  /**
+   * Finds the call a meeting link points to, asking each active provider.
+   *
+   * @param url the meeting link, as an agenda event's conference stores it
+   * @return the provider and the call id, or <code>null</code> when no active
+   *         provider recognises the link
+   */
+  public ConferenceCall findCallByUrl(String url) {
+    if (StringUtils.isBlank(url)) {
+      return null;
+    }
+    for (CallProvider registeredProvider : providers.values()) {
+      CallProvider provider = getProvider(registeredProvider.getType());
+      if (provider != null && provider.isActive()) {
+        String callId = provider.findCallId(url);
+        if (isValidId(callId)) {
+          return new ConferenceCall(provider.getType(), callId);
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Lists the recordings of the call a meeting link points to that the viewer
+   * can open, newest first.
+   *
+   * @param url the meeting link
+   * @param viewer the user name of the viewer, from the authenticated request
+   * @param from the earliest recording date, inclusive, or <code>null</code>
+   * @param to the end of the range, or <code>null</code>; the configured grace
+   *          is added to it
+   * @return the recordings, newest first
+   * @throws ObjectNotFoundException when no active provider recognises the link
+   *           ({@value #RECORDINGS_OTHER_PROVIDER}) or the call does not exist
+   *           ({@value #RECORDINGS_CALL_NOT_FOUND})
+   * @throws IllegalAccessException when the viewer may not read the call's
+   *           recordings
+   */
+  public List<RecordingInfo> getCallRecordingsByConference(String url,
+                                                           String viewer,
+                                                           Date from,
+                                                           Date to) throws ObjectNotFoundException, IllegalAccessException {
+    if (StringUtils.isBlank(url)) {
+      throw new IllegalArgumentException(RECORDINGS_INVALID_URL);
+    }
+    ConferenceCall conferenceCall = findCallByUrl(url);
+    if (conferenceCall == null) {
+      throw new ObjectNotFoundException(RECORDINGS_OTHER_PROVIDER);
+    }
+    return getCallRecordings(conferenceCall.callId(), viewer, from, to);
+  }
+
+  /**
+   * Lists the recordings of a call that the viewer can open, newest first.
+   * <p>
+   * The viewer must be a member of the space owning a space or space-event
+   * call, or a participant of any other call. Within that, the repository
+   * decides: the recordings are read in the viewer's own JCR session, so only
+   * the files the viewer can open in Documents come back.
+   *
+   * @param callId the call id
+   * @param viewer the user name of the viewer, from the authenticated request
+   * @param from the earliest recording date, inclusive, or <code>null</code>
+   * @param to the end of the range, or <code>null</code>; the configured grace
+   *          ({@code exo.webconferencing.recording.occurrenceGraceHours}) is
+   *          added to it, since a recording is saved after its meeting ends
+   * @return the recordings, newest first
+   * @throws ObjectNotFoundException when the call does not exist
+   * @throws IllegalAccessException when the viewer may not read the call's
+   *           recordings
+   */
+  public List<RecordingInfo> getCallRecordings(String callId,
+                                               String viewer,
+                                               Date from,
+                                               Date to) throws ObjectNotFoundException, IllegalAccessException {
+    if (!isValidId(callId)) {
+      throw new IllegalArgumentException(RECORDINGS_INVALID_CALL_ID);
+    }
+    if (from != null && to != null && from.after(to)) {
+      throw new IllegalArgumentException(RECORDINGS_INVALID_RANGE);
+    }
+    org.exoplatform.services.security.Identity viewerIdentity = StringUtils.isBlank(viewer) ? null : userIdentity(viewer);
+    if (viewerIdentity == null) {
+      throw new IllegalAccessException(RECORDINGS_NO_IDENTITY);
+    }
+    CallInfo call;
+    try {
+      call = getCall(callId);
+    } catch (InvalidCallException e) {
+      LOG.debug("Call {} cannot be read for its recordings", callId, e);
+      call = null;
+    }
+    if (call == null) {
+      throw new ObjectNotFoundException(RECORDINGS_CALL_NOT_FOUND);
+    }
+    String spaceGroupId = checkCanReadRecordings(call, viewer);
+    Date rangeEnd = to == null ? null : new Date(to.getTime() + recordingGraceHours * 3600000L);
+    try {
+      List<RecordingInfo> recordings = recordingStorage.findRecordings(viewerIdentity, call.getId(), spaceGroupId, from, rangeEnd);
+      recordings.forEach(recording -> recording.setPreviewUrl(buildDocumentPreviewUrl(recording.getDocumentId())));
+      return recordings;
+    } catch (RepositoryException e) {
+      throw new IllegalStateException(RECORDINGS_STORAGE_ERROR, e);
+    }
+  }
+
+  /**
+   * Gets the grace added to the end of a range of recording dates.
+   *
+   * @return the grace, in hours
+   */
+  public int getRecordingGraceHours() {
+    return recordingGraceHours;
+  }
+
+  /**
+   * Checks that a viewer may read the recordings of a call: a member of the
+   * space owning a space or space-event call (or a platform space
+   * administrator), a participant or the owner of any other call.
+   *
+   * @param call the call
+   * @param viewer the viewer's user name
+   * @return the group id of the space owning the call, or <code>null</code>
+   *         when a user or a chat room owns it
+   * @throws ObjectNotFoundException when the call's space no longer exists
+   * @throws IllegalAccessException when the viewer may not read them
+   */
+  protected String checkCanReadRecordings(CallInfo call, String viewer) throws ObjectNotFoundException, IllegalAccessException {
+    IdentityInfo owner = call.getOwner();
+    String spaceGroupId = null;
+    if (owner instanceof SpaceEventInfo spaceEventOwner) {
+      spaceGroupId = spaceEventOwner.getGroupId();
+    } else if (owner instanceof SpaceInfo spaceOwner) {
+      spaceGroupId = spaceOwner.getGroupId();
+    }
+    if (spaceGroupId != null) {
+      Space space = spaceService.getSpaceByGroupId(spaceGroupId);
+      if (space == null) {
+        throw new ObjectNotFoundException(RECORDINGS_CALL_NOT_FOUND);
+      }
+      if (!spaceService.isMember(space, viewer) && !spaceService.isSuperManager(viewer)) {
+        throw new IllegalAccessException(RECORDINGS_NOT_SPACE_MEMBER);
+      }
+      return spaceGroupId;
+    }
+    boolean isOwner = owner != null && viewer.equals(owner.getId());
+    boolean isParticipant = call.getParticipants().stream().anyMatch(participant -> viewer.equals(participant.getId()));
+    if (!isOwner && !isParticipant) {
+      throw new IllegalAccessException(RECORDINGS_NOT_PARTICIPANT);
+    }
+    return null;
+  }
+
+  /**
+   * Builds the link opening a document in the Documents preview.
+   *
+   * @param documentId the JCR identifier of the document
+   * @return the preview link
+   */
+  protected String buildDocumentPreviewUrl(String documentId) {
+    return new StringBuilder(CommonsUtils.getCurrentDomain()).append("/")
+                                                             .append(LinkProvider.getPortalName(null))
+                                                             .append("/")
+                                                             .append(CommonsUtils.getCurrentPortalOwner())
+                                                             .append("/documents?documentPreviewId=")
+                                                             .append(documentId)
+                                                             .toString();
+  }
+
+  /**
+   * Reads a non-negative integer setting, falling back to its default when it
+   * is absent, malformed or negative.
+   *
+   * @param params the init params holding it, or <code>null</code>
+   * @param name the setting's name
+   * @param defaultValue the default value
+   * @return the value
+   */
+  protected static int readNonNegativeInt(PropertiesParam params, String name, int defaultValue) {
+    String value = params == null ? null : params.getProperty(name);
+    if (StringUtils.isBlank(value)) {
+      return defaultValue;
+    }
+    try {
+      int parsed = Integer.parseInt(value.trim());
+      if (parsed >= 0) {
+        return parsed;
+      }
+    } catch (NumberFormatException e) {
+      LOG.debug("Setting {} is not a number: {}", name, value, e);
+    }
+    LOG.warn("Setting {} must be a non-negative integer, {} is ignored and {} is used", name, value, defaultValue);
+    return defaultValue;
+  }
+
   // <<<<<<< Call storage: wrappers to catch JPA exceptions
   public List<ActiveCallProvider> getActiveProvidersForSpace(String spaceId) {
     List<ActiveCallProvider> allProviders = new ArrayList<>();
