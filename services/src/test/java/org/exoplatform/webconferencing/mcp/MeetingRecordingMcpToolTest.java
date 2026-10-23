@@ -174,6 +174,68 @@ class MeetingRecordingMcpToolTest {
   }
 
   /**
+   * A relative date is not read: the refusal names the argument and its value,
+   * the accepted formats with an example, and asks the model to resolve the
+   * expression itself, instead of the REST layer's message code.
+   */
+  @Test
+  void anUnreadableDateTellsTheModelHowToCallAgain() {
+    String fromMessage = assertThrows(IllegalArgumentException.class,
+                                      () -> tool.getMeetingRecordings(URL, "yesterday", null)).getMessage();
+    assertEquals("Invalid 'recorded_from' value 'yesterday'. Provide an RFC3339 date-time (e.g. 2026-10-23T09:00:00Z) "
+        + "or a date yyyy-MM-dd (e.g. 2026-10-23), in UTC. Resolve a relative expression such as 'yesterday' or "
+        + "'last week' into such a date yourself before calling the tool again.", fromMessage);
+    String toMessage = assertThrows(IllegalArgumentException.class,
+                                    () -> tool.getMeetingRecordings(URL, "2026-10-22", "last week")).getMessage();
+    assertTrue(toMessage.startsWith("Invalid 'recorded_to' value 'last week'."), toMessage);
+  }
+
+  /**
+   * The accepted formats: an RFC3339 date-time with an offset, a date-time
+   * without one read in UTC, and a bare date standing for the start of its day,
+   * or for its end when it closes the range.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void theAcceptedDateFormatsAreRead() throws Exception {
+    when(webConferencingService.getCallRecordingsByConference(any(), any(), any(), any())).thenReturn(List.of());
+
+    tool.getMeetingRecordings(URL, "2026-10-22T09:00:00+02:00", "2026-10-22T10:00:00");
+    verify(webConferencingService).getCallRecordingsByConference(URL,
+                                                                 "john",
+                                                                 Date.from(Instant.parse("2026-10-22T07:00:00Z")),
+                                                                 Date.from(Instant.parse("2026-10-22T10:00:00Z")));
+
+    tool.getMeetingRecordings(URL, "2026-10-22", "2026-10-22");
+    verify(webConferencingService).getCallRecordingsByConference(URL,
+                                                                 "john",
+                                                                 Date.from(Instant.parse("2026-10-22T00:00:00Z")),
+                                                                 Date.from(Instant.parse("2026-10-22T23:59:59.999Z")));
+  }
+
+  /**
+   * The date arguments' descriptions name the accepted formats with an
+   * example, and tell the model to resolve relative expressions itself.
+   */
+  @Test
+  void theDateArgumentsDescribeTheirFormat() {
+    Map<String, Object> definition = definitions().stream()
+                                                  .filter(tool -> "get_meeting_recordings".equals(tool.get("name")))
+                                                  .findFirst()
+                                                  .orElseThrow();
+    @SuppressWarnings("unchecked")
+    Map<String, Map<String, Object>> properties =
+                                                (Map<String, Map<String, Object>>) ((Map<String, Object>) definition.get("input_schema")).get("properties");
+    for (String argument : List.of("recorded_from", "recorded_to")) {
+      String description = (String) properties.get(argument).get("description");
+      assertTrue(description.contains("RFC3339 date-time (2026-10-23T"), description);
+      assertTrue(description.contains("yyyy-MM-dd (2026-10-23"), description);
+      assertTrue(description.contains("resolve a relative expression such as 'yesterday'"), description);
+    }
+  }
+
+  /**
    * Every public method of the tool has an entry in the definitions file, and
    * every entry a method: the server drops a tool without one silently.
    */
