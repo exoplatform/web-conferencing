@@ -74,8 +74,7 @@ export function getConferenceUrl(event) {
 
 /**
  * Whether the event is an occurrence of a recurring series: then its
- * recordings are those of the occurrence opened, and a link offers the whole
- * series.
+ * recordings are those of the occurrence opened.
  *
  * @param {Object} event - the agenda event of the drawer
  * @returns {Boolean} true for an occurrence or a recurring event
