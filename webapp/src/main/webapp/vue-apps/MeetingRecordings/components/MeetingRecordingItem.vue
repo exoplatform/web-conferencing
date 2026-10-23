@@ -76,7 +76,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
           :href="recording.previewUrl"
           class="text-caption primary--text"
           target="_blank"
-          rel="noopener">
+          rel="noopener"
+          @click.prevent="openTranscript">
           {{ $t('visio.recordings.transcript.readAll') }}
         </a>
       </template>
@@ -228,6 +229,23 @@ export default {
     },
   },
   methods: {
+    /**
+     * Opens the recording's transcript in the documents Transcript drawer: a
+     * cancelable documents-open-transcript event carrying the document id,
+     * which the drawer cancels when it opens. Where no drawer is loaded, the
+     * event stays uncancelled and the Documents preview opens instead.
+     *
+     * @returns {void}
+     */
+    openTranscript() {
+      const event = new CustomEvent('documents-open-transcript', {
+        detail: {documentId: this.recording.documentId},
+        cancelable: true,
+      });
+      if (document.dispatchEvent(event)) {
+        window.open(this.recording.previewUrl, '_blank', 'noopener');
+      }
+    },
     /**
      * Reads the start of a ready transcript. An answer that arrives once the
      * row shows another recording is dropped.
