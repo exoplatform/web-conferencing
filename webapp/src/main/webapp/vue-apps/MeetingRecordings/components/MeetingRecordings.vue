@@ -22,19 +22,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
     class="webconferencing-meeting-recordings d-flex flex-grow-0 flex-shrink-1 pb-5">
     <v-icon size="20" class="icon-default-color pe-4 align-self-start mt-1">fas fa-film</v-icon>
     <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden">
-      <div class="d-flex align-center">
-        <span class="text-body font-weight-bold">{{ $t('visio.recordings.title') }}</span>
-        <v-spacer />
-        <v-btn
-          :title="$t('visio.recordings.refresh')"
-          :loading="loading"
-          class="webconferencing-meeting-recordings-refresh"
-          icon
-          small
-          @click="load">
-          <v-icon size="14">fas fa-redo</v-icon>
-        </v-btn>
-      </div>
+      <span class="text-body font-weight-bold">{{ $t('visio.recordings.title') }}</span>
       <v-progress-linear
         v-if="loading && !state"
         indeterminate
@@ -46,34 +34,26 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
           :key="recording.documentId"
           :recording="recording"
           :transcript="transcripts[recording.documentId]"
+          :event="event"
           @retry="retryTranscript" />
       </template>
-      <span
+      <div
         v-else-if="message"
-        class="webconferencing-meeting-recordings-message text-subtitle mt-1">
-        {{ message }}
-      </span>
-      <a
-        v-if="seriesLinkVisible"
-        class="webconferencing-meeting-recordings-series text-caption primary--text mt-1"
-        @click="toggleSeries">
-        {{ wholeSeries && $t('visio.recordings.occurrenceOnly') || $t('visio.recordings.allOfSeries') }}
-      </a>
-      <!--
-        The extension point for actions on the meeting (the enterprise AI row):
-        app MeetingRecordings, type meeting-actions, the contributors receive
-        the props event and recordings. Rebuilt on every load, so a
-        contributor's isEnabled sees the recordings just read.
-      -->
-      <extension-registry-components
-        v-if="actionsVisible"
-        :key="loadCount"
-        :params="actionParams"
-        name="MeetingRecordings"
-        type="meeting-actions"
-        parent-element="div"
-        element="div"
-        class="webconferencing-meeting-actions d-flex flex-wrap mt-2" />
+        class="d-flex align-center mt-1">
+        <span class="webconferencing-meeting-recordings-message text-subtitle">
+          {{ message }}
+        </span>
+        <v-btn
+          v-if="refreshVisible"
+          :title="$t('visio.recordings.refresh')"
+          :loading="loading"
+          class="webconferencing-meeting-recordings-refresh ms-1"
+          icon
+          x-small
+          @click="load">
+          <v-icon size="12">fas fa-redo</v-icon>
+        </v-btn>
+      </div>
     </div>
   </div>
 </template>
@@ -90,7 +70,6 @@ import {
   getConferenceUrl,
   getRecordingsWindow,
   getSpaceName,
-  isRecurring,
   stateFromResponse,
 } from '../js/MeetingRecordingsModel.js';
 import {getRecordingsByConference, getTranscriptionState, retryTranscription} from '../services.js';
@@ -112,8 +91,6 @@ export default {
     recordings: [],
     transcripts: {},
     loading: false,
-    wholeSeries: false,
-    loadCount: 0,
     requestId: 0,
   }),
   computed: {
@@ -135,25 +112,18 @@ export default {
       return !!(this.isPast && this.conferenceUrl);
     },
     /**
-     * Whether the event is an occurrence of a recurring series.
-     *
-     * @returns {Boolean} true for a recurring event
-     */
-    recurring() {
-      return isRecurring(this.event);
-    },
-    /**
      * The time window the recordings are asked for.
      *
      * @returns {Object} {from, to}, or an empty object for every recording
      */
     recordingsWindow() {
-      return getRecordingsWindow(this.event, this.wholeSeries);
+      return getRecordingsWindow(this.event);
     },
     /**
      * What identifies one lookup: when it changes (another event or
-     * occurrence opened, the series toggled, the meeting just ended) the
-     * recordings are read again.
+     * occurrence opened) the recordings are read again. The block appears on
+     * a drawer opened after the meeting's end: isPast does not follow the
+     * clock while the drawer stays open.
      *
      * @returns {String} the lookup key, or null when nothing is to be read
      */
@@ -190,36 +160,14 @@ export default {
       }
     },
     /**
-     * Whether the link between the occurrence's recordings and the whole
-     * series' is offered: on a recurring event whose recordings could be read.
+     * Whether the refresh is offered: only when reading again can change the
+     * answer, a recording still being processed or a failed read. Nothing
+     * polls, so it is the user's way to look again.
      *
-     * @returns {Boolean} true when the link is shown
+     * @returns {Boolean} true when the refresh is shown
      */
-    seriesLinkVisible() {
-      return this.recurring
-        && [STATE_READY, STATE_NOT_RECORDED, STATE_PROCESSING].indexOf(this.state) >= 0;
-    },
-    /**
-     * Whether the meeting-actions extension point is rendered: once the
-     * recordings have been read, even when there is none, so a contributor
-     * decides what it offers without them.
-     *
-     * @returns {Boolean} true when the action slot is rendered
-     */
-    actionsVisible() {
-      return !this.loading
-        && [STATE_READY, STATE_NOT_RECORDED, STATE_PROCESSING].indexOf(this.state) >= 0;
-    },
-    /**
-     * The params handed to the meeting-actions contributors.
-     *
-     * @returns {Object} the event and the recordings shown
-     */
-    actionParams() {
-      return {
-        event: this.event,
-        recordings: this.recordings,
-      };
+    refreshVisible() {
+      return this.state === STATE_PROCESSING || this.state === STATE_ERROR;
     },
   },
   watch: {
@@ -235,10 +183,6 @@ export default {
           }
         }
       },
-    },
-    event() {
-      // Another event or occurrence opened: back to its own recordings
-      this.wholeSeries = false;
     },
   },
   methods: {
@@ -284,7 +228,6 @@ export default {
         .finally(() => {
           if (requestId === this.requestId) {
             this.loading = false;
-            this.loadCount++;
           }
         });
     },
@@ -332,15 +275,6 @@ export default {
       return retryTranscription(documentId)
         .then(() => this.loadTranscript(documentId, requestId))
         .catch(() => this.$root.$emit('alert-message', this.$t('visio.recordings.transcript.retryFailed'), 'error'));
-    },
-    /**
-     * Switches between the recordings of the occurrence opened and those of
-     * the whole series.
-     *
-     * @returns {void}
-     */
-    toggleSeries() {
-      this.wholeSeries = !this.wholeSeries;
     },
   },
 };

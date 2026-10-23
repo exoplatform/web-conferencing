@@ -72,6 +72,27 @@ export function getTranscriptionState(documentId) {
 }
 
 /**
+ * Reads the text of a recording's transcript. Resolves with null whatever goes
+ * wrong: an excerpt the block cannot read is an excerpt it does not show.
+ *
+ * @param {String} documentId - the recording's document id
+ * @returns {Promise<Object|String>} the answer, a JSON object or the plain text, or null
+ */
+export function getTranscriptionText(documentId) {
+  return fetch(`${TRANSCRIPTIONS_URL}/${encodeURIComponent(documentId)}/text`, {
+    method: 'GET',
+    credentials: 'include',
+  }).then(resp => {
+    if (!resp.ok) {
+      return null;
+    }
+    const type = resp.headers.get('Content-Type') || '';
+    return type.indexOf('json') >= 0 ? resp.json() : resp.text();
+  })
+    .catch(() => null);
+}
+
+/**
  * Asks for the transcription of a recording to be run again.
  *
  * @param {String} documentId - the recording's document id

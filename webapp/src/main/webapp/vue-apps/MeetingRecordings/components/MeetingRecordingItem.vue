@@ -15,47 +15,88 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 -->
 <template>
-  <div class="webconferencing-meeting-recording d-flex flex-column mt-2">
-    <a
-      :href="recording.previewUrl"
-      :title="recording.title"
-      class="text-truncate primary--text"
-      target="_blank"
-      rel="noopener">
-      {{ recording.title }}
-    </a>
-    <div class="d-flex align-center flex-wrap">
-      <date-format
-        v-if="recordedTime"
-        :value="recordedTime"
-        :format="dateTimeFormat"
-        class="text-caption text-sub-title me-2" />
-      <v-chip
-        v-if="chip"
-        :color="chipColor"
-        :title="chipReason"
-        class="webconferencing-meeting-transcript-chip me-2"
-        x-small
-        outlined>
-        {{ chipLabel }}
-      </v-chip>
-      <a
-        v-if="chip && chip.kind === 'failed'"
-        class="webconferencing-meeting-transcript-retry text-caption primary--text"
-        @click="$emit('retry', recording.documentId)">
-        {{ $t('visio.recordings.transcript.retry') }}
-      </a>
+  <div class="webconferencing-meeting-recording d-flex mt-2">
+    <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden">
+      <div class="d-flex align-center">
+        <a
+          :href="recording.previewUrl"
+          :title="recording.title"
+          class="text-truncate primary--text"
+          target="_blank"
+          rel="noopener">
+          <v-icon size="12" class="primary--text me-1">fas fa-play</v-icon>
+          {{ label }}
+        </a>
+        <!--
+          The extension point for actions on this recording (the enterprise
+          concierge), right after its name: app MeetingRecordings, type
+          recording-actions, the contributors receive the props event and
+          recordings, this one only.
+        -->
+        <extension-registry-components
+          :params="actionParams"
+          name="MeetingRecordings"
+          type="recording-actions"
+          parent-element="div"
+          element="div"
+          class="webconferencing-recording-actions flex-shrink-0 ms-1" />
+      </div>
+      <div class="d-flex align-center flex-wrap">
+        <span
+          v-if="size"
+          class="text-caption text-sub-title me-2">
+          {{ size }}
+        </span>
+        <v-chip
+          v-if="chip && chip.kind !== 'ready'"
+          :color="chipColor"
+          :title="chipReason"
+          class="webconferencing-meeting-transcript-chip me-2"
+          x-small
+          outlined>
+          {{ chipLabel }}
+        </v-chip>
+        <v-chip
+          v-else-if="chip && !excerpt"
+          color="success"
+          class="webconferencing-meeting-transcript-chip me-2"
+          x-small
+          outlined>
+          {{ $t('visio.recordings.transcript.ready') }}
+        </v-chip>
+        <a
+          v-if="chip && chip.kind === 'failed'"
+          class="webconferencing-meeting-transcript-retry text-caption primary--text"
+          @click="$emit('retry', recording.documentId)">
+          {{ $t('visio.recordings.transcript.retry') }}
+        </a>
+      </div>
+      <span
+        v-if="chip && chip.kind === 'failed' && chipReason"
+        class="text-caption text-sub-title">
+        {{ chipReason }}
+      </span>
+      <template v-if="excerpt">
+        <span
+          class="webconferencing-meeting-transcript-excerpt text-caption text-sub-title mt-1"
+          style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+          {{ excerpt }}
+        </span>
+        <a
+          :href="recording.previewUrl"
+          class="text-caption primary--text"
+          target="_blank"
+          rel="noopener">
+          {{ $t('visio.recordings.transcript.readAll') }}
+        </a>
+      </template>
     </div>
-    <span
-      v-if="chip && chip.kind === 'failed' && chipReason"
-      class="text-caption text-sub-title">
-      {{ chipReason }}
-    </span>
   </div>
 </template>
 
 <script>
-import {transcriptChip} from '../js/MeetingRecordingsModel.js';
+import {formatSize, getOccurrenceBounds, recordingStartTime, transcriptChip, transcriptText} from '../js/MeetingRecordingsModel.js';
+import {getTranscriptionText} from '../services.js';
 
 export default {
   props: {
@@ -67,26 +108,61 @@ export default {
       type: Object,
       default: null,
     },
+    event: {
+      type: Object,
+      default: null,
+    },
   },
   data: () => ({
-    dateTimeFormat: {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    },
+    excerpt: null,
   }),
   computed: {
     /**
-     * When the recording was saved, in milliseconds: the REST gives an ISO
-     * instant, the date-format component takes a number.
+     * When the recording started, in milliseconds.
      *
      * @returns {Number} the time, or 0 when unknown
      */
-    recordedTime() {
-      const time = this.recording && this.recording.recordedDate && new Date(this.recording.recordedDate).getTime();
-      return time && !Number.isNaN(time) ? time : 0;
+    startTime() {
+      return recordingStartTime(this.recording);
+    },
+    /**
+     * The row's label: the meeting is the drawer's own subject, so a
+     * recording is named by when it started, with its day when that is not
+     * the occurrence's.
+     *
+     * @returns {String} the translated label
+     */
+    label() {
+      if (!this.startTime) {
+        return this.recording && this.recording.title;
+      }
+      const start = new Date(this.startTime);
+      const bounds = getOccurrenceBounds(this.event);
+      const sameDay = bounds && bounds.start.toDateString() === start.toDateString();
+      const options = sameDay
+        ? {hour: '2-digit', minute: '2-digit'}
+        : {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'};
+      const language = eXo && eXo.env && eXo.env.portal && eXo.env.portal.language || navigator.language;
+      return this.$t('visio.recordings.recording', {0: new Intl.DateTimeFormat(language, options).format(start)});
+    },
+    /**
+     * The recording's size, as a file list shows it.
+     *
+     * @returns {String} the size, or null when unknown
+     */
+    size() {
+      return formatSize(this.recording && this.recording.sizeBytes);
+    },
+    /**
+     * The params handed to the actions contributed on this recording.
+     *
+     * @returns {Object} the event and this recording, as a list
+     */
+    actionParams() {
+      return {
+        event: this.event,
+        recordings: [this.recording],
+      };
     },
     /**
      * The transcript chip the recording's transcription state calls for.
@@ -109,8 +185,6 @@ export default {
         return this.chip.progress
           ? this.$t('visio.recordings.transcript.processingProgress', {0: this.chip.progress})
           : this.$t('visio.recordings.transcript.processing');
-      case 'ready':
-        return this.$t('visio.recordings.transcript.ready');
       case 'failed':
         return this.$t('visio.recordings.transcript.failed');
       default:
@@ -123,14 +197,7 @@ export default {
      * @returns {String} a Vuetify colour name
      */
     chipColor() {
-      switch (this.chip && this.chip.kind) {
-      case 'ready':
-        return 'success';
-      case 'failed':
-        return 'error';
-      default:
-        return 'primary';
-      }
+      return this.chip && this.chip.kind === 'failed' ? 'error' : 'primary';
     },
     /**
      * The human-readable reason of a failed transcription: the documents
@@ -145,6 +212,43 @@ export default {
       }
       const key = `visio.recordings.transcript.error.${error}`;
       return this.$te(key) ? this.$t(key) : this.$t('visio.recordings.transcript.error.unknown');
+    },
+    /**
+     * What identifies the excerpt to read: a recording whose transcript is
+     * ready.
+     *
+     * @returns {String} the document id, or null when there is no excerpt to read
+     */
+    excerptKey() {
+      return this.chip && this.chip.kind === 'ready' && this.recording && this.recording.documentId || null;
+    },
+  },
+  watch: {
+    excerptKey: {
+      immediate: true,
+      handler(documentId) {
+        this.excerpt = null;
+        if (documentId) {
+          this.loadExcerpt(documentId);
+        }
+      },
+    },
+  },
+  methods: {
+    /**
+     * Reads the start of a ready transcript. An answer that arrives once the
+     * row shows another recording is dropped.
+     *
+     * @param {String} documentId - the recording's document id
+     * @returns {Promise} resolved once the excerpt is known
+     */
+    loadExcerpt(documentId) {
+      return getTranscriptionText(documentId)
+        .then(body => {
+          if (this.excerptKey === documentId) {
+            this.excerpt = transcriptText(body);
+          }
+        });
     },
   },
 };

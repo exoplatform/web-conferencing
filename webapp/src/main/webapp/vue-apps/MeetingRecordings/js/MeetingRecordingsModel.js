@@ -134,18 +134,17 @@ export function getOccurrenceBounds(event) {
 }
 
 /**
- * The time window the recordings are asked for. A single event, or the whole
- * series when asked, has none: every recording of its call is its own. An
+ * The time window the recordings are asked for. A single event has none:
+ * every recording of its call is its own. An
  * occurrence asks for its start to its end; the server adds the configured
  * grace to the end, so a recording saved after a meeting that overran still
  * counts.
  *
  * @param {Object} event - the agenda event of the drawer
- * @param {Boolean} wholeSeries - true when the viewer asked for the series
  * @returns {Object} {from, to} as ISO 8601 strings, or an empty object for no window
  */
-export function getRecordingsWindow(event, wholeSeries) {
-  if (wholeSeries || !isRecurring(event)) {
+export function getRecordingsWindow(event) {
+  if (!isRecurring(event)) {
     return {};
   }
   const bounds = getOccurrenceBounds(event);
@@ -249,4 +248,53 @@ export function transcriptChip(state) {
     return {kind: 'failed', error: state.error || null};
   }
   return null;
+}
+
+/**
+ * When a recording started, in milliseconds: the start the recorder wrote in
+ * its file name, else the moment the file was saved.
+ *
+ * @param {Object} recording - a recording of the recordings REST
+ * @returns {Number} the time, or 0 when unknown
+ */
+export function recordingStartTime(recording) {
+  const date = recording && (recording.startedDate || recording.recordedDate);
+  const time = date ? new Date(date).getTime() : 0;
+  return time && !Number.isNaN(time) ? time : 0;
+}
+
+/**
+ * Formats a size in bytes the way a file list shows it: one decimal under
+ * ten units, none above.
+ *
+ * @param {Number} bytes - the size, -1 or absent when unknown
+ * @returns {String} the size with its unit, or null when unknown
+ */
+export function formatSize(bytes) {
+  if (typeof bytes !== 'number' || bytes < 0) {
+    return null;
+  }
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  const digits = unit > 0 && value < 10 ? 1 : 0;
+  return `${value.toFixed(digits)} ${units[unit]}`;
+}
+
+/**
+ * Reads the text of a transcript from the documents REST answer, a JSON
+ * object carrying it in text or the plain text itself, with its white space
+ * collapsed for a short excerpt.
+ *
+ * @param {Object|String} body - the answer of GET /documents/rest/transcriptions/{id}/text
+ * @returns {String} the text, or null when there is none
+ */
+export function transcriptText(body) {
+  const text = body && typeof body === 'object' ? body.text : body;
+  const collapsed = typeof text === 'string' ? text.replace(/\s+/g, ' ').trim() : '';
+  return collapsed || null;
 }
