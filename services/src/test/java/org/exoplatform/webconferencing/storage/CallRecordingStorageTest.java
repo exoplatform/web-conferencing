@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -28,6 +29,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,6 +48,7 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NoSuchNodeTypeException;
@@ -70,6 +73,7 @@ import org.exoplatform.services.jcr.impl.core.NamespaceRegistryImpl;
 import org.exoplatform.services.jcr.impl.core.query.DefaultQueryNodeFactory;
 import org.exoplatform.services.jcr.impl.core.query.sql.JCRSQLQueryBuilder;
 import org.exoplatform.services.security.ConversationState;
+import org.exoplatform.services.security.Identity;
 import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.IdentityInfo;
 import org.exoplatform.webconferencing.UploadFileInfo;
@@ -144,11 +148,6 @@ class CallRecordingStorageTest {
   }
 
   /**
-   * The statement selects the mixin by call id, bounds the recording date
-   * from below and from above with the right operators, and sorts newest
-   * first; a quote in the id is doubled, never left to close the literal.
-   */
-  /**
    * The repository reads as the viewer whoever the calling thread runs as:
    * the viewer is the current state while the session logs in, and the
    * caller's state is back afterwards.
@@ -157,21 +156,21 @@ class CallRecordingStorageTest {
    */
   @Test
   void theRepositoryReadsAsTheViewerWhateverTheCaller() throws Exception {
-    org.exoplatform.services.security.Identity viewer = new org.exoplatform.services.security.Identity("mary");
-    ConversationState caller = new ConversationState(new org.exoplatform.services.security.Identity("john"));
+    Identity viewer = new Identity("mary");
+    ConversationState caller = new ConversationState(new Identity("john"));
     ConversationState.setCurrent(caller);
     try {
-      ManageableRepository repository = mock(ManageableRepository.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+      ManageableRepository repository = mock(ManageableRepository.class, RETURNS_DEEP_STUBS);
       when(repositoryService.getCurrentRepository()).thenReturn(repository);
       when(repository.getConfiguration().getDefaultWorkspaceName()).thenReturn("collaboration");
       String[] loggedInAs = new String[1];
       when(repository.login("collaboration")).thenAnswer(invocation -> {
         loggedInAs[0] = ConversationState.getCurrent().getIdentity().getUserId();
-        throw new javax.jcr.RepositoryException("stop");
+        throw new RepositoryException("stop");
       });
 
-      org.junit.jupiter.api.Assertions.assertThrows(javax.jcr.RepositoryException.class,
-                                                    () -> storage.findRecordings(viewer, CALL_ID, SPACE_GROUP_ID, null, null));
+      assertThrows(RepositoryException.class,
+                   () -> storage.findRecordings(viewer, CALL_ID, SPACE_GROUP_ID, null, null));
 
       assertEquals("mary", loggedInAs[0]);
       assertEquals(caller, ConversationState.getCurrent());
@@ -216,6 +215,11 @@ class CallRecordingStorageTest {
                  CallRecordingStorage.recordingStart("g_15-41126d_2026-10-25-02-30-00.mp4", ZoneId.of("Europe/Paris")));
   }
 
+  /**
+   * The statement selects the mixin by call id, bounds the recording date
+   * from below and from above with the right operators, and sorts newest
+   * first; a quote in the id is doubled, never left to close the literal.
+   */
   @Test
   void theQuerySelectsTheCallWithinTheRange() {
     Date from = Date.from(Instant.parse("2026-10-23T09:00:00Z"));
@@ -351,6 +355,25 @@ class CallRecordingStorageTest {
     assertEquals(CALL_ID + "_2026-10-23-10-00-00.mp4 title", recordings.get(0).getTitle());
     assertEquals(1234L, recordings.get(0).getSizeBytes());
     assertEquals("video/mp4", recordings.get(0).getMimeType());
+    assertEquals(Date.from(Instant.parse("2026-10-23T10:00:00Z")), recordings.get(0).getStartedDate());
+  }
+
+  /**
+   * A storage told the recorder runs in Paris reads a listed recording's
+   * start in that zone.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aListedRecordingStartsInTheRecordersTimeZone() throws Exception {
+    storage = new CallRecordingStorage(repositoryService, nodeCreator, linkManager, ZoneId.of("Europe/Paris"));
+    ExtendedNode newer = file("id-newer", CALL_ID + "_2026-10-23-12-00-00.mp4", "2026-10-23T10:30:00Z", true, false);
+    queryAnswers(newer);
+    when(session.getItem(RECORDINGS_PATH)).thenThrow(new PathNotFoundException());
+
+    List<RecordingInfo> recordings = storage.findRecordings(sessionProvider, session, "john", CALL_ID, SPACE_GROUP_ID, null, null);
+
+    assertEquals(Date.from(Instant.parse("2026-10-23T10:00:00Z")), recordings.get(0).getStartedDate());
   }
 
   /**
