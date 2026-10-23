@@ -16,6 +16,7 @@
  */
 package org.exoplatform.webconferencing.mcp;
 
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -50,6 +51,17 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
   /** The reason of an empty list: the link is not one of an active provider's meetings. */
   public static final String           OTHER_PROVIDER = "OTHER_PROVIDER";
 
+  /**
+   * The answer to a date argument that cannot be read: it names the argument,
+   * the value, the accepted formats with an example, and asks the model to
+   * resolve a relative expression itself.
+   */
+  public static final String           INVALID_DATE   =
+                                                    "Invalid '%s' value '%s'. Provide an RFC3339 date-time (e.g. 2026-10-23T09:00:00Z) "
+                                                        + "or a date yyyy-MM-dd (e.g. 2026-10-23), in UTC. Resolve a relative "
+                                                        + "expression such as 'yesterday' or 'last week' into such a date yourself "
+                                                        + "before calling the tool again.";
+
   private final WebConferencingService webConferencingService;
 
   /**
@@ -68,10 +80,15 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
    *
    * @param conferenceUrl the meeting link, as {@code get_event_conference}
    *          returns it
-   * @param recordedFrom the earliest recording date, ISO 8601, optional
-   * @param recordedTo the end of the range, ISO 8601, optional: the server adds
-   *          its grace, since a recording is saved after its meeting ends
+   * @param recordedFrom the earliest recording date, RFC3339 or
+   *          {@code yyyy-MM-dd}, optional
+   * @param recordedTo the end of the range, RFC3339 or {@code yyyy-MM-dd},
+   *          optional: the server adds its grace, since a recording is saved
+   *          after its meeting ends
    * @return the recordings, or an empty list with its reason
+   * @throws IllegalArgumentException when the link is missing, or a date is not
+   *           in an accepted format: its message, {@link #INVALID_DATE}, tells
+   *           the model how to call again
    * @throws IllegalAccessException when the user may not read the meeting's
    *           recordings: not a member of its space, or not a participant
    */
@@ -81,14 +98,14 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
     if (StringUtils.isBlank(conferenceUrl)) {
       throw new IllegalArgumentException("conference_url is mandatory: pass the url get_event_conference returns");
     }
+    Date from = parseDateArgument("recorded_from", recordedFrom, false);
+    Date to = parseDateArgument("recorded_to", recordedTo, true);
     try {
       List<MeetingRecordingModel> recordings =
                                              webConferencingService.getCallRecordingsByConference(conferenceUrl,
                                                                                                   getCurrentUserName(),
-                                                                                                  RecordingDateUtils.parseDate(recordedFrom,
-                                                                                                                               false),
-                                                                                                  RecordingDateUtils.parseDate(recordedTo,
-                                                                                                                               true))
+                                                                                                  from,
+                                                                                                  to)
                                                                    .stream()
                                                                    .map(MeetingRecordingMcpTool::toModel)
                                                                    .toList();
@@ -96,6 +113,26 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
     } catch (ObjectNotFoundException e) {
       String reason = WebConferencingService.RECORDINGS_OTHER_PROVIDER.equals(e.getMessage()) ? OTHER_PROVIDER : NO_RECORDING;
       return new MeetingRecordingsModel(List.of(), reason);
+    }
+  }
+
+  /**
+   * Reads a date argument of the tool. An unreadable value is refused with a
+   * message the model can act on, the shape the platform's own tools use for
+   * bad input, rather than the REST layer's message code.
+   *
+   * @param name the argument's name, as the model sends it
+   * @param value the argument's value, or a blank value for none
+   * @param endOfRange true when the date closes the range
+   * @return the date, or <code>null</code> when the value is blank
+   * @throws IllegalArgumentException with {@link #INVALID_DATE} when the value
+   *           is not in an accepted format
+   */
+  private static Date parseDateArgument(String name, String value, boolean endOfRange) {
+    try {
+      return RecordingDateUtils.parseDate(value, endOfRange);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(INVALID_DATE.formatted(name, value), e);
     }
   }
 
