@@ -230,10 +230,11 @@ export default {
   },
   methods: {
     /**
-     * Opens the recording's transcript in the documents Transcript drawer: a
-     * cancelable documents-open-transcript event carrying the document id,
-     * which the drawer cancels when it opens. Where no drawer is loaded, the
-     * event stays uncancelled and the Documents preview opens instead.
+     * Opens the recording's transcript. A cancelable documents-open-transcript
+     * event carries the document id, for a Transcript drawer to cancel when
+     * it opens it; the documents add-on has no such drawer yet, so the event
+     * stays uncancelled and the Documents preview opens, as it does wherever
+     * no drawer is loaded.
      *
      * @returns {void}
      */
