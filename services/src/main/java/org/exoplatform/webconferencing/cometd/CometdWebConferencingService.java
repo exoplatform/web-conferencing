@@ -2346,12 +2346,13 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * Applies a state sent by a client to a call: a participant state always applies to the user of the
-   * Cometd session, never to a user named by the client.
+   * Applies a state sent by a client to a call: a participant state applies to <code>currentUserId</code>,
+   * which is the <code>exoId</code> of the client's message, not a user read from the Cometd session. Nothing
+   * here checks that it is the session's user.
    *
    * @param id the call id
    * @param state the state, one of {@link #isUpdatableState(String)}
-   * @param currentUserId the user of the Cometd session
+   * @param currentUserId the <code>exoId</code> of the client's message
    * @param clientId the client id
    * @return the call info, <code>null</code> if the call was not found
    * @throws WebConferencingException if the call cannot be updated
