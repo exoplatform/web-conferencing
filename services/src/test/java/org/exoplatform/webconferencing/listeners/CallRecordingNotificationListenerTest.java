@@ -221,8 +221,9 @@ class CallRecordingNotificationListenerTest {
   }
 
   /**
-   * A one-to-one recording names the conversation by the other person's full
-   * name, as the owner already did, and notifies each participant.
+   * A one-to-one recording names the conversation by the call owner's full
+   * name, for every recipient, as the owner already did, and notifies each
+   * participant.
    *
    * @throws Exception never
    */
