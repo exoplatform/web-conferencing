@@ -60,12 +60,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.exoplatform.services.cms.link.LinkManager;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.core.ExtendedNode;
+import org.exoplatform.services.jcr.core.ManageableRepository;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
 import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
 import org.exoplatform.services.jcr.impl.core.LocationFactory;
 import org.exoplatform.services.jcr.impl.core.NamespaceRegistryImpl;
 import org.exoplatform.services.jcr.impl.core.query.DefaultQueryNodeFactory;
 import org.exoplatform.services.jcr.impl.core.query.sql.JCRSQLQueryBuilder;
+import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.IdentityInfo;
 import org.exoplatform.webconferencing.UploadFileInfo;
@@ -144,6 +146,38 @@ class CallRecordingStorageTest {
    * from below and from above with the right operators, and sorts newest
    * first; a quote in the id is doubled, never left to close the literal.
    */
+  /**
+   * The repository reads as the viewer whoever the calling thread runs as:
+   * the viewer is the current state while the session logs in, and the
+   * caller's state is back afterwards.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void theRepositoryReadsAsTheViewerWhateverTheCaller() throws Exception {
+    org.exoplatform.services.security.Identity viewer = new org.exoplatform.services.security.Identity("mary");
+    ConversationState caller = new ConversationState(new org.exoplatform.services.security.Identity("john"));
+    ConversationState.setCurrent(caller);
+    try {
+      ManageableRepository repository = mock(ManageableRepository.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+      when(repositoryService.getCurrentRepository()).thenReturn(repository);
+      when(repository.getConfiguration().getDefaultWorkspaceName()).thenReturn("collaboration");
+      String[] loggedInAs = new String[1];
+      when(repository.login("collaboration")).thenAnswer(invocation -> {
+        loggedInAs[0] = ConversationState.getCurrent().getIdentity().getUserId();
+        throw new javax.jcr.RepositoryException("stop");
+      });
+
+      org.junit.jupiter.api.Assertions.assertThrows(javax.jcr.RepositoryException.class,
+                                                    () -> storage.findRecordings(viewer, CALL_ID, SPACE_GROUP_ID, null, null));
+
+      assertEquals("mary", loggedInAs[0]);
+      assertEquals(caller, ConversationState.getCurrent());
+    } finally {
+      ConversationState.setCurrent(null);
+    }
+  }
+
   /**
    * A recording's start is read from the name Jibri gives its file, in UTC,
    * and is unknown for any other name.
