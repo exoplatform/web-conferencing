@@ -32,6 +32,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -113,7 +115,7 @@ class CallRecordingStorageTest {
    */
   @BeforeEach
   void setUp() throws Exception {
-    storage = new CallRecordingStorage(repositoryService, nodeCreator, linkManager);
+    storage = new CallRecordingStorage(repositoryService, nodeCreator, linkManager, null);
     Workspace workspace = mock(Workspace.class);
     lenient().when(session.getWorkspace()).thenReturn(workspace);
     lenient().when(workspace.getQueryManager()).thenReturn(queryManager);
@@ -179,19 +181,39 @@ class CallRecordingStorageTest {
   }
 
   /**
-   * A recording's start is read from the name Jibri gives its file, in UTC,
+   * A recording's start is read from the name Jibri gives its file, here in UTC,
    * and is unknown for any other name.
    */
   @Test
   void aRecordingStartIsReadFromItsFileName() {
     assertEquals(Date.from(Instant.parse("2026-10-23T14:05:00Z")),
-                 CallRecordingStorage.recordingStart("g_15-41126d_2026-10-23-14-05-00.mp4"));
+                 CallRecordingStorage.recordingStart("g_15-41126d_2026-10-23-14-05-00.mp4", ZoneOffset.UTC));
     assertEquals(Date.from(Instant.parse("2026-10-23T14:05:00Z")),
-                 CallRecordingStorage.recordingStart("call_with_underscores_2026-10-23-14-05-00.webm"));
-    assertNull(CallRecordingStorage.recordingStart("ACME demo.mp4"));
-    assertNull(CallRecordingStorage.recordingStart("g_15_2026-13-45-99-99-99.mp4"));
-    assertNull(CallRecordingStorage.recordingStart("g_15_2026-10-23-14-05-00.mp4.bak.txt"));
-    assertNull(CallRecordingStorage.recordingStart(null));
+                 CallRecordingStorage.recordingStart("call_with_underscores_2026-10-23-14-05-00.webm", ZoneOffset.UTC));
+    assertNull(CallRecordingStorage.recordingStart("ACME demo.mp4", ZoneOffset.UTC));
+    assertNull(CallRecordingStorage.recordingStart("g_15_2026-13-45-99-99-99.mp4", ZoneOffset.UTC));
+    assertNull(CallRecordingStorage.recordingStart("g_15_2026-10-23-14-05-00.mp4.bak.txt", ZoneOffset.UTC));
+    assertNull(CallRecordingStorage.recordingStart(null, ZoneOffset.UTC));
+  }
+
+  /**
+   * The recorder writes its own local time, so a recorder in Paris names a
+   * recording started at 14:05 UTC in October after 16:05.
+   */
+  @Test
+  void aRecordingStartIsReadInTheRecordersTimeZone() {
+    assertEquals(Date.from(Instant.parse("2026-10-23T14:05:00Z")),
+                 CallRecordingStorage.recordingStart("g_15-41126d_2026-10-23-16-05-00.mp4", ZoneId.of("Europe/Paris")));
+  }
+
+  /**
+   * Paris writes 02:30 twice on the night its clocks go back, at 00:30 and
+   * 01:30 UTC; the name reads as the earlier one.
+   */
+  @Test
+  void aRepeatedLocalTimeReadsAsItsEarlierInstant() {
+    assertEquals(Date.from(Instant.parse("2026-10-25T00:30:00Z")),
+                 CallRecordingStorage.recordingStart("g_15-41126d_2026-10-25-02-30-00.mp4", ZoneId.of("Europe/Paris")));
   }
 
   @Test
