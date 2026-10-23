@@ -16,7 +16,7 @@
  */
 package org.exoplatform.webconferencing.storage;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
@@ -138,10 +138,13 @@ public class CallRecordingStorage {
   private static final Pattern             FILE_NAME_START       =
                                                          Pattern.compile("_(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2})\\.[^.]+$");
 
-  /** How Jibri writes that start: UTC, the recorder's clock. */
+  /**
+   * How Jibri writes that start: the local time of the recorder's JVM, with
+   * no zone, which {@code exo.webconferencing.recording.recorderTimeZone}
+   * names.
+   */
   private static final DateTimeFormatter   FILE_NAME_START_FORMAT =
-                                                         DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")
-                                                                          .withZone(ZoneOffset.UTC);
+                                                         DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
 
   private static final Comparator<RecordingInfo> NEWEST_FIRST    =
                                                              Comparator.comparing(RecordingInfo::getRecordedDate,
@@ -155,17 +158,25 @@ public class CallRecordingStorage {
 
   private final LinkManager                linkManager;
 
+  private final ZoneId                     recorderZone;
+
   /**
    * Builds the storage.
    *
    * @param repositoryService the repository service
    * @param nodeCreator resolves the spaces' and users' folders
    * @param linkManager resolves the links shared to the participants of a call
+   * @param recorderZone the time zone the recorder writes a recording's start
+   *          in, UTC when null
    */
-  public CallRecordingStorage(RepositoryService repositoryService, NodeHierarchyCreator nodeCreator, LinkManager linkManager) {
+  public CallRecordingStorage(RepositoryService repositoryService,
+                              NodeHierarchyCreator nodeCreator,
+                              LinkManager linkManager,
+                              ZoneId recorderZone) {
     this.repositoryService = repositoryService;
     this.nodeCreator = nodeCreator;
     this.linkManager = linkManager;
+    this.recorderZone = recorderZone == null ? ZoneOffset.UTC : recorderZone;
   }
 
   /**
@@ -514,26 +525,29 @@ public class CallRecordingStorage {
     return new RecordingInfo(((ExtendedNode) file).getIdentifier(),
                              title,
                              recordedDate,
-                             recordingStart(file.getName()),
+                             recordingStart(file.getName(), recorderZone),
                              size,
                              mimeType);
   }
 
   /**
    * Reads when a recording started from its file name, which Jibri writes as
-   * {@code <callId>_<yyyy-MM-dd-HH-mm-ss>.<ext>} in UTC. The node keeps that
-   * name when its displayed title changes.
+   * {@code <callId>_<yyyy-MM-dd-HH-mm-ss>.<ext>} in its own local time. The
+   * node keeps that name when its displayed title changes. A local time the
+   * zone repeats when its clocks go back is ambiguous and reads as the earlier
+   * of its two instants.
    *
    * @param fileName the recording's file name
+   * @param zone the time zone the recorder writes that time in
    * @return the start, or null when the name does not carry one
    */
-  static Date recordingStart(String fileName) {
+  static Date recordingStart(String fileName, ZoneId zone) {
     Matcher matcher = fileName == null ? null : FILE_NAME_START.matcher(fileName);
     if (matcher == null || !matcher.find()) {
       return null;
     }
     try {
-      return Date.from(Instant.from(FILE_NAME_START_FORMAT.parse(matcher.group(1))));
+      return Date.from(LocalDateTime.parse(matcher.group(1), FILE_NAME_START_FORMAT).atZone(zone).toInstant());
     } catch (DateTimeParseException e) {
       LOG.debug("The recording file name {} carries no readable start", fileName, e);
       return null;
