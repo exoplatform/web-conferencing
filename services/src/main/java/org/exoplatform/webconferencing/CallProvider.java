@@ -301,4 +301,21 @@ public abstract class CallProvider extends BaseComponentPlugin {
   public void setConfiguredForIdentity(String identityId, boolean configured) {
   }
 
+  /**
+   * Reads the call id out of a meeting link this provider generated, the
+   * server-side counterpart of the {@code findCallId(url)} of the provider's
+   * JavaScript module. The recordings of a meeting are found through it, from
+   * the conference link an agenda event stores.
+   * <p>
+   * Optional: a provider that does not implement it keeps this default, and its
+   * meetings read as held on another provider.
+   *
+   * @param url a meeting link, possibly carrying a query string
+   * @return the call id the link points to, or <code>null</code> when the link
+   *         is not one of this provider's meetings
+   */
+  public String findCallId(String url) {
+    return null;
+  }
+
 }
