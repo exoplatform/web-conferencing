@@ -26,6 +26,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  *          {@code get_document_transcription_by_id} takes
  * @param title the title displayed in Documents: the meeting's title and date
  * @param recordedDate when the recording was saved, an ISO 8601 instant in UTC
+ * @param startedDate when the recording started, an ISO 8601 instant in UTC,
+ *          absent when its file name does not tell it
  * @param sizeBytes the size of the recording in bytes, -1 when unknown
  * @param mimeType the media type of the recording
  * @param previewUrl the link opening the recording in Documents
