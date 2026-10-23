@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.fileupload2.core.FileUploadException;
 import javax.jcr.Node;
@@ -500,6 +501,7 @@ class WebConferencingServiceRecordingsTest {
     ArgumentCaptor<String> uploadId = ArgumentCaptor.forClass(String.class);
     InOrder order = inOrder(uploadService);
     order.verify(uploadService).addUploadLimit(uploadId.capture(), eq(expectedLimit));
+    assertEquals(uploadId.getValue(), UUID.fromString(uploadId.getValue()).toString(), "the upload id is a random UUID");
     order.verify(uploadService).createUploadResource(uploadId.getValue(), request);
     order.verify(uploadService).removeUploadLimit(uploadId.getValue());
   }
