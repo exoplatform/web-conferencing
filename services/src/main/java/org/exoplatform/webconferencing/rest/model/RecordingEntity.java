@@ -23,6 +23,8 @@ package org.exoplatform.webconferencing.rest.model;
  *          documents add-on and its transcription REST take
  * @param title the title displayed in Documents
  * @param recordedDate when the recording was saved, an ISO 8601 instant in UTC
+ * @param startedDate when the recording started, an ISO 8601 instant in UTC,
+ *          or null when its file name does not tell it
  * @param sizeBytes the size of the recording in bytes, -1 when unknown
  * @param mimeType the media type of the recording
  * @param previewUrl the link opening the recording in the Documents preview
@@ -30,6 +32,7 @@ package org.exoplatform.webconferencing.rest.model;
 public record RecordingEntity(String documentId,
                               String title,
                               String recordedDate,
+                              String startedDate,
                               long sizeBytes,
                               String mimeType,
                               String previewUrl) {

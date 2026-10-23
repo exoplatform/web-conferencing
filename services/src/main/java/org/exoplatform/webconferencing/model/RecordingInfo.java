@@ -34,6 +34,9 @@ public class RecordingInfo {
   /** When the recording was saved. */
   private final Date   recordedDate;
 
+  /** When the recording started, as its file name tells, or null. */
+  private final Date   startedDate;
+
   /** The size of the recording, in bytes, or -1 when unknown. */
   private final long   sizeBytes;
 
@@ -53,9 +56,29 @@ public class RecordingInfo {
    * @param mimeType the media type of the recording
    */
   public RecordingInfo(String documentId, String title, Date recordedDate, long sizeBytes, String mimeType) {
+    this(documentId, title, recordedDate, null, sizeBytes, mimeType);
+  }
+
+  /**
+   * Builds a recording that knows when it started.
+   *
+   * @param documentId the JCR identifier of the recording's file
+   * @param title the title displayed in Documents
+   * @param recordedDate when the recording was saved
+   * @param startedDate when the recording started, or null when unknown
+   * @param sizeBytes the size of the recording, in bytes, or -1 when unknown
+   * @param mimeType the media type of the recording
+   */
+  public RecordingInfo(String documentId,
+                       String title,
+                       Date recordedDate,
+                       Date startedDate,
+                       long sizeBytes,
+                       String mimeType) {
     this.documentId = documentId;
     this.title = title;
     this.recordedDate = recordedDate == null ? null : new Date(recordedDate.getTime());
+    this.startedDate = startedDate == null ? null : new Date(startedDate.getTime());
     this.sizeBytes = sizeBytes;
     this.mimeType = mimeType;
   }
@@ -85,6 +108,15 @@ public class RecordingInfo {
    */
   public Date getRecordedDate() {
     return recordedDate == null ? null : new Date(recordedDate.getTime());
+  }
+
+  /**
+   * Gets when the recording started, as the recorder named its file.
+   *
+   * @return the start, or null when the file name does not tell it
+   */
+  public Date getStartedDate() {
+    return startedDate == null ? null : new Date(startedDate.getTime());
   }
 
   /**
