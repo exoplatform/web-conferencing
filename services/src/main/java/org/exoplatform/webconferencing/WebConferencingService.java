@@ -2258,7 +2258,7 @@ public class WebConferencingService implements Startable {
     } catch (InvalidCallException e) {
       LOG.warn("Failed to build metric for " + OPERATION_CALL_RECORDED, e);
     } catch (Exception e) {
-      broacastCallEvent(EVENT_CALL_RECORDED, call, uploadInfo.getUser(), resource.getEstimatedSize(), null, null, STATUS_NOT_OK);
+      broacastCallEvent(EVENT_CALL_RECORDED, call, uploadInfo.getUser(), resource.getEstimatedSize(), null, uploadInfo, STATUS_NOT_OK);
       LOG.info(metricMessage(uploadInfo.getUser(),
                              call,
                              OPERATION_CALL_RECORDED,
