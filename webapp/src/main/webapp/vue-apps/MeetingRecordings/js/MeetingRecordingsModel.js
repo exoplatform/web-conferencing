@@ -54,6 +54,14 @@ export const STATE_ERROR = 'error';
  */
 export const PROCESSING_WINDOW_MS = 15 * 60 * 1000;
 
+/**
+ * How long a transcription may stay queued or in PROCESSING without an update
+ * before it is no longer moving: the documents transcript drawer and the
+ * server's own TranscriptionState.isInProgress apply the same hour, and the
+ * server accepts a retry of such a transcription.
+ */
+export const TRANSCRIPT_STALE_MS = 60 * 60 * 1000;
+
 /** The refusal codes of the recordings REST that this block tells apart. */
 const CODE_OTHER_PROVIDER = 'webconferencing.recordings.otherProvider';
 const CODE_CALL_NOT_FOUND = 'webconferencing.recordings.callNotFound';
@@ -224,20 +232,30 @@ export function getSpaceName(event) {
 /**
  * Reads the transcript chip a transcription state calls for, or none. The
  * documents REST says available=false where no transcriber is installed
- * (community): then, as for any failure to read it, nothing is shown.
+ * (community): then, as for any failure to read it, nothing is shown. A run
+ * left in PROCESSING with no update for TRANSCRIPT_STALE_MS, or none at all,
+ * was lost: it reads as failed, with the reason stopped, and can be retried.
+ * A transcription queued that long without an error still reads as queued,
+ * and can be retried too.
  *
  * @param {Object} state - the body of GET /documents-portlet/rest/transcriptions/{id}, or null
- * @returns {Object} {kind, progress, error} with kind one of queued, processing, ready, failed; or null
+ * @param {Number} now - the current time in milliseconds
+ * @returns {Object} {kind, progress, error, retryable} with kind one of queued, processing, ready, failed; or null
  */
-export function transcriptChip(state) {
+export function transcriptChip(state, now) {
   if (!state || state.available !== true || !state.status) {
     return null;
   }
   const status = String(state.status).toUpperCase();
+  const updated = typeof state.updated === 'number' ? state.updated : 0;
+  const stale = !updated || now - updated >= TRANSCRIPT_STALE_MS;
   if (status === 'QUEUED') {
-    return {kind: 'queued'};
+    return stale && !state.error ? {kind: 'queued', retryable: true} : {kind: 'queued'};
   }
   if (status === 'PROCESSING') {
+    if (stale) {
+      return {kind: 'failed', error: 'stopped'};
+    }
     return {kind: 'processing', progress: state.progress || null};
   }
   if (status === 'DONE') {

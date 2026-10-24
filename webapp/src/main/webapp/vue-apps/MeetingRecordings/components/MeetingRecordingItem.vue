@@ -28,15 +28,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
           <v-icon size="12" class="primary--text me-1">fas fa-play</v-icon>
           {{ label }}
         </a>
-        <a
-          :href="recording.previewUrl"
-          :title="$t('visio.recordings.openInDocuments')"
-          :aria-label="$t('visio.recordings.openInDocuments')"
-          class="webconferencing-meeting-recording-documents flex-shrink-0 ms-1"
-          target="_blank"
-          rel="noopener">
-          <v-icon size="12" class="icon-default-color">fas fa-external-link-alt</v-icon>
-        </a>
         <!--
           The extension point for actions on this recording (the enterprise
           concierge), right after its name: app MeetingRecordings, type
@@ -65,7 +56,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
           {{ chipLabel }}
         </span>
         <a
-          v-if="chip && chip.kind === 'failed'"
+          v-if="chip && (chip.kind === 'failed' || chip.retryable)"
           class="webconferencing-meeting-transcript-retry text-caption primary--text"
           @click="$emit('retry', recording.documentId)">
           {{ $t('visio.recordings.transcript.retry') }}
@@ -112,10 +103,6 @@ export default {
     event: {
       type: Object,
       default: null,
-    },
-    several: {
-      type: Boolean,
-      default: false,
     },
     transcriptRead: {
       type: Boolean,
@@ -185,15 +172,11 @@ export default {
     /**
      * The row's label. The meeting is the drawer's own subject, so its date
      * says nothing: a recording is named by its length, and by when it
-     * started too when the block holds several. Until the length is known, by
-     * when it started.
+     * started until the length is known.
      *
      * @returns {String} the translated label
      */
     label() {
-      if (this.length && this.several && this.start) {
-        return this.$t('visio.recordings.recordingStarted', {0: this.length, 1: this.start});
-      }
       if (this.length || this.start) {
         return this.$t('visio.recordings.recording', {0: this.length || this.start});
       }
@@ -237,7 +220,7 @@ export default {
      * @returns {Object} {kind, progress, error}, or null for no chip
      */
     chip() {
-      return transcriptChip(this.transcript);
+      return transcriptChip(this.transcript, Date.now());
     },
     /**
      * The text of the transcript's state.

@@ -35,7 +35,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
           :recording="recording"
           :transcript="transcripts[recording.documentId]"
           :event="event"
-          :several="recordings.length > 1"
           :transcript-read="transcriptsRead || !!transcripts[recording.documentId]"
           @retry="retryTranscript" />
       </template>
