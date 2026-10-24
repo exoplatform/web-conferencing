@@ -31,6 +31,13 @@
         <name>jwt-configuration</name>
         <property name="secret-key" value="${webconferencing.jwt.secret:mQzPudDBpSAqUwM0FY2r86gNAd6be5tN1xqwdFDOb4Us1DT4Tm}" />
       </properties-param>
+      <properties-param>
+        <name>recording-configuration</name>
+        <description>Size limit of a recording upload in MB (0: unlimited), and how long after the end of an occurrence a recording still counts as that occurrence's, in hours, and the time zone the recorder writes a recording's start in</description>
+        <property name="upload-limit-mb" value="${exo.webconferencing.recording.uploadLimitMB:0}" />
+        <property name="occurrence-grace-hours" value="${exo.webconferencing.recording.occurrenceGraceHours:12}" />
+        <property name="recorder-time-zone" value="${exo.webconferencing.recording.recorderTimeZone:UTC}" />
+      </properties-param>
     </init-params>
   </component>
 
