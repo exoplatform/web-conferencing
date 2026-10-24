@@ -36,6 +36,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
           :transcript="transcripts[recording.documentId]"
           :event="event"
           :several="recordings.length > 1"
+          :transcript-read="transcriptsRead || !!transcripts[recording.documentId]"
           @retry="retryTranscript" />
       </template>
       <div
@@ -91,6 +92,7 @@ export default {
     state: null,
     recordings: [],
     transcripts: {},
+    transcriptsRead: false,
     loading: false,
     requestId: 0,
   }),
@@ -196,6 +198,7 @@ export default {
       this.state = null;
       this.recordings = [];
       this.transcripts = {};
+      this.transcriptsRead = false;
     },
     /**
      * Reads the recordings of the meeting, then their transcript states. Only
@@ -218,7 +221,13 @@ export default {
           this.state = stateFromResponse(status, body, this.event, Date.now());
           this.recordings = this.state === STATE_READY ? body : [];
           this.transcripts = {};
-          this.loadTranscripts(requestId);
+          this.transcriptsRead = false;
+          this.loadTranscripts(requestId)
+            .finally(() => {
+              if (requestId === this.requestId) {
+                this.transcriptsRead = true;
+              }
+            });
         })
         .catch(() => {
           if (requestId === this.requestId) {

@@ -117,6 +117,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    transcriptRead: {
+      type: Boolean,
+      default: true,
+    },
   },
   data: () => ({
     excerpt: null,
@@ -197,7 +201,8 @@ export default {
     },
     /**
      * What identifies the media to probe for its length: a video or audio
-     * recording whose length neither the server nor its transcription gives.
+     * recording whose length neither the server nor its transcription gives,
+     * once the block has read the transcription states.
      *
      * @returns {String} the document id, or null when there is nothing to probe
      */
@@ -205,7 +210,7 @@ export default {
       const mimeType = this.recording && this.recording.mimeType || '';
       const playable = !mimeType || mimeType.indexOf('video/') === 0 || mimeType.indexOf('audio/') === 0;
       const known = recordingDuration(this.recording, this.transcript);
-      return playable && !known && this.recording && this.recording.documentId || null;
+      return playable && !known && this.transcriptRead && this.recording && this.recording.documentId || null;
     },
     /**
      * The recording's size, as a file list shows it.

@@ -114,17 +114,22 @@ export function retryTranscription(documentId) {
 
 /**
  * Reads how long a recording lasts from the media itself, for a recording
- * saved before the server stored its length: a detached video element loads
- * the metadata only, which the documents content REST serves through byte
- * ranges. The load is stopped once the length is known, after
- * PROBE_TIMEOUT_MS, or when the caller cancels it. The promise resolves with
- * null whatever goes wrong, and with null on a cancel.
+ * saved before the server stored its length. A recorder writes the media's
+ * metadata after its data, which a player reaches cheaply only through byte
+ * ranges: the content REST is first asked for one byte, and only a partial
+ * answer (206) lets a detached video element load the metadata. A server that
+ * answers the whole content is not probed further. The load is stopped once
+ * the length is known, after PROBE_TIMEOUT_MS, or when the caller cancels it.
+ * The promise resolves with null whatever goes wrong, and with null on a
+ * cancel.
  *
  * @param {String} documentId - the recording's document id
  * @returns {Object} {promise, cancel}: promise resolves with the duration in
  *          seconds, or null; cancel stops the load
  */
 export function probeRecordingDuration(documentId) {
+  const url = `/${eXo.env.portal.rest}/v1/documents/content/${encodeURIComponent(documentId)}`;
+  const controller = new AbortController();
   let cancel = null;
   const promise = new Promise(resolve => {
     const video = document.createElement('video');
@@ -136,19 +141,37 @@ export function probeRecordingDuration(documentId) {
       }
       over = true;
       window.clearTimeout(timeout);
+      controller.abort();
       video.onloadedmetadata = null;
       video.onerror = null;
-      video.removeAttribute('src');
-      video.load();
+      if (video.getAttribute('src')) {
+        video.removeAttribute('src');
+        video.load();
+      }
       resolve(typeof duration === 'number' && Number.isFinite(duration) && duration > 0 ? duration : null);
     };
     timeout = window.setTimeout(() => done(null), PROBE_TIMEOUT_MS);
-    video.preload = 'metadata';
-    video.muted = true;
-    video.onloadedmetadata = () => done(video.duration);
-    video.onerror = () => done(null);
     cancel = () => done(null);
-    video.src = `/${eXo.env.portal.rest}/v1/documents/content/${encodeURIComponent(documentId)}`;
+    fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {Range: 'bytes=0-0'},
+      signal: controller.signal,
+    }).then(resp => {
+      if (over) {
+        return;
+      }
+      if (resp.status !== 206) {
+        done(null);
+        return;
+      }
+      video.preload = 'metadata';
+      video.muted = true;
+      video.onloadedmetadata = () => done(video.duration);
+      video.onerror = () => done(null);
+      video.src = url;
+    })
+      .catch(() => done(null));
   });
   return {promise, cancel};
 }
