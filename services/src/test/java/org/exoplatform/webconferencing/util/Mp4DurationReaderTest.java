@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -134,6 +135,21 @@ class Mp4DurationReaderTest {
     assertNull(Mp4DurationReader.readSeconds(write(text).getAbsolutePath()));
     assertNull(Mp4DurationReader.readSeconds(new File("does-not-exist.mp4").getAbsolutePath()));
     assertNull(Mp4DurationReader.readSeconds(null));
+  }
+
+  /**
+   * A movie header declaring more bytes than the {@code moov} holding it is
+   * malformed: it has no length, even when the file goes on after it.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aBoxOverrunningItsParentIsNoLength() throws Exception {
+    byte[] mvhd = mvhdV0(1000, 60_000);
+    ByteBuffer.wrap(mvhd).putInt(mvhd.length + 64);
+    File file = write(ftyp(), box("moov", mvhd), mdat(64));
+
+    assertNull(Mp4DurationReader.readSeconds(file.getAbsolutePath()));
   }
 
 }
