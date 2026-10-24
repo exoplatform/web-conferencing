@@ -56,6 +56,18 @@
                                                                  <p class="status">$DESCRIPTION </p>
                                                         </td>
                                                     </tr>
+                                                    <% if (CALL_TITLE != null && !CALL_TITLE.isEmpty()) { %>
+                                                    <tr>
+                                                        <td align="left" valign="top" bgcolor="#ffffff" style="vertical-align: top; background-color: #ffffff; padding: 0 15px 10px 0;">
+                                                            <p class="meeting" style="margin: 0; color: #333333; font-size: 13px; line-height: 18px;">
+                                                                <strong>$CALL_TITLE</strong>
+                                                                <% if (CALL_START_DATE != null && !CALL_START_DATE.isEmpty()) { %>
+                                                                <br/><%=_ctx.appRes("Notification.label.callStartDate")%> $CALL_START_DATE
+                                                                <% } %>
+                                                            </p>
+                                                        </td>
+                                                    </tr>
+                                                    <% } %>
                                                     <tr>
                                                         <td align="left" bgcolor="#ffffff" width="90%" align="top" style="width: 90%; background-color: #ffffff; padding: 0 0; vertical-align: top;">
                                                             <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#f9f9f9" align="center" style="margin:0 0 10px; width: 100%; background-color: #f9f9f9; font-size: 13px; color:#333333;line-height: 18px;">

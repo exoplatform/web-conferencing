@@ -36,6 +36,15 @@ public class NotificationConstants {
 
     public static final ArgumentLiteral<String> CALL_OWNER  = new ArgumentLiteral<>(String.class, "CALL_OWNER");
 
+    /** The meeting's name: the event's title for a space event, the conversation's name for a chat or one-to-one call. */
+    public static final ArgumentLiteral<String> CALL_TITLE  = new ArgumentLiteral<>(String.class, "CALL_TITLE");
+
+    /** The moment the recorded meeting started, in milliseconds since the epoch. */
+    public static final ArgumentLiteral<String> CALL_START_DATE  = new ArgumentLiteral<>(String.class, "CALL_START_DATE");
+
+    /**
+     * Prevents instantiation of this constants class.
+     */
     private NotificationConstants() {
         throw new IllegalStateException("Utility class");
     }
