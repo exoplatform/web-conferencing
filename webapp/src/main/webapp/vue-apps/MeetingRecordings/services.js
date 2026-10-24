@@ -116,17 +116,25 @@ export function retryTranscription(documentId) {
  * Reads how long a recording lasts from the media itself, for a recording
  * saved before the server stored its length: a detached video element loads
  * the metadata only, which the documents content REST serves through byte
- * ranges. The load is stopped once the length is known, or after
- * PROBE_TIMEOUT_MS. Resolves with null whatever goes wrong.
+ * ranges. The load is stopped once the length is known, after
+ * PROBE_TIMEOUT_MS, or when the caller cancels it. The promise resolves with
+ * null whatever goes wrong, and with null on a cancel.
  *
  * @param {String} documentId - the recording's document id
- * @returns {Promise<Number>} the duration in seconds, or null
+ * @returns {Object} {promise, cancel}: promise resolves with the duration in
+ *          seconds, or null; cancel stops the load
  */
 export function probeRecordingDuration(documentId) {
-  return new Promise(resolve => {
+  let cancel = null;
+  const promise = new Promise(resolve => {
     const video = document.createElement('video');
     let timeout = null;
+    let over = false;
     const done = duration => {
+      if (over) {
+        return;
+      }
+      over = true;
       window.clearTimeout(timeout);
       video.onloadedmetadata = null;
       video.onerror = null;
@@ -139,6 +147,8 @@ export function probeRecordingDuration(documentId) {
     video.muted = true;
     video.onloadedmetadata = () => done(video.duration);
     video.onerror = () => done(null);
+    cancel = () => done(null);
     video.src = `/${eXo.env.portal.rest}/v1/documents/content/${encodeURIComponent(documentId)}`;
   });
+  return {promise, cancel};
 }

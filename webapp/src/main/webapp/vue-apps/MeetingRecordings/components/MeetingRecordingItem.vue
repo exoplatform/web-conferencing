@@ -204,8 +204,8 @@ export default {
     probeKey() {
       const mimeType = this.recording && this.recording.mimeType || '';
       const playable = !mimeType || mimeType.indexOf('video/') === 0 || mimeType.indexOf('audio/') === 0;
-      const stored = this.recording && this.recording.durationSeconds;
-      return playable && !(typeof stored === 'number' && stored > 0) && this.recording && this.recording.documentId || null;
+      const known = recordingDuration(this.recording, this.transcript);
+      return playable && !known && this.recording && this.recording.documentId || null;
     },
     /**
      * The recording's size, as a file list shows it.
@@ -292,6 +292,7 @@ export default {
     probeKey: {
       immediate: true,
       handler(documentId) {
+        this.stopProbe();
         this.probedDuration = null;
         if (documentId) {
           this.probeDuration(documentId);
@@ -307,6 +308,9 @@ export default {
         }
       },
     },
+  },
+  beforeDestroy() {
+    this.stopProbe();
   },
   methods: {
     /**
@@ -343,20 +347,35 @@ export default {
       }
     },
     /**
-     * Reads the recording's length from the media. An answer that arrives
-     * once the row shows another recording, or once the server or the
-     * transcription gave the length, is dropped.
+     * Reads the recording's length from the media. The probe is stopped, and
+     * its answer dropped, once the row shows another recording, once the
+     * transcription gives the length, or when the row goes away.
      *
      * @param {String} documentId - the recording's document id
      * @returns {Promise} resolved once the probe is over
      */
     probeDuration(documentId) {
-      return probeRecordingDuration(documentId)
+      const probe = probeRecordingDuration(documentId);
+      this.probe = probe;
+      return probe.promise
         .then(duration => {
-          if (this.probeKey === documentId) {
+          if (this.probe === probe) {
+            this.probe = null;
             this.probedDuration = duration;
           }
         });
+    },
+    /**
+     * Stops the media probe under way, if any, so that its video stops
+     * loading.
+     *
+     * @returns {void}
+     */
+    stopProbe() {
+      if (this.probe) {
+        this.probe.cancel();
+        this.probe = null;
+      }
     },
     /**
      * Reads the start of a ready transcript. An answer that arrives once the
