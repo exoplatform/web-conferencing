@@ -23,9 +23,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
           :title="recording.title"
           class="text-truncate primary--text"
           target="_blank"
-          rel="noopener">
+          rel="noopener"
+          @click="openRecording">
           <v-icon size="12" class="primary--text me-1">fas fa-play</v-icon>
           {{ label }}
+        </a>
+        <a
+          :href="recording.previewUrl"
+          :title="$t('visio.recordings.openInDocuments')"
+          :aria-label="$t('visio.recordings.openInDocuments')"
+          class="webconferencing-meeting-recording-documents flex-shrink-0 ms-1"
+          target="_blank"
+          rel="noopener">
+          <v-icon size="12" class="icon-default-color">fas fa-external-link-alt</v-icon>
         </a>
         <!--
           The extension point for actions on this recording (the enterprise
@@ -86,8 +96,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import {formatSize, getOccurrenceBounds, recordingStartTime, transcriptChip, transcriptText} from '../js/MeetingRecordingsModel.js';
-import {getTranscriptionText} from '../services.js';
+import {durationParts, formatSize, getOccurrenceBounds, recordingDuration, recordingStartTime, transcriptChip, transcriptText} from '../js/MeetingRecordingsModel.js';
+import {getTranscriptionText, probeRecordingDuration} from '../services.js';
 
 export default {
   props: {
@@ -103,9 +113,14 @@ export default {
       type: Object,
       default: null,
     },
+    several: {
+      type: Boolean,
+      default: false,
+    },
   },
   data: () => ({
     excerpt: null,
+    probedDuration: null,
   }),
   computed: {
     /**
@@ -117,15 +132,42 @@ export default {
       return recordingStartTime(this.recording);
     },
     /**
-     * The row's label: the meeting is the drawer's own subject, so a
-     * recording is named by when it started, with its day when that is not
-     * the occurrence's.
+     * How long the recording lasts: stored by the server, else measured by
+     * its transcription, else read from the media.
      *
-     * @returns {String} the translated label
+     * @returns {Number} the duration in seconds, or null while unknown
      */
-    label() {
+    duration() {
+      return recordingDuration(this.recording, this.transcript) || this.probedDuration;
+    },
+    /**
+     * The recording's length as the row writes it: « 17 s », « 58 min » or
+     * « 1 h 05 ».
+     *
+     * @returns {String} the translated length, or null while unknown
+     */
+    length() {
+      const parts = durationParts(this.duration);
+      switch (parts && parts.unit) {
+      case 'seconds':
+        return this.$t('visio.recordings.duration.seconds', {0: parts.value});
+      case 'minutes':
+        return this.$t('visio.recordings.duration.minutes', {0: parts.value});
+      case 'hours':
+        return this.$t('visio.recordings.duration.hours', {0: parts.value, 1: parts.minutes});
+      default:
+        return null;
+      }
+    },
+    /**
+     * When the recording started, as the row writes it: its time, with its
+     * day when that is not the occurrence's.
+     *
+     * @returns {String} the formatted start, or null when unknown
+     */
+    start() {
       if (!this.startTime) {
-        return this.recording && this.recording.title;
+        return null;
       }
       const start = new Date(this.startTime);
       const bounds = getOccurrenceBounds(this.event);
@@ -134,7 +176,36 @@ export default {
         ? {hour: '2-digit', minute: '2-digit'}
         : {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'};
       const language = eXo && eXo.env && eXo.env.portal && eXo.env.portal.language || navigator.language;
-      return this.$t('visio.recordings.recording', {0: new Intl.DateTimeFormat(language, options).format(start)});
+      return new Intl.DateTimeFormat(language, options).format(start);
+    },
+    /**
+     * The row's label. The meeting is the drawer's own subject, so its date
+     * says nothing: a recording is named by its length, and by when it
+     * started too when the block holds several. Until the length is known, by
+     * when it started.
+     *
+     * @returns {String} the translated label
+     */
+    label() {
+      if (this.length && this.several && this.start) {
+        return this.$t('visio.recordings.recordingStarted', {0: this.length, 1: this.start});
+      }
+      if (this.length || this.start) {
+        return this.$t('visio.recordings.recording', {0: this.length || this.start});
+      }
+      return this.recording && this.recording.title;
+    },
+    /**
+     * What identifies the media to probe for its length: a video or audio
+     * recording whose length neither the server nor its transcription gives.
+     *
+     * @returns {String} the document id, or null when there is nothing to probe
+     */
+    probeKey() {
+      const mimeType = this.recording && this.recording.mimeType || '';
+      const playable = !mimeType || mimeType.indexOf('video/') === 0 || mimeType.indexOf('audio/') === 0;
+      const stored = this.recording && this.recording.durationSeconds;
+      return playable && !(typeof stored === 'number' && stored > 0) && this.recording && this.recording.documentId || null;
     },
     /**
      * The recording's size, as a file list shows it.
@@ -218,6 +289,15 @@ export default {
     },
   },
   watch: {
+    probeKey: {
+      immediate: true,
+      handler(documentId) {
+        this.probedDuration = null;
+        if (documentId) {
+          this.probeDuration(documentId);
+        }
+      },
+    },
     excerptKey: {
       immediate: true,
       handler(documentId) {
@@ -230,11 +310,26 @@ export default {
   },
   methods: {
     /**
-     * Opens the recording's transcript. A cancelable documents-open-transcript
-     * event carries the document id, for a Transcript drawer to cancel when
-     * it opens it; the documents add-on has no such drawer yet, so the event
-     * stays uncancelled and the Documents preview opens, as it does wherever
-     * no drawer is loaded.
+     * Opens a recording clicked by its name in the transcript drawer, which
+     * plays it beside its transcript. A click with a modifier key or another
+     * button keeps the link's own behaviour, a new tab on the Documents
+     * preview.
+     *
+     * @param {MouseEvent} event - the click
+     * @returns {void}
+     */
+    openRecording(event) {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      event.preventDefault();
+      this.openTranscript();
+    },
+    /**
+     * Opens the recording's transcript drawer. A cancelable
+     * documents-open-transcript event carries the document id; the documents
+     * drawer cancels it when it opens. Where nothing cancels it (no drawer on
+     * the page, or an edition without one), the Documents preview opens.
      *
      * @returns {void}
      */
@@ -246,6 +341,22 @@ export default {
       if (document.dispatchEvent(event)) {
         window.open(this.recording.previewUrl, '_blank', 'noopener');
       }
+    },
+    /**
+     * Reads the recording's length from the media. An answer that arrives
+     * once the row shows another recording, or once the server or the
+     * transcription gave the length, is dropped.
+     *
+     * @param {String} documentId - the recording's document id
+     * @returns {Promise} resolved once the probe is over
+     */
+    probeDuration(documentId) {
+      return probeRecordingDuration(documentId)
+        .then(duration => {
+          if (this.probeKey === documentId) {
+            this.probedDuration = duration;
+          }
+        });
     },
     /**
      * Reads the start of a ready transcript. An answer that arrives once the

@@ -21,6 +21,9 @@ const RECORDINGS_URL = '/webconferencing/rest/recordings/byConference';
 /** The transcription state REST of documents. */
 const TRANSCRIPTIONS_URL = '/documents-portlet/rest/transcriptions';
 
+/** How long the media probe waits for a recording's metadata. */
+const PROBE_TIMEOUT_MS = 20000;
+
 /**
  * Reads the recordings of the call a conference URL names, as the viewer can
  * open them. The server finds the call from the URL, so no provider script is
@@ -106,5 +109,36 @@ export function retryTranscription(documentId) {
     if (!resp.ok) {
       throw new Error(`transcription retry refused: ${resp.status}`);
     }
+  });
+}
+
+/**
+ * Reads how long a recording lasts from the media itself, for a recording
+ * saved before the server stored its length: a detached video element loads
+ * the metadata only, which the documents content REST serves through byte
+ * ranges. The load is stopped once the length is known, or after
+ * PROBE_TIMEOUT_MS. Resolves with null whatever goes wrong.
+ *
+ * @param {String} documentId - the recording's document id
+ * @returns {Promise<Number>} the duration in seconds, or null
+ */
+export function probeRecordingDuration(documentId) {
+  return new Promise(resolve => {
+    const video = document.createElement('video');
+    let timeout = null;
+    const done = duration => {
+      window.clearTimeout(timeout);
+      video.onloadedmetadata = null;
+      video.onerror = null;
+      video.removeAttribute('src');
+      video.load();
+      resolve(typeof duration === 'number' && Number.isFinite(duration) && duration > 0 ? duration : null);
+    };
+    timeout = window.setTimeout(() => done(null), PROBE_TIMEOUT_MS);
+    video.preload = 'metadata';
+    video.muted = true;
+    video.onloadedmetadata = () => done(video.duration);
+    video.onerror = () => done(null);
+    video.src = `/${eXo.env.portal.rest}/v1/documents/content/${encodeURIComponent(documentId)}`;
   });
 }

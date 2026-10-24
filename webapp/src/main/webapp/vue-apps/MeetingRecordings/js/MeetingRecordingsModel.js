@@ -263,6 +263,51 @@ export function recordingStartTime(recording) {
 }
 
 /**
+ * How long a recording lasts, in seconds: the length the server read from
+ * its file when it was saved, else the length its transcription measured.
+ *
+ * @param {Object} recording - a recording of the recordings REST
+ * @param {Object} transcript - its transcription state, or null
+ * @returns {Number} the duration, or null when neither tells it
+ */
+export function recordingDuration(recording, transcript) {
+  const stored = recording && recording.durationSeconds;
+  if (typeof stored === 'number' && stored > 0) {
+    return stored;
+  }
+  const measured = transcript && transcript.available === true && transcript.durationSeconds;
+  return typeof measured === 'number' && measured > 0 ? measured : null;
+}
+
+/**
+ * Splits a duration the way the block writes it: seconds under a minute,
+ * minutes under an hour, then hours and two-digit minutes (« 1 h 05 »).
+ * Minutes are rounded to the nearest one.
+ *
+ * @param {Number} seconds - the duration
+ * @returns {Object} {unit, value, minutes}: unit is seconds, minutes or
+ *          hours; minutes is the two-digit remainder for hours; or null when
+ *          the duration is unknown
+ */
+export function durationParts(seconds) {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds <= 0) {
+    return null;
+  }
+  if (seconds < 59.5) {
+    return {unit: 'seconds', value: Math.max(1, Math.round(seconds))};
+  }
+  const totalMinutes = Math.round(seconds / 60);
+  if (totalMinutes < 60) {
+    return {unit: 'minutes', value: totalMinutes};
+  }
+  return {
+    unit: 'hours',
+    value: Math.floor(totalMinutes / 60),
+    minutes: String(totalMinutes % 60).padStart(2, '0'),
+  };
+}
+
+/**
  * Formats a size in bytes the way a file list shows it: one decimal under
  * ten units, none above.
  *

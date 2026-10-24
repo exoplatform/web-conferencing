@@ -112,6 +112,7 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
                                      RecordingDateUtils.formatDate(recording.getStartedDate()),
                                      recording.getSizeBytes(),
                                      recording.getMimeType(),
+                                     recording.getDurationSeconds(),
                                      recording.getPreviewUrl());
   }
 
