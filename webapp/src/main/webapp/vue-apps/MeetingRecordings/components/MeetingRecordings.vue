@@ -274,7 +274,7 @@ export default {
         });
     },
     /**
-     * Asks for a failed transcription to run again, then shows its new state.
+     * Asks for a failed or stalled transcription to run again, then shows its new state.
      *
      * @param {String} documentId - the recording's document id
      * @returns {Promise} resolved once the new state is shown

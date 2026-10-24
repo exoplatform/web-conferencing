@@ -217,7 +217,7 @@ export default {
     /**
      * The transcript state the recording's transcription calls for.
      *
-     * @returns {Object} {kind, progress, error}, or null for no chip
+     * @returns {Object} {kind, progress, error, retryable}, or null for no chip
      */
     chip() {
       return transcriptChip(this.transcript, Date.now());
