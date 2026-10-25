@@ -389,6 +389,12 @@ public class WebConferencingService implements Startable {
 
   /** The Constant OWNER_TYPE_CHATROOM. */
   public static final String                         OWNER_TYPE_CHATROOM    = "chat_room";
+
+  /**
+   * The most attendees a recording's call may list for them to be taken as the
+   * people who may be its speakers (EXO-92126).
+   */
+  public static final int                            MAX_RECORDING_ATTENDEES = 20;
   
   /** The Constant CMS_GROUPS_PATH. */
   public static final String                         CMS_GROUPS_PATH        = "groupsPath";
@@ -4167,6 +4173,51 @@ public class WebConferencingService implements Startable {
       }
     }
     return null;
+  }
+
+  /**
+   * The attendees of the call a recording was made in (EXO-92126), for the
+   * documents add-on to take as the people who may be its speakers, read from
+   * what the call stores rather than from its owner's members: the users a meeting of a space's agenda invited
+   * one by one, the users a chat room call or a one-to-one call was placed
+   * with (for a chat room, its members when the call was placed: who actually
+   * joined is not kept once the call ends), the owner of a one-to-one call
+   * included. A call in a space, a meeting
+   * that invited a whole space (open to all its members), a call that lists more
+   * than {@value #MAX_RECORDING_ATTENDEES} people or none, and a call no longer
+   * known have no attendee list.
+   *
+   * @param documentId the recording file's UUID
+   * @return the attendees' user names, guests left out; <code>null</code> when
+   *         the recording's call gives no attendee list
+   */
+  public List<String> getRecordingAttendees(String documentId) {
+    try {
+      String callId = recordingStorage.findCallId(documentId);
+      CallInfo call = callId == null ? null : getCall(callId);
+      String ownerType = call == null || call.getOwner() == null ? null : call.getOwner().getType();
+      Stream<String> people;
+      if (OWNER_TYPE_SPACEEVENT.equals(ownerType)) {
+        if (!originsStorage.findCallOrigins(callId, OWNER_TYPE_SPACE).isEmpty()) {
+          return null; // NOSONAR null tells a call with no attendee list from one with none
+        }
+        people = originsStorage.findCallOrigins(callId, OWNER_TYPE_USER).stream().map(OriginEntity::getId);
+      } else if (OWNER_TYPE_USER.equals(ownerType) || OWNER_TYPE_CHATROOM.equals(ownerType)) {
+        Stream<String> owner = OWNER_TYPE_USER.equals(ownerType) ? Stream.of(call.getOwner().getId()) : Stream.empty();
+        people = Stream.concat(owner,
+                               participantsStorage.findCallParts(callId)
+                                                  .stream()
+                                                  .filter(participant -> UserInfo.TYPE_NAME.equals(participant.getType()))
+                                                  .map(ParticipantEntity::getId));
+      } else {
+        return null; // NOSONAR
+      }
+      List<String> attendees = people.filter(StringUtils::isNotBlank).distinct().toList();
+      return attendees.isEmpty() || attendees.size() > MAX_RECORDING_ATTENDEES ? null : attendees;
+    } catch (InvalidCallException | RepositoryException | PersistenceException e) {
+      LOG.debug("The attendees of the call of recording {} cannot be read", documentId, e);
+      return null; // NOSONAR
+    }
   }
 
   /**

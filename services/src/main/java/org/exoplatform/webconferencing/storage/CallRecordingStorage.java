@@ -180,6 +180,28 @@ public class CallRecordingStorage {
   }
 
   /**
+   * The call a stamped recording was made in (EXO-92126), read as the system.
+   *
+   * @param documentId the recording file's UUID
+   * @return the call id, or <code>null</code> when the file does not exist or
+   *         was not stamped with a call
+   * @throws RepositoryException when the repository fails
+   */
+  public String findCallId(String documentId) throws RepositoryException {
+    SessionProvider sessionProvider = SessionProvider.createSystemProvider();
+    try {
+      ManageableRepository repository = repositoryService.getCurrentRepository();
+      Session session = sessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
+      Node node = session.getNodeByUUID(documentId);
+      return node.isNodeType(EXO_CALL_RECORDING) && node.hasProperty(EXO_CALL_ID) ? node.getProperty(EXO_CALL_ID).getString() : null;
+    } catch (ItemNotFoundException e) {
+      return null;
+    } finally {
+      sessionProvider.close();
+    }
+  }
+
+  /**
    * Builds the JCR-SQL statement listing the stamped recordings of a call,
    * newest first, optionally within a range of recording dates.
    *
