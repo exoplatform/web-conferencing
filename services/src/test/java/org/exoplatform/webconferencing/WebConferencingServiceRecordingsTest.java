@@ -578,8 +578,7 @@ class WebConferencingServiceRecordingsTest {
   /**
    * A recording gives no attendee list when it was not made in a known call,
    * when its call is a space's or a meeting that invited a whole space, both
-   * open to all their members, or when it lists too many people or none
-   * (EXO-92126).
+   * open to all their members, or when it lists no one (EXO-92126).
    *
    * @throws Exception never
    */
@@ -608,21 +607,38 @@ class WebConferencingServiceRecordingsTest {
     when(origins().findCallOrigins("g_all", WebConferencingService.OWNER_TYPE_SPACE)).thenReturn(List.of(origin("sales")));
     assertNull(service.getRecordingAttendees("all-hands"));
 
-    when(recordingStorage.findCallId("crowd")).thenReturn("p_crowd");
-    doReturn(new CallInfo("p_crowd", "Everyone", new UserInfo("mary", "Mary", "Doe"), "jitsi")).when(service).getCall("p_crowd");
-    List<ParticipantEntity> crowd = new ArrayList<>();
-    for (int i = 0; i < WebConferencingService.MAX_RECORDING_ATTENDEES; i++) {
-      crowd.add(part("user" + i, UserInfo.TYPE_NAME));
-    }
-    when(participants().findCallParts("p_crowd")).thenReturn(crowd);
-    assertNull(service.getRecordingAttendees("crowd"));
-
     when(recordingStorage.findCallId("empty-room")).thenReturn("g_empty");
     GroupInfo room = mock(GroupInfo.class);
     when(room.getType()).thenReturn(WebConferencingService.OWNER_TYPE_CHATROOM);
     doReturn(new CallInfo("g_empty", "Empty", room, "jitsi")).when(service).getCall("g_empty");
     when(participants().findCallParts("g_empty")).thenReturn(List.of(part("guest@example.com", GuestInfo.TYPE_NAME)));
     assertNull(service.getRecordingAttendees("empty-room"));
+  }
+
+  /**
+   * A call listing exactly {@value WebConferencingService#MAX_RECORDING_ATTENDEES}
+   * people, its owner included, still gives its attendee list; one more and it
+   * gives none (EXO-92126).
+   */
+  @Test
+  void aRecordingGivesItsAttendeesUpToTheMostACallMayList() throws Exception {
+    when(recordingStorage.findCallId("full")).thenReturn("p_full");
+    doReturn(new CallInfo("p_full", "Full", new UserInfo("mary", "Mary", "Doe"), "jitsi")).when(service).getCall("p_full");
+    List<ParticipantEntity> full = new ArrayList<>();
+    List<String> expected = new ArrayList<>(List.of("mary"));
+    for (int i = 0; i < WebConferencingService.MAX_RECORDING_ATTENDEES - 1; i++) {
+      full.add(part("user" + i, UserInfo.TYPE_NAME));
+      expected.add("user" + i);
+    }
+    when(participants().findCallParts("p_full")).thenReturn(full);
+    assertEquals(expected, service.getRecordingAttendees("full"));
+
+    when(recordingStorage.findCallId("crowd")).thenReturn("p_crowd");
+    doReturn(new CallInfo("p_crowd", "Everyone", new UserInfo("mary", "Mary", "Doe"), "jitsi")).when(service).getCall("p_crowd");
+    List<ParticipantEntity> crowd = new ArrayList<>(full);
+    crowd.add(part("one-more", UserInfo.TYPE_NAME));
+    when(participants().findCallParts("p_crowd")).thenReturn(crowd);
+    assertNull(service.getRecordingAttendees("crowd"));
   }
 
   /**
