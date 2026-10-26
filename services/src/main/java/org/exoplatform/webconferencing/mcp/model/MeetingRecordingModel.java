@@ -16,6 +16,8 @@
  */
 package org.exoplatform.webconferencing.mcp.model;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -33,6 +35,10 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  * @param durationSeconds how long the recording lasts, in seconds, absent
  *          when its file does not tell it
  * @param previewUrl the link opening the recording in Documents
+ * @param chapters the chapters of the recording's transcript, each with the
+ *          moment it starts and its title, absent when it has none
+ * @param speakers the names of the speakers of the recording's transcript,
+ *          absent when it does not tell them apart
  */
 @JsonInclude(value = Include.NON_EMPTY)
 public record MeetingRecordingModel(String documentId,
@@ -42,5 +48,7 @@ public record MeetingRecordingModel(String documentId,
                                     long sizeBytes,
                                     String mimeType,
                                     Long durationSeconds,
-                                    String previewUrl) {
+                                    String previewUrl,
+                                    List<RecordingChapterModel> chapters,
+                                    List<String> speakers) {
 }

@@ -106,6 +106,12 @@
       <artifactId>mcp-server-tools</artifactId>
       <scope>provided</scope>
     </dependency>
+    <!-- Documents API (the transcript chapters and speakers of a recording) -->
+    <dependency>
+      <groupId>org.exoplatform.documents</groupId>
+      <artifactId>documents-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <build>
     <resources>
