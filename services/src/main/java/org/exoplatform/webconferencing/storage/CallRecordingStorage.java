@@ -94,6 +94,9 @@ public class CallRecordingStorage {
   /** When the recording was saved. */
   public static final String               EXO_RECORDED_DATE     = "exo:recordedDate";
 
+  /** How long the recording lasts, in seconds, when its file tells it. */
+  public static final String               EXO_CALL_DURATION     = "exo:callDuration";
+
   /** The folder that holds the recordings of a space or of a user. */
   public static final String               RECORDINGS_FOLDER     = "recordings";
 
@@ -253,9 +256,16 @@ public class CallRecordingStorage {
    * @param call the call, or <code>null</code> when it could not be read
    * @param uploadInfo the upload info, for the owner when the call is unknown
    * @param recordedDate when the recording is saved
+   * @param durationSeconds how long the recording lasts, or <code>null</code>
+   *          when its file does not tell it
    * @return true when the file is stamped
    */
-  public boolean stamp(Node fileNode, String callId, CallInfo call, UploadFileInfo uploadInfo, Calendar recordedDate) {
+  public boolean stamp(Node fileNode,
+                       String callId,
+                       CallInfo call,
+                       UploadFileInfo uploadInfo,
+                       Calendar recordedDate,
+                       Long durationSeconds) {
     try {
       fileNode.addMixin(EXO_CALL_RECORDING);
       fileNode.setProperty(EXO_CALL_ID, callId);
@@ -282,10 +292,33 @@ public class CallRecordingStorage {
       if (title != null) {
         fileNode.setProperty(EXO_TITLE, title);
       }
-      return true;
     } catch (RepositoryException e) {
       LOG.warn("Cannot stamp the recording of call {} with its call, it is saved without it", callId, e);
       return false;
+    }
+    stampDuration(fileNode, callId, durationSeconds);
+    return true;
+  }
+
+  /**
+   * Writes how long a stamped recording lasts. Node types are registered only
+   * when they do not exist yet, so an instance that registered
+   * {@value #EXO_CALL_RECORDING} before it carried {@value #EXO_CALL_DURATION}
+   * refuses the property: the recording then keeps its stamp without its
+   * length, which the client reads from the media itself.
+   *
+   * @param fileNode the stamped recording's file
+   * @param callId the call id, for the log
+   * @param durationSeconds the duration, or <code>null</code> to write nothing
+   */
+  private void stampDuration(Node fileNode, String callId, Long durationSeconds) {
+    if (durationSeconds == null) {
+      return;
+    }
+    try {
+      fileNode.setProperty(EXO_CALL_DURATION, durationSeconds.longValue());
+    } catch (RepositoryException e) {
+      LOG.warn("Cannot store the duration of the recording of call {}, it is saved without it", callId, e);
     }
   }
 
@@ -506,6 +539,7 @@ public class CallRecordingStorage {
   private RecordingInfo toRecordingInfo(Node file) throws RepositoryException {
     String title = file.hasProperty(EXO_TITLE) ? file.getProperty(EXO_TITLE).getString() : file.getName();
     Date recordedDate = null;
+    Long durationSeconds = file.hasProperty(EXO_CALL_DURATION) ? file.getProperty(EXO_CALL_DURATION).getLong() : null;
     long size = -1;
     String mimeType = null;
     Node content = file.hasNode(JCR_CONTENT) ? file.getNode(JCR_CONTENT) : null;
@@ -527,7 +561,8 @@ public class CallRecordingStorage {
                              recordedDate,
                              recordingStart(file.getName(), recorderZone),
                              size,
-                             mimeType);
+                             mimeType,
+                             durationSeconds);
   }
 
   /**

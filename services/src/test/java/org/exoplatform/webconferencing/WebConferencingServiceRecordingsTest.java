@@ -88,6 +88,7 @@ import org.exoplatform.webconferencing.dao.ParticipantDAO;
 import org.exoplatform.webconferencing.model.ConferenceCall;
 import org.exoplatform.webconferencing.model.RecordingInfo;
 import org.exoplatform.webconferencing.storage.CallRecordingStorage;
+import org.exoplatform.webconferencing.util.Mp4Fixtures;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -189,8 +190,9 @@ class WebConferencingServiceRecordingsTest {
   @Test
   void aSavedRecordingIsStampedWithItsCall() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
-    File stored = File.createTempFile("recording", ".mp4");
-    stored.deleteOnExit();
+    File stored = Mp4Fixtures.write(Mp4Fixtures.ftyp(),
+                                    Mp4Fixtures.mdat(64),
+                                    Mp4Fixtures.box("moov", Mp4Fixtures.mvhdV0(1000, 3_482_000)));
     UploadResource resource = mock(UploadResource.class);
     when(uploadService.getUploadResource(anyString())).thenReturn(resource);
     when(resource.getStatus()).thenReturn(UploadResource.UPLOADED_STATUS);
@@ -232,7 +234,8 @@ class WebConferencingServiceRecordingsTest {
     service.uploadFile(uploadInfo(), request);
 
     InOrder order = inOrder(recordingStorage, documents);
-    order.verify(recordingStorage).stamp(eq(fileNode), eq(CALL_ID), eq(call), any(UploadFileInfo.class), any(Calendar.class));
+    order.verify(recordingStorage)
+         .stamp(eq(fileNode), eq(CALL_ID), eq(call), any(UploadFileInfo.class), any(Calendar.class), eq(3482L));
     order.verify(documents).save();
   }
 

@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -51,6 +52,7 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.nodetype.NoSuchNodeTypeException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
@@ -266,8 +268,8 @@ class CallRecordingStorageTest {
   }
 
   /**
-   * A saved recording records its call, provider, owner, title, start and
-   * recording date, and shows the meeting's title.
+   * A saved recording records its call, provider, owner, title, start,
+   * recording date and length, and shows the meeting's title.
    *
    * @throws Exception never
    */
@@ -282,7 +284,7 @@ class CallRecordingStorageTest {
     call.setStartDate(start);
     Calendar recordedDate = new GregorianCalendar();
 
-    assertTrue(storage.stamp(fileNode, CALL_ID, call, uploadInfo(), recordedDate));
+    assertTrue(storage.stamp(fileNode, CALL_ID, call, uploadInfo(), recordedDate, 3482L));
 
     verify(fileNode).addMixin("exo:callRecording");
     verify(fileNode).setProperty("exo:callId", CALL_ID);
@@ -293,11 +295,13 @@ class CallRecordingStorageTest {
     verify(fileNode).setProperty(eq("exo:callStartDate"), any(Calendar.class));
     verify(fileNode).setProperty("exo:recordedDate", recordedDate);
     verify(fileNode).setProperty("exo:title", CallRecordingStorage.recordingTitle("ACME demo", recordedDate));
+    verify(fileNode).setProperty("exo:callDuration", 3482L);
   }
 
   /**
    * When the call cannot be read, the stamp still records the call id and the
-   * owner the upload token names, and keeps the file's own title.
+   * owner the upload token names, and keeps the file's own title; a file
+   * that does not tell its length gets none.
    *
    * @throws Exception never
    */
@@ -306,7 +310,7 @@ class CallRecordingStorageTest {
     Node fileNode = mock(Node.class);
     Calendar recordedDate = new GregorianCalendar();
 
-    assertTrue(storage.stamp(fileNode, CALL_ID, null, uploadInfo(), recordedDate));
+    assertTrue(storage.stamp(fileNode, CALL_ID, null, uploadInfo(), recordedDate, null));
 
     verify(fileNode).setProperty("exo:callId", CALL_ID);
     verify(fileNode).setProperty("exo:callOwnerType", "space_event");
@@ -314,6 +318,25 @@ class CallRecordingStorageTest {
     verify(fileNode).setProperty("exo:recordedDate", recordedDate);
     verify(fileNode, never()).setProperty(eq("exo:title"), anyString());
     verify(fileNode, never()).setProperty(eq("exo:callProvider"), anyString());
+    verify(fileNode, never()).setProperty(eq("exo:callDuration"), anyLong());
+  }
+
+  /**
+   * An instance that registered the mixin before it carried the length
+   * refuses the property: the recording keeps the rest of its stamp.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aRefusedLengthKeepsTheStamp() throws Exception {
+    Node fileNode = mock(Node.class);
+    Calendar recordedDate = new GregorianCalendar();
+    lenient().doThrow(new ConstraintViolationException("exo:callDuration")).when(fileNode).setProperty("exo:callDuration", 60L);
+
+    assertTrue(storage.stamp(fileNode, CALL_ID, null, uploadInfo(), recordedDate, 60L));
+
+    verify(fileNode).setProperty("exo:callId", CALL_ID);
+    verify(fileNode).setProperty("exo:recordedDate", recordedDate);
   }
 
   /**
@@ -327,7 +350,7 @@ class CallRecordingStorageTest {
     Node fileNode = mock(Node.class);
     doThrow(new NoSuchNodeTypeException("exo:callRecording")).when(fileNode).addMixin("exo:callRecording");
 
-    assertFalse(storage.stamp(fileNode, CALL_ID, null, uploadInfo(), new GregorianCalendar()));
+    assertFalse(storage.stamp(fileNode, CALL_ID, null, uploadInfo(), new GregorianCalendar(), 60L));
   }
 
   /**
@@ -341,6 +364,10 @@ class CallRecordingStorageTest {
   void stampedAndOldRecordingsAreMergedOnce() throws Exception {
     ExtendedNode older = file("id-older", CALL_ID + "_2026-10-22-10-00-00.mp4", "2026-10-22T10:00:00Z", true, false);
     ExtendedNode newer = file("id-newer", CALL_ID + "_2026-10-23-10-00-00.mp4", "2026-10-23T10:00:00Z", true, false);
+    Property duration = mock(Property.class);
+    when(duration.getLong()).thenReturn(3482L);
+    when(newer.hasProperty("exo:callDuration")).thenReturn(true);
+    when(newer.getProperty("exo:callDuration")).thenReturn(duration);
     ExtendedNode trashed = file("id-trashed", "trashed.mp4", "2026-10-24T10:00:00Z", true, true);
     queryAnswers(older, trashed, newer);
     ExtendedNode old = file("id-old", CALL_ID + "_2026-10-01-10-00-00.mp4", "2026-10-01T11:00:00Z", false, false);
@@ -356,6 +383,8 @@ class CallRecordingStorageTest {
     assertEquals(1234L, recordings.get(0).getSizeBytes());
     assertEquals("video/mp4", recordings.get(0).getMimeType());
     assertEquals(Date.from(Instant.parse("2026-10-23T10:00:00Z")), recordings.get(0).getStartedDate());
+    assertEquals(3482L, recordings.get(0).getDurationSeconds());
+    assertNull(recordings.get(2).getDurationSeconds());
   }
 
   /**
