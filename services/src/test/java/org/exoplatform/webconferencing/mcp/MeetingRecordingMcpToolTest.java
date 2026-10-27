@@ -17,6 +17,7 @@
 package org.exoplatform.webconferencing.mcp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,13 +25,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -45,12 +49,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 
 import org.exoplatform.commons.exception.ObjectNotFoundException;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.webconferencing.WebConferencingService;
+import org.exoplatform.webconferencing.mcp.model.MeetingRecordingModel;
 import org.exoplatform.webconferencing.mcp.model.MeetingRecordingsModel;
+import org.exoplatform.webconferencing.mcp.model.RecordingChapterModel;
+import org.exoplatform.webconferencing.mcp.model.RecordingOutlineModel;
 import org.exoplatform.webconferencing.model.RecordingInfo;
 
 import tools.jackson.databind.ObjectMapper;
@@ -68,16 +76,22 @@ class MeetingRecordingMcpToolTest {
   private static final String    DEFINITIONS = "ai-tool-definitions.json";
 
   @Mock
-  private WebConferencingService webConferencingService;
+  private WebConferencingService                 webConferencingService;
 
-  private MeetingRecordingMcpTool tool;
+  @Mock
+  private ObjectProvider<RecordingOutlineReader> outlineReaderProvider;
+
+  @Mock
+  private RecordingOutlineReader                 outlineReader;
+
+  private MeetingRecordingMcpTool                tool;
 
   /**
    * The tool, with an authenticated request of john.
    */
   @BeforeEach
   void setUp() {
-    tool = new MeetingRecordingMcpTool(webConferencingService);
+    tool = new MeetingRecordingMcpTool(webConferencingService, outlineReaderProvider);
     ConversationState.setCurrent(new ConversationState(new Identity("john")));
   }
 
@@ -129,6 +143,104 @@ class MeetingRecordingMcpToolTest {
 
     assertTrue(answer.recordings().isEmpty());
     assertEquals(MeetingRecordingMcpTool.NO_RECORDING, answer.reason());
+    verify(outlineReaderProvider, never()).getIfAvailable();
+  }
+
+  /**
+   * Each recording comes with the chapters and the speakers of its transcript,
+   * read with the identity of the user listing them.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void eachRecordingComesWithItsChaptersAndSpeakers() throws Exception {
+    when(webConferencingService.getCallRecordingsByConference(eq(URL), eq("john"), isNull(), isNull()))
+                                                                                                    .thenReturn(List.of(recording("doc1")));
+    when(outlineReaderProvider.getIfAvailable()).thenReturn(outlineReader);
+    when(outlineReader.getIdentityId("john")).thenReturn(7L);
+    RecordingOutlineModel outline = new RecordingOutlineModel(List.of(new RecordingChapterModel(0, "00:00", "Welcome"),
+                                                                      new RecordingChapterModel(1380, "23:00", "Pricing")),
+                                                              List.of("John Smith", "Speaker 2"));
+    when(outlineReader.readOutline("doc1", 7L)).thenReturn(outline);
+
+    MeetingRecordingModel recording = tool.getMeetingRecordings(URL, null, null).recordings().get(0);
+
+    assertEquals(outline.chapters(), recording.chapters());
+    assertEquals(List.of("John Smith", "Speaker 2"), recording.speakers());
+    String json = new ObjectMapper().writeValueAsString(recording);
+    assertTrue(json.contains("\"chapters\":[{\"start\":0,\"time\":\"00:00\",\"title\":\"Welcome\"}"), json);
+    assertTrue(json.contains("\"speakers\":[\"John Smith\",\"Speaker 2\"]"), json);
+  }
+
+  /**
+   * Without the Documents add-on, or for a recording whose transcript has no
+   * outline, the recording is listed as before: no chapters, no speakers, not
+   * even empty ones.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aRecordingWithoutOutlineIsListedAsBefore() throws Exception {
+    when(webConferencingService.getCallRecordingsByConference(eq(URL), eq("john"), isNull(), isNull()))
+                                                                                                    .thenReturn(List.of(recording("doc1")));
+
+    MeetingRecordingModel withoutDocuments = tool.getMeetingRecordings(URL, null, null).recordings().get(0);
+
+    when(outlineReaderProvider.getIfAvailable()).thenReturn(outlineReader);
+    when(outlineReader.getIdentityId("john")).thenReturn(7L);
+    when(outlineReader.readOutline("doc1", 7L)).thenReturn(RecordingOutlineModel.EMPTY);
+    MeetingRecordingModel withoutOutline = tool.getMeetingRecordings(URL, null, null).recordings().get(0);
+
+    for (MeetingRecordingModel recording : List.of(withoutDocuments, withoutOutline)) {
+      String json = new ObjectMapper().writeValueAsString(recording);
+      assertFalse(json.contains("chapters"), json);
+      assertFalse(json.contains("speakers"), json);
+      assertTrue(json.contains("\"documentId\":\"doc1\""), json);
+    }
+  }
+
+  /**
+   * Only the newest recordings are outlined, the older ones listed alone.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void onlyTheNewestRecordingsAreOutlined() throws Exception {
+    List<RecordingInfo> found = new ArrayList<>();
+    for (int i = 0; i < MeetingRecordingMcpTool.MAX_OUTLINED + 2; i++) {
+      found.add(recording("doc" + i));
+    }
+    when(webConferencingService.getCallRecordingsByConference(eq(URL), eq("john"), isNull(), isNull())).thenReturn(found);
+    when(outlineReaderProvider.getIfAvailable()).thenReturn(outlineReader);
+    when(outlineReader.getIdentityId("john")).thenReturn(7L);
+    RecordingOutlineModel outline = new RecordingOutlineModel(List.of(new RecordingChapterModel(0, "00:00", "Welcome")),
+                                                              List.of());
+    when(outlineReader.readOutline(anyString(), eq(7L))).thenReturn(outline);
+
+    List<MeetingRecordingModel> recordings = tool.getMeetingRecordings(URL, null, null).recordings();
+
+    assertEquals(MeetingRecordingMcpTool.MAX_OUTLINED + 2, recordings.size());
+    verify(outlineReader, times(MeetingRecordingMcpTool.MAX_OUTLINED)).readOutline(anyString(), anyLong());
+    assertEquals(outline.chapters(), recordings.get(MeetingRecordingMcpTool.MAX_OUTLINED - 1).chapters());
+    verify(outlineReader, never()).readOutline("doc" + MeetingRecordingMcpTool.MAX_OUTLINED, 7L);
+    assertTrue(recordings.get(MeetingRecordingMcpTool.MAX_OUTLINED).chapters().isEmpty());
+  }
+
+  /**
+   * A user without an identity reads no outline: the Documents reads would
+   * have no rights to apply.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aUserWithoutIdentityReadsNoOutline() throws Exception {
+    when(webConferencingService.getCallRecordingsByConference(eq(URL), eq("john"), isNull(), isNull()))
+                                                                                                    .thenReturn(List.of(recording("doc1")));
+    when(outlineReaderProvider.getIfAvailable()).thenReturn(outlineReader);
+    when(outlineReader.getIdentityId("john")).thenReturn(0L);
+
+    assertEquals(1, tool.getMeetingRecordings(URL, null, null).recordings().size());
+    verify(outlineReader, never()).readOutline(anyString(), anyLong());
   }
 
   /**
@@ -288,6 +400,16 @@ class MeetingRecordingMcpToolTest {
     Method method = MeetingRecordingMcpTool.class.getMethod("getMeetingRecordings", String.class, String.class, String.class);
     assertEquals(List.of("conferenceUrl", "recordedFrom", "recordedTo"),
                  Stream.of(method.getParameters()).map(java.lang.reflect.Parameter::getName).toList());
+  }
+
+  /**
+   * A recording of the meeting.
+   *
+   * @param documentId the id of its document
+   * @return the recording
+   */
+  private static RecordingInfo recording(String documentId) {
+    return new RecordingInfo(documentId, "ACME demo", Date.from(Instant.parse("2026-10-23T10:05:00Z")), 42, "video/mp4");
   }
 
   /**

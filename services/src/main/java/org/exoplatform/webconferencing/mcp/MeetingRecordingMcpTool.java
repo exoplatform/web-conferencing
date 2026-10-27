@@ -16,10 +16,12 @@
  */
 package org.exoplatform.webconferencing.mcp;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ import org.exoplatform.commons.exception.ObjectNotFoundException;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.mcp.model.MeetingRecordingModel;
 import org.exoplatform.webconferencing.mcp.model.MeetingRecordingsModel;
+import org.exoplatform.webconferencing.mcp.model.RecordingOutlineModel;
 import org.exoplatform.webconferencing.model.RecordingInfo;
 import org.exoplatform.webconferencing.util.RecordingDateUtils;
 
@@ -62,21 +65,37 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
                                                         + "expression such as 'yesterday' or 'last week' into such a date yourself "
                                                         + "before calling the tool again.";
 
+  /**
+   * How many recordings, the newest, are listed with their chapters and
+   * speakers: reading them costs one read of each transcript, and the assistant
+   * narrows an older recording down by date anyway.
+   */
+  public static final int              MAX_OUTLINED   = 10;
+
   private final WebConferencingService webConferencingService;
+
+  private final ObjectProvider<RecordingOutlineReader> outlineReader;
 
   /**
    * Builds the tool.
    *
    * @param webConferencingService the service holding the recordings lookup
+   * @param outlineReader the reader of the recordings' chapters and speakers,
+   *          absent without the Documents add-on
    */
   @Autowired
-  public MeetingRecordingMcpTool(WebConferencingService webConferencingService) {
+  public MeetingRecordingMcpTool(WebConferencingService webConferencingService,
+                                 ObjectProvider<RecordingOutlineReader> outlineReader) {
     this.webConferencingService = webConferencingService;
+    this.outlineReader = outlineReader;
   }
 
   /**
    * Lists the recordings of the meeting behind a conference link that the
-   * current user can open, newest first ({@code get_meeting_recordings}).
+   * current user can open, newest first ({@code get_meeting_recordings}). The
+   * {@link #MAX_OUTLINED} newest come with the chapters of their transcript and
+   * the names of its speakers, read with the same user's rights, so that the
+   * assistant picks a recording and a chapter before reading any transcript.
    *
    * @param conferenceUrl the meeting link, as {@code get_event_conference}
    *          returns it
@@ -101,14 +120,17 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
     Date from = parseDateArgument("recorded_from", recordedFrom, false);
     Date to = parseDateArgument("recorded_to", recordedTo, true);
     try {
-      List<MeetingRecordingModel> recordings =
-                                             webConferencingService.getCallRecordingsByConference(conferenceUrl,
-                                                                                                  getCurrentUserName(),
-                                                                                                  from,
-                                                                                                  to)
-                                                                   .stream()
-                                                                   .map(MeetingRecordingMcpTool::toModel)
-                                                                   .toList();
+      String username = getCurrentUserName();
+      List<RecordingInfo> found = webConferencingService.getCallRecordingsByConference(conferenceUrl, username, from, to);
+      RecordingOutlineReader reader = found.isEmpty() ? null : outlineReader.getIfAvailable();
+      long identityId = reader == null ? 0 : reader.getIdentityId(username);
+      List<MeetingRecordingModel> recordings = new ArrayList<>(found.size());
+      for (RecordingInfo recording : found) {
+        boolean outlined = identityId > 0 && recordings.size() < MAX_OUTLINED;
+        RecordingOutlineModel outline = outlined ? reader.readOutline(recording.getDocumentId(), identityId)
+                                                 : RecordingOutlineModel.EMPTY;
+        recordings.add(toModel(recording, outline));
+      }
       return new MeetingRecordingsModel(recordings, recordings.isEmpty() ? NO_RECORDING : null);
     } catch (ObjectNotFoundException e) {
       String reason = WebConferencingService.RECORDINGS_OTHER_PROVIDER.equals(e.getMessage()) ? OTHER_PROVIDER : NO_RECORDING;
@@ -140,9 +162,10 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
    * Maps a recording to the tool's answer.
    *
    * @param recording the recording
+   * @param outline the chapters and speakers of its transcript
    * @return its model
    */
-  private static MeetingRecordingModel toModel(RecordingInfo recording) {
+  private static MeetingRecordingModel toModel(RecordingInfo recording, RecordingOutlineModel outline) {
     return new MeetingRecordingModel(recording.getDocumentId(),
                                      recording.getTitle(),
                                      RecordingDateUtils.formatDate(recording.getRecordedDate()),
@@ -150,7 +173,9 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
                                      recording.getSizeBytes(),
                                      recording.getMimeType(),
                                      recording.getDurationSeconds(),
-                                     recording.getPreviewUrl());
+                                     recording.getPreviewUrl(),
+                                     outline.chapters(),
+                                     outline.speakers());
   }
 
 }
