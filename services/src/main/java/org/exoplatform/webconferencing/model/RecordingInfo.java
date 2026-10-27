@@ -43,6 +43,9 @@ public class RecordingInfo {
   /** The media type of the recording. */
   private final String mimeType;
 
+  /** How long the recording lasts, in seconds, or null when unknown. */
+  private final Long   durationSeconds;
+
   /** The link opening the recording in the Documents preview. */
   private String       previewUrl;
 
@@ -75,12 +78,35 @@ public class RecordingInfo {
                        Date startedDate,
                        long sizeBytes,
                        String mimeType) {
+    this(documentId, title, recordedDate, startedDate, sizeBytes, mimeType, null);
+  }
+
+  /**
+   * Builds a recording that knows when it started and how long it lasts.
+   *
+   * @param documentId the JCR identifier of the recording's file
+   * @param title the title displayed in Documents
+   * @param recordedDate when the recording was saved
+   * @param startedDate when the recording started, or null when unknown
+   * @param sizeBytes the size of the recording, in bytes, or -1 when unknown
+   * @param mimeType the media type of the recording
+   * @param durationSeconds how long the recording lasts, in seconds, or null
+   *          when unknown
+   */
+  public RecordingInfo(String documentId,
+                       String title,
+                       Date recordedDate,
+                       Date startedDate,
+                       long sizeBytes,
+                       String mimeType,
+                       Long durationSeconds) {
     this.documentId = documentId;
     this.title = title;
     this.recordedDate = recordedDate == null ? null : new Date(recordedDate.getTime());
     this.startedDate = startedDate == null ? null : new Date(startedDate.getTime());
     this.sizeBytes = sizeBytes;
     this.mimeType = mimeType;
+    this.durationSeconds = durationSeconds;
   }
 
   /**
@@ -135,6 +161,15 @@ public class RecordingInfo {
    */
   public String getMimeType() {
     return mimeType;
+  }
+
+  /**
+   * Gets how long the recording lasts, as its file tells it.
+   *
+   * @return the duration in seconds, or null when unknown
+   */
+  public Long getDurationSeconds() {
+    return durationSeconds;
   }
 
   /**
