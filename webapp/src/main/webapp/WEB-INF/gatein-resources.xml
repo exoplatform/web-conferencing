@@ -221,4 +221,35 @@
     </depends>
   </module>
 
+  <!-- The Meeting block of the agenda drawer: a past event's recordings. The
+       module NAME must contain "AgendaExtension": AgendaCommon runs
+       includeExtensions('AgendaExtension'), which filters the loaded module
+       names, then calls the module's init(). AgendaGrp is AgendaCommon's
+       group. webConferencing is deliberately NOT a dependency: the block
+       reads the recordings REST, which finds the call from the URL server
+       side, and needs no provider script. -->
+  <module>
+    <name>WebConferencingAgendaExtension</name>
+    <load-group>AgendaGrp</load-group>
+    <script>
+      <minify>false</minify>
+      <path>/js/meetingRecordings.bundle.js</path>
+    </script>
+    <depends>
+      <module>vue</module>
+    </depends>
+    <depends>
+      <module>vuetify</module>
+    </depends>
+    <depends>
+      <module>eXoVueI18n</module>
+    </depends>
+    <depends>
+      <module>commonVueComponents</module>
+    </depends>
+    <depends>
+      <module>extensionRegistry</module>
+    </depends>
+  </module>
+
 </gatein-resources>
