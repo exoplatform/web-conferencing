@@ -22,11 +22,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
     v-if="meeting"
     :label="$t('webconferencing.recording.meeting')"
     class="webconferencingRecordingMeeting">
+    <!-- The value wraps rather than being cut, its date kept on one line: the
+         details panel is narrow, and the date tells which meeting it was. -->
     <a
       :href="meeting.url"
       :title="$t('webconferencing.recording.meeting.open', {0: meeting.title})"
-      class="text-truncate primary--text">
-      {{ meeting.title }} · {{ dateLabel }}
+      class="text-wrap text-break text-start primary--text">
+      {{ meeting.title }} · <span class="text-no-wrap">{{ dateLabel }}</span>
     </a>
   </documents-info-row>
 </template>
