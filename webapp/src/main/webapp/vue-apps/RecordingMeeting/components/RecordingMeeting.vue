@@ -21,14 +21,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
   <documents-info-row
     v-if="meeting"
     :label="$t('webconferencing.recording.meeting')"
+    align-top
     class="webconferencingRecordingMeeting">
-    <!-- The value wraps rather than being cut, its date kept on one line: the
-         details panel is narrow, and the date tells which meeting it was. -->
+    <!-- The event's title on a first line and its date on a second one,
+         both kept readable in the narrow details panel; the label sits on
+         the title's line. -->
     <a
       :href="meeting.url"
       :title="$t('webconferencing.recording.meeting.open', {0: meeting.title})"
       class="text-wrap text-break text-start primary--text">
-      {{ meeting.title }} · <span class="text-no-wrap">{{ dateLabel }}</span>
+      <span class="d-block">{{ meeting.title }}</span>
+      <span class="d-block text-no-wrap">{{ dateLabel }}</span>
     </a>
   </documents-info-row>
 </template>
