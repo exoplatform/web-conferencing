@@ -126,6 +126,7 @@ import org.exoplatform.webconferencing.domain.OriginEntity;
 import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.domain.ParticipantId;
 import org.exoplatform.webconferencing.model.ConferenceCall;
+import org.exoplatform.webconferencing.model.RecordingCall;
 import org.exoplatform.webconferencing.model.RecordingInfo;
 import org.exoplatform.webconferencing.storage.CallRecordingStorage;
 import org.exoplatform.webconferencing.util.Mp4DurationReader;
@@ -243,6 +244,13 @@ public class WebConferencingService implements Startable {
   /** The default grace after the end of a range, in hours. */
   protected static final int    DEFAULT_RECORDING_GRACE_HOURS      = 12;
 
+  /**
+   * The longest grace a recording may be filed under an occurrence with: a
+   * week, the longest the agenda takes when it finds the occurrence a
+   * recording was made in, so that both read the same occurrence.
+   */
+  public static final int       MAX_RECORDING_GRACE_HOURS          = 168;
+
   /** The message code of an invalid call id. */
   public static final String    RECORDINGS_INVALID_CALL_ID         = "webconferencing.recordings.invalidCallId";
 
@@ -269,6 +277,9 @@ public class WebConferencingService implements Startable {
 
   /** The message code of a repository failure while reading recordings. */
   public static final String    RECORDINGS_STORAGE_ERROR           = "webconferencing.recordings.storageError";
+
+  /** The message code of a missing file identifier. */
+  public static final String    RECORDINGS_INVALID_DOCUMENT_ID     = "webconferencing.recordings.invalidDocumentId";
 
   /**
    * Represent Space in calls.
@@ -614,7 +625,9 @@ public class WebConferencingService implements Startable {
     this.linkManager = linkManager;
     PropertiesParam recordingParam = initParams.getPropertiesParam(RECORDING_CONFIGURATION_PROPERTIES);
     this.recordingUploadLimitMB = readNonNegativeInt(recordingParam, RECORDING_UPLOAD_LIMIT_MB, 0);
-    this.recordingGraceHours = readNonNegativeInt(recordingParam, RECORDING_OCCURRENCE_GRACE_HOURS, DEFAULT_RECORDING_GRACE_HOURS);
+    this.recordingGraceHours = capGraceHours(readNonNegativeInt(recordingParam,
+                                                                RECORDING_OCCURRENCE_GRACE_HOURS,
+                                                                DEFAULT_RECORDING_GRACE_HOURS));
     this.recordingStorage = new CallRecordingStorage(repositoryService,
                                                      nodeCreator,
                                                      linkManager,
@@ -4311,6 +4324,34 @@ public class WebConferencingService implements Startable {
   }
 
   /**
+   * Reads the call a recording file was made in, when the viewer can read
+   * the file. The file is read in the viewer's own session, so the
+   * repository's rights decide; a file that is not a stamped call recording,
+   * or that the viewer cannot read, has no call.
+   *
+   * @param documentId the identifier of the file, or of a link to it
+   * @param viewer the viewer's user name
+   * @return the call, or <code>null</code> when the file is not a stamped
+   *         recording the viewer can read
+   * @throws IllegalArgumentException when the identifier is missing
+   * @throws IllegalAccessException when the viewer has no identity
+   */
+  public RecordingCall getRecordingCall(String documentId, String viewer) throws IllegalAccessException {
+    if (StringUtils.isBlank(documentId)) {
+      throw new IllegalArgumentException(RECORDINGS_INVALID_DOCUMENT_ID);
+    }
+    org.exoplatform.services.security.Identity viewerIdentity = StringUtils.isBlank(viewer) ? null : userIdentity(viewer);
+    if (viewerIdentity == null) {
+      throw new IllegalAccessException(RECORDINGS_NO_IDENTITY);
+    }
+    try {
+      return recordingStorage.findRecordingCall(viewerIdentity, documentId);
+    } catch (RepositoryException e) {
+      throw new IllegalStateException(RECORDINGS_STORAGE_ERROR, e);
+    }
+  }
+
+  /**
    * Gets the grace added to the end of a range of recording dates.
    *
    * @return the grace, in hours
@@ -4397,6 +4438,21 @@ public class WebConferencingService implements Startable {
     }
     LOG.warn("Setting {} must be a non-negative integer, {} is ignored and {} is used", name, value, defaultValue);
     return defaultValue;
+  }
+
+  /**
+   * Caps the grace at {@link #MAX_RECORDING_GRACE_HOURS}, saying so when a
+   * longer one is configured.
+   *
+   * @param graceHours the configured grace, in hours
+   * @return the grace used, in hours
+   */
+  protected static int capGraceHours(int graceHours) {
+    if (graceHours > MAX_RECORDING_GRACE_HOURS) {
+      LOG.warn("Setting {} is capped at {} hours, {} is ignored", RECORDING_OCCURRENCE_GRACE_HOURS, MAX_RECORDING_GRACE_HOURS, graceHours);
+      return MAX_RECORDING_GRACE_HOURS;
+    }
+    return graceHours;
   }
 
   /**

@@ -16,7 +16,9 @@
  */
 package org.exoplatform.webconferencing.rest.util;
 
+import org.exoplatform.webconferencing.model.RecordingCall;
 import org.exoplatform.webconferencing.model.RecordingInfo;
+import org.exoplatform.webconferencing.rest.model.RecordingCallEntity;
 import org.exoplatform.webconferencing.rest.model.RecordingEntity;
 import org.exoplatform.webconferencing.util.RecordingDateUtils;
 
@@ -46,6 +48,23 @@ public final class RecordingEntityBuilder {
                                recording.getMimeType(),
                                recording.getDurationSeconds(),
                                recording.getPreviewUrl());
+  }
+
+  /**
+   * Maps the call of a recording to its REST form.
+   *
+   * @param call the call of the recording
+   * @param graceHours the grace the recordings of an occurrence are listed
+   *          with
+   * @return its REST form
+   */
+  public static RecordingCallEntity toEntity(RecordingCall call, int graceHours) {
+    return new RecordingCallEntity(call.callId(),
+                                   call.providerType(),
+                                   call.ownerType(),
+                                   RecordingDateUtils.formatDate(call.startedDate()),
+                                   RecordingDateUtils.formatDate(call.recordedDate()),
+                                   graceHours);
   }
 
 }
