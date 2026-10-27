@@ -34,6 +34,7 @@ import org.exoplatform.commons.exception.ObjectNotFoundException;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.webconferencing.WebConferencingService;
+import org.exoplatform.webconferencing.model.RecordingCall;
 import org.exoplatform.webconferencing.rest.model.RecordingEntity;
 import org.exoplatform.webconferencing.rest.util.RecordingEntityBuilder;
 import org.exoplatform.webconferencing.rest.util.RecordingsLookup;
@@ -139,6 +140,44 @@ public class CallRecordingRest {
                                                                              request.getRemoteUser(),
                                                                              RecordingDateUtils.parseDate(from, false),
                                                                              RecordingDateUtils.parseDate(to, true)));
+  }
+
+  /**
+   * Answers the call a recording file was made in, when the user can read
+   * the file and it is a stamped call recording.
+   *
+   * @param request the authenticated request
+   * @param documentId the identifier of the file, or of a link to it
+   * @return 200 with the call, or 204 when the file is not a stamped
+   *         recording the user can read
+   */
+  @GetMapping("recordings/documents/{documentId}/call")
+  @Secured("users")
+  @Operation(summary = "Get the call a recording file was made in", method = "GET",
+             description = "Reads the file in the user's own session and answers the call its recording stamp holds."
+                 + " A file the user cannot read, a file in the trash, or a file with no stamp, such as any other file"
+                 + " or a recording saved before recordings were stamped, answers 204.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "The call of the recording"),
+      @ApiResponse(responseCode = "204", description = "The file is not a stamped recording the user can read"),
+      @ApiResponse(responseCode = "400", description = "Missing file identifier"),
+      @ApiResponse(responseCode = "403", description = "The user has no identity"),
+  })
+  public ResponseEntity<?> getRecordingCall(HttpServletRequest request,
+                                            @Parameter(description = "File identifier") @PathVariable("documentId") String documentId) {
+    try {
+      RecordingCall call = webConferencingService.getRecordingCall(documentId, request.getRemoteUser());
+      return call == null ? ResponseEntity.noContent().cacheControl(CacheControl.noStore()).build()
+                          : ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(RecordingEntityBuilder.toEntity(call, webConferencingService.getRecordingGraceHours()));
+    } catch (IllegalAccessException e) {
+      return refusal(HttpStatus.FORBIDDEN, e.getMessage());
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Recording call request refused", e);
+      return refusal(HttpStatus.BAD_REQUEST, StringUtils.startsWith(e.getMessage(), CODE_PREFIX) ? e.getMessage() : INVALID_REQUEST);
+    } catch (RuntimeException e) {
+      LOG.warn("Cannot read the call of a recording", e);
+      return refusal(HttpStatus.INTERNAL_SERVER_ERROR, WebConferencingService.RECORDINGS_STORAGE_ERROR);
+    }
   }
 
   /**
