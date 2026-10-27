@@ -98,7 +98,7 @@ class MeetingRecordingMcpToolTest {
   @Test
   void listsTheRecordingsAsTheAuthenticatedUser() throws Exception {
     RecordingInfo recording = new RecordingInfo("doc1", "ACME demo – 2026-10-23 10:05",
-                                                Date.from(Instant.parse("2026-10-23T10:05:00Z")), 42, "video/mp4");
+                                                Date.from(Instant.parse("2026-10-23T10:05:00Z")), null, 42, "video/mp4", 3482L);
     recording.setPreviewUrl("https://host/portal/dw/documents?documentPreviewId=doc1");
     when(webConferencingService.getCallRecordingsByConference(URL,
                                                               "john",
@@ -112,6 +112,7 @@ class MeetingRecordingMcpToolTest {
     assertEquals(1, answer.recordings().size());
     assertEquals("doc1", answer.recordings().get(0).documentId());
     assertEquals("2026-10-23T10:05:00Z", answer.recordings().get(0).recordedDate());
+    assertEquals(3482L, answer.recordings().get(0).durationSeconds());
     assertEquals("https://host/portal/dw/documents?documentPreviewId=doc1", answer.recordings().get(0).previewUrl());
   }
 
