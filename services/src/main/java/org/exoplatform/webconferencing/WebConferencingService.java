@@ -134,6 +134,7 @@ import org.exoplatform.webconferencing.domain.ParticipantId;
 import org.exoplatform.webconferencing.model.ConferenceCall;
 import org.exoplatform.webconferencing.model.RecordingInfo;
 import org.exoplatform.webconferencing.storage.CallRecordingStorage;
+import org.exoplatform.webconferencing.util.Mp4DurationReader;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -3118,7 +3119,12 @@ public class WebConferencingService implements Startable {
       content.setProperty(JCR_MIME_TYPE, resource.getMimeType());
       Calendar recordedDate = new GregorianCalendar();
       content.setProperty(JCR_LAST_MODIFIED_PROP, recordedDate);
-      recordingStorage.stamp(fileNode, uploadInfo.getCallId(), call, uploadInfo, recordedDate);
+      recordingStorage.stamp(fileNode,
+                             uploadInfo.getCallId(),
+                             call,
+                             uploadInfo,
+                             recordedDate,
+                             Mp4DurationReader.readSeconds(resource.getStoreLocation()));
       folder.save();
       String perm = new StringBuilder(PermissionType.READ).append(",")
                                                           .append(PermissionType.ADD_NODE)
