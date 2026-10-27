@@ -93,6 +93,16 @@
         multiple="false">
         <valueConstraints />
       </propertyDefinition>
+      <propertyDefinition
+        name="exo:callDuration"
+        requiredType="Long"
+        autoCreated="false"
+        mandatory="false"
+        onParentVersion="COPY"
+        protected="false"
+        multiple="false">
+        <valueConstraints />
+      </propertyDefinition>
     </propertyDefinitions>
   </nodeType>
 </nodeTypes>
