@@ -45,6 +45,7 @@ import org.exoplatform.commons.utils.ISO8601;
 import org.exoplatform.services.cms.link.LinkManager;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.core.ExtendedNode;
+import org.exoplatform.services.jcr.core.ExtendedSession;
 import org.exoplatform.services.jcr.core.ManageableRepository;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
 import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
@@ -55,6 +56,7 @@ import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.UploadFileInfo;
+import org.exoplatform.webconferencing.model.RecordingCall;
 import org.exoplatform.webconferencing.model.RecordingInfo;
 
 /**
@@ -320,6 +322,77 @@ public class CallRecordingStorage {
                                             String spaceGroupId,
                                             Date from,
                                             Date to) throws RepositoryException {
+    return readAs(viewer,
+                  (sessionProvider, session) -> findRecordings(sessionProvider,
+                                                               session,
+                                                               viewer.getUserId(),
+                                                               callId,
+                                                               spaceGroupId,
+                                                               from,
+                                                               to));
+  }
+
+  /**
+   * Reads the call a file was recorded in, when the viewer can read the file
+   * and the file is a stamped recording, in the viewer's session as
+   * {@link #findRecordings(Identity, String, String, Date, Date)} reads.
+   *
+   * @param viewer the viewer's security identity, whose session reads JCR
+   * @param documentId the identifier of the file, or of a link to it
+   * @return the call, or <code>null</code> when the file is not a stamped
+   *         recording the viewer can read
+   * @throws RepositoryException when the repository fails
+   */
+  public RecordingCall findRecordingCall(Identity viewer, String documentId) throws RepositoryException {
+    return readAs(viewer, (sessionProvider, session) -> findRecordingCall(session, documentId));
+  }
+
+  /**
+   * Reads the call a file was recorded in, in an open viewer session. A link
+   * to a recording, as a shared recording arrives in a participant's folder,
+   * reads as its target. A file in the trash, or with no stamp, has no call:
+   * the stamp is what tells a call recording from any other file, and the
+   * recordings saved before it existed are left out.
+   *
+   * @param session the viewer's session
+   * @param documentId the identifier of the file, or of a link to it
+   * @return the call, or <code>null</code> when the file is not a stamped
+   *         recording the session can read
+   * @throws RepositoryException when the repository fails
+   */
+  RecordingCall findRecordingCall(Session session, String documentId) throws RepositoryException {
+    Node file;
+    try {
+      file = resolveFile(((ExtendedSession) session).getNodeByIdentifier(documentId));
+    } catch (ItemNotFoundException | AccessDeniedException e) {
+      LOG.debug("File {} is gone or not readable", documentId, e);
+      return null;
+    }
+    if (file == null || isInTrash(file) || !file.isNodeType(EXO_CALL_RECORDING) || !file.hasProperty(EXO_CALL_ID)) {
+      return null;
+    }
+    return new RecordingCall(file.getProperty(EXO_CALL_ID).getString(),
+                             stringProperty(file, EXO_CALL_PROVIDER),
+                             stringProperty(file, EXO_CALL_OWNER_TYPE),
+                             recordingStart(file.getName(), recorderZone),
+                             file.hasProperty(EXO_RECORDED_DATE) ? file.getProperty(EXO_RECORDED_DATE).getDate().getTime() : null);
+  }
+
+  /**
+   * Runs a read in the viewer's session. A JCR session logs in as the
+   * thread's current conversation state, whatever the session provider was
+   * built with: the viewer is made current for the read, the way ecms
+   * {@code WCMCoreUtils.invokeUserSession} does, and the previous state
+   * restored, so the repository applies the viewer's own rights whoever
+   * calls.
+   *
+   * @param <T> what the read returns
+   * @param viewer the viewer's security identity
+   * @param read the read
+   * @return what was read
+   * @throws RepositoryException when the repository fails
+   */
+  private <T> T readAs(Identity viewer, ViewerSessionRead<T> read) throws RepositoryException {
     ConversationState previousState = ConversationState.getCurrent();
     ConversationState viewerState = new ConversationState(viewer);
     viewerState.setAttribute(ConversationState.SUBJECT, viewer.getSubject());
@@ -328,11 +401,23 @@ public class CallRecordingStorage {
     try {
       ManageableRepository repository = repositoryService.getCurrentRepository();
       Session session = sessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
-      return findRecordings(sessionProvider, session, viewer.getUserId(), callId, spaceGroupId, from, to);
+      return read.read(sessionProvider, session);
     } finally {
       sessionProvider.close();
       ConversationState.setCurrent(previousState);
     }
+  }
+
+  /**
+   * Reads a string property of a node.
+   *
+   * @param node the node
+   * @param name the property name
+   * @return its value, or <code>null</code> when the node has none
+   * @throws RepositoryException when the repository fails
+   */
+  private static String stringProperty(Node node, String name) throws RepositoryException {
+    return node.hasProperty(name) ? node.getProperty(name).getString() : null;
   }
 
   /**

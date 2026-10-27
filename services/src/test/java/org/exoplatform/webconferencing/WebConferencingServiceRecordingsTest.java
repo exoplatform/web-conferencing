@@ -48,6 +48,7 @@ import java.util.UUID;
 
 import org.apache.commons.fileupload2.core.FileUploadException;
 import javax.jcr.Node;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -86,6 +87,7 @@ import org.exoplatform.webconferencing.dao.InviteDAO;
 import org.exoplatform.webconferencing.dao.OriginDAO;
 import org.exoplatform.webconferencing.dao.ParticipantDAO;
 import org.exoplatform.webconferencing.model.ConferenceCall;
+import org.exoplatform.webconferencing.model.RecordingCall;
 import org.exoplatform.webconferencing.model.RecordingInfo;
 import org.exoplatform.webconferencing.storage.CallRecordingStorage;
 
@@ -566,6 +568,64 @@ class WebConferencingServiceRecordingsTest {
     ReflectionTestUtils.setField(webConferencing, "recordingStorage", recordingStorage);
     ReflectionTestUtils.setField(webConferencing, "spaceService", spaceService);
     return webConferencing;
+  }
+
+  /**
+   * The configured grace is used up to a week, the longest the agenda takes,
+   * and capped there.
+   */
+  @Test
+  void theGraceIsCappedAtAWeek() {
+    assertEquals(12, newService(null, null).getRecordingGraceHours());
+    assertEquals(168, newService(null, "168").getRecordingGraceHours());
+    assertEquals(WebConferencingService.MAX_RECORDING_GRACE_HOURS, newService(null, "500").getRecordingGraceHours());
+  }
+
+  /**
+   * The call of a recording is read for the viewer's own identity, which
+   * the storage reads the file as.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void theCallOfARecordingIsReadAsTheViewer() throws Exception {
+    Identity viewer = viewer();
+    RecordingCall call = new RecordingCall(CALL_ID, "jitsi", "space_event", null, new Date());
+    when(recordingStorage.findRecordingCall(viewer, "doc1")).thenReturn(call);
+
+    assertSame(call, service.getRecordingCall("doc1", VIEWER));
+  }
+
+  /**
+   * A missing file identifier is refused with its code, and a viewer with no
+   * identity is refused, before the repository is read.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void theCallOfARecordingNeedsAFileAndAViewer() throws Exception {
+    assertEquals(WebConferencingService.RECORDINGS_INVALID_DOCUMENT_ID,
+                 assertThrows(IllegalArgumentException.class, () -> service.getRecordingCall(" ", VIEWER)).getMessage());
+    assertEquals(WebConferencingService.RECORDINGS_NO_IDENTITY,
+                 assertThrows(IllegalAccessException.class, () -> service.getRecordingCall("doc1", "nobody")).getMessage());
+    assertEquals(WebConferencingService.RECORDINGS_NO_IDENTITY,
+                 assertThrows(IllegalAccessException.class, () -> service.getRecordingCall("doc1", null)).getMessage());
+    verify(recordingStorage, never()).findRecordingCall(any(), anyString());
+  }
+
+  /**
+   * A repository failure is a storage error, its text kept out of the
+   * message.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aRepositoryFailureIsAStorageError() throws Exception {
+    Identity viewer = viewer();
+    when(recordingStorage.findRecordingCall(viewer, "doc1")).thenThrow(new RepositoryException("/Groups/spaces/sales"));
+
+    assertEquals(WebConferencingService.RECORDINGS_STORAGE_ERROR,
+                 assertThrows(IllegalStateException.class, () -> service.getRecordingCall("doc1", VIEWER)).getMessage());
   }
 
   /**

@@ -65,6 +65,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.exoplatform.services.cms.link.LinkManager;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.core.ExtendedNode;
+import org.exoplatform.services.jcr.core.ExtendedSession;
 import org.exoplatform.services.jcr.core.ManageableRepository;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
 import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
@@ -77,6 +78,7 @@ import org.exoplatform.services.security.Identity;
 import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.IdentityInfo;
 import org.exoplatform.webconferencing.UploadFileInfo;
+import org.exoplatform.webconferencing.model.RecordingCall;
 import org.exoplatform.webconferencing.model.RecordingInfo;
 
 @ExtendWith(MockitoExtension.class)
@@ -485,6 +487,155 @@ class CallRecordingStorageTest {
     lenient().when(iterator.hasNext()).thenAnswer(invocation -> delegate.hasNext());
     lenient().when(iterator.nextNode()).thenAnswer(invocation -> delegate.next());
     return iterator;
+  }
+
+  /**
+   * A stamped recording the viewer reads answers its call: the stamp's
+   * identifier, provider and owner type, the start its file name tells, and
+   * the date the stamp holds.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aStampedRecordingAnswersItsCall() throws Exception {
+    ExtendedSession viewerSession = mock(ExtendedSession.class);
+    ExtendedNode recording = stamp(file("doc1", CALL_ID + "_2026-10-23-10-00-00.mp4", "2026-10-23T11:00:00Z", true, false));
+    when(viewerSession.getNodeByIdentifier("doc1")).thenReturn(recording);
+
+    RecordingCall call = storage.findRecordingCall(viewerSession, "doc1");
+
+    assertEquals(new RecordingCall(CALL_ID,
+                                   "jitsi",
+                                   "space_event",
+                                   Date.from(Instant.parse("2026-10-23T10:00:00Z")),
+                                   Date.from(Instant.parse("2026-10-23T11:00:00Z"))),
+                 call);
+  }
+
+  /**
+   * A link to a recording, as a shared recording reaches a participant,
+   * answers the call of its target.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aLinkAnswersTheCallOfItsTarget() throws Exception {
+    ExtendedSession viewerSession = mock(ExtendedSession.class);
+    ExtendedNode link = mock(ExtendedNode.class);
+    lenient().when(link.isNodeType(anyString())).thenReturn(false);
+    lenient().when(link.isNodeType("exo:symlink")).thenReturn(true);
+    ExtendedNode recording = stamp(file("doc1", CALL_ID + "_2026-10-23-10-00-00.mp4", "2026-10-23T11:00:00Z", true, false));
+    when(viewerSession.getNodeByIdentifier("link1")).thenReturn(link);
+    when(linkManager.getTarget(link)).thenReturn(recording);
+
+    RecordingCall call = storage.findRecordingCall(viewerSession, "link1");
+
+    assertNotNull(call, "the link reads as its target, a stamped recording");
+    assertEquals(CALL_ID, call.callId());
+  }
+
+  /**
+   * A file with no stamp, any other file or a recording saved before the
+   * stamp existed, has no call, even when its name carries a call's.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aFileWithNoStampHasNoCall() throws Exception {
+    ExtendedSession viewerSession = mock(ExtendedSession.class);
+    ExtendedNode old = stamp(file("doc1", CALL_ID + "_2026-10-23-10-00-00.mp4", "2026-10-23T11:00:00Z", false, false));
+    when(viewerSession.getNodeByIdentifier("doc1")).thenReturn(old);
+
+    assertNull(storage.findRecordingCall(viewerSession, "doc1"));
+  }
+
+  /**
+   * A stamped recording in the trash has no call.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aTrashedRecordingHasNoCall() throws Exception {
+    ExtendedSession viewerSession = mock(ExtendedSession.class);
+    ExtendedNode trashed = stamp(file("doc1", CALL_ID + "_2026-10-23-10-00-00.mp4", "2026-10-23T11:00:00Z", true, true));
+    when(viewerSession.getNodeByIdentifier("doc1")).thenReturn(trashed);
+
+    assertNull(storage.findRecordingCall(viewerSession, "doc1"));
+  }
+
+  /**
+   * A file the viewer's session cannot read, or that is gone, has no call,
+   * and neither has a link whose target the viewer cannot read.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void anUnreadableFileHasNoCall() throws Exception {
+    ExtendedSession viewerSession = mock(ExtendedSession.class);
+    when(viewerSession.getNodeByIdentifier("denied")).thenThrow(new javax.jcr.AccessDeniedException());
+    when(viewerSession.getNodeByIdentifier("gone")).thenThrow(new javax.jcr.ItemNotFoundException());
+    ExtendedNode link = mock(ExtendedNode.class);
+    lenient().when(link.isNodeType(anyString())).thenReturn(false);
+    lenient().when(link.isNodeType("exo:symlink")).thenReturn(true);
+    when(viewerSession.getNodeByIdentifier("link1")).thenReturn(link);
+    when(linkManager.getTarget(link)).thenThrow(new javax.jcr.AccessDeniedException());
+
+    assertNull(storage.findRecordingCall(viewerSession, "denied"));
+    assertNull(storage.findRecordingCall(viewerSession, "gone"));
+    assertNull(storage.findRecordingCall(viewerSession, "link1"));
+  }
+
+  /**
+   * The call is read in the viewer's own session: the viewer is the
+   * conversation state current while the repository is read, and the
+   * previous one is restored after.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void theCallIsReadInTheViewersSession() throws Exception {
+    Identity viewer = new Identity("john");
+    ConversationState previous = new ConversationState(new Identity("system"));
+    ConversationState.setCurrent(previous);
+    when(repositoryService.getCurrentRepository()).thenAnswer(invocation -> {
+      assertEquals("john", ConversationState.getCurrent().getIdentity().getUserId(), "the viewer reads");
+      throw new RepositoryException("stop here");
+    });
+    try {
+      assertThrows(RepositoryException.class, () -> storage.findRecordingCall(viewer, "doc1"));
+      assertEquals(previous, ConversationState.getCurrent(), "the previous state is restored");
+    } finally {
+      ConversationState.setCurrent(null);
+    }
+  }
+
+  /**
+   * Adds a call's stamp properties to a file.
+   *
+   * @param file the file
+   * @return the file
+   * @throws Exception never
+   */
+  private static ExtendedNode stamp(ExtendedNode file) throws Exception {
+    stampProperty(file, "exo:callId", CALL_ID);
+    stampProperty(file, "exo:callProvider", "jitsi");
+    stampProperty(file, "exo:callOwnerType", "space_event");
+    return file;
+  }
+
+  /**
+   * Adds a string property to a node.
+   *
+   * @param node the node
+   * @param name the property name
+   * @param value its value
+   * @throws Exception never
+   */
+  private static void stampProperty(Node node, String name, String value) throws Exception {
+    Property property = mock(Property.class);
+    lenient().when(property.getString()).thenReturn(value);
+    lenient().when(node.hasProperty(name)).thenReturn(true);
+    lenient().when(node.getProperty(name)).thenReturn(property);
   }
 
   /**

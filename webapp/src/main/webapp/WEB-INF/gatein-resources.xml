@@ -138,6 +138,34 @@
     </depends>
   </module>
 
+  <!-- The « Meeting » line of a recording's details in Documents. The module
+       NAME must contain "DocumentsExtension": Documents runs
+       includeExtensions('DocumentsExtension') in its app and its info drawer,
+       which filters the loaded module names, then calls the module's init().
+       DocumentsGRP is the Documents app's group. webConferencing is
+       deliberately NOT a dependency: the line reads the recordings REST and
+       the agenda REST, and needs no provider script. -->
+  <module>
+    <name>WebConferencingDocumentsExtension</name>
+    <load-group>DocumentsGRP</load-group>
+    <script>
+      <minify>false</minify>
+      <path>/js/recordingMeeting.bundle.js</path>
+    </script>
+    <depends>
+      <module>vue</module>
+    </depends>
+    <depends>
+      <module>vuetify</module>
+    </depends>
+    <depends>
+      <module>eXoVueI18n</module>
+    </depends>
+    <depends>
+      <module>extensionRegistry</module>
+    </depends>
+  </module>
+
   <module>
     <name>webConferencingNotificationExtension</name>
     <load-group>notificationGRP</load-group>
