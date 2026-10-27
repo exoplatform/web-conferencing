@@ -21,10 +21,19 @@
     :message="message"
     :url="fileUrl">
     <template #actions>
-      <div v-if="recordingStatus === 'ok'" class="text-truncate">
+      <div v-if="callTitle" class="text-truncate">
+        <v-icon size="14" class="me-1">fa-solid fa-video</v-icon>
+        {{ callTitle }}
+      </div>
+      <div v-else-if="recordingStatus === 'ok'" class="text-truncate">
         <v-icon size="14" class="me-1">fa-solid fa-video</v-icon>
         {{ fileName }}
       </div>
+      <date-format
+        v-if="callStartDate"
+        :value="callStartDate"
+        :format="dateTimeFormat"
+        class="text-truncate text-caption" />
     </template>
   </user-notification-template>
 </template>
@@ -37,7 +46,23 @@ export default {
       default: null,
     },
   },
+  data: () => ({
+    dateTimeFormat: {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    },
+  }),
   computed: {
+    callTitle() {
+      return this.notification && this.notification.parameters && this.notification.parameters.CALL_TITLE;
+    },
+    callStartDate() {
+      const startDate = Number(this.notification && this.notification.parameters && this.notification.parameters.CALL_START_DATE);
+      return Number.isFinite(startDate) && startDate > 0 ? startDate : null;
+    },
     profileAvatarUrl() {
       return this.notification && this.notification.parameters && this.notification.parameters.AVATAR;
     },
