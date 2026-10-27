@@ -564,4 +564,37 @@ class CallRecordingStorageTest {
     return file;
   }
 
+  /**
+   * The call of a recording is read as the system from its stamp; a file not
+   * stamped, or gone, has none (EXO-92126).
+   *
+   * @throws Exception never
+   */
+  @Test
+  void theCallOfARecordingIsReadFromItsStamp() throws Exception {
+    ManageableRepository repository = mock(ManageableRepository.class, RETURNS_DEEP_STUBS);
+    when(repositoryService.getCurrentRepository()).thenReturn(repository);
+    when(repository.getConfiguration().getDefaultWorkspaceName()).thenReturn("collaboration");
+    when(sessionProvider.getSession("collaboration", repository)).thenReturn(session);
+    Node stamped = mock(Node.class);
+    when(session.getNodeByUUID("stamped")).thenReturn(stamped);
+    when(stamped.isNodeType(CallRecordingStorage.EXO_CALL_RECORDING)).thenReturn(true);
+    when(stamped.hasProperty(CallRecordingStorage.EXO_CALL_ID)).thenReturn(true);
+    javax.jcr.Property callId = mock(javax.jcr.Property.class);
+    when(callId.getString()).thenReturn(CALL_ID);
+    when(stamped.getProperty(CallRecordingStorage.EXO_CALL_ID)).thenReturn(callId);
+    Node plain = mock(Node.class);
+    when(session.getNodeByUUID("plain")).thenReturn(plain);
+    when(session.getNodeByUUID("gone")).thenThrow(new javax.jcr.ItemNotFoundException("gone"));
+
+    try (org.mockito.MockedStatic<SessionProvider> providers = org.mockito.Mockito.mockStatic(SessionProvider.class)) {
+      providers.when(SessionProvider::createSystemProvider).thenReturn(sessionProvider);
+
+      assertEquals(CALL_ID, storage.findCallId("stamped"));
+      assertNull(storage.findCallId("plain"));
+      assertNull(storage.findCallId("gone"));
+    }
+    verify(sessionProvider, org.mockito.Mockito.times(3)).close();
+  }
+
 }
