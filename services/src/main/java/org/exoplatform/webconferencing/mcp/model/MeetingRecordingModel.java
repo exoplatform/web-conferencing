@@ -30,6 +30,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  *          absent when its file name does not tell it
  * @param sizeBytes the size of the recording in bytes, -1 when unknown
  * @param mimeType the media type of the recording
+ * @param durationSeconds how long the recording lasts, in seconds, absent
+ *          when its file does not tell it
  * @param previewUrl the link opening the recording in Documents
  */
 @JsonInclude(value = Include.NON_EMPTY)
@@ -39,5 +41,6 @@ public record MeetingRecordingModel(String documentId,
                                     String startedDate,
                                     long sizeBytes,
                                     String mimeType,
+                                    Long durationSeconds,
                                     String previewUrl) {
 }
