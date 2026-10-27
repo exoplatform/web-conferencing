@@ -27,6 +27,8 @@ package org.exoplatform.webconferencing.rest.model;
  *          or null when its file name does not tell it
  * @param sizeBytes the size of the recording in bytes, -1 when unknown
  * @param mimeType the media type of the recording
+ * @param durationSeconds how long the recording lasts, in seconds, or null
+ *          when its file does not tell it
  * @param previewUrl the link opening the recording in the Documents preview
  */
 public record RecordingEntity(String documentId,
@@ -35,5 +37,6 @@ public record RecordingEntity(String documentId,
                               String startedDate,
                               long sizeBytes,
                               String mimeType,
+                              Long durationSeconds,
                               String previewUrl) {
 }

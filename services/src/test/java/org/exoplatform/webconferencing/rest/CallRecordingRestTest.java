@@ -78,8 +78,8 @@ class CallRecordingRestTest {
    */
   @Test
   void answersTheRecordingsOfTheAuthenticatedUser() throws Exception {
-    RecordingInfo recording = new RecordingInfo("doc1", "ACME demo", Date.from(Instant.parse("2026-10-23T10:05:00Z")), 42,
-                                                "video/mp4");
+    RecordingInfo recording = new RecordingInfo("doc1", "ACME demo", Date.from(Instant.parse("2026-10-23T10:05:00Z")), null, 42,
+                                                "video/mp4", 3482L);
     recording.setPreviewUrl("preview");
     when(webConferencingService.getCallRecordings(CALL_ID,
                                                   "john",
@@ -90,7 +90,7 @@ class CallRecordingRestTest {
     ResponseEntity<?> response = rest.getCallRecordings(request, CALL_ID, "2026-10-23T09:00:00Z", "2026-10-23T11:00:00+01:00");
 
     assertEquals(200, response.getStatusCode().value());
-    assertEquals(List.of(new RecordingEntity("doc1", "ACME demo", "2026-10-23T10:05:00Z", null, 42, "video/mp4", "preview")),
+    assertEquals(List.of(new RecordingEntity("doc1", "ACME demo", "2026-10-23T10:05:00Z", null, 42, "video/mp4", 3482L, "preview")),
                  response.getBody());
     assertEquals("no-store", response.getHeaders().getCacheControl());
   }
