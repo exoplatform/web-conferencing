@@ -31,19 +31,37 @@ import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.social.notification.LinkProviderUtils;
 import org.exoplatform.webconferencing.notification.plugin.CallRecordingPlugin;
 import org.exoplatform.webconferencing.notification.utils.NotificationConstants;
+import org.exoplatform.webconferencing.notification.utils.RecordingNotificationUtils;
+
+import java.time.ZoneId;
 
 
 @TemplateConfigs(templates = {
     @TemplateConfig(pluginId = CallRecordingPlugin.ID, template = "war:/notification/templates/mail/CallRecordingPlugin.gtmpl") })
 public class MailTemplateProvider extends TemplateProvider {
 
+  /**
+   * Creates the provider and registers the recording notification's mail builder.
+   *
+   * @param initParams the provider's parameters
+   */
   public MailTemplateProvider(InitParams initParams) {
     super(initParams);
     this.templateBuilders.put(PluginKey.key(CallRecordingPlugin.ID), new TemplateBuilder());
   }
 
+  /**
+   * Builds the recording notification's mail.
+   */
   private class TemplateBuilder extends AbstractTemplateBuilder {
 
+    /**
+     * Fills the mail template with the recording's status, file, link, the
+     * meeting's owner, title and start date, encoded for HTML.
+     *
+     * @param notificationContext the context holding the notification
+     * @return the mail's subject and body
+     */
     @Override
     protected MessageInfo makeMessage(NotificationContext notificationContext) {
       NotificationInfo notificationInfo = notificationContext.getNotificationInfo();
@@ -57,11 +75,18 @@ public class MailTemplateProvider extends TemplateProvider {
       String fileUrl = notificationInfo.getValueOwnerParameter(NotificationConstants.RECORDED_FILE_URL.getKey());
       String avatarUrl = notificationInfo.getValueOwnerParameter(NotificationConstants.AVATAR_URL.getKey());
       String callOwner = notificationInfo.getValueOwnerParameter(NotificationConstants.CALL_OWNER.getKey());
+      String callTitle = notificationInfo.getValueOwnerParameter(NotificationConstants.CALL_TITLE.getKey());
+      String callStartDate =
+                           RecordingNotificationUtils.formatCallStartDate(notificationInfo.getValueOwnerParameter(NotificationConstants.CALL_START_DATE.getKey()),
+                                                                          language,
+                                                                          ZoneId.systemDefault());
       templateContext.put("RECORDING_STATUS", encoder.encode(recordingStatus));
       templateContext.put("FILE_URL", encoder.encode(fileUrl));
       templateContext.put("FILE_NAME", encoder.encode(fileName));
       templateContext.put("AVATAR_URL", encoder.encode(avatarUrl));
       templateContext.put("CALL_OWNER", encoder.encode(callOwner));
+      templateContext.put("CALL_TITLE", callTitle == null ? "" : encoder.encode(callTitle));
+      templateContext.put("CALL_START_DATE", encoder.encode(callStartDate));
       String user = notificationInfo.getTo();
       templateContext.put("USER", encoder.encode(user));
       templateContext.put("NOTIFICATION_ID", notificationInfo.getId());
