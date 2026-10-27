@@ -54,6 +54,8 @@
     <!-- Dependencies versions                    -->
     <!-- **************************************** -->
     <addon.exo.ecms.version>7.3.x-ai-contribution-SNAPSHOT</addon.exo.ecms.version>
+    <!-- documents provides the transcript chapters and speakers the recordings tool lists -->
+    <addon.exo.documents.version>7.3.x-ai-contribution-SNAPSHOT</addon.exo.documents.version>
 
     <!-- Sonar properties -->
     <sonar.organization>exoplatform</sonar.organization>
@@ -68,6 +70,11 @@
         <version>${addon.exo.ecms.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.exoplatform.documents</groupId>
+        <artifactId>documents-api</artifactId>
+        <version>${addon.exo.documents.version}</version>
       </dependency>
       <!-- Video Calls extension -->
       <dependency>
