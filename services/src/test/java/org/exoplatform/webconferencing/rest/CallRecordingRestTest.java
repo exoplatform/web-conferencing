@@ -39,7 +39,9 @@ import org.springframework.http.ResponseEntity;
 
 import org.exoplatform.commons.exception.ObjectNotFoundException;
 import org.exoplatform.webconferencing.WebConferencingService;
+import org.exoplatform.webconferencing.model.RecordingCall;
 import org.exoplatform.webconferencing.model.RecordingInfo;
+import org.exoplatform.webconferencing.rest.model.RecordingCallEntity;
 import org.exoplatform.webconferencing.rest.model.RecordingEntity;
 import org.exoplatform.webconferencing.util.RecordingDateUtils;
 
@@ -172,6 +174,75 @@ class CallRecordingRestTest {
   private static void assertRefusal(ResponseEntity<?> response, int status, String code) {
     assertEquals(status, response.getStatusCode().value());
     assertEquals(Map.of("message", code), response.getBody());
+  }
+
+  /**
+   * The call of a recording is answered for the authenticated user, with the
+   * grace the recordings of an occurrence are listed with, never cached.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void answersTheCallOfARecording() throws Exception {
+    when(webConferencingService.getRecordingCall("doc1", "john"))
+                                                          .thenReturn(new RecordingCall(CALL_ID,
+                                                                                        "jitsi",
+                                                                                        "space_event",
+                                                                                        Date.from(Instant.parse("2026-10-23T10:00:00Z")),
+                                                                                        Date.from(Instant.parse("2026-10-23T11:00:00Z"))));
+
+    when(webConferencingService.getRecordingGraceHours()).thenReturn(6);
+
+    ResponseEntity<?> response = rest.getRecordingCall(request, "doc1");
+
+    assertEquals(200, response.getStatusCode().value());
+    assertEquals(new RecordingCallEntity(CALL_ID, "jitsi", "space_event", "2026-10-23T10:00:00Z", "2026-10-23T11:00:00Z", 6),
+                 response.getBody());
+    assertEquals("no-store", response.getHeaders().getCacheControl());
+  }
+
+  /**
+   * A file that is not a stamped recording the user can read is a 204, not
+   * an error: the details of any file ask.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aFileWithNoCallIsNoContent() throws Exception {
+    ResponseEntity<?> response = rest.getRecordingCall(request, "doc1");
+
+    assertEquals(204, response.getStatusCode().value());
+    assertEquals(null, response.getBody());
+    assertEquals("no-store", response.getHeaders().getCacheControl());
+  }
+
+  /**
+   * The refusals of the call of a recording map to their status with their
+   * code, never the engine's text.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void theRefusalsOfTheCallOfARecordingCarryTheirCode() throws Exception {
+    when(webConferencingService.getRecordingCall(" ", "john"))
+                                                         .thenThrow(new IllegalArgumentException(WebConferencingService.RECORDINGS_INVALID_DOCUMENT_ID));
+    when(webConferencingService.getRecordingCall("doc1", "john"))
+                                                           .thenThrow(new IllegalAccessException(WebConferencingService.RECORDINGS_NO_IDENTITY));
+    when(webConferencingService.getRecordingCall("doc2", "john")).thenThrow(new IllegalStateException("/Groups/secret"));
+
+    ResponseEntity<?> missing = rest.getRecordingCall(request, " ");
+    ResponseEntity<?> noIdentity = rest.getRecordingCall(request, "doc1");
+    ResponseEntity<?> failure = rest.getRecordingCall(request, "doc2");
+
+    assertEquals(400, missing.getStatusCode().value());
+    assertEquals(Map.of("message", WebConferencingService.RECORDINGS_INVALID_DOCUMENT_ID), missing.getBody());
+    assertEquals(403, noIdentity.getStatusCode().value());
+    assertEquals(Map.of("message", WebConferencingService.RECORDINGS_NO_IDENTITY), noIdentity.getBody());
+    assertEquals(500, failure.getStatusCode().value());
+    assertEquals(Map.of("message", WebConferencingService.RECORDINGS_STORAGE_ERROR), failure.getBody());
+    assertEquals("no-store", missing.getHeaders().getCacheControl());
+    assertEquals("no-store", noIdentity.getHeaders().getCacheControl());
+    assertEquals("no-store", failure.getHeaders().getCacheControl());
   }
 
 }
