@@ -20,14 +20,14 @@ const BUNDLE = 'locale.portlet.visio.Visio';
 
 /**
  * Contributes the « Meeting » line to a file's details: the extension point
- * of the details rows (app DocumentsInfo, type documents-info-details). The
+ * of the details rows (app DocumentsInfoDetails, type documents-info-details). The
  * panel hands the props file, documentId and mimetype; the line decides from
  * them whether it shows.
  *
  * @returns {void}
  */
 export function registerRecordingMeeting() {
-  extensionRegistry.registerComponent('DocumentsInfo', 'documents-info-details', {
+  extensionRegistry.registerComponent('DocumentsInfoDetails', 'documents-info-details', {
     id: 'webconferencing-recording-meeting',
     vueComponent: Vue.options.components['webconferencing-recording-meeting'],
     rank: 10,

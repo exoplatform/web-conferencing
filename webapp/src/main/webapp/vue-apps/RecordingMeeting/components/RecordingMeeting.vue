@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 -->
 <template>
   <!-- The « Meeting » line of a recording's details, contributed to the
-       DocumentsInfo / documents-info-details extension point: the agenda
+       DocumentsInfoDetails / documents-info-details extension point: the agenda
        event the recording was made in, opening it. -->
   <documents-info-row
     v-if="meeting"
