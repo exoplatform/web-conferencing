@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.fileupload2.core.FileUploadException;
@@ -85,6 +86,8 @@ import org.exoplatform.webconferencing.dao.CallDAO;
 import org.exoplatform.webconferencing.dao.InviteDAO;
 import org.exoplatform.webconferencing.dao.OriginDAO;
 import org.exoplatform.webconferencing.dao.ParticipantDAO;
+import org.exoplatform.webconferencing.domain.OriginEntity;
+import org.exoplatform.webconferencing.domain.ParticipantEntity;
 import org.exoplatform.webconferencing.model.ConferenceCall;
 import org.exoplatform.webconferencing.model.RecordingInfo;
 import org.exoplatform.webconferencing.storage.CallRecordingStorage;
@@ -524,6 +527,157 @@ class WebConferencingServiceRecordingsTest {
     assertEquals(uploadId.getValue(), UUID.fromString(uploadId.getValue()).toString(), "the upload id is a random UUID");
     order.verify(uploadService).createUploadResource(uploadId.getValue(), request);
     order.verify(uploadService).removeUploadLimit(uploadId.getValue());
+  }
+
+  /**
+   * The attendees of a one-to-one call are its owner and the users it was
+   * placed with, read from what the call stores; guests are left out
+   * (EXO-92126).
+   *
+   * @throws Exception never
+   */
+  @Test
+  void theAttendeesOfAOneToOneCallAreItsOwnerAndItsUsers() throws Exception {
+    when(recordingStorage.findCallId("one-to-one")).thenReturn("p_john-mary");
+    doReturn(new CallInfo("p_john-mary", "John and Mary", new UserInfo("mary", "Mary", "Doe"), "jitsi")).when(service).getCall("p_john-mary");
+    when(participants().findCallParts("p_john-mary")).thenReturn(List.of(part(VIEWER, UserInfo.TYPE_NAME),
+                                                                        part("mary", UserInfo.TYPE_NAME),
+                                                                        part("guest@example.com", GuestInfo.TYPE_NAME)));
+
+    assertEquals(List.of("mary", VIEWER), service.getRecordingAttendees("one-to-one"));
+  }
+
+  /**
+   * The attendees of a chat room call are the users the call stored when it was
+   * placed, which are the room's members at that time (who actually joined is
+   * not kept once the call ends), not whatever its owner resolves to when read;
+   * those of a meeting are the users it invited one by one, not the members of
+   * its space (EXO-92126).
+   *
+   * @throws Exception never
+   */
+  @Test
+  void theAttendeesOfARoomOrAMeetingAreThoseItStores() throws Exception {
+    when(recordingStorage.findCallId("room")).thenReturn("g_room");
+    GroupInfo room = mock(GroupInfo.class);
+    when(room.getType()).thenReturn(WebConferencingService.OWNER_TYPE_CHATROOM);
+    CallInfo roomCall = new CallInfo("g_room", "Team room", room, "jitsi");
+    roomCall.addParticipant(new UserInfo("everyone", "Every", "One"));
+    doReturn(roomCall).when(service).getCall("g_room");
+    when(participants().findCallParts("g_room")).thenReturn(List.of(part(VIEWER, UserInfo.TYPE_NAME), part("ann", UserInfo.TYPE_NAME)));
+    assertEquals(List.of(VIEWER, "ann"), service.getRecordingAttendees("room"));
+
+    when(recordingStorage.findCallId("meeting")).thenReturn("g_meeting");
+    GroupInfo event = mock(GroupInfo.class);
+    when(event.getType()).thenReturn(WebConferencingService.OWNER_TYPE_SPACEEVENT);
+    CallInfo meeting = new CallInfo("g_meeting", "Weekly", event, "jitsi");
+    meeting.addParticipant(new UserInfo("space-member", "Space", "Member"));
+    doReturn(meeting).when(service).getCall("g_meeting");
+    when(origins().findCallOrigins("g_meeting", WebConferencingService.OWNER_TYPE_SPACE)).thenReturn(List.of());
+    when(origins().findCallOrigins("g_meeting", WebConferencingService.OWNER_TYPE_USER)).thenReturn(List.of(origin(VIEWER), origin("ann")));
+    assertEquals(List.of(VIEWER, "ann"), service.getRecordingAttendees("meeting"));
+  }
+
+  /**
+   * A recording gives no attendee list when it was not made in a known call,
+   * when its call is a space's or a meeting that invited a whole space, both
+   * open to all their members, or when it lists no one (EXO-92126).
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aRecordingGivesNoAttendeesWithoutAClearList() throws Exception {
+    when(recordingStorage.findCallId("unstamped")).thenReturn(null);
+    assertNull(service.getRecordingAttendees("unstamped"));
+
+    when(recordingStorage.findCallId("broken")).thenThrow(new javax.jcr.RepositoryException("down"));
+    assertNull(service.getRecordingAttendees("broken"));
+
+    when(recordingStorage.findCallId("lost")).thenReturn("g_lost");
+    doThrow(new InvalidCallException("lost")).when(service).getCall("g_lost");
+    assertNull(service.getRecordingAttendees("lost"));
+
+    when(recordingStorage.findCallId("space")).thenReturn("g_42");
+    GroupInfo space = mock(GroupInfo.class);
+    when(space.getType()).thenReturn(WebConferencingService.OWNER_TYPE_SPACE);
+    doReturn(new CallInfo("g_42", "Sales", space, "jitsi")).when(service).getCall("g_42");
+    assertNull(service.getRecordingAttendees("space"));
+
+    when(recordingStorage.findCallId("all-hands")).thenReturn("g_all");
+    GroupInfo event = mock(GroupInfo.class);
+    when(event.getType()).thenReturn(WebConferencingService.OWNER_TYPE_SPACEEVENT);
+    doReturn(new CallInfo("g_all", "All hands", event, "jitsi")).when(service).getCall("g_all");
+    when(origins().findCallOrigins("g_all", WebConferencingService.OWNER_TYPE_SPACE)).thenReturn(List.of(origin("sales")));
+    assertNull(service.getRecordingAttendees("all-hands"));
+
+    when(recordingStorage.findCallId("empty-room")).thenReturn("g_empty");
+    GroupInfo room = mock(GroupInfo.class);
+    when(room.getType()).thenReturn(WebConferencingService.OWNER_TYPE_CHATROOM);
+    doReturn(new CallInfo("g_empty", "Empty", room, "jitsi")).when(service).getCall("g_empty");
+    when(participants().findCallParts("g_empty")).thenReturn(List.of(part("guest@example.com", GuestInfo.TYPE_NAME)));
+    assertNull(service.getRecordingAttendees("empty-room"));
+  }
+
+  /**
+   * A call listing exactly {@value WebConferencingService#MAX_RECORDING_ATTENDEES}
+   * people, its owner included, still gives its attendee list; one more and it
+   * gives none (EXO-92126).
+   */
+  @Test
+  void aRecordingGivesItsAttendeesUpToTheMostACallMayList() throws Exception {
+    when(recordingStorage.findCallId("full")).thenReturn("p_full");
+    doReturn(new CallInfo("p_full", "Full", new UserInfo("mary", "Mary", "Doe"), "jitsi")).when(service).getCall("p_full");
+    List<ParticipantEntity> full = new ArrayList<>();
+    List<String> expected = new ArrayList<>(List.of("mary"));
+    for (int i = 0; i < WebConferencingService.MAX_RECORDING_ATTENDEES - 1; i++) {
+      full.add(part("user" + i, UserInfo.TYPE_NAME));
+      expected.add("user" + i);
+    }
+    when(participants().findCallParts("p_full")).thenReturn(full);
+    assertEquals(expected, service.getRecordingAttendees("full"));
+
+    when(recordingStorage.findCallId("crowd")).thenReturn("p_crowd");
+    doReturn(new CallInfo("p_crowd", "Everyone", new UserInfo("mary", "Mary", "Doe"), "jitsi")).when(service).getCall("p_crowd");
+    List<ParticipantEntity> crowd = new ArrayList<>(full);
+    crowd.add(part("one-more", UserInfo.TYPE_NAME));
+    when(participants().findCallParts("p_crowd")).thenReturn(crowd);
+    assertNull(service.getRecordingAttendees("crowd"));
+  }
+
+  /**
+   * @return the service's participants storage, a mock
+   */
+  private ParticipantDAO participants() {
+    return (ParticipantDAO) ReflectionTestUtils.getField(service, "participantsStorage");
+  }
+
+  /**
+   * @return the service's origins storage, a mock
+   */
+  private OriginDAO origins() {
+    return (OriginDAO) ReflectionTestUtils.getField(service, "originsStorage");
+  }
+
+  /**
+   * @param id a participant's id
+   * @param type its type
+   * @return a stored participant of a call
+   */
+  private static ParticipantEntity part(String id, String type) {
+    ParticipantEntity participant = new ParticipantEntity();
+    participant.setId(id);
+    participant.setType(type);
+    return participant;
+  }
+
+  /**
+   * @param id an origin's id
+   * @return a stored origin of a call
+   */
+  private static OriginEntity origin(String id) {
+    OriginEntity origin = new OriginEntity();
+    origin.setId(id);
+    return origin;
   }
 
   /**
