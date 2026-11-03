@@ -687,10 +687,13 @@ public class WebConferencingService implements Startable {
 
     SpaceEventInfo spaceEvent = new SpaceEventInfo(spaceIdentity);
     
-    // Merge the host space, given spaces and participants.
+    // Merge the host space, given spaces and participants. A user hosts a
+    // personal event: its name is not a space's.
     Set<String> allSpaces = new LinkedHashSet<>();
     String spacePrettyName = spaceIdentity.getRemoteId();
-    allSpaces.add(spacePrettyName);
+    if (spaceIdentity.isSpace()) {
+      allSpaces.add(spacePrettyName);
+    }
     allSpaces.addAll(Arrays.asList(spaces));
     // 1) host space & 2) invited spaces
     for (String s : allSpaces) {

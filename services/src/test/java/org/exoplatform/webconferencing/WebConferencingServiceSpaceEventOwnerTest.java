@@ -21,6 +21,8 @@ package org.exoplatform.webconferencing;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -109,6 +111,46 @@ class WebConferencingServiceSpaceEventOwnerTest {
     SpaceEventInfo spaceEvent = assertInstanceOf(SpaceEventInfo.class, owner);
     assertEquals("/spaces/sales_team", spaceEvent.getGroupId());
     assertEquals(space.getUrl(), spaceEvent.getProfileLink());
+  }
+
+  @Test
+  void testPersonalEventMembersSkipASpaceNamedLikeTheHost() throws Exception {
+    Identity userIdentity = new Identity("organization", "john");
+    userIdentity.setId(OWNER_ID);
+    userIdentity.setProfile(new Profile(userIdentity));
+    when(identityManager.getIdentity(OWNER_ID)).thenReturn(userIdentity);
+    Space homonymSpace = new Space();
+    homonymSpace.setPrettyName("john");
+    homonymSpace.setMembers(new String[] { "mary" });
+    when(spaceService.getSpaceByPrettyName("john")).thenReturn(homonymSpace);
+    doReturn(new UserInfo("mary", "Mary", "Smith")).when(webConferencing).userInfo("mary");
+    doReturn(new UserInfo("paul", "Paul", "Smith")).when(webConferencing).userInfo("paul");
+
+    try (MockedStatic<LinkProvider> linkProvider = mockStatic(LinkProvider.class)) {
+      linkProvider.when(() -> LinkProvider.getUserProfileUri("john")).thenReturn("/portal/dw/profile/john");
+
+      SpaceEventInfo spaceEvent = webConferencing.spaceEventInfo(OWNER_ID, "call1", new String[] { "paul" }, new String[0]);
+
+      assertEquals(1, spaceEvent.getMembers().size());
+      assertTrue(spaceEvent.getMembers().containsKey("paul"));
+    }
+  }
+
+  @Test
+  void testSpaceEventMembersIncludeTheHostSpaceMembers() throws Exception {
+    Identity spaceIdentity = new Identity("space", "sales_team");
+    spaceIdentity.setId(OWNER_ID);
+    Space space = new Space();
+    space.setPrettyName("sales_team");
+    space.setGroupId("/spaces/sales_team");
+    space.setMembers(new String[] { "mary" });
+    when(identityManager.getIdentity(OWNER_ID)).thenReturn(spaceIdentity);
+    when(spaceService.getSpaceByPrettyName("sales_team")).thenReturn(space);
+    doReturn(new UserInfo("mary", "Mary", "Smith")).when(webConferencing).userInfo("mary");
+
+    SpaceEventInfo spaceEvent = webConferencing.spaceEventInfo(OWNER_ID, "call1", new String[0], new String[0]);
+
+    assertTrue(spaceEvent.getMembers().containsKey("mary"));
   }
 
   private IdentityInfo createSpaceEventOwner() throws Exception {
