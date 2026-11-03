@@ -264,7 +264,7 @@ public class WebConferencingService implements Startable {
      */
     public SpaceEventInfo(Identity hostIdentity) {
       super(hostIdentity.getId(), hostIdentity.getRemoteId());
-      Space space = spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId());
+      Space space = hostIdentity.isSpace() ? spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId()) : null;
       if (space != null) {
         this.profileLink = space.getUrl();
         this.avatarLink = space.getAvatarUrl() != null ? space.getAvatarUrl() : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
@@ -2447,7 +2447,7 @@ public class WebConferencingService implements Startable {
    * @return the root folder node
    * @throws RepositoryException the repository exception
    */
-  private Node getRootFolderNode(String identity, String type) throws RepositoryException {
+  Node getRootFolderNode(String identity, String type) throws RepositoryException {
     Node folderNode = null;
     ManageableRepository repository = repositoryService.getCurrentRepository();
     // TODO use the user session, not a system session
@@ -2460,7 +2460,7 @@ public class WebConferencingService implements Startable {
       folderNode = rootSpace.getNode("Documents");
     } else if (OWNER_TYPE_SPACEEVENT.equals(type)) {
       Identity hostIdentity = socialIdentityManager.getIdentity(identity);
-      Space space = spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId());
+      Space space = hostIdentity.isSpace() ? spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId()) : null;
       if (space != null) {
         Node rootSpace = (Node) session.getItem(nodeCreator.getJcrPath(CMS_GROUPS_PATH) + space.getGroupId());
         folderNode = rootSpace.getNode("Documents");

@@ -75,7 +75,7 @@ public class CallRecordingNotificationListener extends Listener<CallInfo, Map<? 
       if (callType.equals(WebConferencingService.OWNER_TYPE_SPACEEVENT)) {
         // A space hosts a space event, a user hosts a personal event
         Identity hostIdentity = identityManager.getIdentity(identity);
-        Space space = spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId());
+        Space space = hostIdentity.isSpace() ? spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId()) : null;
         if (space != null) {
           ownerName = space.getDisplayName();
           ownerAvatarUrl = space.getAvatarUrl();

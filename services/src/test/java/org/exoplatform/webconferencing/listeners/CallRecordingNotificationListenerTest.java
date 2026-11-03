@@ -82,7 +82,14 @@ class CallRecordingNotificationListenerTest {
     profile.setAvatarUrl("/avatar/john");
     userIdentity.setProfile(profile);
     when(identityManager.getIdentity(HOST_ID)).thenReturn(userIdentity);
-    when(spaceService.getSpaceByPrettyName("john")).thenReturn(null);
+    // A space whose pretty name equals the user name must not be taken for the host
+    Space homonymSpace = new Space();
+    homonymSpace.setPrettyName("john");
+    homonymSpace.setDisplayName("John Space");
+    homonymSpace.setAvatarUrl("/avatar/john_space");
+    homonymSpace.setUrl("john");
+    homonymSpace.setGroupId("/spaces/john");
+    when(spaceService.getSpaceByPrettyName("john")).thenReturn(homonymSpace);
 
     fireSpaceEventRecording();
 
