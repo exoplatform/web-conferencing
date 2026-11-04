@@ -18,6 +18,7 @@
  */
 package org.exoplatform.webconferencing.listeners;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
@@ -114,6 +115,16 @@ class CallRecordingNotificationListenerTest {
     verify(ctx).append(NotificationConstants.AVATAR_URL, "/avatar/sales_team");
   }
 
+  @Test
+  void testSpaceEventRecordingOfAGoneSpaceFails() {
+    // A space identity whose space is not found is not named as a user host
+    Identity spaceIdentity = new Identity("space", "sales_team");
+    spaceIdentity.setId(HOST_ID);
+    when(identityManager.getIdentity(HOST_ID)).thenReturn(spaceIdentity);
+
+    assertThrows(IllegalStateException.class, this::fireSpaceEventRecording);
+  }
+
   private void fireSpaceEventRecording() throws Exception {
     CallInfo callInfo = mock(CallInfo.class);
     when(callInfo.getParticipants()).thenReturn(Collections.emptySet());
@@ -122,8 +133,9 @@ class CallRecordingNotificationListenerTest {
     data.put("file_name", "recording.mp4");
     data.put("identity", HOST_ID);
     data.put("type", WebConferencingService.OWNER_TYPE_SPACEEVENT);
-    try (MockedStatic<NotificationContextImpl> contexts = mockStatic(NotificationContextImpl.class);
-        MockedStatic<CommonsUtils> commonsUtils = mockStatic(CommonsUtils.class)) {
+    // CommonsUtils is mocked first: NotificationContextImpl's initializer reaches the container through it
+    try (MockedStatic<CommonsUtils> commonsUtils = mockStatic(CommonsUtils.class);
+        MockedStatic<NotificationContextImpl> contexts = mockStatic(NotificationContextImpl.class)) {
       contexts.when(NotificationContextImpl::cloneInstance).thenReturn(ctx);
       commonsUtils.when(CommonsUtils::getCurrentDomain).thenReturn("http://host");
       listener.onEvent(new Event<>("recording", callInfo, data));

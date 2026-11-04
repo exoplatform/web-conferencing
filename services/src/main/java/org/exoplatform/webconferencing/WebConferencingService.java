@@ -264,8 +264,11 @@ public class WebConferencingService implements Startable {
      */
     public SpaceEventInfo(Identity hostIdentity) {
       super(hostIdentity.getId(), hostIdentity.getRemoteId());
-      Space space = hostIdentity.isSpace() ? spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId()) : null;
-      if (space != null) {
+      if (hostIdentity.isSpace()) {
+        Space space = spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId());
+        if (space == null) {
+          throw new IllegalStateException("Cannot find the space hosting the event: " + hostIdentity.getRemoteId());
+        }
         this.profileLink = space.getUrl();
         this.avatarLink = space.getAvatarUrl() != null ? space.getAvatarUrl() : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
         this.groupId = space.getGroupId();
@@ -2463,8 +2466,11 @@ public class WebConferencingService implements Startable {
       folderNode = rootSpace.getNode("Documents");
     } else if (OWNER_TYPE_SPACEEVENT.equals(type)) {
       Identity hostIdentity = socialIdentityManager.getIdentity(identity);
-      Space space = hostIdentity.isSpace() ? spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId()) : null;
-      if (space != null) {
+      if (hostIdentity.isSpace()) {
+        Space space = spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId());
+        if (space == null) {
+          throw new RepositoryException("Cannot find the space hosting the event: " + hostIdentity.getRemoteId());
+        }
         Node rootSpace = (Node) session.getItem(nodeCreator.getJcrPath(CMS_GROUPS_PATH) + space.getGroupId());
         folderNode = rootSpace.getNode("Documents");
       } else {

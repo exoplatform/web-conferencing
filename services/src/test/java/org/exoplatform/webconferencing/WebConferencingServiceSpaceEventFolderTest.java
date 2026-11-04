@@ -19,6 +19,7 @@
 package org.exoplatform.webconferencing;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import javax.jcr.Node;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -98,6 +100,9 @@ class WebConferencingServiceSpaceEventFolderTest {
     homonymSpace.setPrettyName("john");
     homonymSpace.setGroupId("/spaces/john");
     when(spaceService.getSpaceByPrettyName("john")).thenReturn(homonymSpace);
+    Node homonymSpaceRoot = mock(Node.class);
+    when(session.getItem("/Groups/spaces/john")).thenReturn(homonymSpaceRoot);
+    when(homonymSpaceRoot.getNode("Documents")).thenReturn(mock(Node.class));
     Node userNode = mock(Node.class);
     Node privateFolder = mock(Node.class);
     when(nodeCreator.getUserNode(sessionProvider, "john")).thenReturn(userNode);
@@ -125,5 +130,19 @@ class WebConferencingServiceSpaceEventFolderTest {
     Node folder = webConferencing.getRootFolderNode(HOST_ID, WebConferencingService.OWNER_TYPE_SPACEEVENT);
 
     assertSame(documents, folder);
+  }
+
+  @Test
+  void testSpaceEventOfAGoneSpaceHasNoRecordingFolder() throws Exception {
+    // A space identity whose space is not found gets no user folder in its name
+    Identity spaceIdentity = new Identity("space", "sales_team");
+    spaceIdentity.setId(HOST_ID);
+    when(identityManager.getIdentity(HOST_ID)).thenReturn(spaceIdentity);
+    Node userNode = mock(Node.class);
+    when(nodeCreator.getUserNode(sessionProvider, "sales_team")).thenReturn(userNode);
+    when(userNode.getNode("Private")).thenReturn(mock(Node.class));
+
+    assertThrows(RepositoryException.class,
+                 () -> webConferencing.getRootFolderNode(HOST_ID, WebConferencingService.OWNER_TYPE_SPACEEVENT));
   }
 }

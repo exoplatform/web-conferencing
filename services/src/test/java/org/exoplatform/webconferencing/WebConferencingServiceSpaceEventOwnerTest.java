@@ -21,6 +21,7 @@ package org.exoplatform.webconferencing;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
@@ -111,6 +112,20 @@ class WebConferencingServiceSpaceEventOwnerTest {
     SpaceEventInfo spaceEvent = assertInstanceOf(SpaceEventInfo.class, owner);
     assertEquals("/spaces/sales_team", spaceEvent.getGroupId());
     assertEquals(space.getUrl(), spaceEvent.getProfileLink());
+  }
+
+  @Test
+  void testCreateOwnerOfSpaceEventWhoseSpaceIsGoneFails() {
+    // A space identity whose space is not found is not taken for a user host
+    Identity spaceIdentity = new Identity("space", "sales_team");
+    spaceIdentity.setId(OWNER_ID);
+    when(identityManager.getIdentity(OWNER_ID)).thenReturn(spaceIdentity);
+
+    try (MockedStatic<LinkProvider> linkProvider = mockStatic(LinkProvider.class)) {
+      linkProvider.when(() -> LinkProvider.getUserProfileUri("sales_team")).thenReturn("/portal/dw/profile/sales_team");
+
+      assertThrows(IllegalStateException.class, this::createSpaceEventOwner);
+    }
   }
 
   @Test
