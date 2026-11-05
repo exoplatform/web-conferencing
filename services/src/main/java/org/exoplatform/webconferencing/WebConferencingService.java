@@ -2201,7 +2201,11 @@ public class WebConferencingService implements Startable {
 
   /**
    * Marks as missed, before the call is removed with its participants, the participants still invited to it:
-   * among the missed call check of the same start, a join or a decline, a participant is marked once.
+   * among the missed call check of the same start, a join or a decline, a participant is marked once. It runs
+   * one conditional update per invited participant, each telling whether this call marked that participant: a
+   * single update of all of them would not tell which ones another writer marked meanwhile. Its cost is bounded
+   * by the participants the call holds when it is removed, whatever added them (its start, a participants
+   * update, a guest): for a space call, up to the members of the space.
    *
    * @param call the call to remove
    * @param invitedIds the participants invited to the call
@@ -2402,7 +2406,9 @@ public class WebConferencingService implements Startable {
 
   /**
    * Marks as notified of their decline the given participants of a call, each only while still declined and the
-   * call still from a start not later than the given date.
+   * call still from a start not later than the given date. It runs one conditional update per participant, each
+   * telling whether this call marked that participant, so that a decline is reported to the caller once whatever
+   * the concurrent writers. Its cost is bounded by the participants who declined the call.
    *
    * @param call the call
    * @param declinerIds the participants who declined the call
