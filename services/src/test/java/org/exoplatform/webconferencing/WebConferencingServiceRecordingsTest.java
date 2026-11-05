@@ -416,24 +416,24 @@ class WebConferencingServiceRecordingsTest {
   }
 
   /**
-   * A space recording's notification goes to the participants who may read it,
-   * by the rule its readers are checked with: the space's members and a
-   * platform space administrator, in the call's order; a guest, a blank id
-   * and a participant invited directly are left out.
+   * A space recording's notification goes to the participants who are members
+   * of the space, in the call's order; a guest, a blank id, a participant
+   * invited directly and a platform space administrator who is no member are
+   * left out, as the validated story says (EXO-91999). Mutant: the read rule,
+   * which lets the administrator through, used for the notification.
    */
   @Test
-  void aSpaceRecordingGoesToTheParticipantsWhoMayReadIt() {
+  void aSpaceRecordingGoesToTheParticipantsWhoAreMembers() {
     Space space = new Space();
     when(spaceService.isMember(space, "alice")).thenReturn(true);
+    when(spaceService.isMember(space, "carol")).thenReturn(true);
     when(spaceService.isMember(space, "bob")).thenReturn(false);
-    when(spaceService.isSuperManager("bob")).thenReturn(false);
     when(spaceService.isMember(space, "root")).thenReturn(false);
-    when(spaceService.isSuperManager("root")).thenReturn(true);
+    lenient().when(spaceService.isSuperManager("root")).thenReturn(true);
     when(spaceService.isMember(space, "guest@acme.com")).thenReturn(false);
-    when(spaceService.isSuperManager("guest@acme.com")).thenReturn(false);
 
-    assertEquals(List.of("alice", "root"),
-                 service.getRecordingRecipients(space, java.util.Arrays.asList("alice", "bob", " ", "root", "guest@acme.com")));
+    assertEquals(List.of("alice", "carol"),
+                 service.getRecordingRecipients(space, java.util.Arrays.asList("alice", "bob", " ", "root", "guest@acme.com", "carol")));
     assertEquals(List.of(), service.getRecordingRecipients(space, List.of()));
     assertEquals(List.of(), service.getRecordingRecipients(null, List.of("alice")));
   }
