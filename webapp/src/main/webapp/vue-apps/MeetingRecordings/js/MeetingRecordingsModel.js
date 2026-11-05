@@ -329,8 +329,12 @@ const SIZE_UNITS = ['byte', 'kilobyte', 'megabyte', 'gigabyte'];
 
 /**
  * Formats a size in bytes the way a file list shows it: one decimal under
- * ten units, none above, the unit written in the user's language ("12 KB",
- * "12 ko"). No shared helper of the platform formats a byte count.
+ * ten units, none above, the unit written in the user's language ("512B",
+ * "12 kB" and "5 MB" in English; "512o", "12 ko" and "5 Mo" in French). A
+ * count of bytes takes the narrow unit, the short one reading "512 byte" in
+ * English. A malformed language tag, which Intl refuses, falls back to
+ * English; a well-formed tag Intl does not know takes the browser's locale.
+ * No shared helper of the platform formats a byte count.
  *
  * @param {Number} bytes - the size, -1 or absent when unknown
  * @param {String} language - the user's language, such as fr or pt_BR
@@ -350,7 +354,7 @@ export function formatSize(bytes, language) {
   const options = {
     style: 'unit',
     unit: SIZE_UNITS[unit],
-    unitDisplay: 'short',
+    unitDisplay: unit === 0 ? 'narrow' : 'short',
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   };
