@@ -201,7 +201,7 @@ export default {
      * @returns {String} the size, or null when unknown
      */
     size() {
-      return formatSize(this.recording && this.recording.sizeBytes);
+      return formatSize(this.recording && this.recording.sizeBytes, eXo.env.portal.language);
     },
     /**
      * The params handed to the actions contributed on this recording.
