@@ -37,7 +37,6 @@ import org.exoplatform.webconferencing.notification.plugin.CallRecordingPlugin;
 import org.exoplatform.webconferencing.notification.utils.NotificationConstants;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -67,8 +66,9 @@ public class CallRecordingNotificationListener extends Listener<CallInfo, Map<? 
    * Creates the listener.
    *
    * @param identityManager resolves the space-event and user identities
-   * @param webConferencingService builds the recording's URL
-   * @param spaceService resolves the call's space and its membership
+   * @param webConferencingService builds the recording's URL and tells who
+   *          may read a space's recording
+   * @param spaceService resolves the call's space
    */
   public CallRecordingNotificationListener(IdentityManager identityManager,
                                            WebConferencingService webConferencingService,
@@ -132,7 +132,7 @@ public class CallRecordingNotificationListener extends Listener<CallInfo, Map<? 
       if (space != null) {
         ownerName = space.getDisplayName();
         ownerAvatarUrl = space.getAvatarUrl();
-        recipients = getSpaceMembers(space, participants);
+        recipients = webConferencingService.getRecordingRecipients(space, participants);
         if (recipients.isEmpty()) {
           LOG.debug("No participant of call {} is a member of space {}, no recording notification sent",
                     callInfo.getId(),
@@ -196,24 +196,6 @@ public class CallRecordingNotificationListener extends Listener<CallInfo, Map<? 
    */
   protected NotificationContext newNotificationContext() {
     return NotificationContextImpl.cloneInstance();
-  }
-
-  /**
-   * Keeps, among the call's participants, only the members of the space: a
-   * space or space-event recording is saved in the space's Documents, which a
-   * non-member (an attendee invited directly, a guest) cannot open.
-   *
-   * @param space the space the recording is saved in
-   * @param participants the ids of the call's participants
-   * @return the participants who are members of the space, in the same order
-   */
-  private List<String> getSpaceMembers(Space space, List<String> participants) {
-    if (participants == null || participants.isEmpty()) {
-      return Collections.emptyList();
-    }
-    return participants.stream()
-                       .filter(participant -> StringUtils.isNotBlank(participant) && spaceService.isMember(space, participant))
-                       .collect(Collectors.toList());
   }
 
   /**
