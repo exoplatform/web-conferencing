@@ -56,7 +56,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
           {{ chipLabel }}
         </span>
         <a
-          v-if="chip && (chip.kind === 'failed' || chip.retryable)"
+          v-if="chip && (chip.kind === 'failed' || chip.retryable) && transcript && transcript.canRetry"
           class="webconferencing-meeting-transcript-retry text-caption primary--text"
           @click="$emit('retry', recording.documentId)">
           {{ $t('visio.recordings.transcript.retry') }}
