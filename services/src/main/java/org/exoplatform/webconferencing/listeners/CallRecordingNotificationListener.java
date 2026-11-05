@@ -23,8 +23,10 @@ import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.social.core.identity.model.Identity;
+import org.exoplatform.social.core.identity.model.Profile;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
 import org.exoplatform.social.core.manager.IdentityManager;
+import org.exoplatform.social.core.service.LinkProvider;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.webconferencing.CallInfo;
@@ -68,12 +70,28 @@ public class CallRecordingNotificationListener extends Listener<CallInfo, Map<? 
     String name = "";
     String avatarUrl = CommonsUtils.getCurrentDomain();
     if (callType.equals(WebConferencingService.OWNER_TYPE_SPACE) || callType.equals(WebConferencingService.OWNER_TYPE_SPACEEVENT)) {
-      Space space;
+      String ownerName;
+      String ownerAvatarUrl;
       if (callType.equals(WebConferencingService.OWNER_TYPE_SPACEEVENT)) {
-        Identity spaceIdentity = identityManager.getIdentity(identity);
-        space = spaceService.getSpaceByPrettyName(spaceIdentity.getRemoteId());
+        // A space hosts a space event, a user hosts a personal event
+        Identity hostIdentity = identityManager.getIdentity(identity);
+        if (hostIdentity.isSpace()) {
+          Space space = spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId());
+          if (space == null) {
+            throw new IllegalStateException("Cannot find the space hosting the event: " + hostIdentity.getRemoteId());
+          }
+          ownerName = space.getDisplayName();
+          ownerAvatarUrl = space.getAvatarUrl();
+        } else {
+          Profile profile = hostIdentity.getProfile();
+          ownerName = profile != null ? profile.getFullName() : hostIdentity.getRemoteId();
+          ownerAvatarUrl = profile != null && profile.getAvatarUrl() != null ? profile.getAvatarUrl()
+                                                                              : LinkProvider.PROFILE_DEFAULT_AVATAR_URL;
+        }
       } else {
-        space = spaceService.getSpaceByPrettyName(identity);
+        Space space = spaceService.getSpaceByPrettyName(identity);
+        ownerName = space.getDisplayName();
+        ownerAvatarUrl = space.getAvatarUrl();
       }
       NotificationContext ctx = NotificationContextImpl.cloneInstance();
       String fileUrl = webConferencingService.getRecordingUrl(identity, fileName, callType);
@@ -81,10 +99,10 @@ public class CallRecordingNotificationListener extends Listener<CallInfo, Map<? 
       ctx.append(NotificationConstants.RECORDED_FILE_URL, fileUrl);
       ctx.append(NotificationConstants.CALL_PARTICIPANTS, participants);
       ctx.append(NotificationConstants.FILE_NAME, fileName);
-      ctx.append(NotificationConstants.AVATAR_URL, space.getAvatarUrl());
+      ctx.append(NotificationConstants.AVATAR_URL, ownerAvatarUrl);
       ctx.append(NotificationConstants.RECORDING_STATUS, status);
       ctx.append(NotificationConstants.CALL_TYPE, callType);
-      ctx.append(NotificationConstants.CALL_OWNER, space.getDisplayName());
+      ctx.append(NotificationConstants.CALL_OWNER, ownerName);
       ctx.getNotificationExecutor().with(ctx.makeCommand(PluginKey.key(CallRecordingPlugin.ID))).execute(ctx);
     } else {
       if (callType.equals(WebConferencingService.OWNER_TYPE_USER)) {

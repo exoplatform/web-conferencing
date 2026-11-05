@@ -254,22 +254,36 @@ public class WebConferencingService implements Startable {
     protected final String groupId;
     
     /**
-     * Instantiates a new space event info.
+     * Instantiates a new space event info. A space hosts a space event, a
+     * user hosts a personal event: a host that is not a space takes the
+     * user's profile link and avatar, and has no group id.
      *
-     * @param spaceIdentity the space identity
+     * @param hostIdentity the identity of the space or the user hosting the
+     *          event
      */
-    public SpaceEventInfo(Identity spaceIdentity) {
-      super(spaceIdentity.getId(), spaceIdentity.getRemoteId());
-      Space space = spaceService.getSpaceByPrettyName(spaceIdentity.getRemoteId());
-      this.profileLink = space.getUrl();
-      this.avatarLink = space.getAvatarUrl() != null ? space.getAvatarUrl() : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
-      this.groupId = space.getGroupId();
+    public SpaceEventInfo(Identity hostIdentity) {
+      super(hostIdentity.getId(), hostIdentity.getRemoteId());
+      if (hostIdentity.isSpace()) {
+        Space space = spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId());
+        if (space == null) {
+          throw new IllegalStateException("Cannot find the space hosting the event: " + hostIdentity.getRemoteId());
+        }
+        this.profileLink = space.getUrl();
+        this.avatarLink = space.getAvatarUrl() != null ? space.getAvatarUrl() : LinkProvider.SPACE_DEFAULT_AVATAR_URL;
+        this.groupId = space.getGroupId();
+      } else {
+        Profile profile = hostIdentity.getProfile();
+        String avatar = profile != null ? profile.getAvatarUrl() : null;
+        this.profileLink = LinkProvider.getUserProfileUri(hostIdentity.getRemoteId());
+        this.avatarLink = avatar != null ? avatar : LinkProvider.PROFILE_DEFAULT_AVATAR_URL;
+        this.groupId = null;
+      }
     }
 
     /**
-     * Gets the group id of the space.
+     * Gets the group id of the space hosting the event.
      *
-     * @return the groupId
+     * @return the groupId, null when a user hosts the event
      */
     public String getGroupId() {
       return groupId;
@@ -675,10 +689,13 @@ public class WebConferencingService implements Startable {
 
     SpaceEventInfo spaceEvent = new SpaceEventInfo(spaceIdentity);
     
-    // Merge the host space, given spaces and participants.
+    // Merge the host space, given spaces and participants. A user hosts a
+    // personal event: its name is not a space's.
     Set<String> allSpaces = new LinkedHashSet<>();
     String spacePrettyName = spaceIdentity.getRemoteId();
-    allSpaces.add(spacePrettyName);
+    if (spaceIdentity.isSpace()) {
+      allSpaces.add(spacePrettyName);
+    }
     allSpaces.addAll(Arrays.asList(spaces));
     // 1) host space & 2) invited spaces
     for (String s : allSpaces) {
@@ -2435,7 +2452,7 @@ public class WebConferencingService implements Startable {
    * @return the root folder node
    * @throws RepositoryException the repository exception
    */
-  private Node getRootFolderNode(String identity, String type) throws RepositoryException {
+  Node getRootFolderNode(String identity, String type) throws RepositoryException {
     Node folderNode = null;
     ManageableRepository repository = repositoryService.getCurrentRepository();
     // TODO use the user session, not a system session
@@ -2447,23 +2464,42 @@ public class WebConferencingService implements Startable {
       rootSpace = (Node) session.getItem(nodeCreator.getJcrPath(CMS_GROUPS_PATH) + space.getGroupId());
       folderNode = rootSpace.getNode("Documents");
     } else if (OWNER_TYPE_SPACEEVENT.equals(type)) {
-      Node rootSpace = null;
-      Identity spaceIdentity = socialIdentityManager.getIdentity(identity);
-      Space space = spaceService.getSpaceByPrettyName(spaceIdentity.getRemoteId());
-      rootSpace = (Node) session.getItem(nodeCreator.getJcrPath(CMS_GROUPS_PATH) + space.getGroupId());
-      folderNode = rootSpace.getNode("Documents");
-    } else {
-      String privateRelativePath = nodeCreator.getJcrPath("userPrivate");
-      Node userNode = null;
-      try {
-        userNode = nodeCreator.getUserNode(sessionProvider, identity);
-      } catch (Exception e) {
-        LOG.error("Cannot find user node by id: " + identity, e.getMessage());
-        throw new RepositoryException("Cannot find user node by id: " + identity, e);
+      Identity hostIdentity = socialIdentityManager.getIdentity(identity);
+      if (hostIdentity.isSpace()) {
+        Space space = spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId());
+        if (space == null) {
+          throw new RepositoryException("Cannot find the space hosting the event: " + hostIdentity.getRemoteId());
+        }
+        Node rootSpace = (Node) session.getItem(nodeCreator.getJcrPath(CMS_GROUPS_PATH) + space.getGroupId());
+        folderNode = rootSpace.getNode("Documents");
+      } else {
+        // A user hosts the event (personal event): its private folder holds the recording
+        folderNode = getUserPrivateFolderNode(sessionProvider, hostIdentity.getRemoteId());
       }
-      folderNode = userNode.getNode(privateRelativePath);
+    } else {
+      folderNode = getUserPrivateFolderNode(sessionProvider, identity);
     }
     return folderNode;
+  }
+
+  /**
+   * Gets the private folder node of a user.
+   *
+   * @param sessionProvider the session provider
+   * @param userName the user name
+   * @return the user's private folder node
+   * @throws RepositoryException the repository exception
+   */
+  private Node getUserPrivateFolderNode(SessionProvider sessionProvider, String userName) throws RepositoryException {
+    String privateRelativePath = nodeCreator.getJcrPath("userPrivate");
+    Node userNode = null;
+    try {
+      userNode = nodeCreator.getUserNode(sessionProvider, userName);
+    } catch (Exception e) {
+      LOG.error("Cannot find user node by id: " + userName, e.getMessage());
+      throw new RepositoryException("Cannot find user node by id: " + userName, e);
+    }
+    return userNode.getNode(privateRelativePath);
   }
 
   /**
