@@ -221,19 +221,26 @@ class CallRecordingStorageTest {
 
   /**
    * The statement selects the mixin by call id, bounds the recording date
-   * from below and from above with the right operators, and sorts newest
-   * first; a quote in the id is doubled, never left to close the literal.
+   * from below by the from date and from above by the to date, each written
+   * in UTC whatever the server's time zone, and sorts newest first; a quote
+   * in the id is doubled, never left to close the literal.
    */
   @Test
   void theQuerySelectsTheCallWithinTheRange() {
     Date from = Date.from(Instant.parse("2026-10-23T09:00:00Z"));
     Date to = Date.from(Instant.parse("2026-10-23T22:00:00Z"));
-    String statement = CallRecordingStorage.buildRecordingsQuery(CALL_ID, from, to);
-    assertTrue(statement.startsWith("SELECT * FROM exo:callRecording WHERE exo:callId = '" + CALL_ID + "'"), statement);
-    assertTrue(statement.contains(" AND exo:recordedDate >= TIMESTAMP '"), statement);
-    assertTrue(statement.contains(" AND exo:recordedDate <= TIMESTAMP '"), statement);
-    assertTrue(statement.indexOf(">=") < statement.indexOf("<="), "the lower bound is the from date: " + statement);
-    assertTrue(statement.endsWith(" ORDER BY exo:recordedDate DESC"), statement);
+    assertEquals("SELECT * FROM exo:callRecording WHERE exo:callId = '" + CALL_ID + "'"
+        + " AND exo:recordedDate >= TIMESTAMP '2026-10-23T09:00:00.000Z'"
+        + " AND exo:recordedDate <= TIMESTAMP '2026-10-23T22:00:00.000Z'"
+        + " ORDER BY exo:recordedDate DESC", CallRecordingStorage.buildRecordingsQuery(CALL_ID, from, to));
+    assertEquals("SELECT * FROM exo:callRecording WHERE exo:callId = '" + CALL_ID + "'"
+        + " AND exo:recordedDate >= TIMESTAMP '2026-10-23T09:00:00.000Z'"
+        + " ORDER BY exo:recordedDate DESC", CallRecordingStorage.buildRecordingsQuery(CALL_ID, from, null),
+                 "the from date bounds from below only");
+    assertEquals("SELECT * FROM exo:callRecording WHERE exo:callId = '" + CALL_ID + "'"
+        + " AND exo:recordedDate <= TIMESTAMP '2026-10-23T22:00:00.000Z'"
+        + " ORDER BY exo:recordedDate DESC", CallRecordingStorage.buildRecordingsQuery(CALL_ID, null, to),
+                 "the to date bounds from above only");
     String unbounded = CallRecordingStorage.buildRecordingsQuery(CALL_ID, null, null);
     assertFalse(unbounded.contains("exo:recordedDate >="), unbounded);
     assertFalse(unbounded.contains("exo:recordedDate <="), unbounded);
