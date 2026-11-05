@@ -136,10 +136,8 @@ class CallRecordingNotificationListenerTest {
   @Test
   void spaceEventRecordingNotifiesOnlySpaceMembers() throws Exception {
     Space space = mockSpaceEvent();
-    when(spaceService.isMember(space, "alice")).thenReturn(true);
-    when(spaceService.isMember(space, "bob")).thenReturn(false);
-    when(spaceService.isMember(space, "guest@acme.com")).thenReturn(false);
-    when(spaceService.isMember(space, "carol")).thenReturn(true);
+    when(webConferencingService.getRecordingRecipients(space, List.of("alice", "bob", "guest@acme.com", "carol")))
+                                                                                                              .thenReturn(List.of("alice", "carol"));
     CallInfo call = call("Demo ACME", "alice", "bob", "guest@acme.com", "carol");
     call.setLastDate(new Date(LAST_DATE));
     call.setStartDate(new Date(PLANNED_DATE));
@@ -164,7 +162,7 @@ class CallRecordingNotificationListenerTest {
   @Test
   void spaceEventRecordingWithoutMemberParticipantNotifiesNobody() throws Exception {
     Space space = mockSpaceEvent();
-    when(spaceService.isMember(space, "bob")).thenReturn(false);
+    when(webConferencingService.getRecordingRecipients(space, List.of("bob"))).thenReturn(List.of());
     CallInfo call = call("Demo ACME", "bob");
 
     listener.onEvent(recordedEvent(call, WebConferencingService.OWNER_TYPE_SPACEEVENT, SPACE_IDENTITY));
@@ -235,8 +233,7 @@ class CallRecordingNotificationListenerTest {
     space.setPrettyName("sales_team");
     space.setDisplayName("Sales team");
     when(spaceService.getSpaceByPrettyName("sales_team")).thenReturn(space);
-    when(spaceService.isMember(space, "alice")).thenReturn(true);
-    when(spaceService.isMember(space, "bob")).thenReturn(false);
+    when(webConferencingService.getRecordingRecipients(space, List.of("bob", "alice"))).thenReturn(List.of("alice"));
     when(webConferencingService.getRecordingUrl("sales_team", FILE_NAME, WebConferencingService.OWNER_TYPE_SPACE))
                                                                                                           .thenReturn(DOMAIN + "/portal/dw/documents?documentPreviewId=1");
     CallInfo call = call(" ", "bob", "alice");
@@ -272,7 +269,7 @@ class CallRecordingNotificationListenerTest {
     assertEquals(List.of("bob"), appended(contexts.get(1), NotificationConstants.CALL_PARTICIPANTS));
     assertEquals("Weekly sync", appended(contexts.get(1), NotificationConstants.CALL_TITLE));
     assertEquals(String.valueOf(LAST_DATE), appended(contexts.get(1), NotificationConstants.CALL_START_DATE));
-    verify(spaceService, never()).isMember(any(Space.class), anyString());
+    verify(webConferencingService, never()).getRecordingRecipients(any(Space.class), any());
   }
 
   /**
@@ -299,7 +296,7 @@ class CallRecordingNotificationListenerTest {
     assertEquals(appended(contexts.get(0), NotificationConstants.CALL_OWNER),
                  appended(contexts.get(0), NotificationConstants.CALL_TITLE));
     assertEquals(null, appended(contexts.get(0), NotificationConstants.CALL_START_DATE));
-    verify(spaceService, never()).isMember(any(Space.class), anyString());
+    verify(webConferencingService, never()).getRecordingRecipients(any(Space.class), any());
   }
 
   /**

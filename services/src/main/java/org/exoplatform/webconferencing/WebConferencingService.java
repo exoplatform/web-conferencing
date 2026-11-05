@@ -5169,6 +5169,38 @@ public class WebConferencingService implements Startable {
   }
 
   /**
+   * Keeps, among the participants of a space or space-event call, those who may
+   * read its recordings, by the rule {@link #checkCanReadRecordings} applies to
+   * a reader: a member of the space, or a platform space administrator. Such a
+   * recording is saved in the space's Documents, which a non-member (an
+   * attendee invited directly, a guest) cannot open.
+   *
+   * @param space the space owning the call
+   * @param participants the user names of the call's participants
+   * @return the participants who may read the recording, in the same order
+   */
+  public List<String> getRecordingRecipients(Space space, List<String> participants) {
+    if (space == null || participants == null || participants.isEmpty()) {
+      return new ArrayList<>();
+    }
+    return participants.stream()
+                       .filter(participant -> StringUtils.isNotBlank(participant) && canReadSpaceRecordings(space, participant))
+                       .collect(Collectors.toList());
+  }
+
+  /**
+   * Tells whether a user may read the recordings of a space's calls: a member of
+   * the space, or a platform space administrator.
+   *
+   * @param space the space
+   * @param user the user name
+   * @return true when the user may read them
+   */
+  private boolean canReadSpaceRecordings(Space space, String user) {
+    return spaceService.isMember(space, user) || spaceService.isSuperManager(user);
+  }
+
+  /**
    * Checks that a viewer may read the recordings of a call: a member of the
    * space owning a space or space-event call (or a platform space
    * administrator), a participant or the owner of any other call.
@@ -5193,7 +5225,7 @@ public class WebConferencingService implements Startable {
       if (space == null) {
         throw new ObjectNotFoundException(RECORDINGS_CALL_NOT_FOUND);
       }
-      if (!spaceService.isMember(space, viewer) && !spaceService.isSuperManager(viewer)) {
+      if (!canReadSpaceRecordings(space, viewer)) {
         throw new IllegalAccessException(RECORDINGS_NOT_SPACE_MEMBER);
       }
       return spaceGroupId;
