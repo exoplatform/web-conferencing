@@ -416,6 +416,29 @@ class WebConferencingServiceRecordingsTest {
   }
 
   /**
+   * A space recording's notification goes to the participants who may read it,
+   * by the rule its readers are checked with: the space's members and a
+   * platform space administrator, in the call's order; a guest, a blank id
+   * and a participant invited directly are left out.
+   */
+  @Test
+  void aSpaceRecordingGoesToTheParticipantsWhoMayReadIt() {
+    Space space = new Space();
+    when(spaceService.isMember(space, "alice")).thenReturn(true);
+    when(spaceService.isMember(space, "bob")).thenReturn(false);
+    when(spaceService.isSuperManager("bob")).thenReturn(false);
+    when(spaceService.isMember(space, "root")).thenReturn(false);
+    when(spaceService.isSuperManager("root")).thenReturn(true);
+    when(spaceService.isMember(space, "guest@acme.com")).thenReturn(false);
+    when(spaceService.isSuperManager("guest@acme.com")).thenReturn(false);
+
+    assertEquals(List.of("alice", "root"),
+                 service.getRecordingRecipients(space, java.util.Arrays.asList("alice", "bob", " ", "root", "guest@acme.com")));
+    assertEquals(List.of(), service.getRecordingRecipients(space, List.of()));
+    assertEquals(List.of(), service.getRecordingRecipients(null, List.of("alice")));
+  }
+
+  /**
    * A space call (not an event's) is checked against its space as well.
    *
    * @throws Exception never
