@@ -27,6 +27,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -724,13 +725,16 @@ public class CallRecordingStorage {
   }
 
   /**
-   * Formats a date as a JCR-SQL timestamp literal.
+   * Formats a date as a JCR-SQL timestamp literal, in UTC: the same instant
+   * whatever the server's time zone, and the same text.
    *
    * @param date the date
-   * @return its ISO 8601 form
+   * @return its ISO 8601 form, such as 2026-10-23T09:00:00.000Z
    */
   private static String format(Date date) {
-    return ISO8601.format(toCalendar(date));
+    Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone(ZoneOffset.UTC));
+    calendar.setTime(date);
+    return ISO8601.format(calendar);
   }
 
   /**
