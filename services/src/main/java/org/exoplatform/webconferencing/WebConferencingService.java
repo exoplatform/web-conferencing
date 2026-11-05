@@ -5169,22 +5169,24 @@ public class WebConferencingService implements Startable {
   }
 
   /**
-   * Keeps, among the participants of a space or space-event call, those who may
-   * read its recordings, by the rule {@link #checkCanReadRecordings} applies to
-   * a reader: a member of the space, or a platform space administrator. Such a
-   * recording is saved in the space's Documents, which a non-member (an
-   * attendee invited directly, a guest) cannot open.
+   * Keeps, among the participants of a space or space-event call, those its
+   * recording's notification goes to: the members of the space (EXO-91999,
+   * EXO-92101). Such a recording is saved in the space's Documents, which a
+   * non-member (an attendee invited directly, a guest) cannot open. A platform
+   * space administrator who is no member may read the recordings
+   * ({@link #checkCanReadRecordings}) but is not notified of them, as the
+   * validated story says.
    *
    * @param space the space owning the call
    * @param participants the user names of the call's participants
-   * @return the participants who may read the recording, in the same order
+   * @return the participants who are members of the space, in the same order
    */
   public List<String> getRecordingRecipients(Space space, List<String> participants) {
     if (space == null || participants == null || participants.isEmpty()) {
       return new ArrayList<>();
     }
     return participants.stream()
-                       .filter(participant -> StringUtils.isNotBlank(participant) && canReadSpaceRecordings(space, participant))
+                       .filter(participant -> StringUtils.isNotBlank(participant) && spaceService.isMember(space, participant))
                        .collect(Collectors.toList());
   }
 
