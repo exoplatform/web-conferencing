@@ -325,26 +325,40 @@ export function durationParts(seconds) {
   };
 }
 
+const SIZE_UNITS = ['byte', 'kilobyte', 'megabyte', 'gigabyte'];
+
 /**
  * Formats a size in bytes the way a file list shows it: one decimal under
- * ten units, none above.
+ * ten units, none above, the unit written in the user's language ("12 KB",
+ * "12 ko"). No shared helper of the platform formats a byte count.
  *
  * @param {Number} bytes - the size, -1 or absent when unknown
+ * @param {String} language - the user's language, such as fr or pt_BR
  * @returns {String} the size with its unit, or null when unknown
  */
-export function formatSize(bytes) {
+export function formatSize(bytes, language) {
   if (typeof bytes !== 'number' || bytes < 0) {
     return null;
   }
-  const units = ['B', 'KB', 'MB', 'GB'];
   let value = bytes;
   let unit = 0;
-  while (value >= 1024 && unit < units.length - 1) {
+  while (value >= 1024 && unit < SIZE_UNITS.length - 1) {
     value /= 1024;
     unit++;
   }
   const digits = unit > 0 && value < 10 ? 1 : 0;
-  return `${value.toFixed(digits)} ${units[unit]}`;
+  const options = {
+    style: 'unit',
+    unit: SIZE_UNITS[unit],
+    unitDisplay: 'short',
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  };
+  try {
+    return new Intl.NumberFormat((language || 'en').replace('_', '-'), options).format(value);
+  } catch (e) {
+    return new Intl.NumberFormat('en', options).format(value);
+  }
 }
 
 /**
