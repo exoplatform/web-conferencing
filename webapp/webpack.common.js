@@ -6,10 +6,12 @@ let config = {
   // can use multiple entry
   entry: {
     admin: "./src/main/webapp/vue-apps/Admin/main.js",
+    recordingMeeting: "./src/main/webapp/vue-apps/RecordingMeeting/main.js",
     callButtons: "./src/main/webapp/vue-apps/CallButtons/main.js",
     webConferencingNotificationExtension: "./src/main/webapp/vue-apps/Web-conferencing-notifications/main.js",
     webConferencing: './src/main/webapp/vue-apps/SpaceAdministrationVisioConference/main.js',
-    visioDrawer: './src/main/webapp/vue-apps/VisioDrawer/main.js'
+    visioDrawer: './src/main/webapp/vue-apps/VisioDrawer/main.js',
+    meetingRecordings: './src/main/webapp/vue-apps/MeetingRecordings/main.js'
   },
   output: {
     filename: "js/[name].bundle.js",

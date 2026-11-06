@@ -100,6 +100,18 @@
       <artifactId>app-center-services</artifactId>
       <scope>provided</scope>
     </dependency>
+    <!-- MCP Server API (used by the MCP tools exposed to the AI agent) -->
+    <dependency>
+      <groupId>io.meeds.mcp-server</groupId>
+      <artifactId>mcp-server-tools</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <!-- Documents API (the transcript chapters and speakers of a recording) -->
+    <dependency>
+      <groupId>org.exoplatform.documents</groupId>
+      <artifactId>documents-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <build>
     <resources>
@@ -141,6 +153,16 @@
       </resource>
     </resources>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <compilerArgs>
+            <!-- Required so MCP tool method parameter names are retained and bound by name -->
+            <arg>-parameters</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>io.openapitools.swagger</groupId>
         <artifactId>swagger-maven-plugin</artifactId>
