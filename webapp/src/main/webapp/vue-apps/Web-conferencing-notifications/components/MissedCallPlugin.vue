@@ -23,7 +23,7 @@
     <template v-if="actionLabel" #actions>
       <v-btn
         :loading="acting"
-        class="ignore-vuetify-classes"
+        class="missedCallAction ignore-vuetify-classes"
         color="primary"
         elevation="0"
         small
