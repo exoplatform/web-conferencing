@@ -38,18 +38,21 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.mortbay.cometd.continuation.EXoContinuationBayeux;
+
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.webconferencing.CallInfo;
 import org.exoplatform.webconferencing.CallState;
 import org.exoplatform.webconferencing.GroupInfo;
 import org.exoplatform.webconferencing.IdentityInfo;
+import org.exoplatform.webconferencing.ParticipantNotFoundException;
 import org.exoplatform.webconferencing.UserInfo;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.WebConferencingService;
 
 /**
- * The update command applies a participant state sent by a client to the user
- * of the Cometd session, the declined state included.
+ * The update command applies a participant state sent by a client, and a decline
+ * only for the user the Cometd session was opened for.
  */
 class CometdWebConferencingServiceStateTest {
 
@@ -59,18 +62,25 @@ class CometdWebConferencingServiceStateTest {
 
   private static final String         CLIENT_ID = "client-1";
 
+  private static final String         SESSION_ID = "session-1";
+
+  private static final String         OTHER_USER_ID = "mary";
+
   private static final long           REMOVED_AT = 1_800_000_000_000L;
 
   private static final String         CHANNEL_ID = "/eXo/Application/WebConferencing/call/" + CALL_ID;
 
   private WebConferencingService      webConferencing;
 
+  private EXoContinuationBayeux        exoBayeux;
+
   private CometdWebConferencingService cometdService;
 
   @BeforeEach
   void setUp() {
     webConferencing = mock(WebConferencingService.class);
-    cometdService = new CometdWebConferencingService(null, null, webConferencing, null, mock(CacheService.class), null);
+    exoBayeux = mock(EXoContinuationBayeux.class);
+    cometdService = new CometdWebConferencingService(null, null, webConferencing, exoBayeux, mock(CacheService.class), null);
   }
 
   @AfterEach
@@ -109,18 +119,43 @@ class CometdWebConferencingServiceStateTest {
   @Test
   void declinedStateDeclinesTheCallForTheSessionUser() throws Exception {
     CallInfo call = mock(CallInfo.class);
+    when(exoBayeux.isSubscribed(USER_ID, SESSION_ID)).thenReturn(true);
     when(webConferencing.declineCall(CALL_ID, USER_ID, CLIENT_ID)).thenReturn(call);
 
-    assertSame(call, cometdService.updateCallState(CALL_ID, UserState.DECLINED, USER_ID, CLIENT_ID));
+    assertSame(call, cometdService.updateCallState(CALL_ID, UserState.DECLINED, USER_ID, CLIENT_ID, SESSION_ID));
 
     verify(webConferencing).declineCall(CALL_ID, USER_ID, CLIENT_ID);
     verifyNoMoreInteractions(webConferencing);
   }
 
+  /** A decline naming a user the Cometd session was not opened for is refused, and declines nothing. */
+  @Test
+  void declinedStateForAnotherUserThanTheSessionOneIsRefused() throws Exception {
+    when(exoBayeux.isSubscribed(USER_ID, SESSION_ID)).thenReturn(true);
+    when(exoBayeux.isSubscribed(OTHER_USER_ID, SESSION_ID)).thenReturn(false);
+
+    assertThrows(ParticipantNotFoundException.class,
+                 () -> cometdService.updateCallState(CALL_ID, UserState.DECLINED, OTHER_USER_ID, CLIENT_ID, SESSION_ID));
+
+    verify(exoBayeux).isSubscribed(OTHER_USER_ID, SESSION_ID);
+    verifyNoMoreInteractions(webConferencing);
+  }
+
+  /** The joined and left states keep applying to the message's user without the session check. */
+  @Test
+  void joinedAndLeftStatesDoNotCheckTheSessionUser() throws Exception {
+    cometdService.updateCallState(CALL_ID, UserState.JOINED, USER_ID, CLIENT_ID, SESSION_ID);
+    cometdService.updateCallState(CALL_ID, UserState.LEAVED, USER_ID, CLIENT_ID, SESSION_ID);
+
+    verify(webConferencing).joinCall(CALL_ID, USER_ID, CLIENT_ID);
+    verify(webConferencing).leaveCall(CALL_ID, USER_ID, CLIENT_ID);
+    verifyNoMoreInteractions(exoBayeux);
+  }
+
   @Test
   void anUnknownStateIsRefused() {
     assertThrows(IllegalArgumentException.class,
-                 () -> cometdService.updateCallState(CALL_ID, "rejected", USER_ID, CLIENT_ID));
+                 () -> cometdService.updateCallState(CALL_ID, "rejected", USER_ID, CLIENT_ID, SESSION_ID));
   }
 
   /** The call channel goes when its last subscriber, a call window, goes: the call still running is stopped. */
