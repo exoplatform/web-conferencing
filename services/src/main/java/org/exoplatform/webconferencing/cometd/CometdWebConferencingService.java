@@ -2347,8 +2347,8 @@ public class CometdWebConferencingService implements Startable {
 
   /**
    * Applies a state sent by a client to a call: a participant state applies to <code>currentUserId</code>,
-   * which is the <code>exoId</code> of the client's message. A decline applies only when that user is the one
-   * the Cometd session was opened for; the joined and left states do not check it.
+   * which is the <code>exoId</code> of the client's message. A decline applies only to the user the Cometd
+   * session was opened for.
    *
    * @param id the call id
    * @param state the state, one of {@link #isUpdatableState(String)}
