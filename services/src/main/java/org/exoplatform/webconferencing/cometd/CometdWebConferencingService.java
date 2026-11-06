@@ -1966,7 +1966,7 @@ public class CometdWebConferencingService implements Startable {
                               if (isValidArg(state)) {
                                 try {
                                   if (isUpdatableState(state)) {
-                                    CallInfo call = updateCallState(id, state, currentUserId, exoClientId);
+                                    CallInfo call = updateCallState(id, state, currentUserId, exoClientId, session.getId());
                                     if (call != null) {
                                       caller.result(asJSON(call));
                                     } else {
@@ -2347,17 +2347,23 @@ public class CometdWebConferencingService implements Startable {
 
   /**
    * Applies a state sent by a client to a call: a participant state applies to <code>currentUserId</code>,
-   * which is the <code>exoId</code> of the client's message, not a user read from the Cometd session. Nothing
-   * here checks that it is the session's user.
+   * which is the <code>exoId</code> of the client's message. A decline applies only when that user is the one
+   * the Cometd session was opened for; the joined and left states do not check it.
    *
    * @param id the call id
    * @param state the state, one of {@link #isUpdatableState(String)}
    * @param currentUserId the <code>exoId</code> of the client's message
    * @param clientId the client id
+   * @param sessionId the id of the Cometd session the message came from
    * @return the call info, <code>null</code> if the call was not found
+   * @throws ParticipantNotFoundException if a decline names a user the session was not opened for
    * @throws WebConferencingException if the call cannot be updated
    */
-  protected CallInfo updateCallState(String id, String state, String currentUserId, String clientId) throws WebConferencingException {
+  protected CallInfo updateCallState(String id,
+                                     String state,
+                                     String currentUserId,
+                                     String clientId,
+                                     String sessionId) throws WebConferencingException {
     if (CallState.STARTED.equals(state)) {
       return webConferencing.startCall(id, clientId);
     } else if (CallState.STOPPED.equals(state)) {
@@ -2367,6 +2373,9 @@ public class CometdWebConferencingService implements Startable {
     } else if (UserState.LEAVED.equals(state)) {
       return webConferencing.leaveCall(id, currentUserId, clientId);
     } else if (UserState.DECLINED.equals(state)) {
+      if (!exoBayeux.isSubscribed(currentUserId, sessionId)) {
+        throw new ParticipantNotFoundException("Not a participant of this session");
+      }
       return webConferencing.declineCall(id, currentUserId, clientId);
     } else {
       throw new IllegalArgumentException("State not recognized: " + state);
