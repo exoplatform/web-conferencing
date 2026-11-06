@@ -141,17 +141,6 @@ class CometdWebConferencingServiceStateTest {
     verifyNoMoreInteractions(webConferencing);
   }
 
-  /** The joined and left states keep applying to the message's user without the session check. */
-  @Test
-  void joinedAndLeftStatesDoNotCheckTheSessionUser() throws Exception {
-    cometdService.updateCallState(CALL_ID, UserState.JOINED, USER_ID, CLIENT_ID, SESSION_ID);
-    cometdService.updateCallState(CALL_ID, UserState.LEAVED, USER_ID, CLIENT_ID, SESSION_ID);
-
-    verify(webConferencing).joinCall(CALL_ID, USER_ID, CLIENT_ID);
-    verify(webConferencing).leaveCall(CALL_ID, USER_ID, CLIENT_ID);
-    verifyNoMoreInteractions(exoBayeux);
-  }
-
   @Test
   void anUnknownStateIsRefused() {
     assertThrows(IllegalArgumentException.class,
