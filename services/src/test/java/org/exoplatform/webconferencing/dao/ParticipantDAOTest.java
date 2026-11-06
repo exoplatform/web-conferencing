@@ -42,8 +42,10 @@ import org.exoplatform.webconferencing.domain.ParticipantId;
  * The missed call mark runs through Hibernate on HSQLDB: it marks a participant
  * only while the participant is still invited and the call still started from
  * a start not later than the given date, and only that participant of that
- * call. Index usage, the other engines' behaviour and the rounding of a start
- * date stored in whole seconds are not covered by this test.
+ * call. Index usage and the other engines' behaviour are not covered by this
+ * test, nor the rounding of a start date to whole seconds by a MySQL TIMESTAMP
+ * column, which WebConferencingService.LAST_DATE_PRECISION allows for: HSQLDB
+ * keeps the fractional seconds.
  */
 class ParticipantDAOTest {
 
