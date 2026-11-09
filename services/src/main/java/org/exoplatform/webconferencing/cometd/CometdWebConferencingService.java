@@ -1749,6 +1749,13 @@ public class CometdWebConferencingService implements Startable {
 
       @SuppressWarnings("unchecked")
       Map<String, Object> arguments = (Map<String, Object>) data;
+      if (!isSessionUser(asString(arguments.get("exoId")), session)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Refused remote call of " + CALLS_CHANNEL_NAME + ": user is not the one of session " + session.getId());
+        }
+        caller.failure(ErrorInfo.clientError("Unauthorized user").asJSON());
+        return;
+      }
       String containerName = asString(arguments.get("exoContainerName"));
 
       callHandlers.submit(new ContainerCommand(containerName) {
@@ -1763,7 +1770,7 @@ public class CometdWebConferencingService implements Startable {
               String exoClientId = asString(arguments.get("exoClientId"));
               if (isValidId(exoClientId)) {
                 // Do all the job under actual (requester) user: set this user as current identity in eXo
-                // We rely on EXoContinuationBayeux.EXoSecurityPolicy for user security here (exoId above)
+                // The exoId above is the user of the caller's CometD session, checked before this command was queued
                 // Use services acquired from context container.
                 IdentityRegistry identityRegistry = exoContainer.getComponentInstanceOfType(IdentityRegistry.class);
                 WebConferencingService webConferencing = exoContainer.getComponentInstanceOfType(WebConferencingService.class);
@@ -2084,7 +2091,7 @@ public class CometdWebConferencingService implements Startable {
         // prefix - string, a log record prefix (e.g. provider type or app context)
         // timestamp - string, date with time and seconds fraction in ISO format and UTC timezone
         String currentUserId = asString(params.get("exoId"));
-        if (isValidId(currentUserId)) {
+        if (isSessionUser(currentUserId, session)) {
           // TODO validate all log params on max length in like validate() method
           String clientId = asString(params.get("exoClientId"));
           if (isValidArg(clientId)) {
@@ -2182,6 +2189,9 @@ public class CometdWebConferencingService implements Startable {
             caller.failure(ErrorInfo.clientError("Wrong request parameters: clientId").asJSON());
           }
         } else {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Refused remote call of " + LOGS_CHANNEL_NAME + ": user is not the one of session " + session.getId());
+          }
           caller.failure(ErrorInfo.clientError("Unauthorized user").asJSON());
         }
       } catch (Throwable e) {
@@ -2305,6 +2315,18 @@ public class CometdWebConferencingService implements Startable {
    */
   public String getUserToken(String userId) {
     return exoBayeux.getUserToken(userId);
+  }
+
+  /**
+   * Tells whether a user is the one the CometD session was opened for: the handshake checks the user's token and
+   * records the session for that user, while a later message carries no checked user.
+   *
+   * @param userId the user a client message names
+   * @param session the server session the message came from
+   * @return <code>true</code> if the session was opened for that user, <code>false</code> otherwise
+   */
+  protected boolean isSessionUser(String userId, ServerSession session) {
+    return isValidId(userId) && session != null && exoBayeux.isSubscribed(userId, session.getId());
   }
 
   /**
