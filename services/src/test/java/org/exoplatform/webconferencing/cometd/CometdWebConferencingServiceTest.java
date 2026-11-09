@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,8 +37,10 @@ import org.cometd.annotation.server.RemoteCall;
 import org.cometd.bayeux.server.ServerSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.mortbay.cometd.continuation.EXoContinuationBayeux;
 
+import org.exoplatform.container.ExoContainer;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.security.IdentityRegistry;
@@ -80,17 +83,21 @@ public class CometdWebConferencingServiceTest {
     when(session.getId()).thenReturn(SESSION_ID);
     caller = mock(RemoteCall.Caller.class);
     when(caller.getServerSession()).thenReturn(session);
-    cometdService = new CometdWebConferencingService(mock(IdentityRegistry.class),
-                                                     mock(OrganizationService.class),
-                                                     mock(WebConferencingService.class),
-                                                     exoBayeux,
-                                                     mock(CacheService.class),
-                                                     callLogs) {
-      @Override
-      protected ExecutorService createThreadExecutor(String threadNamePrefix, int maxFactor, int queueFactor) {
-        return mock(ExecutorService.class);
-      }
-    };
+    // The constructor reads the cluster profile: answered here, so that no Kernel container is started
+    try (MockedStatic<ExoContainer> exoContainer = mockStatic(ExoContainer.class)) {
+      exoContainer.when(() -> ExoContainer.hasProfile("cluster")).thenReturn(false);
+      cometdService = new CometdWebConferencingService(mock(IdentityRegistry.class),
+                                                       mock(OrganizationService.class),
+                                                       mock(WebConferencingService.class),
+                                                       exoBayeux,
+                                                       mock(CacheService.class),
+                                                       callLogs) {
+        @Override
+        protected ExecutorService createThreadExecutor(String threadNamePrefix, int maxFactor, int queueFactor) {
+          return mock(ExecutorService.class);
+        }
+      };
+    }
   }
 
   @Test
