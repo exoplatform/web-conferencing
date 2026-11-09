@@ -1749,7 +1749,8 @@ public class CometdWebConferencingService implements Startable {
 
       @SuppressWarnings("unchecked")
       Map<String, Object> arguments = (Map<String, Object>) data;
-      if (!isSessionUser(asString(arguments.get("exoId")), session)) {
+      final String currentUserId = asString(arguments.get("exoId"));
+      if (!isSessionUser(currentUserId, session)) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Refused remote call of " + CALLS_CHANNEL_NAME + ": user is not the one of session " + session.getId());
         }
@@ -1765,11 +1766,10 @@ public class CometdWebConferencingService implements Startable {
         @Override
         void execute(ExoContainer exoContainer) {
           try {
-            String currentUserId = asString(arguments.get("exoId"));
             String exoClientId = asString(arguments.get("exoClientId"));
             if (isValidId(exoClientId)) {
               // Do all the job under actual (requester) user: set this user as current identity in eXo
-              // The exoId above is the user of the caller's CometD session, checked before this command was queued
+              // currentUserId is the user of the caller's CometD session, checked before this command was queued
               // Use services acquired from context container.
               IdentityRegistry identityRegistry = exoContainer.getComponentInstanceOfType(IdentityRegistry.class);
               WebConferencingService webConferencing = exoContainer.getComponentInstanceOfType(WebConferencingService.class);
@@ -2314,8 +2314,8 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * Tells whether a user is the one the CometD session was opened for: the handshake checks the user's token and
-   * records the session for that user, while a later message carries no checked user.
+   * Tells whether a user is the one the CometD session was opened for, as the handshake recorded it after checking
+   * the user's token.
    *
    * @param userId the user a client message names
    * @param session the server session the message came from
