@@ -177,6 +177,9 @@ public class CometdWebConferencingService implements Startable {
   /** The Constant COMMAND_GET_ORG_IDENTITIES. */
   public static final String             COMMAND_GET_ORG_IDENTITIES            = "get_org_identities";
   
+  /** The message field naming the user a remote call is made for. */
+  private static final String            EXO_ID_FIELD                          = "exoId";
+
   /** The Constant EVENT_CALL_LEAVED. */
   public static final String             EVENT_CALL_LEAVED = "call_leaved";
   
@@ -1749,7 +1752,7 @@ public class CometdWebConferencingService implements Startable {
 
       @SuppressWarnings("unchecked")
       Map<String, Object> arguments = (Map<String, Object>) data;
-      final String currentUserId = asString(arguments.get("exoId"));
+      final String currentUserId = asString(arguments.get(EXO_ID_FIELD));
       if (!isSessionUser(currentUserId, session)) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Refused remote call of " + CALLS_CHANNEL_NAME + ": user is not the one of session " + session.getId());
@@ -2086,7 +2089,7 @@ public class CometdWebConferencingService implements Startable {
         // level - string, it's a log level: one of "trace", "debug", "info", "warn", "error"
         // prefix - string, a log record prefix (e.g. provider type or app context)
         // timestamp - string, date with time and seconds fraction in ISO format and UTC timezone
-        String currentUserId = asString(params.get("exoId"));
+        String currentUserId = asString(params.get(EXO_ID_FIELD));
         if (isSessionUser(currentUserId, session)) {
           // TODO validate all log params on max length in like validate() method
           String clientId = asString(params.get("exoClientId"));
@@ -2333,7 +2336,7 @@ public class CometdWebConferencingService implements Startable {
    */
   protected String currentUserId(ServerMessage message) {
     if (message != null) {
-      return asString(message.get("exoId"));
+      return asString(message.get(EXO_ID_FIELD));
     } else {
       // FIXME Should we rely at ConversationState current's here (it will not be set by something external in
       // Cometd thread) or only on message's exoId?
