@@ -7,10 +7,12 @@
       offset-x
       right
       open-on-hover
+      disable-keys
       eager
       transition="slide-x-transition">
-      <template #activator="{ on, attrs }">
-        <div v-bind="attrs" v-on="on">
+      <template #activator="{ on }">
+        <!-- the header is the parent menu's entry: no button role around it, and the arrows stay with that menu -->
+        <div role="none" v-on="on">
           <dropdown-header
             ref="buttonsheader"
             :header="header"
