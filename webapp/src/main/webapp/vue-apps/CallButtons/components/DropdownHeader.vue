@@ -1,16 +1,22 @@
 <template>
   <div
     class="dropdown-header">
+    <!-- the call action: a menu item in a person's menu, a button elsewhere, reachable and named for the keyboard -->
     <div
+      :role="isMenu ? 'menuitem' : 'button'"
+      :aria-label="callHeaderLabel"
+      tabindex="0"
       class="dropdown-heading d-flex d-row align-center justify-center"
       :class="!isMenu && ps-2"
-      @click.stop.prevent="startCall()">
+      @click.stop.prevent="startCall()"
+      @keydown.enter.stop.prevent="startCall()"
+      @keydown.space.stop.prevent="startCall()">
       <v-tooltip bottom>
-        <template v-slot:activator="{ on, attrs }">
+        <template v-slot:activator="{ on }">
           <v-icon
             class="align-center d-flex"
             :size="isMenu ? '18' : '20'"
-            v-bind="attrs"
+            aria-hidden="true"
             v-on="on">
             fas fa-video
           </v-icon>
@@ -46,6 +52,9 @@
 <script>
 export default {
   computed: {
+    callHeaderLabel() {
+      return this.$t('webconferencing.callHeader') ? this.$i18n.t('webconferencing.callHeader') : 'Start Call';
+    },
     isMobile() {
       return this.$vuetify && this.$vuetify.breakpoint && this.$vuetify.breakpoint.name === 'xs';
     },
