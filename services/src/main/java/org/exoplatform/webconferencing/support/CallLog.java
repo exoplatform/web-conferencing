@@ -474,7 +474,8 @@ public class CallLog {
         }
       }
     };
-    t.setDaemon(false);
+    // A flush left pending when the server stops does not keep its JVM alive: the shutdown hook flushes the messages
+    t.setDaemon(true);
     t.start();
     return t;
   }
