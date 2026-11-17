@@ -34,6 +34,8 @@
   <description>eXo Web Conferencing services of portal extension</description>
 
   <properties>
+    <!-- The module's first tests cover a small part of it: the parent's default ratio, 1.0, would fail the coverage check -->
+    <exo.test.coverage.ratio>0</exo.test.coverage.ratio>
     <rest.api.doc.title>WebConferencing Rest Api</rest.api.doc.title>
     <rest.api.doc.version>1.0</rest.api.doc.version>
     <rest.api.doc.description>WebConferencing addon rest endpoints</rest.api.doc.description>

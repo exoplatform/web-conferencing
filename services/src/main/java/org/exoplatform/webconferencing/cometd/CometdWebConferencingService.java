@@ -737,8 +737,9 @@ public class CometdWebConferencingService implements Startable {
         }
 
       };
-      if (t.isDaemon()) {
-        t.setDaemon(false);
+      // A command left running or queued when the server stops does not keep its JVM alive
+      if (!t.isDaemon()) {
+        t.setDaemon(true);
       }
       if (t.getPriority() != Thread.NORM_PRIORITY) {
         t.setPriority(Thread.NORM_PRIORITY);
@@ -2281,11 +2282,12 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * {@inheritDoc}
+   * Ends the call commands: the commands already queued still run, no new one starts, and their threads end once
+   * idle.
    */
   @Override
   public void stop() {
-    //
+    callHandlers.shutdown();
   }
 
   /**
