@@ -24,7 +24,7 @@
       </template>
 
       <v-list 
-        class="white elevation-3 pa-0 overflow-visible"
+        class="application-background elevation-3 pa-0 overflow-visible"
         min-width="180"
         dense
         eager>

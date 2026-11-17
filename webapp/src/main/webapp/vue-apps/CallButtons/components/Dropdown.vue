@@ -88,8 +88,8 @@ export default {
 @import "../../../skin/less/variables.less";
 
 .buttons-container {
-  background-color: white;
-  border: @defaultBorder;
+  background-color: var(--allPagesBaseBackground, white);
+  border: 1px solid var(--allPagesBorderColorDark, #e1e8ee);
   border-radius: 3px;
   margin-top: 3px;
   min-width: @width;

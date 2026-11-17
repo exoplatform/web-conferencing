@@ -22,6 +22,7 @@ import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.MessageInfo;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.service.template.TemplateContext;
+import org.exoplatform.commons.notification.mail.MailPalette;
 import org.exoplatform.commons.notification.template.TemplateUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.commons.utils.HTMLEntityEncoder;
@@ -57,6 +58,8 @@ public class MissedCallTemplateBuilder extends AbstractTemplateBuilder {
     String callOwner = notification.getValueOwnerParameter(NotificationConstants.CALL_OWNER.getKey());
 
     templateContext.put("USER", encoder.encode(notification.getTo()));
+    // the mail is written on the recipient's palette
+    MailPalette.bind(templateContext, notification.getTo());
     templateContext.put("CALLER_NAME", encoder.encode(callerName));
     templateContext.put("CALLER_AVATAR", encoder.encode(LinkProviderUtils.getUserAvatarUrl(caller == null ? null : caller.getProfile())));
     templateContext.put("IS_GROUP", String.valueOf(MissedCallNotificationUtils.isGroupCall(notification)));

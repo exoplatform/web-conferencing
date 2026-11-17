@@ -1,3 +1,4 @@
+<% def palette = org.exoplatform.commons.notification.mail.MailPalette.of(_templateContext) %>
 <%
 /*
 * Copyright (C) 2026 eXo Platform SAS.
@@ -20,30 +21,30 @@
   String message = severalDecliners ? _ctx.appRes("Notification.message.DeclinedCallPlugin.several", "<strong>" + DECLINERS_COUNT + "</strong>")
                                     : _ctx.appRes("Notification.message.DeclinedCallPlugin.one", "<strong>" + DECLINER_NAME + "</strong>");
 %>
-<table border="0" cellpadding="0" cellspacing="0" width="600" bgcolor="#ffffff" align="center" style="background-color: #ffffff; font-size: 13px;color:#333333;line-height: 18px;font-family: HelveticaNeue, Helvetica, Arial, sans-serif;">
+<table border="0" cellpadding="0" cellspacing="0" width="600" bgcolor="${palette.surface}" align="center" style="background-color: ${palette.surface}; font-size: 13px;color:${palette.text};line-height: 18px;font-family: HelveticaNeue, Helvetica, Arial, sans-serif;" class="mail-surface mail-text">
     <%
           _templateContext.put("header_title", _ctx.appRes("Notification.title.DeclinedCallPlugin"));
           _ctx.include("war:/notification/templates/mail/NotificationHeader.gtmpl", _templateContext);
     %>
     <tr>
-        <td bgcolor="#ffffff" style="background-color: #ffffff;">
-            <table cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" style="background-color: #ffffff; border-left:1px solid #d8d8d8;border-right:1px solid #d8d8d8;">
+        <td bgcolor="${palette.surface}" style="background-color: ${palette.surface};" class="mail-surface">
+            <table cellpadding="0" cellspacing="0" width="100%" bgcolor="${palette.surface}" style="background-color: ${palette.surface}; border-left:1px solid ${palette.border};border-right:1px solid ${palette.border};" class="mail-surface mail-border">
                 <tr>
-                    <td bgcolor="#ffffff" style="background-color: #ffffff;">
-                        <table border="0" cellpadding="0" cellspacing="0" width="92%" bgcolor="#ffffff" align="center" style="background-color: #ffffff; font-size: 13px;color:#333333;line-height: 18px;">
+                    <td bgcolor="${palette.surface}" style="background-color: ${palette.surface};" class="mail-surface">
+                        <table border="0" cellpadding="0" cellspacing="0" width="92%" bgcolor="${palette.surface}" align="center" style="background-color: ${palette.surface}; font-size: 13px;color:${palette.text};line-height: 18px;" class="mail-surface mail-text">
                             <tr>
-                                <td align="left" bgcolor="#ffffff" style="background-color: #ffffff;padding: 20px 0 10px;">
-                                    <p style="margin: 0 0 10px; color: #333333; font-size: 13px; line-height: 18px;">
+                                <td align="left" bgcolor="${palette.surface}" style="background-color: ${palette.surface};padding: 20px 0 10px;" class="mail-surface">
+                                    <p style="margin: 0 0 10px; color: ${palette.text}; font-size: 13px; line-height: 18px;" class="mail-text">
                                         <%=_ctx.appRes("Notification.label.SayHello")%> $USER
                                     </p>
-                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" align="center" style="background-color: #ffffff; font-size: 13px;color:#333333;line-height: 18px;">
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="${palette.surface}" align="center" style="background-color: ${palette.surface}; font-size: 13px;color:${palette.text};line-height: 18px;" class="mail-surface mail-text">
                                         <tbody>
                                         <tr>
-                                            <td align="left" valign="top" bgcolor="#ffffff" style="vertical-align: top; padding: 0 15px 0 0;">
+                                            <td align="left" valign="top" bgcolor="${palette.surface}" style="vertical-align: top; padding: 0 15px 0 0;" class="mail-surface">
                                                 <a target="_blank" href="$CALL_LINK"><img style="border-radius: 4px;" height="76" width="76" src="$DECLINER_AVATAR" alt="$DECLINER_NAME" title="$DECLINER_NAME" /></a>
                                             </td>
                                             <td align="left" valign="top" style="padding: 0;">
-                                                <p style="margin: 0 0 10px; color: #333333; font-size: 13px; line-height: 18px;"><%=message%></p>
+                                                <p style="margin: 0 0 10px; color: ${palette.text}; font-size: 13px; line-height: 18px;" class="mail-text"><%=message%></p>
                                             </td>
                                         </tr>
                                         </tbody>
