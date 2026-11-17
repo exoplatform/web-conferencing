@@ -18,7 +18,10 @@
         @showDropdown="showDropdown($event)"
         @dropdownIsVisualized="fireDropdownIsVisualized"
         @selectedProvider="hideDropdown" />
-      <singlebtn v-else ref="singlebtn" />
+      <singlebtn
+        v-else
+        ref="singlebtn"
+        :is-menu="isMenu" />
     </div>
   </v-app>
 </template>
@@ -246,6 +249,9 @@ export default {
             } else {
               // add button as DOM Element
               callButton.appendChild(pb);
+            }
+            if (this.$refs.singlebtn) {
+              this.$refs.singlebtn.hideProviderControls();
             }
             break;
           }
