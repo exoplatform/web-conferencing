@@ -1,3 +1,4 @@
+<% def palette = org.exoplatform.commons.notification.mail.MailPalette.of(_templateContext) %>
 <%
 /*
 * Copyright (C) 2026 eXo Platform SAS.
@@ -25,36 +26,36 @@
   String actionLabel = endedCall ? _ctx.appRes("Notification.label.MissedCallPlugin.openSpace")
                                  : groupCall ? _ctx.appRes("Notification.label.MissedCallPlugin.join") : _ctx.appRes("Notification.label.MissedCallPlugin.callAgain");
 %>
-<table border="0" cellpadding="0" cellspacing="0" width="600" bgcolor="#ffffff" align="center" style="background-color: #ffffff; font-size: 13px;color:#333333;line-height: 18px;font-family: HelveticaNeue, Helvetica, Arial, sans-serif;">
+<table border="0" cellpadding="0" cellspacing="0" width="600" bgcolor="${palette.surface}" align="center" style="background-color: ${palette.surface}; font-size: 13px;color:${palette.text};line-height: 18px;font-family: HelveticaNeue, Helvetica, Arial, sans-serif;" class="mail-surface mail-text">
     <%
           _templateContext.put("header_title", _ctx.appRes("Notification.title.MissedCallPlugin"));
           _ctx.include("war:/notification/templates/mail/NotificationHeader.gtmpl", _templateContext);
     %>
     <tr>
-        <td bgcolor="#ffffff" style="background-color: #ffffff;">
-            <table cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" style="background-color: #ffffff; border-left:1px solid #d8d8d8;border-right:1px solid #d8d8d8;">
+        <td bgcolor="${palette.surface}" style="background-color: ${palette.surface};" class="mail-surface">
+            <table cellpadding="0" cellspacing="0" width="100%" bgcolor="${palette.surface}" style="background-color: ${palette.surface}; border-left:1px solid ${palette.border};border-right:1px solid ${palette.border};" class="mail-surface mail-border">
                 <tr>
-                    <td bgcolor="#ffffff" style="background-color: #ffffff;">
-                        <table border="0" cellpadding="0" cellspacing="0" width="92%" bgcolor="#ffffff" align="center" style="background-color: #ffffff; font-size: 13px;color:#333333;line-height: 18px;">
+                    <td bgcolor="${palette.surface}" style="background-color: ${palette.surface};" class="mail-surface">
+                        <table border="0" cellpadding="0" cellspacing="0" width="92%" bgcolor="${palette.surface}" align="center" style="background-color: ${palette.surface}; font-size: 13px;color:${palette.text};line-height: 18px;" class="mail-surface mail-text">
                             <tr>
-                                <td align="left" bgcolor="#ffffff" style="background-color: #ffffff;padding: 20px 0 10px;">
-                                    <p style="margin: 0 0 10px; color: #333333; font-size: 13px; line-height: 18px;">
+                                <td align="left" bgcolor="${palette.surface}" style="background-color: ${palette.surface};padding: 20px 0 10px;" class="mail-surface">
+                                    <p style="margin: 0 0 10px; color: ${palette.text}; font-size: 13px; line-height: 18px;" class="mail-text">
                                         <%=_ctx.appRes("Notification.label.SayHello")%> $USER
                                     </p>
-                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" align="center" style="background-color: #ffffff; font-size: 13px;color:#333333;line-height: 18px;">
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="${palette.surface}" align="center" style="background-color: ${palette.surface}; font-size: 13px;color:${palette.text};line-height: 18px;" class="mail-surface mail-text">
                                         <tbody>
                                         <tr>
-                                            <td align="left" valign="top" bgcolor="#ffffff" style="vertical-align: top; padding: 0 15px 0 0;">
+                                            <td align="left" valign="top" bgcolor="${palette.surface}" style="vertical-align: top; padding: 0 15px 0 0;" class="mail-surface">
                                                 <img style="border-radius: 4px;" height="76" width="76" src="$CALLER_AVATAR" alt="$CALLER_NAME" title="$CALLER_NAME" />
                                             </td>
                                             <td align="left" valign="top" style="padding: 0;">
-                                                <p style="margin: 0 0 10px; color: #333333; font-size: 13px; line-height: 18px;"><%=message%></p>
+                                                <p style="margin: 0 0 10px; color: ${palette.text}; font-size: 13px; line-height: 18px;" class="mail-text"><%=message%></p>
                                                 <% if (endedCall) { %>
-                                                <p style="margin: 0 0 10px; color: #333333; font-size: 13px; line-height: 18px;"><%=_ctx.appRes("Notification.message.MissedCallPlugin.ended")%></p>
+                                                <p style="margin: 0 0 10px; color: ${palette.text}; font-size: 13px; line-height: 18px;" class="mail-text"><%=_ctx.appRes("Notification.message.MissedCallPlugin.ended")%></p>
                                                 <% } %>
                                                 <% if (showAction) { %>
                                                 <p style="margin: 0">
-                                                    <a target="_blank" href="$CALL_LINK" style="display: inline-block; font-size: 11px; color: #333333; background-color: #f1f1f1; border: 1px solid #bbbbbb; border-radius: 4px; padding: 5px 8px; text-decoration: none;"><%=actionLabel%></a>
+                                                    <a target="_blank" href="$CALL_LINK" style="display: inline-block; font-size: 11px; color: ${palette.text}; background-color: ${palette.background}; border: 1px solid ${palette.border}; border-radius: 4px; padding: 5px 8px; text-decoration: none;" class="mail-text mail-bg mail-border"><%=actionLabel%></a>
                                                 </p>
                                                 <% } %>
                                             </td>

@@ -127,12 +127,12 @@ export default {
     header() {
       return this.condition
         ? {
-          bgHover: 'white',
+          bgHover: 'var(--allPagesBaseBackground, white)',
           // paddingClass: "pa-1",
-          bgMini: this.isOpen ? '#d3d6db' : '#ffffff'
+          bgMini: this.isOpen ? 'var(--allPagesBorderColorDark, #d3d6db)' : 'var(--allPagesBaseBackground, #ffffff)'
         }
         : {
-          bgHover: this.isOpen ? 'var(--allPagesGreyColor, #e1e8ee)' : 'white'
+          bgHover: this.isOpen ? 'var(--allPagesGreyColor, #e1e8ee)' : 'var(--allPagesBaseBackground, white)'
           // paddingClass: "px-2"
         };
     },
@@ -423,7 +423,7 @@ export default {
         .dropdown-header {
           background-color: unset;
           .uiIconMiniArrowDown {
-            background: #d3d6db;
+            background: var(--allPagesBorderColorDark, #d3d6db);
             border-radius: 50%;
           }
         }
@@ -496,7 +496,7 @@ export default {
           a,
           a:hover,
           a:focus {
-            color: black;
+            color: var(--allPagesBaseColor, black);
           }
           a:hover {
             i,
