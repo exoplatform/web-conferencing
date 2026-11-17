@@ -25,6 +25,7 @@ import org.exoplatform.commons.api.notification.model.MessageInfo;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.api.notification.service.template.TemplateContext;
+import org.exoplatform.commons.notification.mail.MailPalette;
 import org.exoplatform.commons.notification.template.TemplateUtils;
 import org.exoplatform.commons.utils.HTMLEntityEncoder;
 import org.exoplatform.container.xml.InitParams;
@@ -70,6 +71,8 @@ public class MailTemplateProvider extends TemplateProvider {
       templateContext.put("CALL_OWNER", encoder.encode(callOwner));
       String user = notificationInfo.getTo();
       templateContext.put("USER", encoder.encode(user));
+      // the mail is written on the recipient's palette
+      MailPalette.bind(templateContext, user);
       templateContext.put("NOTIFICATION_ID", notificationInfo.getId());
       templateContext.put("COMPANY_LINK", LinkProviderUtils.getBaseUrl());
 
