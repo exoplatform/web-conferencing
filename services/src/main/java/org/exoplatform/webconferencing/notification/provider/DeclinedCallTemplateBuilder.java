@@ -24,6 +24,7 @@ import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.MessageInfo;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.service.template.TemplateContext;
+import org.exoplatform.commons.notification.mail.MailPalette;
 import org.exoplatform.commons.notification.template.TemplateUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.commons.utils.HTMLEntityEncoder;
@@ -69,6 +70,8 @@ public class DeclinedCallTemplateBuilder extends AbstractTemplateBuilder {
       avatarUrl = getGroupAvatarUrl(notification);
     }
     templateContext.put("USER", encoder.encode(notification.getTo()));
+    // the mail is written on the recipient's palette
+    MailPalette.bind(templateContext, notification.getTo());
     templateContext.put("DECLINER_NAME", encoder.encode(declinerName));
     templateContext.put("DECLINER_AVATAR", encoder.encode(avatarUrl));
     templateContext.put("DECLINERS_COUNT", String.valueOf(declinerIds.size()));
