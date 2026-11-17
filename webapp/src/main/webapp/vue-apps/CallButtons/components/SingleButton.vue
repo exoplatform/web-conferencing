@@ -4,7 +4,7 @@
     ref="singlebtn"
     :role="isMenu ? 'menuitem' : null"
     :tabindex="isMenu ? 0 : null"
-    :aria-label="isMenu ? callHeaderLabel : null"
+    :aria-label="isMenu ? providerLabel || callHeaderLabel : null"
     class="single-btn-container"
     @click="selectProvider"
     @keydown.enter="startCallFromKeyboard"
@@ -20,10 +20,19 @@ export default {
       default: false
     }
   },
+  data: () => ({
+    providerLabel: null,
+    labelObserver: null,
+  }),
   computed: {
     callHeaderLabel() {
       return this.$t('webconferencing.callHeader') ? this.$i18n.t('webconferencing.callHeader') : 'Start Call';
     },
+  },
+  beforeDestroy() {
+    if (this.labelObserver) {
+      this.labelObserver.disconnect();
+    }
   },
   methods: {
     selectProvider(event) {
@@ -37,6 +46,22 @@ export default {
       }
       [...this.$refs.singlebtn.children].forEach(child => child.setAttribute('aria-hidden', 'true'));
       this.$refs.singlebtn.querySelectorAll('button, a[href], [tabindex]').forEach(control => control.setAttribute('tabindex', '-1'));
+      this.followProviderLabel();
+    },
+    // The entry takes the name of the provider's control it stands for, which names the call's state (start, join, in
+    // progress) and changes with it; a control with no name of its own leaves the generic one
+    followProviderLabel() {
+      const control = this.$refs.singlebtn.querySelector('button, a[href]');
+      if (!control) {
+        return;
+      }
+      const readLabel = () => this.providerLabel = control.getAttribute('aria-label') || null;
+      readLabel();
+      if (this.labelObserver) {
+        this.labelObserver.disconnect();
+      }
+      this.labelObserver = new MutationObserver(readLabel);
+      this.labelObserver.observe(control, {attributes: true, attributeFilter: ['aria-label']});
     },
     startCallFromKeyboard(event) {
       if (!this.isMenu || event.target !== this.$refs.singlebtn) {
