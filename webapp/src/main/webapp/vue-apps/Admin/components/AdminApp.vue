@@ -129,14 +129,14 @@ export default {
 <style scoped lang="less">
   #web-conferencing-admin {
     .webconferencingTitle {
-    color: #4d5466;
+    color: var(--allPagesDarkGrey, #4d5466);
     font-size: 24px;
     position: relative;
     overflow: hidden;
     line-height: 27px;
 
     &:after {
-      border-bottom: 1px solid #dadada;
+      border-bottom: 1px solid var(--allPagesBorderColorDark, #dadada);
       height: 14px;
       content: "";
       position: absolute;
