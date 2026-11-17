@@ -223,6 +223,9 @@ public class CometdWebConferencingService implements Startable {
    */
   public static final String             CALL_THREAD_PREFIX                    = "webconferencing-call-thread-";
 
+  /** How long the stop waits for the call commands already submitted, in seconds. */
+  static final long                      CALL_STOP_WAIT_SECONDS                = 5;
+
   /** The Constant LOG. */
   private static final Log               LOG                                   =
                                              ExoLogger.getLogger(CometdWebConferencingService.class);
@@ -746,8 +749,9 @@ public class CometdWebConferencingService implements Startable {
         }
 
       };
-      if (t.isDaemon()) {
-        t.setDaemon(false);
+      // A command left running or queued when the server stops does not keep its JVM alive
+      if (!t.isDaemon()) {
+        t.setDaemon(true);
       }
       if (t.getPriority() != Thread.NORM_PRIORITY) {
         t.setPriority(Thread.NORM_PRIORITY);
@@ -2453,11 +2457,22 @@ public class CometdWebConferencingService implements Startable {
   }
 
   /**
-   * {@inheritDoc}
+   * Ends the leave grace timer, then the call commands: no new command starts, and the stop waits up to
+   * {@link #CALL_STOP_WAIT_SECONDS} seconds for the commands already submitted, a leave or a stop of a call among them, so
+   * that they reach the store before the node goes down. A command still running past that wait is not waited for: its
+   * thread is a daemon and ends with the JVM. A command submitted after the stop is dropped.
    */
   @Override
   public void stop() {
     leaveGraceTimer.shutdownNow();
+    callHandlers.shutdown();
+    try {
+      if (!callHandlers.awaitTermination(CALL_STOP_WAIT_SECONDS, TimeUnit.SECONDS)) {
+        LOG.warn("A call command did not end within {} seconds of the stop", CALL_STOP_WAIT_SECONDS);
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   /**
