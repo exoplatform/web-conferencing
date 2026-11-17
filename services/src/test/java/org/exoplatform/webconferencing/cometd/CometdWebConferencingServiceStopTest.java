@@ -94,4 +94,32 @@ public class CometdWebConferencingServiceStopTest {
     assertTrue(cometdService.callHandlers.isTerminated());
   }
 
+  @Test
+  public void testAStopInterruptedWhileWaitingKeepsTheInterruptOfItsThread() throws Exception {
+    CountDownLatch started = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    cometdService.callHandlers.submit(() -> {
+      started.countDown();
+      try {
+        release.await(5, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    });
+    assertTrue(started.await(5, TimeUnit.SECONDS));
+    long start = System.nanoTime();
+    Thread.currentThread().interrupt();
+    try {
+      cometdService.stop();
+      assertTrue(Thread.interrupted(),
+                 "A stop interrupted while waiting for the call commands must keep the interrupt of its thread");
+      long waited = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - start);
+      assertTrue(waited < CometdWebConferencingService.CALL_STOP_WAIT_SECONDS,
+                 "An interrupted stop must not wait for the call commands");
+    } finally {
+      Thread.interrupted();
+      release.countDown();
+    }
+    assertTrue(cometdService.callHandlers.awaitTermination(5, TimeUnit.SECONDS));
+  }
 }
