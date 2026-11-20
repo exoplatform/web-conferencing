@@ -29,6 +29,7 @@ import org.exoplatform.commons.notification.template.TemplateUtils;
 import org.exoplatform.commons.utils.HTMLEntityEncoder;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.social.notification.LinkProviderUtils;
+import org.exoplatform.social.notification.plugin.SocialNotificationUtils;
 import org.exoplatform.webconferencing.notification.plugin.CallRecordingPlugin;
 import org.exoplatform.webconferencing.notification.plugin.DeclinedCallPlugin;
 import org.exoplatform.webconferencing.notification.plugin.MissedCallPlugin;
@@ -97,6 +98,8 @@ public class MailTemplateProvider extends TemplateProvider {
       templateContext.put("USER", encoder.encode(user));
       templateContext.put("NOTIFICATION_ID", notificationInfo.getId());
       templateContext.put("COMPANY_LINK", LinkProviderUtils.getBaseUrl());
+      // the first name of the receiver and the link to its notification settings, as the other notifications have
+      SocialNotificationUtils.addFooterAndFirstName(notificationInfo.getTo(), templateContext);
 
       String subject = TemplateUtils.processSubject(templateContext);
       String body = TemplateUtils.processGroovy(templateContext);

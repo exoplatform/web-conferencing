@@ -30,6 +30,7 @@ import org.exoplatform.commons.utils.HTMLEntityEncoder;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.manager.IdentityManager;
 import org.exoplatform.social.notification.LinkProviderUtils;
+import org.exoplatform.social.notification.plugin.SocialNotificationUtils;
 import org.exoplatform.webconferencing.notification.utils.DeclinedCallNotificationUtils;
 import org.exoplatform.webconferencing.notification.utils.NotificationConstants;
 
@@ -75,6 +76,8 @@ public class DeclinedCallTemplateBuilder extends AbstractTemplateBuilder {
     templateContext.put("CALL_LINK", encoder.encode(DeclinedCallNotificationUtils.getAbsoluteDeclineLink(notification)));
     templateContext.put("NOTIFICATION_ID", notification.getId());
     templateContext.put("COMPANY_LINK", LinkProviderUtils.getBaseUrl());
+    // the first name of the receiver and the link to its notification settings, as the other notifications have
+    SocialNotificationUtils.addFooterAndFirstName(notification.getTo(), templateContext);
     String subject = TemplateUtils.processSubject(templateContext);
     String body = TemplateUtils.processGroovy(templateContext);
     ctx.setException(templateContext.getException());
