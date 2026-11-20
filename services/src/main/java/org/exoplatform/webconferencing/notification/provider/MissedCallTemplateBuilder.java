@@ -28,6 +28,7 @@ import org.exoplatform.commons.utils.HTMLEntityEncoder;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.manager.IdentityManager;
 import org.exoplatform.social.notification.LinkProviderUtils;
+import org.exoplatform.social.notification.plugin.SocialNotificationUtils;
 import org.exoplatform.webconferencing.notification.utils.MissedCallNotificationUtils;
 import org.exoplatform.webconferencing.notification.utils.NotificationConstants;
 
@@ -66,6 +67,8 @@ public class MissedCallTemplateBuilder extends AbstractTemplateBuilder {
     templateContext.put("HAS_CALL_PAGE", String.valueOf(MissedCallNotificationUtils.getCallLink(notification) != null));
     templateContext.put("NOTIFICATION_ID", notification.getId());
     templateContext.put("COMPANY_LINK", LinkProviderUtils.getBaseUrl());
+    // the first name of the receiver and the link to its notification settings, as the other notifications have
+    SocialNotificationUtils.addFooterAndFirstName(notification.getTo(), templateContext);
 
     String subject = TemplateUtils.processSubject(templateContext);
     String body = TemplateUtils.processGroovy(templateContext);
