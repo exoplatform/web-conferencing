@@ -18,9 +18,9 @@
 */
   boolean severalDecliners = Integer.parseInt(DECLINERS_COUNT) > 1;
   String message = severalDecliners ? _ctx.appRes("Notification.message.DeclinedCallPlugin.several", "<strong>" + DECLINERS_COUNT + "</strong>")
-                                    : _ctx.appRes("Notification.message.DeclinedCallPlugin.one", "<span style=\"color:${io.meeds.portal.mail.EmailLayout.linkColor()};text-decoration:none;font-weight:bold;font-family:${io.meeds.portal.mail.EmailLayout.fontStack()};\">" + DECLINER_NAME + "</span>");
+                                    : _ctx.appRes("Notification.message.DeclinedCallPlugin.one", "<span style=\"color:${io.meeds.portal.mail.util.EmailLayout.linkColor()};text-decoration:none;font-weight:bold;font-family:${io.meeds.portal.mail.util.EmailLayout.fontStack()};\">" + DECLINER_NAME + "</span>");
 %>
-<table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" align="center" style="width:100%;overflow-wrap:anywhere;word-break:break-word;background-color: #ffffff; font-size: 15px;color: #1d2327;line-height: 1.7;font-family: ${io.meeds.portal.mail.EmailLayout.fontStack()};" dir="${io.meeds.portal.mail.EmailLayout.dir(_ctx.language)}">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" align="center" style="width:100%;overflow-wrap:anywhere;word-break:break-word;background-color: #ffffff; font-size: 15px;color: #1d2327;line-height: 1.7;font-family: ${io.meeds.portal.mail.util.EmailLayout.fontStack()};" dir="${io.meeds.portal.mail.util.EmailLayout.dir(_ctx.language)}">
     <%
           _templateContext.put("header_title", _ctx.appRes("Notification.title.DeclinedCallPlugin"));
           _ctx.include("war:/notification/templates/mail/NotificationHeader.gtmpl", _templateContext);
@@ -32,31 +32,31 @@
                     <td bgcolor="#ffffff" style="background-color: #ffffff;">
                         <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" style="background-color: #ffffff; color: #1d2327;line-height: 1.7;">
                             <tr>
-                                <td align="${io.meeds.portal.mail.EmailLayout.start(_ctx.language)}" bgcolor="#ffffff" style="background-color: #ffffff;padding: 30px 0 10px 0;">
-                                    <p style="margin: 0 0 14px; font-size: 15px; color: #1d2327; font-family: ${io.meeds.portal.mail.EmailLayout.fontStack()};" dir="auto"><%=_ctx.appRes("Notification.label.SayHello")%> <%=_ctx.escapeHTML(FIRSTNAME)%>,</p>
+                                <td align="${io.meeds.portal.mail.util.EmailLayout.start(_ctx.language)}" bgcolor="#ffffff" style="background-color: #ffffff;padding: 30px 0 10px 0;">
+                                    <p style="margin: 0 0 14px; font-size: 15px; color: #1d2327; font-family: ${io.meeds.portal.mail.util.EmailLayout.fontStack()};" dir="auto"><%=_ctx.appRes("Notification.label.SayHello")%> <%=_ctx.escapeHTML(FIRSTNAME)%>,</p>
                                     <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" align="center" style="background-color: #ffffff; font-size: 15px;color: #1d2327;line-height: 1.7;">
                                         <tbody>
                                         <tr>
                                             <!--[if mso]>
-                                            <td width="64" align="${io.meeds.portal.mail.EmailLayout.start(_ctx.language)}" valign="top" bgcolor="#ffffff" style="vertical-align: top; ">
+                                            <td width="64" align="${io.meeds.portal.mail.util.EmailLayout.start(_ctx.language)}" valign="top" bgcolor="#ffffff" style="vertical-align: top; ">
                                                 <img width="44" height="44" style="border-radius: 50%;" src="$DECLINER_AVATAR" alt="$DECLINER_NAME" title="$DECLINER_NAME" />
                                             </td>
                                             <![endif]-->
-                                            <td width="64" align="${io.meeds.portal.mail.EmailLayout.start(_ctx.language)}" valign="top" bgcolor="#ffffff" style="mso-hide:all; vertical-align: top; ">
+                                            <td width="64" align="${io.meeds.portal.mail.util.EmailLayout.start(_ctx.language)}" valign="top" bgcolor="#ffffff" style="mso-hide:all; vertical-align: top; ">
                                                 <img width="44" height="44" style="border-radius: 50%;" src="$DECLINER_AVATAR" alt="$DECLINER_NAME" title="$DECLINER_NAME" />
                                             </td>
-                                            <td align="${io.meeds.portal.mail.EmailLayout.start(_ctx.language)}" valign="top" style="padding: 0;">
-                                                <p style="margin:0; color:#1d2327; line-height:1.7; font-size:15px; font-family: ${io.meeds.portal.mail.EmailLayout.fontStack()};" dir="auto"><%=message%></p>
+                                            <td align="${io.meeds.portal.mail.util.EmailLayout.start(_ctx.language)}" valign="top" style="padding: 0;">
+                                                <p style="margin:0; color:#1d2327; line-height:1.7; font-size:15px; font-family: ${io.meeds.portal.mail.util.EmailLayout.fontStack()};" dir="auto"><%=message%></p>
                                                 
                                             </td>
                                         </tr>
                                         </tbody>
                                     </table>
-<div dir="${io.meeds.portal.mail.EmailLayout.dir(_ctx.language)}" style="margin: 20px 0 8px 0;">
-                                                    <%=io.meeds.portal.mail.EmailLayout.actionLink(_ctx.appRes("Notification.label.MissedCallPlugin.callAgain"), "$CALL_LINK", true)%>
+<div dir="${io.meeds.portal.mail.util.EmailLayout.dir(_ctx.language)}" style="margin: 20px 0 8px 0;">
+                                                    <%=io.meeds.portal.mail.util.EmailLayout.actionLink(_ctx.appRes("Notification.label.MissedCallPlugin.callAgain"), "$CALL_LINK", true)%>
                                                 </div>
-                                    <p style="margin:28px 0 0 0; color: #5d676d;font-size: 13px;font-family: ${io.meeds.portal.mail.EmailLayout.fontStack()}">
-                                        <%=io.meeds.portal.mail.EmailLayout.linkStyled(_ctx.appRes("Notification.label.footer", FOOTER_LINK))%>
+                                    <p style="margin:28px 0 0 0; color: #5d676d;font-size: 13px;font-family: ${io.meeds.portal.mail.util.EmailLayout.fontStack()}">
+                                        <%=io.meeds.portal.mail.util.EmailLayout.linkStyled(_ctx.appRes("Notification.label.footer", FOOTER_LINK))%>
                                     </p>
                                 </td>
                             </tr>
