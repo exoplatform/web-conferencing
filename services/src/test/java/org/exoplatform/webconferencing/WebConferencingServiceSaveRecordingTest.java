@@ -233,8 +233,12 @@ class WebConferencingServiceSaveRecordingTest {
     verify(userSession).logout();
   }
 
+  /**
+   * The repository refuses this read in production (the host's Private folder
+   * is owner-only); the test pins only the choice of session.
+   */
   @Test
-  void testRecordingOfAPersonalEventIsSavedWithTheModeratorSessionInTheHostFolder() throws Exception {
+  void testRecordingOfAPersonalEventIsAttemptedWithTheModeratorSessionNeverTheSystemSession() throws Exception {
     String hostPrivatePath = "/Users/j___/jo/jonas/Private";
     // A personal event: the host is a user, who is not the moderator named in the upload token
     org.exoplatform.social.core.identity.model.Identity hostIdentity =
@@ -252,7 +256,7 @@ class WebConferencingServiceSaveRecordingTest {
     webConferencing.saveFile(root, resource, "john", null);
 
     assertSame(hostPrivate, root);
-    // Written in the host's folder with the moderator's own session, not with the system one
+    // The write is attempted with the moderator's own session, never with the system one
     verify(repository).login("collaboration");
     assertEquals(List.of("john"), loginIdentities);
     verify(writtenFolder).save();

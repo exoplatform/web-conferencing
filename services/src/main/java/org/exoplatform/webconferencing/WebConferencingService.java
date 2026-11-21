@@ -2986,7 +2986,9 @@ public class WebConferencingService implements Startable {
     }
     // The thread's conversation state is the caller's: it is restored in the end
     ConversationState previousState = ConversationState.getCurrent();
-    // Opened for the named user only, never taken from the thread's slot
+    // Opened for the named user only, never taken from the thread's slot: the
+    // provider logs in as the conversation state current when it opens the
+    // session, so the state is set first
     SessionProvider userSessionProvider = null;
     try {
       ConversationState state;
