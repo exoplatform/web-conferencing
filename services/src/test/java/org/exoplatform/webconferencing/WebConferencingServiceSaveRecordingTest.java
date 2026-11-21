@@ -53,6 +53,7 @@ import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
+import org.exoplatform.social.core.manager.IdentityManager;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.upload.UploadResource;
@@ -90,6 +91,10 @@ class WebConferencingServiceSaveRecordingTest {
   private ConversationState      callerState;
 
   private File                   recording;
+
+  private NodeHierarchyCreator   nodeCreator;
+
+  private IdentityManager        identityManager;
 
   private List<String>           loginIdentities = new ArrayList<>();
 
@@ -140,7 +145,11 @@ class WebConferencingServiceSaveRecordingTest {
     ReflectionTestUtils.setField(webConferencing, "repositoryService", repositoryService);
     ReflectionTestUtils.setField(webConferencing, "identityRegistry", identityRegistry);
     ReflectionTestUtils.setField(webConferencing, "spaceService", spaceService);
-    ReflectionTestUtils.setField(webConferencing, "nodeCreator", mock(NodeHierarchyCreator.class));
+    nodeCreator = mock(NodeHierarchyCreator.class);
+    when(nodeCreator.getJcrPath("userPrivate")).thenReturn("Private");
+    identityManager = mock(IdentityManager.class);
+    ReflectionTestUtils.setField(webConferencing, "nodeCreator", nodeCreator);
+    ReflectionTestUtils.setField(webConferencing, "socialIdentityManager", identityManager);
   }
 
   @AfterEach
@@ -222,6 +231,35 @@ class WebConferencingServiceSaveRecordingTest {
     verify(spaceFolder).save();
     verifyNoInteractions(systemProvider);
     verify(userSession).logout();
+  }
+
+  @Test
+  void testRecordingOfAPersonalEventIsSavedWithTheModeratorSessionInTheHostFolder() throws Exception {
+    String hostPrivatePath = "/Users/j___/jo/jonas/Private";
+    // A personal event: the host is a user, who is not the moderator named in the upload token
+    org.exoplatform.social.core.identity.model.Identity hostIdentity =
+                                                                    new org.exoplatform.social.core.identity.model.Identity("organization",
+                                                                                                                              "jonas");
+    when(identityManager.getIdentity("7")).thenReturn(hostIdentity);
+    Node hostUserNode = mock(Node.class);
+    Node hostPrivate = mockFolder(hostPrivatePath);
+    when(nodeCreator.getUserNode(systemProvider, "jonas")).thenReturn(hostUserNode);
+    when(hostUserNode.getNode("Private")).thenReturn(hostPrivate);
+    Node writtenFolder = mockFolder(hostPrivatePath);
+    when(userSession.getItem(hostPrivatePath)).thenReturn(writtenFolder);
+
+    Node root = webConferencing.getRootFolderNode("7", WebConferencingService.OWNER_TYPE_SPACEEVENT);
+    webConferencing.saveFile(root, resource, "john", null);
+
+    assertSame(hostPrivate, root);
+    // Written in the host's folder with the moderator's own session, not with the system one
+    verify(repository).login("collaboration");
+    assertEquals(List.of("john"), loginIdentities);
+    verify(writtenFolder).save();
+    verify(systemSession, never()).getItem(anyString());
+    verify(userSession).logout();
+    verifyNoInteractions(callerProvider);
+    assertSame(callerState, ConversationState.getCurrent());
   }
 
   private Node mockFolder(String path) throws RepositoryException {
