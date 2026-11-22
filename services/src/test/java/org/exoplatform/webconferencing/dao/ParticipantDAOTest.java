@@ -20,13 +20,21 @@ package org.exoplatform.webconferencing.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 
+import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,6 +83,7 @@ class ParticipantDAOTest {
                                               .setProperty("hibernate.connection.username", "sa")
                                               .setProperty("hibernate.connection.password", "")
                                               .setProperty("hibernate.hbm2ddl.auto", "create-drop")
+                                              .setProperty("hibernate.generate_statistics", "true")
                                               .buildSessionFactory();
     entityManager = entityManagerFactory.createEntityManager();
     entityManager.getTransaction().begin();
@@ -298,6 +307,156 @@ class ParticipantDAOTest {
     assertEquals(UserState.DECLINED_NOTIFIED, stateOf(CALL_ID, JOHN));
   }
 
+  @Test
+  void marksTheStillInvitedParticipantsOfABatchAndReturnsThem() {
+    List<String> marked = markBatchMissed(CALL_ID, List.of(PAUL, MARY, JOHN, "nobody"), LATEST_START);
+
+    assertEquals(List.of(JOHN, PAUL), marked);
+    assertEquals(UserState.MISSED, stateOf(CALL_ID, JOHN));
+    assertEquals(UserState.MISSED, stateOf(CALL_ID, PAUL));
+    assertEquals(UserState.JOINED, stateOf(CALL_ID, MARY));
+    assertEquals(UserState.INVITED, stateOf(OTHER_CALL_ID, JOHN));
+  }
+
+  @Test
+  void marksNobodyOfABatchOfACallNoLongerStartedOrStartedAgainLater() {
+    assertEquals(List.of(), markBatchMissed(CALL_ID, List.of(JOHN, PAUL), new Date(STARTED_AT.getTime() - 1)));
+    stop(CALL_ID);
+    assertEquals(List.of(), markBatchMissed(CALL_ID, List.of(JOHN, PAUL), LATEST_START));
+
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, JOHN));
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, PAUL));
+  }
+
+  @Test
+  void aSecondBatchMarksNobodyMore() {
+    assertEquals(List.of(JOHN, PAUL), markBatchMissed(CALL_ID, List.of(JOHN, PAUL), LATEST_START));
+
+    assertEquals(List.of(), markBatchMissed(CALL_ID, List.of(JOHN, PAUL), LATEST_START));
+  }
+
+  @Test
+  void aBatchMarksNobodyWhoJoinedMeanwhile() {
+    setState(CALL_ID, PAUL, UserState.JOINED);
+
+    assertEquals(List.of(JOHN), markBatchMissed(CALL_ID, List.of(JOHN, PAUL), LATEST_START));
+    assertEquals(UserState.JOINED, stateOf(CALL_ID, PAUL));
+  }
+
+  @Test
+  void aBatchOfNobodyRunsNoQuery() {
+    long before = prepareStatementCount();
+
+    assertEquals(List.of(), markBatchMissed(CALL_ID, List.of(), LATEST_START));
+
+    assertEquals(0, prepareStatementCount() - before);
+  }
+
+  @Test
+  void aBatchOfAFullSizeCostsTwoQueriesWhateverItsSize() {
+    List<String> ids = addInvitedParticipants(CALL_ID, 500);
+    long before = prepareStatementCount();
+
+    List<String> marked = markBatchMissed(CALL_ID, ids, LATEST_START);
+
+    assertEquals(500, marked.size());
+    assertEquals(2, prepareStatementCount() - before);
+    assertEquals(UserState.MISSED, stateOf(CALL_ID, ids.get(499)));
+    assertEquals(UserState.INVITED, stateOf(CALL_ID, JOHN));
+  }
+
+  @Test
+  void aBatchOfDeclinesMarksTheStillDeclinedParticipantsOnceAndReturnsThem() {
+    setState(CALL_ID, JOHN, UserState.DECLINED);
+    setState(CALL_ID, PAUL, UserState.DECLINED);
+    setState(CALL_ID, MARY, UserState.DECLINED_NOTIFIED);
+
+    assertEquals(List.of(JOHN, PAUL), markBatchDeclinedNotified(CALL_ID, List.of(PAUL, MARY, JOHN), LATEST_START));
+    assertEquals(List.of(), markBatchDeclinedNotified(CALL_ID, List.of(PAUL, MARY, JOHN), LATEST_START));
+
+    assertEquals(UserState.DECLINED_NOTIFIED, stateOf(CALL_ID, JOHN));
+    assertEquals(UserState.DECLINED_NOTIFIED, stateOf(CALL_ID, PAUL));
+  }
+
+  @Test
+  void aBatchOfDeclinesMarksNobodyOfACallStartedAgainLater() {
+    setState(CALL_ID, JOHN, UserState.DECLINED);
+
+    assertEquals(List.of(), markBatchDeclinedNotified(CALL_ID, List.of(JOHN), new Date(STARTED_AT.getTime() - 1)));
+    assertEquals(UserState.DECLINED, stateOf(CALL_ID, JOHN));
+  }
+
+  @Test
+  void aBatchOfDeclinesOfAFullSizeCostsTwoQueries() {
+    List<String> ids = addInvitedParticipants(CALL_ID, 500);
+    for (String id : ids) {
+      setStateNoClear(CALL_ID, id, UserState.DECLINED);
+    }
+    long before = prepareStatementCount();
+
+    List<String> marked = markBatchDeclinedNotified(CALL_ID, ids, LATEST_START);
+
+    assertEquals(500, marked.size());
+    assertEquals(2, prepareStatementCount() - before);
+  }
+
+  @Test
+  void aWriterWaitsForTheLockedBatchAndThenFindsNobodyInvited() throws Exception {
+    EntityManager first = entityManagerFactory.createEntityManager();
+    EntityManager second = entityManagerFactory.createEntityManager();
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      first.getTransaction().begin();
+      assertEquals(List.of(JOHN, PAUL), ParticipantDAO.markParticipantsMissed(first, CALL_ID, List.of(JOHN, PAUL), LATEST_START));
+
+      Future<List<String>> concurrent = executor.submit(() -> {
+        second.getTransaction().begin();
+        try {
+          return ParticipantDAO.markParticipantsMissed(second, CALL_ID, List.of(JOHN, PAUL), LATEST_START);
+        } finally {
+          second.getTransaction().commit();
+        }
+      });
+      assertThrows(TimeoutException.class, () -> concurrent.get(700, TimeUnit.MILLISECONDS));
+
+      first.getTransaction().commit();
+
+      assertEquals(List.of(), concurrent.get(10, TimeUnit.SECONDS));
+      assertEquals(UserState.MISSED, stateOf(CALL_ID, JOHN));
+    } finally {
+      executor.shutdownNow();
+      if (first.getTransaction().isActive()) {
+        first.getTransaction().rollback();
+      }
+      first.close();
+      second.close();
+    }
+  }
+
+  @Test
+  void aBatchWaitsForAConcurrentDeclineAndMarksNobodyWhoDeclined() throws Exception {
+    EntityManager decliner = entityManagerFactory.createEntityManager();
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      decliner.getTransaction().begin();
+      assertEquals(1, ParticipantDAO.markParticipantDeclined(decliner, CALL_ID, JOHN));
+
+      Future<List<String>> missed = executor.submit(() -> markBatchMissed(CALL_ID, List.of(JOHN, PAUL), LATEST_START));
+      assertThrows(TimeoutException.class, () -> missed.get(700, TimeUnit.MILLISECONDS));
+
+      decliner.getTransaction().commit();
+
+      assertEquals(List.of(PAUL), missed.get(10, TimeUnit.SECONDS));
+      assertEquals(UserState.DECLINED, stateOf(CALL_ID, JOHN));
+    } finally {
+      executor.shutdownNow();
+      if (decliner.getTransaction().isActive()) {
+        decliner.getTransaction().rollback();
+      }
+      decliner.close();
+    }
+  }
+
   private void setState(String callId, String partId, String state) {
     entityManager.getTransaction().begin();
     entityManager.find(ParticipantEntity.class, new ParticipantId(partId, callId)).setState(state);
@@ -322,7 +481,7 @@ class ParticipantDAOTest {
 
   private int markDeclinedNotified(String callId, String partId, Date latestStart) {
     entityManager.getTransaction().begin();
-    int updated = ParticipantDAO.markParticipantDeclinedNotified(entityManager, callId, partId, latestStart);
+    int updated = ParticipantDAO.markParticipantsDeclinedNotified(entityManager, callId, List.of(partId), latestStart).size();
     entityManager.getTransaction().commit();
     entityManager.clear();
     return updated;
@@ -349,6 +508,53 @@ class ParticipantDAOTest {
     entityManager.getTransaction().commit();
     entityManager.clear();
     return updated;
+  }
+
+  private long prepareStatementCount() {
+    return entityManagerFactory.unwrap(SessionFactory.class).getStatistics().getPrepareStatementCount();
+  }
+
+  private List<String> markBatchMissed(String callId, List<String> partIds, Date latestStart) {
+    EntityManager em = entityManagerFactory.createEntityManager();
+    try {
+      em.getTransaction().begin();
+      List<String> marked = ParticipantDAO.markParticipantsMissed(em, callId, partIds, latestStart);
+      em.getTransaction().commit();
+      return marked;
+    } finally {
+      em.close();
+    }
+  }
+
+  private List<String> markBatchDeclinedNotified(String callId, List<String> partIds, Date latestStart) {
+    EntityManager em = entityManagerFactory.createEntityManager();
+    try {
+      em.getTransaction().begin();
+      List<String> marked = ParticipantDAO.markParticipantsDeclinedNotified(em, callId, partIds, latestStart);
+      em.getTransaction().commit();
+      return marked;
+    } finally {
+      em.close();
+    }
+  }
+
+  private List<String> addInvitedParticipants(String callId, int count) {
+    List<String> ids = new ArrayList<>();
+    entityManager.getTransaction().begin();
+    for (int i = 0; i < count; i++) {
+      String id = String.format("guest%05d", i);
+      ids.add(id);
+      entityManager.persist(participant(callId, id, UserState.INVITED));
+    }
+    entityManager.getTransaction().commit();
+    entityManager.clear();
+    return ids;
+  }
+
+  private void setStateNoClear(String callId, String partId, String state) {
+    entityManager.getTransaction().begin();
+    entityManager.find(ParticipantEntity.class, new ParticipantId(partId, callId)).setState(state);
+    entityManager.getTransaction().commit();
   }
 
   private String stateOf(String callId, String partId) {

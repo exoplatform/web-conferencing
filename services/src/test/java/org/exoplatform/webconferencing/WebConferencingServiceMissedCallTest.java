@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -37,6 +38,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,6 +48,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import jakarta.persistence.PersistenceException;
 
@@ -417,13 +420,13 @@ class WebConferencingServiceMissedCallTest {
   @Test
   void aRemovedUserCallMarksItsStillInvitedPeerBeforeTheRemovalAndNotifiesIt() throws Exception {
     CallInfo call = removedUserCall();
-    when(participantsStorage.markParticipantMissed(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
+    when(participantsStorage.markParticipantsMissed(CALL_ID, List.of(CALLEE), latestStart(call.getLastDate()))).thenReturn(List.of(CALLEE));
     stubStop();
 
     service.stopCall(call, CALLER, true);
 
     InOrder order = inOrder(participantsStorage, service);
-    order.verify(participantsStorage).markParticipantMissed(CALL_ID, CALLEE, latestStart(call.getLastDate()));
+    order.verify(participantsStorage).markParticipantsMissed(CALL_ID, List.of(CALLEE), latestStart(call.getLastDate()));
     order.verify(service).txStopCall(call, true);
     verify(service).scheduleStoppedMissedCall(call, List.of(CALLEE), true);
   }
@@ -431,7 +434,7 @@ class WebConferencingServiceMissedCallTest {
   @Test
   void theMarkedPeerOfAUserCallIsNotifiedEvenWhenItsRemovalFails() throws Exception {
     CallInfo call = removedUserCall();
-    when(participantsStorage.markParticipantMissed(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
+    when(participantsStorage.markParticipantsMissed(CALL_ID, List.of(CALLEE), latestStart(call.getLastDate()))).thenReturn(List.of(CALLEE));
     stubStop();
     doThrow(new PersistenceException("down")).when(service).txStopCall(call, true);
 
@@ -467,7 +470,7 @@ class WebConferencingServiceMissedCallTest {
   @Test
   void aRemovedUserCallWhosePeerTheCheckAlreadyMarkedNotifiesNobody() throws Exception {
     CallInfo call = removedUserCall();
-    when(participantsStorage.markParticipantMissed(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(0);
+    when(participantsStorage.markParticipantsMissed(CALL_ID, List.of(CALLEE), latestStart(call.getLastDate()))).thenReturn(List.of());
     stubStop();
 
     service.stopCall(call, CALLER, true);
@@ -666,7 +669,7 @@ class WebConferencingServiceMissedCallTest {
                                 participant(OTHER, UserState.DECLINED),
                                 participant("paul", UserState.INVITED));
     when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE, OTHER));
-    when(participantsStorage.markParticipantDeclinedNotified(eq(CALL_ID), anyString(), eq(latestStart(startedAt)))).thenReturn(1);
+    when(participantsStorage.markParticipantsDeclinedNotified(eq(CALL_ID), eq(List.of(CALLEE, OTHER)), eq(latestStart(startedAt)))).thenReturn(List.of(CALLEE, OTHER));
 
     service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
 
@@ -678,7 +681,7 @@ class WebConferencingServiceMissedCallTest {
                                              CALLEE + "," + OTHER,
                                              "status",
                                              WebConferencingService.STATUS_OK));
-    verify(participantsStorage, never()).markParticipantDeclinedNotified(eq(CALL_ID), eq("paul"), any(Date.class));
+    verify(participantsStorage).markParticipantsDeclinedNotified(CALL_ID, List.of(CALLEE, OTHER), latestStart(startedAt));
   }
 
   @Test
@@ -687,7 +690,7 @@ class WebConferencingServiceMissedCallTest {
     // The missed call check of the same request loaded the participant still invited
     CallInfo call = startedCall(startedAt, participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.INVITED));
     when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE));
-    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(startedAt))).thenReturn(1);
+    when(participantsStorage.markParticipantsDeclinedNotified(CALL_ID, List.of(CALLEE), latestStart(startedAt))).thenReturn(List.of(CALLEE));
 
     service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
 
@@ -704,8 +707,7 @@ class WebConferencingServiceMissedCallTest {
                                 participant(CALLEE, UserState.DECLINED),
                                 participant(OTHER, UserState.DECLINED));
     when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE, OTHER));
-    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(startedAt))).thenReturn(0);
-    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, OTHER, latestStart(startedAt))).thenReturn(1);
+    when(participantsStorage.markParticipantsDeclinedNotified(CALL_ID, List.of(CALLEE, OTHER), latestStart(startedAt))).thenReturn(List.of(OTHER));
 
     service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
 
@@ -721,7 +723,7 @@ class WebConferencingServiceMissedCallTest {
 
     service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
 
-    verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
+    verify(participantsStorage, never()).markParticipantsDeclinedNotified(anyString(), anyList(), any(Date.class));
     verifyNoDeclinesClosedBroadcast();
   }
 
@@ -730,7 +732,7 @@ class WebConferencingServiceMissedCallTest {
     Date startedAt = new Date();
     startedCall(startedAt, participant(CALLER, UserState.JOINED), participant(CALLEE, UserState.DECLINED));
     when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE));
-    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(startedAt))).thenReturn(0);
+    when(participantsStorage.markParticipantsDeclinedNotified(CALL_ID, List.of(CALLEE), latestStart(startedAt))).thenReturn(List.of());
 
     service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
 
@@ -744,7 +746,7 @@ class WebConferencingServiceMissedCallTest {
 
     service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
 
-    verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
+    verify(participantsStorage, never()).markParticipantsDeclinedNotified(anyString(), anyList(), any(Date.class));
     verifyNoDeclinesClosedBroadcast();
   }
 
@@ -765,7 +767,7 @@ class WebConferencingServiceMissedCallTest {
 
     service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
 
-    verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
+    verify(participantsStorage, never()).markParticipantsDeclinedNotified(anyString(), anyList(), any(Date.class));
     verifyNoDeclinesClosedBroadcast();
   }
 
@@ -773,13 +775,13 @@ class WebConferencingServiceMissedCallTest {
   void aStoppedCallMarksItsDeclinesBeforeTheStopAndReportsThem() throws Exception {
     CallInfo call = removedUserCall();
     when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE));
-    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
+    when(participantsStorage.markParticipantsDeclinedNotified(CALL_ID, List.of(CALLEE), latestStart(call.getLastDate()))).thenReturn(List.of(CALLEE));
     stubStop();
 
     service.stopCall(call, CALLER, true);
 
     InOrder order = inOrder(participantsStorage, service);
-    order.verify(participantsStorage).markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()));
+    order.verify(participantsStorage).markParticipantsDeclinedNotified(CALL_ID, List.of(CALLEE), latestStart(call.getLastDate()));
     order.verify(service).txStopCall(call, true);
     verify(service).scheduleStoppedDeclinesClosed(call, List.of(CALLEE));
   }
@@ -788,7 +790,7 @@ class WebConferencingServiceMissedCallTest {
   void theMarkedDeclinesOfARemovedCallAreReportedEvenWhenItsRemovalFails() throws Exception {
     CallInfo call = removedUserCall();
     when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE));
-    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
+    when(participantsStorage.markParticipantsDeclinedNotified(CALL_ID, List.of(CALLEE), latestStart(call.getLastDate()))).thenReturn(List.of(CALLEE));
     stubStop();
     doThrow(new PersistenceException("down")).when(service).txStopCall(call, true);
 
@@ -803,7 +805,7 @@ class WebConferencingServiceMissedCallTest {
     call.setCallerId(CALLER);
     // The decline was saved after the stop read the call
     when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE));
-    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
+    when(participantsStorage.markParticipantsDeclinedNotified(CALL_ID, List.of(CALLEE), latestStart(call.getLastDate()))).thenReturn(List.of(CALLEE));
     stubStop();
 
     service.stopCall(call, CALLER, false);
@@ -811,7 +813,7 @@ class WebConferencingServiceMissedCallTest {
     InOrder order = inOrder(service, participantsStorage);
     order.verify(service).txStopCall(call, false);
     order.verify(participantsStorage).findDeclinedParticipantIds(CALL_ID);
-    order.verify(participantsStorage).markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()));
+    order.verify(participantsStorage).markParticipantsDeclinedNotified(CALL_ID, List.of(CALLEE), latestStart(call.getLastDate()));
     order.verify(service).scheduleStoppedDeclinesClosed(call, List.of(CALLEE));
   }
 
@@ -845,11 +847,11 @@ class WebConferencingServiceMissedCallTest {
     call.setCallerId(CALLER);
     // The decline was saved after the stop read the call
     when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE));
-    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
+    when(participantsStorage.markParticipantsDeclinedNotified(CALL_ID, List.of(CALLEE), latestStart(call.getLastDate()))).thenReturn(List.of(CALLEE));
 
     assertEquals(List.of(CALLEE), service.markDeclinesClosedOnStop(call));
 
-    verify(participantsStorage, never()).markParticipantDeclinedNotified(eq(CALL_ID), eq(OTHER), any(Date.class));
+    verify(participantsStorage, never()).markParticipantsDeclinedNotified(eq(CALL_ID), eq(List.of(OTHER)), any(Date.class));
   }
 
   @Test
@@ -868,7 +870,7 @@ class WebConferencingServiceMissedCallTest {
   @Test
   void aRemovedCallWhoseDeclinesCannotBeReadIsRemovedAndNotifiesWhoMissedIt() throws Exception {
     CallInfo call = removedUserCall();
-    when(participantsStorage.markParticipantMissed(CALL_ID, CALLEE, latestStart(call.getLastDate()))).thenReturn(1);
+    when(participantsStorage.markParticipantsMissed(CALL_ID, List.of(CALLEE), latestStart(call.getLastDate()))).thenReturn(List.of(CALLEE));
     when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenThrow(new PersistenceException("down"));
     stubStop();
 
@@ -887,7 +889,7 @@ class WebConferencingServiceMissedCallTest {
 
     assertEquals(List.of(), service.markDeclinesClosedOnStop(call));
 
-    verify(participantsStorage, never()).markParticipantDeclinedNotified(anyString(), anyString(), any(Date.class));
+    verify(participantsStorage, never()).markParticipantsDeclinedNotified(anyString(), anyList(), any(Date.class));
   }
 
   @Test
@@ -907,21 +909,42 @@ class WebConferencingServiceMissedCallTest {
   }
 
   @Test
-  void aMarkThatFailsLeavesTheOtherDeclinesReported() throws Exception {
+  void aBatchOfDeclinesThatFailsLeavesTheOtherBatchesReported() throws Exception {
     Date startedAt = new Date();
-    CallInfo call = startedCall(startedAt,
-                                participant(CALLER, UserState.JOINED),
-                                participant(CALLEE, UserState.DECLINED),
-                                participant(OTHER, UserState.DECLINED));
-    when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE, OTHER));
-    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, CALLEE, latestStart(startedAt))).thenThrow(new PersistenceException("down"));
-    when(participantsStorage.markParticipantDeclinedNotified(CALL_ID, OTHER, latestStart(startedAt))).thenReturn(1);
+    CallInfo call = startedCall(startedAt, participant(CALLER, UserState.JOINED));
+    List<String> ids = ids(WebConferencingService.PARTICIPANTS_BATCH_SIZE + 1);
+    List<String> firstBatch = ids.subList(0, WebConferencingService.PARTICIPANTS_BATCH_SIZE);
+    List<String> secondBatch = ids.subList(WebConferencingService.PARTICIPANTS_BATCH_SIZE, ids.size());
+    when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(ids);
+    when(participantsStorage.markParticipantsDeclinedNotified(CALL_ID, firstBatch, latestStart(startedAt))).thenThrow(new PersistenceException("down"));
+    when(participantsStorage.markParticipantsDeclinedNotified(CALL_ID, secondBatch, latestStart(startedAt))).thenReturn(secondBatch);
 
     service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
 
     verify(listenerService).broadcast(eq(WebConferencingService.EVENT_CALL_DECLINES_CLOSED),
                                       eq(call),
-                                      argThat((Map<String, String> data) -> OTHER.equals(data.get(WebConferencingService.EVENT_DATA_DECLINER_IDS))));
+                                      argThat((Map<String, String> data) -> String.join(",", secondBatch)
+                                                                                  .equals(data.get(WebConferencingService.EVENT_DATA_DECLINER_IDS))));
+  }
+
+  @Test
+  void aLargeRemovedCallMarksItsInvitedParticipantsInBatchesAndKeepsTheMarkedOnes() throws Exception {
+    int batchSize = WebConferencingService.PARTICIPANTS_BATCH_SIZE;
+    CallInfo call = removedUserCall();
+    List<String> ids = ids(2 * batchSize + 1);
+    Date latestStart = latestStart(call.getLastDate());
+    when(participantsStorage.markParticipantsMissed(CALL_ID, ids.subList(0, batchSize), latestStart)).thenReturn(ids.subList(0, batchSize));
+    when(participantsStorage.markParticipantsMissed(CALL_ID, ids.subList(batchSize, 2 * batchSize), latestStart)).thenThrow(new PersistenceException("down"));
+    when(participantsStorage.markParticipantsMissed(CALL_ID, ids.subList(2 * batchSize, ids.size()), latestStart)).thenReturn(List.of());
+
+    List<String> marked = service.markRemovedCallMissed(call, ids);
+
+    assertEquals(ids.subList(0, batchSize), marked);
+    verify(participantsStorage, times(3)).markParticipantsMissed(eq(CALL_ID), anyList(), eq(latestStart));
+  }
+
+  private static List<String> ids(int count) {
+    return IntStream.range(0, count).mapToObj(i -> String.format("user%05d", i)).toList();
   }
 
   @SuppressWarnings("unchecked")
