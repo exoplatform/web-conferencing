@@ -485,7 +485,8 @@ public class RESTWebConferencingService implements ResourceContainer {
           if (participants != null && participants.length() > 0) {
             if (spaces != null && spaces.length() > 0) {
               try {
-                GroupInfo space = webConferencing.getSpaceEventInfo(spaceIdentityId,
+                GroupInfo space = webConferencing.getSpaceEventInfo(currentUserName,
+                                                                    spaceIdentityId,
                                                                     participants.trim().split(";"),
                                                                     spaces.trim().split(";"));
                 if (space != null) {
