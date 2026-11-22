@@ -1538,7 +1538,8 @@ public class WebConferencingService implements Startable {
                                   .toList();
     if (remove && call.getCallerId() != null) {
       // A removed call, 1:1 or group (an instant visio room deleted before anyone joined), loses its
-      // participants: they are marked before, while the call is still started, one update each in this request
+      // participants: they are marked before, while the call is still started, in batches of
+      // PARTICIPANTS_BATCH_SIZE, at most two queries each
       invitedIds = markRemovedCallMissed(call, invitedIds);
     }
     // The incoming call alert closes with the call: a removed call loses its participants, its declines are
@@ -2243,7 +2244,7 @@ public class WebConferencingService implements Startable {
    * Marks as missed, before the call is removed with its participants, the participants still invited to it:
    * among the missed call check of the same start, a join or a decline, a participant is marked once. The
    * participants are marked in batches of {@link #PARTICIPANTS_BATCH_SIZE}, each batch locking its still invited
-   * participants and marking them in one transaction, which returns the ones this call marked: a batch costs two
+   * participants and marking them in one transaction, which returns the ones this call marked: a batch costs at most two
    * queries whatever the participants a call holds when it is removed (its start, a participants update, a
    * guest: for a space call, up to the members of the space).
    *
@@ -2448,7 +2449,7 @@ public class WebConferencingService implements Startable {
    * call still from a start not later than the given date. The participants are marked in batches of
    * {@link #PARTICIPANTS_BATCH_SIZE}, each batch locking its still declined participants and marking them in one
    * transaction, which returns the ones this call marked, so that a decline is reported to the caller once
-   * whatever the concurrent writers. A batch costs two queries.
+   * whatever the concurrent writers. A batch costs at most two queries.
    *
    * @param call the call
    * @param declinerIds the participants who declined the call

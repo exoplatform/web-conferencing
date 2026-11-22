@@ -21,10 +21,12 @@ package org.exoplatform.webconferencing.dao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -36,6 +38,7 @@ import jakarta.persistence.EntityManagerFactory;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.resource.jdbc.spi.StatementInspector;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,12 +74,15 @@ class ParticipantDAOTest {
 
   private static final Date    LATEST_START  = new Date(STARTED_AT.getTime() + 1000);
 
+  private static final List<String> SQL = new CopyOnWriteArrayList<>();
+
   private EntityManagerFactory entityManagerFactory;
 
   private EntityManager        entityManager;
 
   @BeforeEach
   void setUp() {
+    SQL.clear();
     entityManagerFactory = new Configuration().addAnnotatedClass(ParticipantEntity.class)
                                               .addAnnotatedClass(CallEntity.class)
                                               .setProperty("hibernate.connection.url", "jdbc:hsqldb:mem:wbc-participants")
@@ -84,6 +90,7 @@ class ParticipantDAOTest {
                                               .setProperty("hibernate.connection.password", "")
                                               .setProperty("hibernate.hbm2ddl.auto", "create-drop")
                                               .setProperty("hibernate.generate_statistics", "true")
+                                              .setProperty("hibernate.session_factory.statement_inspector", CapturingInspector.class.getName())
                                               .buildSessionFactory();
     entityManager = entityManagerFactory.createEntityManager();
     entityManager.getTransaction().begin();
@@ -401,6 +408,19 @@ class ParticipantDAOTest {
   }
 
   @Test
+  void theLockSelectOfEachBatchMethodEndsWithForUpdate() {
+    setState(CALL_ID, JOHN, UserState.DECLINED);
+    SQL.clear();
+
+    markBatchMissed(CALL_ID, List.of(PAUL), LATEST_START);
+    markBatchDeclinedNotified(CALL_ID, List.of(JOHN), LATEST_START);
+
+    List<String> selects = SQL.stream().filter(sql -> sql.startsWith("select")).toList();
+    assertEquals(2, selects.size());
+    selects.forEach(sql -> assertTrue(sql.trim().endsWith("for update"), sql));
+  }
+
+  @Test
   void aWriterWaitsForTheLockedBatchAndThenFindsNobodyInvited() throws Exception {
     EntityManager first = entityManagerFactory.createEntityManager();
     EntityManager second = entityManagerFactory.createEntityManager();
@@ -508,6 +528,15 @@ class ParticipantDAOTest {
     entityManager.getTransaction().commit();
     entityManager.clear();
     return updated;
+  }
+
+  /** Records the SQL Hibernate sends, to check the lock clause the unit engine would not enforce on its own. */
+  public static class CapturingInspector implements StatementInspector {
+    @Override
+    public String inspect(String sql) {
+      SQL.add(sql);
+      return sql;
+    }
   }
 
   private long prepareStatementCount() {

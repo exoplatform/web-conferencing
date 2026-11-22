@@ -212,13 +212,14 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
    * decline committed meanwhile, the call stopped or started again), a participant is marked at most once. The
    * candidate rows are locked (<code>SELECT ... FOR UPDATE</code>, by id) with the same condition, then updated
    * by one statement, in one transaction: a concurrent writer waits for the commit and then finds the
-   * participants no longer invited. The cost is two queries, whatever the number of participants.
+   * participants no longer invited. The cost is at most two queries, whatever the number of participants.
    *
    * @param callId the call id
    * @param partIds the participant ids
    * @param latestStart the latest start date of the call the participants may have missed
    * @return the ids of the participants marked by this call, in id order
    */
+  // @ExoTransactional as the sibling conditional updates: same EntityManager and transaction model; replacing it is a separate task
   @ExoTransactional
   public List<String> markParticipantsMissed(String callId, Collection<String> partIds, Date latestStart) {
     return markParticipantsMissed(getEntityManager(), callId, partIds, latestStart);
@@ -265,6 +266,7 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
    * @param latestStart the latest start date of the call the participants may be marked for
    * @return the ids of the participants marked by this call, in id order
    */
+  // @ExoTransactional as the sibling conditional updates: same EntityManager and transaction model; replacing it is a separate task
   @ExoTransactional
   public List<String> markParticipantsDeclinedNotified(String callId, Collection<String> partIds, Date latestStart) {
     return markParticipantsDeclinedNotified(getEntityManager(), callId, partIds, latestStart);
