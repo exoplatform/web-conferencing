@@ -4667,12 +4667,42 @@ public class WebConferencingService implements Startable {
           // IdentityStateException if error reading call participant
           // CallInfoException if call has wrong settings (type or room settings)
           LOG.warn("Error reading user group call: " + c.getId(), e);
+        } catch (IllegalStateException e) {
+          // Rethrown unless the call is a space event whose host space is gone:
+          // that call cannot be shown, whatever the failure that surfaced it.
+          boolean gone;
+          try {
+            gone = isSpaceEventHostGone(c);
+          } catch (RuntimeException ex) {
+            e.addSuppressed(ex);
+            throw e;
+          }
+          if (!gone) {
+            throw e;
+          }
+          LOG.debug("Skipped call {}: the space hosting its event does not exist anymore", c.getId());
         }
       }
       return Collections.unmodifiableCollection(calls);
     } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
       throw new StorageException("Error reading user group calls by " + userId, e);
     }
+  }
+
+  /**
+   * Tells whether a saved call is a space event call hosted by a space that
+   * does not exist anymore. A call hosted by a user (a personal event) never is.
+   *
+   * @param savedCall the saved call
+   * @return <code>true</code> when the host is a space identity whose space is not found
+   */
+  private boolean isSpaceEventHostGone(CallEntity savedCall) {
+    if (!OWNER_TYPE_SPACEEVENT.equals(savedCall.getOwnerType())) {
+      return false;
+    }
+    Identity hostIdentity = socialIdentityManager.getIdentity(savedCall.getOwnerId());
+    return hostIdentity != null && hostIdentity.isSpace()
+        && spaceService.getSpaceByPrettyName(hostIdentity.getRemoteId()) == null;
   }
 
   /**
