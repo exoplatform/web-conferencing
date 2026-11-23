@@ -465,14 +465,13 @@ public class RESTWebConferencingService implements ResourceContainer {
     @Operation(
             summary = "Return a Social space event information",
             method = "GET",
-            description = "Use this method to read a Social space event used as call origin. This operation is available to all Platform users.")
+            description = "Use this method to read a Social space event used as call origin. This operation is available only to the event host: a member of the host space, or the host user of a personal event.")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Request fulfilled. Space event info object returned."),
       @ApiResponse(responseCode = "400", description = "Wrong request parameters: spaceName. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),
       @ApiResponse(responseCode = "400", description = "Wrong request parameters: participants. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),
       @ApiResponse(responseCode = "400", description = "Wrong request parameters: spaces. Error code: " + ErrorInfo.CODE_CLIENT_ERROR),
       @ApiResponse(responseCode = "401", description = "Unauthorized user (conversation state not present). Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
-      @ApiResponse(responseCode = "403", description = "Not space member. Error code: " + ErrorInfo.CODE_ACCESS_ERROR),
-      @ApiResponse(responseCode = "404", description = "Space not found or not accessible. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
+      @ApiResponse(responseCode = "404", description = "Event host not found, or the user is neither a member of the host space nor the host user. Error code: " + ErrorInfo.CODE_NOT_FOUND_ERROR),
       @ApiResponse(responseCode = "500", description = "Internal server error due to data reading from DB, its encoding or formatting result to JSON. Error code: " + ErrorInfo.CODE_SERVER_ERROR)})
     public Response getSpaceEventInfo(@Context UriInfo uriInfo,
                                       @Parameter(description = "Space pretty name used as the event host, ex: 'sales_team'", required = true) @PathParam("spaceIdentityId") String spaceIdentityId,
@@ -490,14 +489,7 @@ public class RESTWebConferencingService implements ResourceContainer {
                                                                     participants.trim().split(";"),
                                                                     spaces.trim().split(";"));
                 if (space != null) {
-                  if (space.getMembers().containsKey(currentUserName)) {
-                    return Response.ok().cacheControl(cacheControl).entity(space).build();
-                  } else {
-                    return Response.status(Status.FORBIDDEN)
-                                   .cacheControl(cacheControl)
-                                   .entity(ErrorInfo.accessError("Not space member"))
-                                   .build();
-                  }
+                  return Response.ok().cacheControl(cacheControl).entity(space).build();
                 } else {
                   return Response.status(Status.NOT_FOUND)
                                  .cacheControl(cacheControl)
