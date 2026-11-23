@@ -50,6 +50,7 @@ import org.exoplatform.services.jcr.core.ManageableRepository;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
 import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
+import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
@@ -195,8 +196,15 @@ class WebConferencingServiceSaveRecordingTest {
 
   @Test
   void testUserOfAnUnknownIdentityDoesNotFallBackOnTheThreadProvider() throws Exception {
-    assertThrows(UploadFileException.class, () -> webConferencing.saveFile(mockFolder(USER_FOLDER), resource, "ghost", null));
+    // The registry does not know "ghost" and the authenticator cannot create its identity
+    Authenticator authenticator = mock(Authenticator.class);
+    when(authenticator.createIdentity("ghost")).thenReturn(null);
+    ReflectionTestUtils.setField(webConferencing, "authenticator", authenticator);
 
+    UploadFileException refusal = assertThrows(UploadFileException.class,
+                                               () -> webConferencing.saveFile(mockFolder(USER_FOLDER), resource, "ghost", null));
+
+    assertEquals("Identity not found for user: ghost", refusal.getMessage());
     assertSame(callerState, ConversationState.getCurrent());
     verifyNoInteractions(callerProvider);
   }

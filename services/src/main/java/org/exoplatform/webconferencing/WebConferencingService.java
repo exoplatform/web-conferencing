@@ -2994,14 +2994,14 @@ public class WebConferencingService implements Startable {
       ConversationState state;
       try {
         state = createState(user);
-        if (state == null) {
-          throw new UploadFileException("Identity not found for user: " + user);
-        }
-        ConversationState.setCurrent(state);
       } catch (Exception e) {
         LOG.error("Cannot set conversation state for user: " + user, e);
-        throw new UploadFileException("Cannot set conversation state for user: " + user);
+        throw new UploadFileException("Cannot set conversation state for user: " + user, e);
       }
+      if (state == null) {
+        throw new UploadFileException("Identity not found for user: " + user);
+      }
+      ConversationState.setCurrent(state);
       SessionProvider sessionProvider;
       if (isRecordedWithSystemRights(parent, user)) {
         sessionProvider = sessionProviders.getSystemSessionProvider(null);
