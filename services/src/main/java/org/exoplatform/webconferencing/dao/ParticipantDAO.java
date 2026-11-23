@@ -46,6 +46,23 @@ import org.exoplatform.webconferencing.domain.ParticipantId;
  */
 public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, ParticipantId> {
 
+  // Names of the JPQL parameters shared by the conditional updates and the batched marks
+  private static final String CALL_ID      = "callId";
+
+  private static final String PART_ID      = "partId";
+
+  private static final String MISSED       = "missed";
+
+  private static final String STARTED      = "started";
+
+  private static final String INVITED      = "invited";
+
+  private static final String DECLINED     = "declined";
+
+  private static final String IDS          = "ids";
+
+  private static final String LATEST_START = "latestStart";
+
   /**
    * Instantiates a new participant DAO.
    */
@@ -66,7 +83,7 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
                                                               IllegalArgumentException {
     TypedQuery<ParticipantEntity> query =
                                         getEntityManager().createNamedQuery("WebConfCall.findCallParts", ParticipantEntity.class)
-                                                          .setParameter("callId", callId);
+                                                          .setParameter(CALL_ID, callId);
     try {
       return query.getResultList();
     } catch (NoResultException e) {
@@ -85,7 +102,7 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
    */
   @Deprecated // TODO not used
   public int deleteCallParts(String callId) throws PersistenceException, IllegalStateException, IllegalArgumentException {
-    return getEntityManager().createNamedQuery("WebConfCall.deleteCallParts").setParameter("callId", callId).executeUpdate();
+    return getEntityManager().createNamedQuery("WebConfCall.deleteCallParts").setParameter(CALL_ID, callId).executeUpdate();
   }
 
   /**
@@ -98,7 +115,7 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
   public int updateParticipantStateByCallId(String state, String callId) {
     Query query = getEntityManager().createQuery("UPDATE WebConfParticipant p SET p.state = :state  WHERE p.callId = :callId")
             .setParameter("state", state)
-            .setParameter("callId", callId);
+            .setParameter(CALL_ID, callId);
 
     return query.executeUpdate();
   }
@@ -124,12 +141,12 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
         + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :invited"
         + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.state = :started"
         + " AND c.lastDate <= :latestStart)")
-                        .setParameter("missed", UserState.MISSED)
-                        .setParameter("callId", callId)
-                        .setParameter("partId", partId)
-                        .setParameter("invited", UserState.INVITED)
-                        .setParameter("started", CallState.STARTED)
-                        .setParameter("latestStart", latestStart)
+                        .setParameter(MISSED, UserState.MISSED)
+                        .setParameter(CALL_ID, callId)
+                        .setParameter(PART_ID, partId)
+                        .setParameter(INVITED, UserState.INVITED)
+                        .setParameter(STARTED, CallState.STARTED)
+                        .setParameter(LATEST_START, latestStart)
                         .executeUpdate();
   }
   /**
@@ -151,12 +168,12 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
         + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :invited"
         + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.state = :stopped"
         + " AND c.lastDate <= :latestStart)")
-                        .setParameter("missed", UserState.MISSED)
-                        .setParameter("callId", callId)
-                        .setParameter("partId", partId)
-                        .setParameter("invited", UserState.INVITED)
+                        .setParameter(MISSED, UserState.MISSED)
+                        .setParameter(CALL_ID, callId)
+                        .setParameter(PART_ID, partId)
+                        .setParameter(INVITED, UserState.INVITED)
                         .setParameter("stopped", CallState.STOPPED)
-                        .setParameter("latestStart", latestStart)
+                        .setParameter(LATEST_START, latestStart)
                         .executeUpdate();
   }
 
@@ -174,9 +191,9 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
   static List<String> findDeclinedParticipantIds(EntityManager entityManager, String callId) {
     return entityManager.createQuery("SELECT p.id FROM WebConfParticipant p"
         + " WHERE p.callId = :callId AND p.type = :user AND p.state = :declined", String.class)
-                        .setParameter("callId", callId)
+                        .setParameter(CALL_ID, callId)
                         .setParameter("user", UserInfo.TYPE_NAME)
-                        .setParameter("declined", UserState.DECLINED)
+                        .setParameter(DECLINED, UserState.DECLINED)
                         .getResultList();
   }
 
@@ -198,11 +215,11 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
     return entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :declined, p.clientId = NULL"
         + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :invited"
         + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.state = :started)")
-                        .setParameter("declined", UserState.DECLINED)
-                        .setParameter("callId", callId)
-                        .setParameter("partId", partId)
-                        .setParameter("invited", UserState.INVITED)
-                        .setParameter("started", CallState.STARTED)
+                        .setParameter(DECLINED, UserState.DECLINED)
+                        .setParameter(CALL_ID, callId)
+                        .setParameter(PART_ID, partId)
+                        .setParameter(INVITED, UserState.INVITED)
+                        .setParameter(STARTED, CallState.STARTED)
                         .executeUpdate();
   }
 
@@ -237,18 +254,18 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
         + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.state = :started"
         + " AND c.lastDate <= :latestStart) ORDER BY p.id", String.class)
                                           .setLockMode(LockModeType.PESSIMISTIC_WRITE)
-                                          .setParameter("callId", callId)
-                                          .setParameter("ids", partIds)
-                                          .setParameter("invited", UserState.INVITED)
-                                          .setParameter("started", CallState.STARTED)
-                                          .setParameter("latestStart", latestStart)
+                                          .setParameter(CALL_ID, callId)
+                                          .setParameter(IDS, partIds)
+                                          .setParameter(INVITED, UserState.INVITED)
+                                          .setParameter(STARTED, CallState.STARTED)
+                                          .setParameter(LATEST_START, latestStart)
                                           .getResultList();
     if (!lockedIds.isEmpty()) {
       entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :missed"
           + " WHERE p.callId = :callId AND p.id IN :ids")
-                   .setParameter("missed", UserState.MISSED)
-                   .setParameter("callId", callId)
-                   .setParameter("ids", lockedIds)
+                   .setParameter(MISSED, UserState.MISSED)
+                   .setParameter(CALL_ID, callId)
+                   .setParameter(IDS, lockedIds)
                    .executeUpdate();
     }
     return lockedIds;
@@ -284,17 +301,17 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
         + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.lastDate <= :latestStart)"
         + " ORDER BY p.id", String.class)
                                           .setLockMode(LockModeType.PESSIMISTIC_WRITE)
-                                          .setParameter("callId", callId)
-                                          .setParameter("ids", partIds)
-                                          .setParameter("declined", UserState.DECLINED)
-                                          .setParameter("latestStart", latestStart)
+                                          .setParameter(CALL_ID, callId)
+                                          .setParameter(IDS, partIds)
+                                          .setParameter(DECLINED, UserState.DECLINED)
+                                          .setParameter(LATEST_START, latestStart)
                                           .getResultList();
     if (!lockedIds.isEmpty()) {
       entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :notified"
           + " WHERE p.callId = :callId AND p.id IN :ids")
                    .setParameter("notified", UserState.DECLINED_NOTIFIED)
-                   .setParameter("callId", callId)
-                   .setParameter("ids", lockedIds)
+                   .setParameter(CALL_ID, callId)
+                   .setParameter(IDS, lockedIds)
                    .executeUpdate();
     }
     return lockedIds;

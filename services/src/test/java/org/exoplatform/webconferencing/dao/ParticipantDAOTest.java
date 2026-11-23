@@ -23,7 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -43,6 +45,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.webconferencing.CallState;
 import org.exoplatform.webconferencing.UserState;
 import org.exoplatform.webconferencing.domain.CallEntity;
@@ -608,5 +611,20 @@ class ParticipantDAOTest {
     entity.setType("user");
     entity.setState(state);
     return entity;
+  }
+
+  /**
+   * The lock select and the update of a batch run in one transaction only because the DAO method is annotated:
+   * this class calls the static seams inside transactions it opens itself, and the service tests mock the
+   * storage. Without the annotation the two queries run on the request's EntityManager with no transaction around
+   * them, and a failing batch is only logged.
+   */
+  @Test
+  void theBatchMethodsRunInATransactionOfTheirOwn() throws Exception {
+    Method missed = ParticipantDAO.class.getMethod("markParticipantsMissed", String.class, Collection.class, Date.class);
+    Method declined = ParticipantDAO.class.getMethod("markParticipantsDeclinedNotified", String.class, Collection.class, Date.class);
+
+    assertTrue(missed.isAnnotationPresent(ExoTransactional.class), "markParticipantsMissed must be @ExoTransactional");
+    assertTrue(declined.isAnnotationPresent(ExoTransactional.class), "markParticipantsDeclinedNotified must be @ExoTransactional");
   }
 }
