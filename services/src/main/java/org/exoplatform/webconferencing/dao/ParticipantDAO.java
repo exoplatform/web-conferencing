@@ -236,7 +236,7 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
    * @param latestStart the latest start date of the call the participants may have missed
    * @return the ids of the participants marked by this call, in id order
    */
-  // @ExoTransactional as the sibling conditional updates: same EntityManager and transaction model; replacing it is a separate task
+  // @ExoTransactional as the sibling conditional updates: same EntityManager and transaction model; its replacement is EXO-93034
   @ExoTransactional
   public List<String> markParticipantsMissed(String callId, Collection<String> partIds, Date latestStart) {
     return markParticipantsMissed(getEntityManager(), callId, partIds, latestStart);
@@ -283,7 +283,7 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
    * @param latestStart the latest start date of the call the participants may be marked for
    * @return the ids of the participants marked by this call, in id order
    */
-  // @ExoTransactional as the sibling conditional updates: same EntityManager and transaction model; replacing it is a separate task
+  // @ExoTransactional as the sibling conditional updates: same EntityManager and transaction model; its replacement is EXO-93034
   @ExoTransactional
   public List<String> markParticipantsDeclinedNotified(String callId, Collection<String> partIds, Date latestStart) {
     return markParticipantsDeclinedNotified(getEntityManager(), callId, partIds, latestStart);

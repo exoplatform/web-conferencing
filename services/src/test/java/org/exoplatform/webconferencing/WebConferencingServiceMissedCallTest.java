@@ -669,7 +669,7 @@ class WebConferencingServiceMissedCallTest {
                                 participant(OTHER, UserState.DECLINED),
                                 participant("paul", UserState.INVITED));
     when(participantsStorage.findDeclinedParticipantIds(CALL_ID)).thenReturn(List.of(CALLEE, OTHER));
-    when(participantsStorage.markParticipantsDeclinedNotified(eq(CALL_ID), eq(List.of(CALLEE, OTHER)), eq(latestStart(startedAt)))).thenReturn(List.of(CALLEE, OTHER));
+    when(participantsStorage.markParticipantsDeclinedNotified(CALL_ID, List.of(CALLEE, OTHER), latestStart(startedAt))).thenReturn(List.of(CALLEE, OTHER));
 
     service.notifyDeclinesClosed(CALL_ID, CALLER, startedAt);
 
@@ -928,7 +928,7 @@ class WebConferencingServiceMissedCallTest {
   }
 
   @Test
-  void aLargeRemovedCallMarksItsInvitedParticipantsInBatchesAndKeepsTheMarkedOnes() throws Exception {
+  void aLargeRemovedCallMarksItsInvitedParticipantsInBatchesAndKeepsTheMarkedOnes() {
     int batchSize = WebConferencingService.PARTICIPANTS_BATCH_SIZE;
     CallInfo call = removedUserCall();
     List<String> ids = ids(2 * batchSize + 1);
