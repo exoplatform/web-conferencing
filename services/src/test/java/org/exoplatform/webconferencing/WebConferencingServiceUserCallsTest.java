@@ -18,6 +18,7 @@
  */
 package org.exoplatform.webconferencing;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -43,6 +44,7 @@ import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.webconferencing.dao.CallDAO;
 import org.exoplatform.webconferencing.dao.OriginDAO;
+import org.exoplatform.webconferencing.dao.StorageException;
 import org.exoplatform.webconferencing.domain.CallEntity;
 
 /**
@@ -97,15 +99,31 @@ class WebConferencingServiceUserCallsTest {
   }
 
   @Test
-  void testIllegalStateOfTheStorageStillFailsTheRead() throws Exception {
+  void testIllegalStateOfTheStorageStillFailsTheRead() {
     spaceIdentity("1", "sales_team", true);
     when(callStorage.findUserGroupCalls(USER)).thenReturn(List.of(spaceEventCall("call-space", "1")));
     when(originsStorage.findCallOrigins("call-space", WebConferencingService.OWNER_TYPE_USER))
                                                                                               .thenThrow(new IllegalStateException("closed"));
 
-    Exception e = assertThrows(Exception.class, () -> webConferencing.getUserCalls(USER));
+    StorageException e = assertThrows(StorageException.class, () -> webConferencing.getUserCalls(USER));
 
-    assertInstanceOf(org.exoplatform.webconferencing.dao.StorageException.class, e);
+    IllegalStateException cause = assertInstanceOf(IllegalStateException.class, e.getCause());
+    assertEquals("closed", cause.getMessage());
+  }
+
+  @Test
+  void testAFailedHostCheckRethrowsTheOriginalFailureWithTheCheckFailureSuppressed() {
+    Identity identity = new Identity("space", "gone_team");
+    identity.setId("2");
+    IllegalStateException checkFailure = new IllegalStateException("down");
+    when(identityManager.getIdentity("2")).thenReturn(identity).thenThrow(checkFailure);
+    when(callStorage.findUserGroupCalls(USER)).thenReturn(List.of(spaceEventCall("call-gone", "2")));
+
+    StorageException e = assertThrows(StorageException.class, () -> webConferencing.getUserCalls(USER));
+
+    IllegalStateException cause = assertInstanceOf(IllegalStateException.class, e.getCause());
+    assertEquals("Cannot find the space hosting the event: gone_team", cause.getMessage());
+    assertArrayEquals(new Throwable[] { checkFailure }, cause.getSuppressed());
   }
 
   private void spaceIdentity(String id, String prettyName, boolean exists) {
