@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import org.exoplatform.commons.exception.ObjectNotFoundException;
+import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.webconferencing.WebConferencingService;
 import org.exoplatform.webconferencing.mcp.model.MeetingRecordingCheckModel;
 import org.exoplatform.webconferencing.mcp.model.MeetingRecordingModel;
@@ -181,9 +182,9 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
     if (meetings.size() > MAX_MEETINGS) {
       throw new IllegalArgumentException("meetings: at most " + MAX_MEETINGS + " in one call; check the latest first");
     }
-    // the same viewer the single-meeting lookup passes, read once: every
-    // meeting is looked up, and read in JCR, as that user
-    String username = getCurrentUserName();
+    // the same viewer the single-meeting lookup passes, read once and
+    // null-safely: every meeting is looked up, and read in JCR, as that user
+    String username = currentUserNameOrNull();
     if (StringUtils.isBlank(username)) {
       throw new IllegalAccessException(WebConferencingService.RECORDINGS_NO_IDENTITY);
     }
@@ -204,12 +205,26 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
       } catch (ObjectNotFoundException e) {
         reason = WebConferencingService.RECORDINGS_OTHER_PROVIDER.equals(e.getMessage()) ? OTHER_PROVIDER : NO_RECORDING;
       } catch (IllegalAccessException e) {
+        if (WebConferencingService.RECORDINGS_NO_IDENTITY.equals(e.getMessage())) {
+          // the user has no identity: refused, as a single meeting is
+          throw e;
+        }
         // another user's meeting reads as one with no recording: nothing is said of it
         reason = NO_RECORDING;
       }
       checks.add(new MeetingRecordingCheckModel(url, from, to, count, reason));
     }
     return new MeetingRecordingsModel(null, null, checks);
+  }
+
+  /**
+   * @return the user name of the request's conversation state, null when the
+   *         request has none: {@link #getCurrentUserName()} reads it with no
+   *         check
+   */
+  private static String currentUserNameOrNull() {
+    ConversationState state = ConversationState.getCurrent();
+    return state == null || state.getIdentity() == null ? null : state.getIdentity().getUserId();
   }
 
   /**

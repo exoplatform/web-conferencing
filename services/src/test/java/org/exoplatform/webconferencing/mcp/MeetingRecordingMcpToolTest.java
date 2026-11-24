@@ -369,7 +369,7 @@ class MeetingRecordingMcpToolTest {
 
   /**
    * The tool is a read: no approval, read-only annotations, and its arguments
-   * are the method's, the link mandatory.
+   * are the method's, none required: a link or several meetings.
    */
   @Test
   void theToolIsDeclaredAsARead() {
@@ -474,6 +474,22 @@ class MeetingRecordingMcpToolTest {
   }
 
   /**
+   * EXO-95138: a user the lookup finds no identity for is refused for
+   * several meetings, as for one, never answered « no recording » each.
+   * Mutant: the no-identity refusal read as another user's meeting.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void severalMeetingsForAUserWithNoIdentityAreRefused() throws Exception {
+    when(webConferencingService.getCallRecordingsByConference(eq(URL), eq("john"), any(), any()))
+                                                                                               .thenThrow(new IllegalAccessException(WebConferencingService.RECORDINGS_NO_IDENTITY));
+
+    assertThrows(IllegalAccessException.class,
+                 () -> tool.getMeetingRecordings(null, null, null, List.of(Map.of("conference_url", URL))));
+  }
+
+  /**
    * EXO-95138: more meetings than {@link MeetingRecordingMcpTool#MAX_MEETINGS},
    * a meeting with no link, or an unreadable date are refused before any
    * lookup, the refusal naming the meeting. Mutants: the cap removed; the
@@ -518,7 +534,7 @@ class MeetingRecordingMcpToolTest {
       @SuppressWarnings("unchecked")
       List<String> replaced = (List<String>) upgrade.get("replaced_definitions");
       assertEquals(3, replaced.size());
-      assertFalse(replaced.contains("957b827f0eb750f3b73d355648ed6143fe6d32c72392e41e6ac7730e9af666fb"), "the shipped definition replaces nothing");
+      assertFalse(replaced.contains("7626b7ca6eefdf01af02f3a09edfe50f7b42bb15d455fee1226701d95d16d0d9"), "the shipped definition replaces nothing");
     }
   }
 
