@@ -125,7 +125,8 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
    *           in an accepted format: its message, {@link #INVALID_DATE}, tells
    *           the model how to call again
    * @throws IllegalAccessException when the user may not read the meeting's
-   *           recordings: not a member of its space, or not a participant
+   *           recordings: not a member of its space, or not a participant;
+   *           or when the request has no authenticated user
    */
   public MeetingRecordingsModel getMeetingRecordings(String conferenceUrl,
                                                      String recordedFrom,
@@ -141,7 +142,10 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
     Date from = parseDateArgument("recorded_from", recordedFrom, false);
     Date to = parseDateArgument("recorded_to", recordedTo, true);
     try {
-      String username = getCurrentUserName();
+      String username = currentUserNameOrNull();
+      if (StringUtils.isBlank(username)) {
+        throw new IllegalAccessException(WebConferencingService.RECORDINGS_NO_IDENTITY);
+      }
       List<RecordingInfo> found = webConferencingService.getCallRecordingsByConference(conferenceUrl, username, from, to);
       RecordingOutlineReader reader = found.isEmpty() ? null : outlineReader.getIfAvailable();
       long identityId = reader == null ? 0 : reader.getIdentityId(username);
@@ -175,8 +179,9 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
    *           are given, one is no map or has no link, or a date is not in
    *           an accepted format
    * @throws IllegalAccessException when the request has no authenticated
-   *           user: each meeting would otherwise read as one with no
-   *           recording, as the single-meeting lookup refuses it instead
+   *           user, or the lookup finds no identity for it: each meeting
+   *           would otherwise read as one with no recording, and a single
+   *           meeting is refused the same way
    */
   private MeetingRecordingsModel checkMeetings(List<Object> meetings) throws IllegalAccessException {
     if (meetings.size() > MAX_MEETINGS) {

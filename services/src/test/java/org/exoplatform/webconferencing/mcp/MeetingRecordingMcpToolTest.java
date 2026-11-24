@@ -474,6 +474,21 @@ class MeetingRecordingMcpToolTest {
   }
 
   /**
+   * EXO-95138: with no authenticated user, a single meeting is refused too,
+   * before any lookup, never a NullPointerException. Mutant: the single
+   * path's guard removed.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aMeetingWithNoAuthenticatedUserIsRefused() throws Exception {
+    ConversationState.setCurrent(null);
+
+    assertThrows(IllegalAccessException.class, () -> tool.getMeetingRecordings(URL, null, null, null));
+    verify(webConferencingService, never()).getCallRecordingsByConference(any(), any(), any(), any());
+  }
+
+  /**
    * EXO-95138: a user the lookup finds no identity for is refused for
    * several meetings, as for one, never answered « no recording » each.
    * Mutant: the no-identity refusal read as another user's meeting.
