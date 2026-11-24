@@ -43,9 +43,6 @@
          raise it to just under the real figure once a green build reports one,
          so the number means something rather than staying switched off. -->
     <exo.test.coverage.ratio>0</exo.test.coverage.ratio>
-    <rest.api.doc.title>WebConferencing Rest Api</rest.api.doc.title>
-    <rest.api.doc.version>1.0</rest.api.doc.version>
-    <rest.api.doc.description>WebConferencing addon rest endpoints</rest.api.doc.description>
   </properties>
 
   <dependencies>
@@ -140,28 +137,5 @@
         </includes>
       </resource>
     </resources>
-    <plugins>
-      <plugin>
-        <groupId>io.openapitools.swagger</groupId>
-        <artifactId>swagger-maven-plugin</artifactId>
-        <configuration>
-          <useResourcePackagesChildren>true</useResourcePackagesChildren>
-          <resourcePackages>
-            <locations>org.exoplatform.webconferencing.rest</locations>
-          </resourcePackages>
-          <swaggerConfig>
-            <info>
-              <title>${rest.api.doc.title}</title>
-              <version>${rest.api.doc.version}</version>
-              <description>${rest.api.doc.description}</description>
-              <license>
-                <url>https://www.gnu.org/licenses/agpl-3.0.en.html</url>
-                <name>AGPL</name>
-              </license>
-            </info>
-          </swaggerConfig>
-        </configuration>
-      </plugin>
-    </plugins>
   </build>
 </project>
