@@ -173,12 +173,20 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
    * @throws IllegalArgumentException when more than {@link #MAX_MEETINGS}
    *           are given, one is no map or has no link, or a date is not in
    *           an accepted format
+   * @throws IllegalAccessException when the request has no authenticated
+   *           user: each meeting would otherwise read as one with no
+   *           recording, as the single-meeting lookup refuses it instead
    */
-  private MeetingRecordingsModel checkMeetings(List<Object> meetings) {
+  private MeetingRecordingsModel checkMeetings(List<Object> meetings) throws IllegalAccessException {
     if (meetings.size() > MAX_MEETINGS) {
       throw new IllegalArgumentException("meetings: at most " + MAX_MEETINGS + " in one call; check the latest first");
     }
+    // the same viewer the single-meeting lookup passes, read once: every
+    // meeting is looked up, and read in JCR, as that user
     String username = getCurrentUserName();
+    if (StringUtils.isBlank(username)) {
+      throw new IllegalAccessException(WebConferencingService.RECORDINGS_NO_IDENTITY);
+    }
     List<MeetingRecordingCheckModel> checks = new ArrayList<>(meetings.size());
     for (int i = 0; i < meetings.size(); i++) {
       if (!(meetings.get(i) instanceof Map<?, ?> meeting) || !(meeting.get("conference_url") instanceof String url) || StringUtils.isBlank(url)) {

@@ -456,6 +456,24 @@ class MeetingRecordingMcpToolTest {
   }
 
   /**
+   * EXO-95138: with no authenticated user, several meetings are refused, as
+   * a single one is by the lookup, never answered « no recording » each.
+   * Every meeting is looked up as the request's user (the John case above).
+   * Mutant: the identity guard removed, every refusal then reading as
+   * NO_RECORDING.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void severalMeetingsWithNoAuthenticatedUserAreRefused() throws Exception {
+    ConversationState.setCurrent(null);
+
+    assertThrows(IllegalAccessException.class,
+                 () -> tool.getMeetingRecordings(null, null, null, List.of(Map.of("conference_url", URL))));
+    verify(webConferencingService, never()).getCallRecordingsByConference(any(), any(), any(), any());
+  }
+
+  /**
    * EXO-95138: more meetings than {@link MeetingRecordingMcpTool#MAX_MEETINGS},
    * a meeting with no link, or an unreadable date are refused before any
    * lookup, the refusal naming the meeting. Mutants: the cap removed; the
