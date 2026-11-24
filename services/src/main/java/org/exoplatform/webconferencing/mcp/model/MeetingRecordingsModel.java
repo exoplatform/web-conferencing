@@ -22,12 +22,29 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
- * The recordings of a meeting, newest first, or the reason there are none.
+ * The recordings of a meeting, newest first, or the reason there are none;
+ * or, when several meetings were given at once, whether each one has
+ * recordings (EXO-95138).
  *
- * @param recordings the recordings the user can open, newest first
+ * @param recordings the recordings the user can open, newest first; absent
+ *          when several meetings were given
  * @param reason when the list is empty: {@code NO_RECORDING} or
  *          {@code OTHER_PROVIDER}; absent otherwise
+ * @param meetings for each meeting given at once, in the order given,
+ *          whether it has recordings; absent for a single meeting
  */
 @JsonInclude(value = Include.NON_NULL)
-public record MeetingRecordingsModel(List<MeetingRecordingModel> recordings, String reason) {
+public record MeetingRecordingsModel(List<MeetingRecordingModel> recordings, String reason, List<MeetingRecordingCheckModel> meetings) {
+
+  /**
+   * The recordings of a single meeting.
+   *
+   * @param recordings the recordings the user can open, newest first
+   * @param reason when the list is empty: {@code NO_RECORDING} or
+   *          {@code OTHER_PROVIDER}; absent otherwise
+   */
+  public MeetingRecordingsModel(List<MeetingRecordingModel> recordings, String reason) {
+    this(recordings, reason, null);
+  }
+
 }
