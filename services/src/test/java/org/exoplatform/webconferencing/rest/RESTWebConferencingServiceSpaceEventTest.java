@@ -70,6 +70,9 @@ class RESTWebConferencingServiceSpaceEventTest {
 
     assertEquals(200, response.getStatus());
     assertSame(info, response.getEntity());
+    String cacheControl = String.valueOf(response.getMetadata().getFirst("Cache-Control"));
+    assertTrue(cacheControl.contains("no-cache"));
+    assertTrue(cacheControl.contains("no-store"));
   }
 
   @Test
