@@ -176,4 +176,20 @@
     </addColumn>
   </changeSet>
 
+  <!-- Alter WBC_CALLS table: store 4-byte characters (emoji) of a space or room title on MySQL, where NVARCHAR is 3-byte utf8 -->
+  <changeSet author="web-conferencing" id="1.0.0-exo-94671-01" dbms="mysql">
+    <sql>
+      ALTER TABLE WBC_CALLS
+        MODIFY TITLE VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+        MODIFY SETTINGS VARCHAR(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL
+    </sql>
+    <rollback>
+      <sql>
+        ALTER TABLE WBC_CALLS
+          MODIFY TITLE NVARCHAR(255) NULL,
+          MODIFY SETTINGS NVARCHAR(2000) NULL
+      </sql>
+    </rollback>
+  </changeSet>
+
 </databaseChangeLog>
