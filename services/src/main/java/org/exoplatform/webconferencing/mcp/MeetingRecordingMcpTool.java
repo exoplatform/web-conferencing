@@ -193,19 +193,30 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
     if (StringUtils.isBlank(username)) {
       throw new IllegalAccessException(WebConferencingService.RECORDINGS_NO_IDENTITY);
     }
-    List<MeetingRecordingCheckModel> checks = new ArrayList<>(meetings.size());
+    // every entry is checked before any lookup: a refused one names its
+    // meeting, and no meeting before it was read for nothing
+    List<MeetingRequest> requests = new ArrayList<>(meetings.size());
     for (int i = 0; i < meetings.size(); i++) {
       if (!(meetings.get(i) instanceof Map<?, ?> meeting) || !(meeting.get("conference_url") instanceof String url) || StringUtils.isBlank(url)) {
         throw new IllegalArgumentException("meetings[" + i + "]: an object with conference_url, recorded_from and recorded_to");
       }
       String from = meeting.get("recorded_from") instanceof String text ? text : null;
       String to = meeting.get("recorded_to") instanceof String text ? text : null;
-      Date fromDate = parseDateArgument("meetings[" + i + "].recorded_from", from, false);
-      Date toDate = parseDateArgument("meetings[" + i + "].recorded_to", to, true);
+      requests.add(new MeetingRequest(url,
+                                      from,
+                                      to,
+                                      parseDateArgument("meetings[" + i + "].recorded_from", from, false),
+                                      parseDateArgument("meetings[" + i + "].recorded_to", to, true)));
+    }
+    List<MeetingRecordingCheckModel> checks = new ArrayList<>(requests.size());
+    for (MeetingRequest request : requests) {
+      String url = request.url();
+      String from = request.from();
+      String to = request.to();
       int count = 0;
       String reason;
       try {
-        count = webConferencingService.getCallRecordingsByConference(url, username, fromDate, toDate).size();
+        count = webConferencingService.getCallRecordingsByConference(url, username, request.fromDate(), request.toDate()).size();
         reason = count == 0 ? NO_RECORDING : null;
       } catch (ObjectNotFoundException e) {
         reason = WebConferencingService.RECORDINGS_OTHER_PROVIDER.equals(e.getMessage()) ? OTHER_PROVIDER : NO_RECORDING;
@@ -230,6 +241,19 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
   private static String currentUserNameOrNull() {
     ConversationState state = ConversationState.getCurrent();
     return state == null || state.getIdentity() == null ? null : state.getIdentity().getUserId();
+  }
+
+  /**
+   * One checked entry of the {@code meetings} argument, kept until every
+   * entry is checked (EXO-95138).
+   *
+   * @param url the meeting's conference link
+   * @param from the earliest recording date, as the model sent it
+   * @param to the latest recording date, as the model sent it
+   * @param fromDate {@code from} read, null for none
+   * @param toDate {@code to} read, null for none
+   */
+  private record MeetingRequest(String url, String from, String to, Date fromDate, Date toDate) {
   }
 
   /**
