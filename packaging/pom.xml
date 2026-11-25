@@ -32,6 +32,10 @@
   <name>eXo Web Conferencing :: Extension Packaging</name>
   <description>eXo Web Conferencing packaging for installation</description>
   
+  <properties>
+    <!-- Generate and publish the CycloneDX SBOM of the deliverable zip -->
+    <sbom.skip>false</sbom.skip>
+  </properties>
   <dependencies>
     <!-- Web Conferencing -->
     <dependency>
