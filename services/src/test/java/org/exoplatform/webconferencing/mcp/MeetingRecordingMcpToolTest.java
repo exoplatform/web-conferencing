@@ -35,6 +35,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -120,7 +121,7 @@ class MeetingRecordingMcpToolTest {
                                                               Date.from(Instant.parse("2026-10-23T23:59:59.999Z"))))
                                                                                                                   .thenReturn(List.of(recording));
 
-    MeetingRecordingsModel answer = tool.getMeetingRecordings(URL, "2026-10-23T09:00:00Z", "2026-10-23");
+    MeetingRecordingsModel answer = tool.getMeetingRecordings(URL, "2026-10-23T09:00:00Z", "2026-10-23", null);
 
     assertNull(answer.reason());
     assertEquals(1, answer.recordings().size());
@@ -139,7 +140,7 @@ class MeetingRecordingMcpToolTest {
   void anEmptyListSaysNoRecording() throws Exception {
     when(webConferencingService.getCallRecordingsByConference(eq(URL), eq("john"), isNull(), isNull())).thenReturn(List.of());
 
-    MeetingRecordingsModel answer = tool.getMeetingRecordings(URL, null, null);
+    MeetingRecordingsModel answer = tool.getMeetingRecordings(URL, null, null, null);
 
     assertTrue(answer.recordings().isEmpty());
     assertEquals(MeetingRecordingMcpTool.NO_RECORDING, answer.reason());
@@ -163,7 +164,7 @@ class MeetingRecordingMcpToolTest {
                                                               List.of("John Smith", "Speaker 2"));
     when(outlineReader.readOutline("doc1", 7L)).thenReturn(outline);
 
-    MeetingRecordingModel recording = tool.getMeetingRecordings(URL, null, null).recordings().get(0);
+    MeetingRecordingModel recording = tool.getMeetingRecordings(URL, null, null, null).recordings().get(0);
 
     assertEquals(outline.chapters(), recording.chapters());
     assertEquals(List.of("John Smith", "Speaker 2"), recording.speakers());
@@ -184,12 +185,12 @@ class MeetingRecordingMcpToolTest {
     when(webConferencingService.getCallRecordingsByConference(eq(URL), eq("john"), isNull(), isNull()))
                                                                                                     .thenReturn(List.of(recording("doc1")));
 
-    MeetingRecordingModel withoutDocuments = tool.getMeetingRecordings(URL, null, null).recordings().get(0);
+    MeetingRecordingModel withoutDocuments = tool.getMeetingRecordings(URL, null, null, null).recordings().get(0);
 
     when(outlineReaderProvider.getIfAvailable()).thenReturn(outlineReader);
     when(outlineReader.getIdentityId("john")).thenReturn(7L);
     when(outlineReader.readOutline("doc1", 7L)).thenReturn(RecordingOutlineModel.EMPTY);
-    MeetingRecordingModel withoutOutline = tool.getMeetingRecordings(URL, null, null).recordings().get(0);
+    MeetingRecordingModel withoutOutline = tool.getMeetingRecordings(URL, null, null, null).recordings().get(0);
 
     for (MeetingRecordingModel recording : List.of(withoutDocuments, withoutOutline)) {
       String json = new ObjectMapper().writeValueAsString(recording);
@@ -217,7 +218,7 @@ class MeetingRecordingMcpToolTest {
                                                               List.of());
     when(outlineReader.readOutline(anyString(), eq(7L))).thenReturn(outline);
 
-    List<MeetingRecordingModel> recordings = tool.getMeetingRecordings(URL, null, null).recordings();
+    List<MeetingRecordingModel> recordings = tool.getMeetingRecordings(URL, null, null, null).recordings();
 
     assertEquals(MeetingRecordingMcpTool.MAX_OUTLINED + 2, recordings.size());
     verify(outlineReader, times(MeetingRecordingMcpTool.MAX_OUTLINED)).readOutline(anyString(), anyLong());
@@ -239,7 +240,7 @@ class MeetingRecordingMcpToolTest {
     when(outlineReaderProvider.getIfAvailable()).thenReturn(outlineReader);
     when(outlineReader.getIdentityId("john")).thenReturn(0L);
 
-    assertEquals(1, tool.getMeetingRecordings(URL, null, null).recordings().size());
+    assertEquals(1, tool.getMeetingRecordings(URL, null, null, null).recordings().size());
     verify(outlineReader, never()).readOutline(anyString(), anyLong());
   }
 
@@ -256,8 +257,8 @@ class MeetingRecordingMcpToolTest {
     when(webConferencingService.getCallRecordingsByConference(eq(URL), anyString(), any(), any()))
                                                                                                 .thenThrow(new ObjectNotFoundException(WebConferencingService.RECORDINGS_CALL_NOT_FOUND));
 
-    assertEquals(MeetingRecordingMcpTool.OTHER_PROVIDER, tool.getMeetingRecordings("https://teams/x", null, null).reason());
-    assertEquals(MeetingRecordingMcpTool.NO_RECORDING, tool.getMeetingRecordings(URL, null, null).reason());
+    assertEquals(MeetingRecordingMcpTool.OTHER_PROVIDER, tool.getMeetingRecordings("https://teams/x", null, null, null).reason());
+    assertEquals(MeetingRecordingMcpTool.NO_RECORDING, tool.getMeetingRecordings(URL, null, null, null).reason());
   }
 
   /**
@@ -271,7 +272,7 @@ class MeetingRecordingMcpToolTest {
     when(webConferencingService.getCallRecordingsByConference(eq(URL), eq("john"), any(), any()))
                                                                                                .thenThrow(new IllegalAccessException(WebConferencingService.RECORDINGS_NOT_SPACE_MEMBER));
 
-    assertThrows(IllegalAccessException.class, () -> tool.getMeetingRecordings(URL, null, null));
+    assertThrows(IllegalAccessException.class, () -> tool.getMeetingRecordings(URL, null, null, null));
   }
 
   /**
@@ -281,8 +282,8 @@ class MeetingRecordingMcpToolTest {
    */
   @Test
   void invalidArgumentsAreRefused() throws Exception {
-    assertThrows(IllegalArgumentException.class, () -> tool.getMeetingRecordings(" ", null, null));
-    assertThrows(IllegalArgumentException.class, () -> tool.getMeetingRecordings(URL, "yesterday", null));
+    assertThrows(IllegalArgumentException.class, () -> tool.getMeetingRecordings(" ", null, null, null));
+    assertThrows(IllegalArgumentException.class, () -> tool.getMeetingRecordings(URL, "yesterday", null, null));
     verify(webConferencingService, never()).getCallRecordingsByConference(anyString(), anyString(), any(), any());
   }
 
@@ -294,12 +295,12 @@ class MeetingRecordingMcpToolTest {
   @Test
   void anUnreadableDateTellsTheModelHowToCallAgain() {
     String fromMessage = assertThrows(IllegalArgumentException.class,
-                                      () -> tool.getMeetingRecordings(URL, "yesterday", null)).getMessage();
+                                      () -> tool.getMeetingRecordings(URL, "yesterday", null, null)).getMessage();
     assertEquals("Invalid 'recorded_from' value 'yesterday'. Provide an RFC3339 date-time (e.g. 2026-10-23T09:00:00Z) "
         + "or a date yyyy-MM-dd (e.g. 2026-10-23), in UTC. Resolve a relative expression such as 'yesterday' or "
         + "'last week' into such a date yourself before calling the tool again.", fromMessage);
     String toMessage = assertThrows(IllegalArgumentException.class,
-                                    () -> tool.getMeetingRecordings(URL, "2026-10-22", "last week")).getMessage();
+                                    () -> tool.getMeetingRecordings(URL, "2026-10-22", "last week", null)).getMessage();
     assertTrue(toMessage.startsWith("Invalid 'recorded_to' value 'last week'."), toMessage);
   }
 
@@ -314,13 +315,13 @@ class MeetingRecordingMcpToolTest {
   void theAcceptedDateFormatsAreRead() throws Exception {
     when(webConferencingService.getCallRecordingsByConference(any(), any(), any(), any())).thenReturn(List.of());
 
-    tool.getMeetingRecordings(URL, "2026-10-22T09:00:00+02:00", "2026-10-22T10:00:00");
+    tool.getMeetingRecordings(URL, "2026-10-22T09:00:00+02:00", "2026-10-22T10:00:00", null);
     verify(webConferencingService).getCallRecordingsByConference(URL,
                                                                  "john",
                                                                  Date.from(Instant.parse("2026-10-22T07:00:00Z")),
                                                                  Date.from(Instant.parse("2026-10-22T10:00:00Z")));
 
-    tool.getMeetingRecordings(URL, "2026-10-22", "2026-10-22");
+    tool.getMeetingRecordings(URL, "2026-10-22", "2026-10-22", null);
     verify(webConferencingService).getCallRecordingsByConference(URL,
                                                                  "john",
                                                                  Date.from(Instant.parse("2026-10-22T00:00:00Z")),
@@ -368,7 +369,7 @@ class MeetingRecordingMcpToolTest {
 
   /**
    * The tool is a read: no approval, read-only annotations, and its arguments
-   * are the method's, the link mandatory.
+   * are the method's, none required: a link or several meetings.
    */
   @Test
   void theToolIsDeclaredAsARead() {
@@ -385,8 +386,9 @@ class MeetingRecordingMcpToolTest {
     Map<String, Object> schema = (Map<String, Object>) definition.get("input_schema");
     @SuppressWarnings("unchecked")
     Map<String, Object> properties = (Map<String, Object>) schema.get("properties");
-    assertEquals(Set.of("conference_url", "recorded_from", "recorded_to"), properties.keySet());
-    assertEquals(List.of("conference_url"), schema.get("required"));
+    assertEquals(Set.of("conference_url", "recorded_from", "recorded_to", "meetings"), properties.keySet());
+    // a link or several meetings: neither alone is required (EXO-95138)
+    assertNull(schema.get("required"));
   }
 
   /**
@@ -397,9 +399,158 @@ class MeetingRecordingMcpToolTest {
    */
   @Test
   void parameterNamesAreKept() throws Exception {
-    Method method = MeetingRecordingMcpTool.class.getMethod("getMeetingRecordings", String.class, String.class, String.class);
-    assertEquals(List.of("conferenceUrl", "recordedFrom", "recordedTo"),
+    Method method = MeetingRecordingMcpTool.class.getMethod("getMeetingRecordings", String.class, String.class, String.class, List.class);
+    assertEquals(List.of("conferenceUrl", "recordedFrom", "recordedTo", "meetings"),
                  Stream.of(method.getParameters()).map(java.lang.reflect.Parameter::getName).toList());
+  }
+
+  /**
+   * EXO-95138: several meetings checked at once, each looked up as a single
+   * meeting is, with the authenticated user's rights and its own window:
+   * each comes back with its count, or the reason it has none, in the order
+   * given, and no transcript outline is read. A meeting whose recordings the
+   * user may not read, another user's, answers NO_RECORDING, as one with
+   * none, never its existence. Mutants: the refusal propagated; the
+   * windows not passed; the outline read.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void severalMeetingsAreCheckedAtOnceWithTheUsersRights() throws Exception {
+    String other = "https://host/jitsi/meet/g_43-def";
+    String someoneElses = "https://host/jitsi/meet/u_mary-private";
+    when(webConferencingService.getCallRecordingsByConference(URL,
+                                                              "john",
+                                                              Date.from(Instant.parse("2026-11-16T09:00:00Z")),
+                                                              Date.from(Instant.parse("2026-11-16T10:00:00Z"))))
+                                                                                                                 .thenReturn(List.of(recording("d1"),
+                                                                                                                                     recording("d2")));
+    when(webConferencingService.getCallRecordingsByConference(eq(other), eq("john"), any(), any())).thenReturn(List.of());
+    when(webConferencingService.getCallRecordingsByConference(eq("https://teams/x"), eq("john"), any(), any()))
+                                                                                                         .thenThrow(new ObjectNotFoundException(WebConferencingService.RECORDINGS_OTHER_PROVIDER));
+    when(webConferencingService.getCallRecordingsByConference(eq(someoneElses), eq("john"), any(), any()))
+                                                                                                    .thenThrow(new IllegalAccessException(WebConferencingService.RECORDINGS_NOT_SPACE_MEMBER));
+
+    MeetingRecordingsModel checked = tool.getMeetingRecordings(null,
+                                                               null,
+                                                               null,
+                                                               List.of(Map.of("conference_url",
+                                                                              URL,
+                                                                              "recorded_from",
+                                                                              "2026-11-16T09:00:00Z",
+                                                                              "recorded_to",
+                                                                              "2026-11-16T10:00:00Z"),
+                                                                       Map.of("conference_url", other),
+                                                                       Map.of("conference_url", "https://teams/x"),
+                                                                       Map.of("conference_url", someoneElses)));
+
+    assertNull(checked.recordings());
+    assertEquals(List.of(2, 0, 0, 0), checked.meetings().stream().map(meeting -> meeting.recordingCount()).toList());
+    assertEquals(Arrays.asList(null,
+                               MeetingRecordingMcpTool.NO_RECORDING,
+                               MeetingRecordingMcpTool.OTHER_PROVIDER,
+                               MeetingRecordingMcpTool.NO_RECORDING),
+                 checked.meetings().stream().map(meeting -> meeting.reason()).toList());
+    assertEquals("2026-11-16T09:00:00Z", checked.meetings().get(0).recordedFrom());
+    verify(outlineReaderProvider, never()).getIfAvailable();
+  }
+
+  /**
+   * EXO-95138: with no authenticated user, several meetings are refused, as
+   * a single one is by the lookup, never answered « no recording » each.
+   * Every meeting is looked up as the request's user (the John case above).
+   * Mutant: the identity guard removed, every refusal then reading as
+   * NO_RECORDING.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void severalMeetingsWithNoAuthenticatedUserAreRefused() throws Exception {
+    ConversationState.setCurrent(null);
+
+    assertThrows(IllegalAccessException.class,
+                 () -> tool.getMeetingRecordings(null, null, null, List.of(Map.of("conference_url", URL))));
+    verify(webConferencingService, never()).getCallRecordingsByConference(any(), any(), any(), any());
+  }
+
+  /**
+   * EXO-95138: with no authenticated user, a single meeting is refused too,
+   * before any lookup, never a NullPointerException. Mutant: the single
+   * path's guard removed.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aMeetingWithNoAuthenticatedUserIsRefused() throws Exception {
+    ConversationState.setCurrent(null);
+
+    assertThrows(IllegalAccessException.class, () -> tool.getMeetingRecordings(URL, null, null, null));
+    verify(webConferencingService, never()).getCallRecordingsByConference(any(), any(), any(), any());
+  }
+
+  /**
+   * EXO-95138: a user the lookup finds no identity for is refused for
+   * several meetings, as for one, never answered « no recording » each.
+   * Mutant: the no-identity refusal read as another user's meeting.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void severalMeetingsForAUserWithNoIdentityAreRefused() throws Exception {
+    when(webConferencingService.getCallRecordingsByConference(eq(URL), eq("john"), any(), any()))
+                                                                                               .thenThrow(new IllegalAccessException(WebConferencingService.RECORDINGS_NO_IDENTITY));
+
+    assertThrows(IllegalAccessException.class,
+                 () -> tool.getMeetingRecordings(null, null, null, List.of(Map.of("conference_url", URL))));
+  }
+
+  /**
+   * EXO-95138: more meetings than {@link MeetingRecordingMcpTool#MAX_MEETINGS},
+   * a meeting with no link, or an unreadable date are refused before any
+   * lookup, the refusal naming the meeting. Mutants: the cap removed; the
+   * entry's link not checked.
+   */
+  @Test
+  void invalidMeetingsAreRefusedBeforeAnyLookup() throws Exception {
+    List<Object> tooMany = new ArrayList<>();
+    for (int i = 0; i <= MeetingRecordingMcpTool.MAX_MEETINGS; i++) {
+      tooMany.add(Map.of("conference_url", URL));
+    }
+    assertThrows(IllegalArgumentException.class, () -> tool.getMeetingRecordings(null, null, null, tooMany));
+    String noLink = assertThrows(IllegalArgumentException.class,
+                                 () -> tool.getMeetingRecordings(null, null, null, List.of(Map.of("recorded_from", "2026-11-16")))).getMessage();
+    assertTrue(noLink.startsWith("meetings[0]"), noLink);
+    String badDate = assertThrows(IllegalArgumentException.class,
+                                  () -> tool.getMeetingRecordings(null,
+                                                                  null,
+                                                                  null,
+                                                                  List.of(Map.of("conference_url", URL),
+                                                                          Map.of("conference_url", URL, "recorded_from", "yesterday"))))
+                                                                                                                                 .getMessage();
+    assertTrue(badDate.startsWith("Invalid 'meetings[1].recorded_from' value 'yesterday'"), badDate);
+    verify(webConferencingService, never()).getCallRecordingsByConference(anyString(), anyString(), any(), any());
+  }
+
+  /**
+   * EXO-95138: the definition upgrade lists, for this tool, the digests of
+   * the definitions it replaces and never the shipped one's, so that an
+   * instance that saved an earlier text takes the new one at its restart.
+   * Mutant: the upgrade file dropped from the jar's resources.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void theDefinitionUpgradeListsTheReplacedDefinitions() throws Exception {
+    try (var stream = getClass().getClassLoader().getResourceAsStream("ai-tool-definition-upgrades.json")) {
+      assertTrue(stream != null, "ai-tool-definition-upgrades.json is shipped");
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> upgrades = (List<Map<String, Object>>) new ObjectMapper().readValue(stream, Map.class).get("tools");
+      Map<String, Object> upgrade = upgrades.stream().filter(tool -> "get_meeting_recordings".equals(tool.get("name"))).findFirst().orElseThrow();
+      @SuppressWarnings("unchecked")
+      List<String> replaced = (List<String>) upgrade.get("replaced_definitions");
+      assertEquals(3, replaced.size());
+      assertFalse(replaced.contains("7626b7ca6eefdf01af02f3a09edfe50f7b42bb15d455fee1226701d95d16d0d9"), "the shipped definition replaces nothing");
+    }
   }
 
   /**

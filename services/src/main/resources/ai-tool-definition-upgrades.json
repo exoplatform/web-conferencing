@@ -1,0 +1,12 @@
+{
+  "tools": [
+    {
+      "name": "get_meeting_recordings",
+      "replaced_definitions": [
+        "64ef408e1d7ba1d8cc535046ff679a15465404c436f733ea1fcc7cf00ec00fa4",
+        "aecf4c70c81935ff1597318ceea26439a00bd2afba6e19d847a416544d89e573",
+        "f96287927c6628ffb76691d785c7f8a1790c558d6cf37612b8764b5a0af0d2fd"
+      ]
+    }
+  ]
+}

@@ -19,6 +19,7 @@ package org.exoplatform.webconferencing.mcp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
@@ -27,7 +28,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import org.exoplatform.commons.exception.ObjectNotFoundException;
+import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.webconferencing.WebConferencingService;
+import org.exoplatform.webconferencing.mcp.model.MeetingRecordingCheckModel;
 import org.exoplatform.webconferencing.mcp.model.MeetingRecordingModel;
 import org.exoplatform.webconferencing.mcp.model.MeetingRecordingsModel;
 import org.exoplatform.webconferencing.mcp.model.RecordingOutlineModel;
@@ -72,6 +75,12 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
    */
   public static final int              MAX_OUTLINED   = 10;
 
+  /**
+   * The most meetings checked in one call (EXO-95138): the last days' events,
+   * the assistant asking again for older ones.
+   */
+  public static final int              MAX_MEETINGS   = 20;
+
   private final WebConferencingService webConferencingService;
 
   private final ObjectProvider<RecordingOutlineReader> outlineReader;
@@ -92,7 +101,9 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
 
   /**
    * Lists the recordings of the meeting behind a conference link that the
-   * current user can open, newest first ({@code get_meeting_recordings}). The
+   * current user can open, newest first ({@code get_meeting_recordings}); or,
+   * given several meetings at once, tells for each one whether it has
+   * recordings, see {@link #checkMeetings}. The
    * {@link #MAX_OUTLINED} newest come with the chapters of their transcript and
    * the names of its speakers, read with the same user's rights, so that the
    * assistant picks a recording and a chapter before reading any transcript.
@@ -104,23 +115,37 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
    * @param recordedTo the end of the range, RFC3339 or {@code yyyy-MM-dd},
    *          optional: the server adds its grace, since a recording is saved
    *          after its meeting ends
-   * @return the recordings, or an empty list with its reason
+   * @param meetings optional, instead of the three arguments above: the
+   *          meetings to check, each a map of {@code conference_url},
+   *          {@code recorded_from} and {@code recorded_to}, at most
+   *          {@link #MAX_MEETINGS}
+   * @return the recordings, or an empty list with its reason; for several
+   *         meetings, whether each one has recordings
    * @throws IllegalArgumentException when the link is missing, or a date is not
    *           in an accepted format: its message, {@link #INVALID_DATE}, tells
    *           the model how to call again
    * @throws IllegalAccessException when the user may not read the meeting's
-   *           recordings: not a member of its space, or not a participant
+   *           recordings: not a member of its space, or not a participant;
+   *           or when the request has no authenticated user
    */
   public MeetingRecordingsModel getMeetingRecordings(String conferenceUrl,
                                                      String recordedFrom,
-                                                     String recordedTo) throws IllegalAccessException {
+                                                     String recordedTo,
+                                                     List<Object> meetings) throws IllegalAccessException {
+    if (meetings != null && !meetings.isEmpty()) {
+      return checkMeetings(meetings);
+    }
     if (StringUtils.isBlank(conferenceUrl)) {
-      throw new IllegalArgumentException("conference_url is mandatory: pass the url get_event_conference returns");
+      throw new IllegalArgumentException("conference_url is mandatory, or meetings: pass the url get_event_conference or "
+          + "get_agenda_events returns");
     }
     Date from = parseDateArgument("recorded_from", recordedFrom, false);
     Date to = parseDateArgument("recorded_to", recordedTo, true);
     try {
-      String username = getCurrentUserName();
+      String username = currentUserNameOrNull();
+      if (StringUtils.isBlank(username)) {
+        throw new IllegalAccessException(WebConferencingService.RECORDINGS_NO_IDENTITY);
+      }
       List<RecordingInfo> found = webConferencingService.getCallRecordingsByConference(conferenceUrl, username, from, to);
       RecordingOutlineReader reader = found.isEmpty() ? null : outlineReader.getIfAvailable();
       long identityId = reader == null ? 0 : reader.getIdentityId(username);
@@ -136,6 +161,99 @@ public class MeetingRecordingMcpTool implements McpToolPlugin {
       String reason = WebConferencingService.RECORDINGS_OTHER_PROVIDER.equals(e.getMessage()) ? OTHER_PROVIDER : NO_RECORDING;
       return new MeetingRecordingsModel(List.of(), reason);
     }
+  }
+
+  /**
+   * Tells, for each meeting given, whether the current user can open
+   * recordings of it within its window (EXO-95138). Each one is looked up as
+   * a single meeting is, with the same rights: a meeting whose recordings the
+   * user may not read answers {@link #NO_RECORDING}, as one with none, so
+   * that the answer says nothing of another user's meetings. No transcript is
+   * read: the assistant reads the recording of the meeting it picked with a
+   * single-meeting call.
+   *
+   * @param meetings the meetings, each a map of {@code conference_url},
+   *          {@code recorded_from} and {@code recorded_to}
+   * @return whether each one has recordings, in the order given
+   * @throws IllegalArgumentException when more than {@link #MAX_MEETINGS}
+   *           are given, one is no map or has no link, or a date is not in
+   *           an accepted format
+   * @throws IllegalAccessException when the request has no authenticated
+   *           user, or the lookup finds no identity for it: each meeting
+   *           would otherwise read as one with no recording, and a single
+   *           meeting is refused the same way
+   */
+  private MeetingRecordingsModel checkMeetings(List<Object> meetings) throws IllegalAccessException {
+    if (meetings.size() > MAX_MEETINGS) {
+      throw new IllegalArgumentException("meetings: at most " + MAX_MEETINGS + " in one call; check the latest first");
+    }
+    // the same viewer the single-meeting lookup passes, read once and
+    // null-safely: every meeting is looked up, and read in JCR, as that user
+    String username = currentUserNameOrNull();
+    if (StringUtils.isBlank(username)) {
+      throw new IllegalAccessException(WebConferencingService.RECORDINGS_NO_IDENTITY);
+    }
+    // every entry is checked before any lookup: a refused one names its
+    // meeting, and no meeting before it was read for nothing
+    List<MeetingRequest> requests = new ArrayList<>(meetings.size());
+    for (int i = 0; i < meetings.size(); i++) {
+      if (!(meetings.get(i) instanceof Map<?, ?> meeting) || !(meeting.get("conference_url") instanceof String url) || StringUtils.isBlank(url)) {
+        throw new IllegalArgumentException("meetings[" + i + "]: an object with conference_url, recorded_from and recorded_to");
+      }
+      String from = meeting.get("recorded_from") instanceof String text ? text : null;
+      String to = meeting.get("recorded_to") instanceof String text ? text : null;
+      requests.add(new MeetingRequest(url,
+                                      from,
+                                      to,
+                                      parseDateArgument("meetings[" + i + "].recorded_from", from, false),
+                                      parseDateArgument("meetings[" + i + "].recorded_to", to, true)));
+    }
+    List<MeetingRecordingCheckModel> checks = new ArrayList<>(requests.size());
+    for (MeetingRequest request : requests) {
+      String url = request.url();
+      String from = request.from();
+      String to = request.to();
+      int count = 0;
+      String reason;
+      try {
+        count = webConferencingService.getCallRecordingsByConference(url, username, request.fromDate(), request.toDate()).size();
+        reason = count == 0 ? NO_RECORDING : null;
+      } catch (ObjectNotFoundException e) {
+        reason = WebConferencingService.RECORDINGS_OTHER_PROVIDER.equals(e.getMessage()) ? OTHER_PROVIDER : NO_RECORDING;
+      } catch (IllegalAccessException e) {
+        if (WebConferencingService.RECORDINGS_NO_IDENTITY.equals(e.getMessage())) {
+          // the user has no identity: refused, as a single meeting is
+          throw e;
+        }
+        // another user's meeting reads as one with no recording: nothing is said of it
+        reason = NO_RECORDING;
+      }
+      checks.add(new MeetingRecordingCheckModel(url, from, to, count, reason));
+    }
+    return new MeetingRecordingsModel(null, null, checks);
+  }
+
+  /**
+   * @return the user name of the request's conversation state, null when the
+   *         request has none: {@link #getCurrentUserName()} reads it with no
+   *         check
+   */
+  private static String currentUserNameOrNull() {
+    ConversationState state = ConversationState.getCurrent();
+    return state == null || state.getIdentity() == null ? null : state.getIdentity().getUserId();
+  }
+
+  /**
+   * One checked entry of the {@code meetings} argument, kept until every
+   * entry is checked (EXO-95138).
+   *
+   * @param url the meeting's conference link
+   * @param from the earliest recording date, as the model sent it
+   * @param to the latest recording date, as the model sent it
+   * @param fromDate {@code from} read, null for none
+   * @param toDate {@code to} read, null for none
+   */
+  private record MeetingRequest(String url, String from, String to, Date fromDate, Date toDate) {
   }
 
   /**
