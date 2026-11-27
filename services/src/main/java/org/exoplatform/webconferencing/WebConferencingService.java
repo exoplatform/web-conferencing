@@ -758,22 +758,56 @@ public class WebConferencingService implements Startable {
   }
   
   /**
-   * Gets the space event info, it will return actual event participants at the
-   * moment of invocation. Even participants will be resolved from the owner and
-   * given spaces' members plus given participants IDs.
+   * Gets the space event info for a requester, it will return actual event
+   * participants at the moment of invocation. Even participants will be
+   * resolved from the owner and given spaces' members plus given participants
+   * IDs. The details are given only to the host: a member of the host space,
+   * or the host user of a personal event; a given space the requester cannot
+   * view adds no member.
    *
+   * @param requester the name of the user asking
    * @param spaceIdentityId the space identity id
    * @param partIds the participants IDs (attendees) added to the event directly
    * @param spacesPrettyName the Social spaces' pretty names for add its members as
    *          participants (attendees) to the event
-   * @return the space event info
+   * @return the space event info, or {@code null} if the host is not found or
+   *         the requester is neither a member of the host
+   *         space nor the host user
    * @throws IdentityStateException the identity state exception
    * @throws StorageException the storage exception
    */
-  public SpaceEventInfo getSpaceEventInfo(String spaceIdentityId, String[] partIds, String[] spacesPrettyName)
-                                                                                                     throws IdentityStateException,
-                                                                                                     StorageException {
-    return spaceEventInfo(spaceIdentityId, findLastSpaceEventCallId(spaceIdentityId), partIds, spacesPrettyName);
+  public SpaceEventInfo getSpaceEventInfo(String requester,
+                                          String spaceIdentityId,
+                                          String[] partIds,
+                                          String[] spacesPrettyName) throws IdentityStateException,
+                                                                     StorageException {
+    Identity host = socialIdentityManager.getIdentity(spaceIdentityId);
+    if (host == null || requester == null || !isEventHost(host, requester)) {
+      return null;
+    }
+    List<String> viewableSpaces = new ArrayList<>();
+    for (String prettyName : spacesPrettyName) {
+      Space space = spaceService.getSpaceByPrettyName(prettyName);
+      if (space != null && spaceService.canViewSpace(space, requester)) {
+        viewableSpaces.add(prettyName);
+      }
+    }
+    return spaceEventInfo(spaceIdentityId,
+                          findLastSpaceEventCallId(spaceIdentityId),
+                          partIds,
+                          viewableSpaces.toArray(new String[0]));
+  }
+
+  /**
+   * Checks if the user hosts the event: a member of the host space, or the
+   * host user of a personal event.
+   */
+  private boolean isEventHost(Identity host, String userName) {
+    if (host.isSpace()) {
+      Space space = spaceService.getSpaceByPrettyName(host.getRemoteId());
+      return space != null && spaceService.isMember(space, userName);
+    }
+    return userName.equals(host.getRemoteId());
   }
 
   /**
