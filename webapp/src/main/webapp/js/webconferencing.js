@@ -649,7 +649,7 @@
   var getSpaceEventInfoReq = function(spaceId, participants, spaces) {
     var q = "";
     if (participants) {
-      q += "participants=" + encodeURIComponent(participants);
+      q += "?participants=" + encodeURIComponent(participants);
     }
     if (spaces) {
       if (q.length == 0) {
@@ -657,7 +657,7 @@
       } else {
         q += "&";
       }
-      q += "?spaces=" + encodeURIComponent(spaces);
+      q += "spaces=" + encodeURIComponent(spaces);
     }
     var request = $.ajax({
       async : true,
