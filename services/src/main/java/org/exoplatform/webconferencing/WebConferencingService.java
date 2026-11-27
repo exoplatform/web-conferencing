@@ -2973,7 +2973,7 @@ public class WebConferencingService implements Startable {
    * @throws RepositoryException the repository exception
    * @throws UploadFileException the upload file exception
    */
-  private void saveFile(Node parent, UploadResource resource, String user, List<String> shareToUsers) throws RepositoryException,
+  void saveFile(Node parent, UploadResource resource, String user, List<String> shareToUsers) throws RepositoryException,
                                                                                                       UploadFileException {
     if (parent == null) {
       throw new UploadFileException("Cannot save the file because parent node empty for user: " + user);
@@ -2984,23 +2984,75 @@ public class WebConferencingService implements Startable {
     if (user == null) {
       throw new UploadFileException("Cannot save the file because user is undefined");
     }
-    ConversationState state = null;
+    // The thread's conversation state is the caller's: it is restored in the end
+    ConversationState previousState = ConversationState.getCurrent();
+    // Opened for the named user only, never taken from the thread's slot: the
+    // provider logs in as the conversation state current when it opens the
+    // session, so the state is set first
+    SessionProvider userSessionProvider = null;
     try {
-      state = createState(user);
+      ConversationState state;
+      try {
+        state = createState(user);
+      } catch (Exception e) {
+        LOG.error("Cannot set conversation state for user: " + user, e);
+        throw new UploadFileException("Cannot set conversation state for user: " + user, e);
+      }
+      if (state == null) {
+        throw new UploadFileException("Identity not found for user: " + user);
+      }
       ConversationState.setCurrent(state);
-    } catch (Exception e) {
-      LOG.error("Cannot set conversation state for user: " + user, e);
-      throw new UploadFileException("Cannot set conversation state for user: " + user);
+      SessionProvider sessionProvider;
+      if (isRecordedWithSystemRights(parent, user)) {
+        sessionProvider = sessionProviders.getSystemSessionProvider(null);
+      } else {
+        userSessionProvider = new SessionProvider(state);
+        sessionProvider = userSessionProvider;
+      }
+      writeRecording(parent, resource, user, shareToUsers, sessionProvider);
+    } finally {
+      if (userSessionProvider != null) {
+        userSessionProvider.close();
+      }
+      ConversationState.setCurrent(previousState);
     }
-    ManageableRepository repository = repositoryService.getCurrentRepository();
-    SessionProvider sessionProvider = sessionProviders.getSessionProvider(state);
-    sessionProviders.setSessionProvider(null, sessionProvider);
+  }
+
+  /**
+   * Tells if a recording in the given folder is written with the system
+   * session: the Documents folder of a space which the user is not a member of.
+   *
+   * @param parent the folder
+   * @param user the user
+   * @return true, if the system session is used
+   * @throws RepositoryException the repository exception
+   */
+  private boolean isRecordedWithSystemRights(Node parent, String user) throws RepositoryException {
     if (parent.getPath().contains("Groups/spaces")) {
       Space space = spaceService.getSpaceByGroupId(parent.getPath().split("/Groups")[1].split("/Documents")[0]);
-      if (space == null || !spaceService.isMember(space, user)) { // If user is not member of the space we use system session
-        sessionProvider = sessionProviders.getSystemSessionProvider(null);
-      }
+      // If user is not member of the space we use system session
+      return space == null || !spaceService.isMember(space, user);
     }
+    return false;
+  }
+
+  /**
+   * Writes the recording with the given session provider.
+   *
+   * @param parent the parent
+   * @param resource the recording
+   * @param user the user
+   * @param shareToUsers the users to share file with
+   * @param sessionProvider the session provider to open the session with
+   * @throws RepositoryException the repository exception
+   * @throws UploadFileException the upload file exception
+   */
+  private void writeRecording(Node parent,
+                              UploadResource resource,
+                              String user,
+                              List<String> shareToUsers,
+                              SessionProvider sessionProvider) throws RepositoryException, UploadFileException {
+    ManageableRepository repository = repositoryService.getCurrentRepository();
     Session session = sessionProvider.getSession(repository.getConfiguration().getDefaultWorkspaceName(), repository);
     Node folder = (Node) session.getItem(parent.getPath());
     Node recordingsFolder = getRecordingsFolder(folder);
@@ -3043,9 +3095,7 @@ public class WebConferencingService implements Startable {
           }
         }
       }
-      cleanConversationState();
     } else {
-      cleanConversationState();
       throw new UploadFileException("Cannot get the node for recorings folder to upload the record (" + resource.getFileName()
           + ") for user:" + user);
     }
@@ -3092,17 +3142,6 @@ public class WebConferencingService implements Startable {
     recordingsFolder.setProperty("exo:title", "Recordings");
     recordingsFolder.addMixin("exo:recordingsFolder");
     return recordingsFolder;
-  }
-
-  /**
-   * Clean conversation state.
-   */
-  private void cleanConversationState() {
-    try {
-      ConversationState.setCurrent(null);
-    } catch (Exception e) {
-      LOG.warn("An error occured while cleaning the ConversationState", e);
-    }
   }
 
   /**
