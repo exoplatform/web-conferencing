@@ -18,11 +18,13 @@
  */
 package org.exoplatform.webconferencing.dao;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceException;
 import jakarta.persistence.Query;
@@ -44,6 +46,23 @@ import org.exoplatform.webconferencing.domain.ParticipantId;
  */
 public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, ParticipantId> {
 
+  // Names of the JPQL parameters shared by the conditional updates and the batched marks
+  private static final String CALL_ID      = "callId";
+
+  private static final String PART_ID      = "partId";
+
+  private static final String MISSED       = "missed";
+
+  private static final String STARTED      = "started";
+
+  private static final String INVITED      = "invited";
+
+  private static final String DECLINED     = "declined";
+
+  private static final String IDS          = "ids";
+
+  private static final String LATEST_START = "latestStart";
+
   /**
    * Instantiates a new participant DAO.
    */
@@ -64,7 +83,7 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
                                                               IllegalArgumentException {
     TypedQuery<ParticipantEntity> query =
                                         getEntityManager().createNamedQuery("WebConfCall.findCallParts", ParticipantEntity.class)
-                                                          .setParameter("callId", callId);
+                                                          .setParameter(CALL_ID, callId);
     try {
       return query.getResultList();
     } catch (NoResultException e) {
@@ -83,7 +102,7 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
    */
   @Deprecated // TODO not used
   public int deleteCallParts(String callId) throws PersistenceException, IllegalStateException, IllegalArgumentException {
-    return getEntityManager().createNamedQuery("WebConfCall.deleteCallParts").setParameter("callId", callId).executeUpdate();
+    return getEntityManager().createNamedQuery("WebConfCall.deleteCallParts").setParameter(CALL_ID, callId).executeUpdate();
   }
 
   /**
@@ -96,7 +115,7 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
   public int updateParticipantStateByCallId(String state, String callId) {
     Query query = getEntityManager().createQuery("UPDATE WebConfParticipant p SET p.state = :state  WHERE p.callId = :callId")
             .setParameter("state", state)
-            .setParameter("callId", callId);
+            .setParameter(CALL_ID, callId);
 
     return query.executeUpdate();
   }
@@ -122,12 +141,12 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
         + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :invited"
         + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.state = :started"
         + " AND c.lastDate <= :latestStart)")
-                        .setParameter("missed", UserState.MISSED)
-                        .setParameter("callId", callId)
-                        .setParameter("partId", partId)
-                        .setParameter("invited", UserState.INVITED)
-                        .setParameter("started", CallState.STARTED)
-                        .setParameter("latestStart", latestStart)
+                        .setParameter(MISSED, UserState.MISSED)
+                        .setParameter(CALL_ID, callId)
+                        .setParameter(PART_ID, partId)
+                        .setParameter(INVITED, UserState.INVITED)
+                        .setParameter(STARTED, CallState.STARTED)
+                        .setParameter(LATEST_START, latestStart)
                         .executeUpdate();
   }
   /**
@@ -149,12 +168,12 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
         + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :invited"
         + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.state = :stopped"
         + " AND c.lastDate <= :latestStart)")
-                        .setParameter("missed", UserState.MISSED)
-                        .setParameter("callId", callId)
-                        .setParameter("partId", partId)
-                        .setParameter("invited", UserState.INVITED)
+                        .setParameter(MISSED, UserState.MISSED)
+                        .setParameter(CALL_ID, callId)
+                        .setParameter(PART_ID, partId)
+                        .setParameter(INVITED, UserState.INVITED)
                         .setParameter("stopped", CallState.STOPPED)
-                        .setParameter("latestStart", latestStart)
+                        .setParameter(LATEST_START, latestStart)
                         .executeUpdate();
   }
 
@@ -172,9 +191,9 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
   static List<String> findDeclinedParticipantIds(EntityManager entityManager, String callId) {
     return entityManager.createQuery("SELECT p.id FROM WebConfParticipant p"
         + " WHERE p.callId = :callId AND p.type = :user AND p.state = :declined", String.class)
-                        .setParameter("callId", callId)
+                        .setParameter(CALL_ID, callId)
                         .setParameter("user", UserInfo.TYPE_NAME)
-                        .setParameter("declined", UserState.DECLINED)
+                        .setParameter(DECLINED, UserState.DECLINED)
                         .getResultList();
   }
 
@@ -196,41 +215,107 @@ public class ParticipantDAO extends GenericDAOJPAImpl<ParticipantEntity, Partici
     return entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :declined, p.clientId = NULL"
         + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :invited"
         + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.state = :started)")
-                        .setParameter("declined", UserState.DECLINED)
-                        .setParameter("callId", callId)
-                        .setParameter("partId", partId)
-                        .setParameter("invited", UserState.INVITED)
-                        .setParameter("started", CallState.STARTED)
+                        .setParameter(DECLINED, UserState.DECLINED)
+                        .setParameter(CALL_ID, callId)
+                        .setParameter(PART_ID, partId)
+                        .setParameter(INVITED, UserState.INVITED)
+                        .setParameter(STARTED, CallState.STARTED)
                         .executeUpdate();
   }
 
   /**
-   * Marks a participant who declined a call as notified of the decline, only while still declined and the call
-   * from a start not later than the given date, whatever its state: a call started again has its participants
-   * alerted again.
+   * Marks as missed the given participants of a call, only those still invited while the call is still started,
+   * from a start not later than the given date: among concurrent writers (several cluster nodes, a join or a
+   * decline committed meanwhile, the call stopped or started again), a participant is marked at most once. The
+   * candidate rows are locked (<code>SELECT ... FOR UPDATE</code>, by id) with the same condition, then updated
+   * by one statement, in one transaction: a concurrent writer waits for the commit and then finds the
+   * participants no longer invited. The cost is at most two queries, whatever the number of participants.
    *
    * @param callId the call id
-   * @param partId the participant id
-   * @param latestStart the latest start date of the call the participant may be marked for
-   * @return the number of updated participants, 1 or 0
+   * @param partIds the participant ids
+   * @param latestStart the latest start date of the call the participants may have missed
+   * @return the ids of the participants marked by this call, in id order
    */
+  // @ExoTransactional as the sibling conditional updates: same EntityManager and transaction model; its replacement is EXO-93034
   @ExoTransactional
-  public int markParticipantDeclinedNotified(String callId, String partId, Date latestStart) {
-    return markParticipantDeclinedNotified(getEntityManager(), callId, partId, latestStart);
+  public List<String> markParticipantsMissed(String callId, Collection<String> partIds, Date latestStart) {
+    return markParticipantsMissed(getEntityManager(), callId, partIds, latestStart);
   }
 
-  static int markParticipantDeclinedNotified(EntityManager entityManager, String callId, String partId, Date latestStart) {
-    return entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :notified"
-        + " WHERE p.callId = :callId AND p.id = :partId AND p.state = :declined"
-        + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.lastDate <= :latestStart)")
-                        .setParameter("notified", UserState.DECLINED_NOTIFIED)
-                        .setParameter("callId", callId)
-                        .setParameter("partId", partId)
-                        .setParameter("declined", UserState.DECLINED)
-                        .setParameter("latestStart", latestStart)
-                        .executeUpdate();
+  static List<String> markParticipantsMissed(EntityManager entityManager,
+                                             String callId,
+                                             Collection<String> partIds,
+                                             Date latestStart) {
+    if (partIds.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<String> lockedIds = entityManager.createQuery("SELECT p.id FROM WebConfParticipant p"
+        + " WHERE p.callId = :callId AND p.id IN :ids AND p.state = :invited"
+        + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.state = :started"
+        + " AND c.lastDate <= :latestStart) ORDER BY p.id", String.class)
+                                          .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                                          .setParameter(CALL_ID, callId)
+                                          .setParameter(IDS, partIds)
+                                          .setParameter(INVITED, UserState.INVITED)
+                                          .setParameter(STARTED, CallState.STARTED)
+                                          .setParameter(LATEST_START, latestStart)
+                                          .getResultList();
+    if (!lockedIds.isEmpty()) {
+      entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :missed"
+          + " WHERE p.callId = :callId AND p.id IN :ids")
+                   .setParameter(MISSED, UserState.MISSED)
+                   .setParameter(CALL_ID, callId)
+                   .setParameter(IDS, lockedIds)
+                   .executeUpdate();
+    }
+    return lockedIds;
   }
 
+  /**
+   * Marks as notified of their decline the given participants of a call, only those still declined while the
+   * call is from a start not later than the given date, whatever its state: a call started again has its
+   * participants alerted again. The candidate rows are locked and then updated in one transaction, as
+   * {@link #markParticipantsMissed(String, Collection, Date)} does, so that a decline is reported once whatever
+   * the concurrent writers.
+   *
+   * @param callId the call id
+   * @param partIds the participant ids
+   * @param latestStart the latest start date of the call the participants may be marked for
+   * @return the ids of the participants marked by this call, in id order
+   */
+  // @ExoTransactional as the sibling conditional updates: same EntityManager and transaction model; its replacement is EXO-93034
+  @ExoTransactional
+  public List<String> markParticipantsDeclinedNotified(String callId, Collection<String> partIds, Date latestStart) {
+    return markParticipantsDeclinedNotified(getEntityManager(), callId, partIds, latestStart);
+  }
+
+  static List<String> markParticipantsDeclinedNotified(EntityManager entityManager,
+                                                       String callId,
+                                                       Collection<String> partIds,
+                                                       Date latestStart) {
+    if (partIds.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<String> lockedIds = entityManager.createQuery("SELECT p.id FROM WebConfParticipant p"
+        + " WHERE p.callId = :callId AND p.id IN :ids AND p.state = :declined"
+        + " AND EXISTS (SELECT c.id FROM WebConfCall c WHERE c.id = :callId AND c.lastDate <= :latestStart)"
+        + " ORDER BY p.id", String.class)
+                                          .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                                          .setParameter(CALL_ID, callId)
+                                          .setParameter(IDS, partIds)
+                                          .setParameter(DECLINED, UserState.DECLINED)
+                                          .setParameter(LATEST_START, latestStart)
+                                          .getResultList();
+    if (!lockedIds.isEmpty()) {
+      entityManager.createQuery("UPDATE WebConfParticipant p SET p.state = :notified"
+          + " WHERE p.callId = :callId AND p.id IN :ids")
+                   .setParameter("notified", UserState.DECLINED_NOTIFIED)
+                   .setParameter(CALL_ID, callId)
+                   .setParameter(IDS, lockedIds)
+                   .executeUpdate();
+    }
+    return lockedIds;
+  }
 
   /**
    * Clear the storage.

@@ -302,6 +302,12 @@ public class WebConferencingService implements Startable {
    */
   public static final long      LAST_DATE_PRECISION          = 1000;
 
+  /**
+   * How many participants of a removed call are marked by one locking select and one update: the size of an
+   * <code>IN</code> list the databases accept, and of the set of rows one transaction locks.
+   */
+  protected static final int    PARTICIPANTS_BATCH_SIZE      = 500;
+
   protected static final String VIDEO_CONFERENCE_IS_ENABLED  = "videoConferenceEnabled";
 
   /**
@@ -1532,7 +1538,8 @@ public class WebConferencingService implements Startable {
                                   .toList();
     if (remove && call.getCallerId() != null) {
       // A removed call, 1:1 or group (an instant visio room deleted before anyone joined), loses its
-      // participants: they are marked before, while the call is still started, one update each in this request
+      // participants: they are marked before, while the call is still started, in batches of
+      // PARTICIPANTS_BATCH_SIZE, at most two queries each
       invitedIds = markRemovedCallMissed(call, invitedIds);
     }
     // The incoming call alert closes with the call: a removed call loses its participants, its declines are
@@ -2235,11 +2242,11 @@ public class WebConferencingService implements Startable {
 
   /**
    * Marks as missed, before the call is removed with its participants, the participants still invited to it:
-   * among the missed call check of the same start, a join or a decline, a participant is marked once. It runs
-   * one conditional update per invited participant, each telling whether this call marked that participant: a
-   * single update of all of them would not tell which ones another writer marked meanwhile. Its cost is bounded
-   * by the participants the call holds when it is removed, whatever added them (its start, a participants
-   * update, a guest): for a space call, up to the members of the space.
+   * among the missed call check of the same start, a join or a decline, a participant is marked once. The
+   * participants are marked in batches of {@link #PARTICIPANTS_BATCH_SIZE}, each batch locking its still invited
+   * participants and marking them in one transaction, which returns the ones this call marked: a batch costs at most two
+   * queries whatever the participants a call holds when it is removed (its start, a participants update, a
+   * guest: for a space call, up to the members of the space).
    *
    * @param call the call to remove
    * @param invitedIds the participants invited to the call
@@ -2249,13 +2256,12 @@ public class WebConferencingService implements Startable {
   protected List<String> markRemovedCallMissed(CallInfo call, List<String> invitedIds) {
     Date latestStart = new Date(call.getLastDate().getTime() + LAST_DATE_PRECISION);
     List<String> markedIds = new ArrayList<>();
-    for (String partId : invitedIds) {
+    for (int from = 0; from < invitedIds.size(); from += PARTICIPANTS_BATCH_SIZE) {
+      List<String> batch = invitedIds.subList(from, Math.min(from + PARTICIPANTS_BATCH_SIZE, invitedIds.size()));
       try {
-        if (markParticipantMissed(call.getId(), partId, latestStart)) {
-          markedIds.add(partId);
-        }
-      } catch (StorageException e) {
-        LOG.warn("Cannot mark participant {} of removed call {} as missed, the participant is not notified", partId, call.getId(), e);
+        markedIds.addAll(participantsStorage.markParticipantsMissed(call.getId(), batch, latestStart));
+      } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
+        LOG.warn("Cannot mark {} participants of removed call {} as missed, they are not notified", batch.size(), call.getId(), e);
       }
     }
     return markedIds;
@@ -2440,9 +2446,10 @@ public class WebConferencingService implements Startable {
 
   /**
    * Marks as notified of their decline the given participants of a call, each only while still declined and the
-   * call still from a start not later than the given date. It runs one conditional update per participant, each
-   * telling whether this call marked that participant, so that a decline is reported to the caller once whatever
-   * the concurrent writers. Its cost is bounded by the participants who declined the call.
+   * call still from a start not later than the given date. The participants are marked in batches of
+   * {@link #PARTICIPANTS_BATCH_SIZE}, each batch locking its still declined participants and marking them in one
+   * transaction, which returns the ones this call marked, so that a decline is reported to the caller once
+   * whatever the concurrent writers. A batch costs at most two queries.
    *
    * @param call the call
    * @param declinerIds the participants who declined the call
@@ -2451,13 +2458,12 @@ public class WebConferencingService implements Startable {
    */
   protected List<String> markDeclinesClosed(CallInfo call, List<String> declinerIds, Date latestStart) {
     List<String> markedIds = new ArrayList<>();
-    for (String partId : declinerIds) {
+    for (int from = 0; from < declinerIds.size(); from += PARTICIPANTS_BATCH_SIZE) {
+      List<String> batch = declinerIds.subList(from, Math.min(from + PARTICIPANTS_BATCH_SIZE, declinerIds.size()));
       try {
-        if (participantsStorage.markParticipantDeclinedNotified(call.getId(), partId, latestStart) > 0) {
-          markedIds.add(partId);
-        }
+        markedIds.addAll(participantsStorage.markParticipantsDeclinedNotified(call.getId(), batch, latestStart));
       } catch (IllegalArgumentException | IllegalStateException | PersistenceException e) {
-        LOG.warn("Cannot mark the decline of participant {} of call {} as notified, it is not reported", partId, call.getId(), e);
+        LOG.warn("Cannot mark the decline of {} participants of call {} as notified, they are not reported", batch.size(), call.getId(), e);
       }
     }
     return markedIds;
