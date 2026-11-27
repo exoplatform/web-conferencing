@@ -238,6 +238,9 @@ class WebConferencingMailPaletteTest {
     binding.put("FILE_URL", "https://exo.test/file");
     binding.put("FILE_NAME", "recording.mp4");
     binding.put("AVATAR_URL", "/avatar");
+    // the recording mail's meeting row, rendered as its provider binds it
+    binding.put("CALL_TITLE", "Demo ACME");
+    binding.put("CALL_START_DATE", "");
     return new GroovyTemplate(name, name, read(name)).render(binding);
   }
 

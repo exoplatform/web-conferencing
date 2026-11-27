@@ -59,8 +59,8 @@
                                                     </tr>
                                                     <% if (CALL_TITLE != null && !CALL_TITLE.isEmpty()) { %>
                                                     <tr>
-                                                        <td align="left" valign="top" bgcolor="#ffffff" style="vertical-align: top; background-color: #ffffff; padding: 0 15px 10px 0;">
-                                                            <p class="meeting" style="margin: 0; color: #333333; font-size: 13px; line-height: 18px;">
+                                                        <td align="left" valign="top" bgcolor="${palette.surface}" style="vertical-align: top; background-color: ${palette.surface}; padding: 0 15px 10px 0;" class="mail-surface">
+                                                            <p class="meeting mail-text" style="margin: 0; color: ${palette.text}; font-size: 13px; line-height: 18px;">
                                                                 <strong>$CALL_TITLE</strong>
                                                                 <% if (CALL_START_DATE != null && !CALL_START_DATE.isEmpty()) { %>
                                                                 <br/><%=_ctx.appRes("Notification.label.callStartDate")%> $CALL_START_DATE
