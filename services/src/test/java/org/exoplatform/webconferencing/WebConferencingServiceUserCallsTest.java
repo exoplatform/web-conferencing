@@ -112,6 +112,20 @@ class WebConferencingServiceUserCallsTest {
   }
 
   @Test
+  void testAFailedReadOfAUserHostedCallStillFailsTheRead() {
+    // a personal event's host is a user: no space of that name exists, and the call is not skipped
+    userIdentity("3", "john");
+    when(callStorage.findUserGroupCalls(USER)).thenReturn(List.of(spaceEventCall("call-personal", "3")));
+    when(originsStorage.findCallOrigins("call-personal", WebConferencingService.OWNER_TYPE_USER))
+                                                                                                 .thenThrow(new IllegalStateException("closed"));
+
+    StorageException e = assertThrows(StorageException.class, () -> webConferencing.getUserCalls(USER));
+
+    IllegalStateException cause = assertInstanceOf(IllegalStateException.class, e.getCause());
+    assertEquals("closed", cause.getMessage());
+  }
+
+  @Test
   void testAFailedHostCheckRethrowsTheOriginalFailureWithTheCheckFailureSuppressed() {
     Identity identity = new Identity("space", "gone_team");
     identity.setId("2");
